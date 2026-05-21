@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
  * IEC-style open manual disconnect on a one-line: gap in the bar + diagonal blade.
@@ -12,6 +14,7 @@ function SchematicManualLineSwitch({
   primaryLabel,
   secondaryLabel,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const midY = height / 2 + 2;
   const gapL = width * 0.34;
   const gapR = width * 0.66;
@@ -60,7 +63,7 @@ function SchematicManualLineSwitch({
           textAnchor="middle"
           dominantBaseline="hanging"
           fill="#c5c5c5"
-          fontSize="9"
+          fontSize={adjSvgFontPx(9, fontPxDelta)}
           fontWeight="600"
           pointerEvents="none"
         >
@@ -74,7 +77,7 @@ function SchematicManualLineSwitch({
           textAnchor="middle"
           dominantBaseline="auto"
           fill="#9e9e9e"
-          fontSize="8"
+          fontSize={adjSvgFontPx(8, fontPxDelta)}
           pointerEvents="none"
         >
           {secondaryLabel}

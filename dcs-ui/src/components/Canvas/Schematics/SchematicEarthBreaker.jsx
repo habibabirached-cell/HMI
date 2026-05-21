@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
  * Earth / chassis circuit breaker symbol (vertical stem + three graded horizontal bars).
@@ -14,6 +16,7 @@ function SchematicEarthBreaker({
   /** One-line square frame (e.g. sectional CB on bus), width/height = one grid cell. */
   showFrame = false,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   /** Slight downward shift + compact bars so top/bottom labels clear the graphic. */
   const symY = height / 2 + 1;
@@ -88,7 +91,7 @@ function SchematicEarthBreaker({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -99,7 +102,7 @@ function SchematicEarthBreaker({
         y={height - 10}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {secondaryLabel}

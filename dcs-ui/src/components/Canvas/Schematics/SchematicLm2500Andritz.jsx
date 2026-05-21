@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 const PAD_TOP = 4;
 const PAD_BOT = 4;
@@ -18,6 +20,7 @@ function SchematicLm2500Andritz({
   strokeColor,
   strokeWidthVal,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   const textureUrl =
     textureHref != null && textureHref !== ''
@@ -50,7 +53,7 @@ function SchematicLm2500Andritz({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -62,7 +65,7 @@ function SchematicLm2500Andritz({
         textAnchor="middle"
         dominantBaseline="auto"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {mwLabel}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useFontScaleToolbar } from '../../contexts/FontScaleContext';
 import './Toolbar.css';
 
 const Toolbar = ({
@@ -22,6 +23,13 @@ const Toolbar = ({
   canSaveSimulationConfig, // Design-dir scenario loaded: open “Save configuration as” for .sim.json presets
   canCopyScenarioLink, // Scenario running from design dir: copy ?design=&sim=&config= link
 }) => {
+  const {
+    increaseFont,
+    decreaseFont,
+    canDecrease: canDecreaseFont,
+    canIncrease: canIncreaseFont,
+    delta: fontPxShift,
+  } = useFontScaleToolbar();
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const saveDropdownRef = useRef(null);
 
@@ -174,6 +182,30 @@ const Toolbar = ({
         </button>
         <button className="btn-zoom" onClick={onResetView} title="Reset View">
           ⊙
+        </button>
+        <span className="toolbar-font-shift-label" title="Increase or decrease UI and diagram label font sizes (~1 px each step); persisted for this browser">
+          Font: {fontPxShift >= 0 ? '+' : ''}
+          {fontPxShift}
+        </span>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={decreaseFont}
+          disabled={!canDecreaseFont}
+          title="Smaller fonts (diagram labels + panels)"
+          aria-label="Decrease global font size"
+        >
+          −
+        </button>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={increaseFont}
+          disabled={!canIncreaseFont}
+          title="Larger fonts (diagram labels + panels)"
+          aria-label="Increase global font size"
+        >
+          +
         </button>
       </div>
 

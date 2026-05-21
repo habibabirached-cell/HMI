@@ -61,6 +61,7 @@ import {
 } from './utils/perfDebug';
 import { usePresenceForcedOfflineIds } from './hooks/usePresenceForcedOfflineIds';
 import VariablePresenceRuleDialog from './components/VariablePresenceRuleDialog/VariablePresenceRuleDialog';
+import { FontScaleProvider } from './contexts/FontScaleContext';
 import './styles/App.css';
 
 /** Verbose trace for deep links / session restore / copy-link debugging — filter console by `[DCS:` */
@@ -4799,6 +4800,7 @@ function App() {
   }, [designApiPath, simulationMetadata?.id]);
 
   return (
+    <FontScaleProvider>
     <div className="app-container">
       <header className="app-header">
         <div className="header-left">
@@ -5282,6 +5284,7 @@ function App() {
         />
       )}
     </div>
+    </FontScaleProvider>
   );
 }
 

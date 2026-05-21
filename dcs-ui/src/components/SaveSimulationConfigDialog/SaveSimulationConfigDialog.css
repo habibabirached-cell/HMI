@@ -20,19 +20,19 @@
 
 .save-sim-config-dialog h2 {
   margin: 0 0 10px;
-  font-size: 18px;
+  font-size: calc(18px + var(--global-font-px-shift, 0px));
   color: #00d4a8;
 }
 
 .save-sim-config-help {
   margin: 0 0 16px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #aaa;
   line-height: 1.4;
 }
 
 .save-sim-config-help code {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #e0e0e0;
 }
 
@@ -40,7 +40,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #ccc;
 }
 
@@ -50,7 +50,7 @@
   border: 1px solid #444;
   background: #0d0d0d;
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: calc(14px + var(--global-font-px-shift, 0px));
 }
 
 .save-sim-config-input:focus {
@@ -63,7 +63,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 12px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #ddd;
   cursor: pointer;
 }
@@ -78,7 +78,7 @@
 .save-sim-config-btn {
   padding: 8px 16px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   cursor: pointer;
   border: 1px solid #444;
 }

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
  * Current transformer one-line symbol: bold zigzag (resistor-style) centered vertically.
@@ -14,6 +16,7 @@ function SchematicCT({
   primaryLabel,
   secondaryLabel,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   const wireY = height / 2;
   const margin = Math.max(2, width * 0.08);
@@ -53,7 +56,7 @@ function SchematicCT({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -64,7 +67,7 @@ function SchematicCT({
         y={height - 6}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {secondaryLabel}

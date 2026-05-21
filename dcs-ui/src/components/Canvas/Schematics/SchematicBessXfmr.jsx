@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
 const LABEL_ART_GAP = 5;
@@ -21,6 +23,7 @@ function SchematicBessXfmr({
   textureHref,
   textureOpacity = 1,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   const voltageRatioLabel = transformerVoltageRatioLabel(component);
   const textureUrl =
@@ -53,7 +56,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#FFC107"
-        fontSize="15"
+        fontSize={adjSvgFontPx(15, fontPxDelta)}
         fontWeight="700"
         pointerEvents="none"
       >
@@ -65,7 +68,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#FF9800"
-        fontSize="15"
+        fontSize={adjSvgFontPx(15, fontPxDelta)}
         fontWeight="700"
         pointerEvents="none"
       >
@@ -77,7 +80,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -89,7 +92,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#bdbdbd"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         fontWeight="500"
         pointerEvents="none"
       >
@@ -119,7 +122,7 @@ function SchematicBessXfmr({
         y={mvaY}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {mvaLabel}

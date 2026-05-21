@@ -32,7 +32,7 @@
 }
 
 .panel-header h3 {
-  font-size: 15px;
+  font-size: calc(15px + var(--global-font-px-shift, 0px));
   color: #005E60;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -43,7 +43,7 @@
   background: none;
   border: none;
   color: #999;
-  font-size: 24px;
+  font-size: calc(24px + var(--global-font-px-shift, 0px));
   cursor: pointer;
   padding: 0;
   width: 24px;
@@ -65,7 +65,7 @@
 }
 
 .prop-hint {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #888;
   line-height: 1.4;
   margin: 0 0 10px 0;
@@ -95,7 +95,7 @@
 }
 
 .sparkline-xy {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #ccc;
   display: block;
   overflow: hidden;
@@ -114,7 +114,7 @@
 .btn-remove-sparkline {
   flex-shrink: 0;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   border-radius: 4px;
   border: 1px solid #666;
   background: rgba(244, 67, 54, 0.15);
@@ -135,7 +135,7 @@
 .btn-remove-all-sparklines {
   width: 100%;
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   border-radius: 6px;
   border: 1px solid rgba(244, 67, 54, 0.4);
   background: transparent;
@@ -157,7 +157,7 @@
 }
 
 .prop-section h4 {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #005E60;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -171,7 +171,7 @@
 
 .prop-group label {
   display: block;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -187,7 +187,7 @@
   background: #0d0d0d;
   border: 1px solid #444;
   color: #e0e0e0;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   border-radius: 4px;
   outline: none;
   transition: border-color 0.2s;
@@ -210,7 +210,7 @@
   background: #0d0d0d;
   border: 1px solid #444;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #e0e0e0;
 }
 
@@ -231,7 +231,7 @@
   padding: 10px 16px;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -277,7 +277,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #ccc;
   cursor: pointer;
 }
@@ -330,7 +330,7 @@
 }
 
 .prop-subsection h5 {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -344,7 +344,7 @@
 }
 
 .variable-presence-rules-hint {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #999;
   line-height: 1.4;
   margin: 0 0 10px;
@@ -363,7 +363,7 @@
   gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid #2a2a2a;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
 }
 
 .variable-presence-rule-main {
@@ -372,7 +372,7 @@
 }
 
 .variable-presence-rule-col {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #b2dfdb;
   word-break: break-all;
 }
@@ -386,6 +386,6 @@
   display: block;
   width: 100%;
   margin-top: 6px;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #7a8a92;
 }

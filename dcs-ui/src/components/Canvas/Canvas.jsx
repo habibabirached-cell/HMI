@@ -9,11 +9,37 @@ import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { resolveConnectionRenderParams } from '../../utils/connectionLineStyle';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
 import { markSelectionInteractionStart } from '../../utils/perfDebug';
+import {
+  getTieHiddenMemberIdSet,
+  tieEffectiveDimensions,
+  buildTieCollapseHorizontalShiftMap,
+  getTieCollapsedStubSegments,
+  isTieBreakerNetwork,
+  isTieNetworkCollapsed,
+  hasTieStubLinks,
+} from '../../utils/tieBreakerNetwork';
+import { useFontPxDelta } from '../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import './Canvas.css';
 
 function sanitizeSvgGradientId(connId) {
   return String(connId).replace(/[^a-zA-Z0-9_-]/g, '_');
 }
+
+const TIE_COLLAPSED_STUB_CONN = {
+  style: {
+    useAuto: false,
+    color: '#7a8790',
+    thickness: 4,
+    animation: 'none',
+  },
+};
+const tieCollapsedStubRenderResolved = resolveConnectionRenderParams(
+  TIE_COLLAPSED_STUB_CONN,
+  'breaker-hv-boxed',
+  'tie-breaker-network',
+  false,
+);
 
 /** macOS treats Control+primary-click as a context menu (same as right-click). */
 function isMacLikePlatform() {
@@ -142,10 +168,9 @@ function orthogonalEdgeConnection(
 /** Width/height used for grid snapping — must match build_fullblock_conf.snap_component_to_grid. */
 function getLayoutDimensionsForSnap(comp) {
   const base = getComponentVisualConfig(comp.type);
-  return {
-    width: comp.visualOverrides?.width ?? base.width,
-    height: comp.visualOverrides?.height ?? base.height,
-  };
+  const bw = comp.visualOverrides?.width ?? base.width;
+  const bh = comp.visualOverrides?.height ?? base.height;
+  return tieEffectiveDimensions(comp, bw, bh);
 }
 
 function bboxFromSegments(segments, halfStroke, pad) {
@@ -210,6 +235,7 @@ const Canvas = forwardRef(({
   onOpenVariablePresenceDialog,
   onOpenVariablePresenceDialogConnections,
 }, ref) => {
+  const fontPxDelta = useFontPxDelta();
   const canvasRef = useRef(null);
   /** Keep latest pan for native wheel/touch handlers (avoids stale closures). */
   const panForGesturesRef = useRef(pan);
@@ -220,11 +246,57 @@ const Canvas = forwardRef(({
   const handleComponentMouseUpLatestRef = useRef(null);
   const onOpenChartLatestRef = useRef(onOpenChart);
   const onUpdateComponentLatestRef = useRef(onUpdateComponent);
+  const tieTapCandidateRef = useRef({
+    componentId: null,
+    startClientX: 0,
+    startClientY: 0,
+    movedBeyondTapThreshold: false,
+  });
+
+  const hiddenTieMemberIds = useMemo(
+    () => getTieHiddenMemberIdSet(components),
+    [components],
+  );
+
+  const visibleComponents = useMemo(
+    () => components.filter((c) => !hiddenTieMemberIds.has(c.id)),
+    [components, hiddenTieMemberIds],
+  );
+
+  const tieCollapseShiftById = useMemo(
+    () => buildTieCollapseHorizontalShiftMap(components, getComponentVisualConfig),
+    [components],
+  );
+
+  const renderComponents = useMemo(() => {
+    return visibleComponents.map((c) => {
+      const dx = tieCollapseShiftById.get(c.id);
+      if (dx == null || dx === 0) return c;
+      return {
+        ...c,
+        position: { ...c.position, x: c.position.x + dx },
+      };
+    });
+  }, [visibleComponents, tieCollapseShiftById]);
+
+  const tieCollapsedStubSegments = useMemo(() => {
+    const accum = [];
+    for (const c of components) {
+      if (!isTieBreakerNetwork(c) || !isTieNetworkCollapsed(c)) continue;
+      if (!hasTieStubLinks(c)) continue;
+      const rt = renderComponents.find((x) => x.id === c.id);
+      if (!rt) continue;
+      accum.push(
+        ...getTieCollapsedStubSegments(renderComponents, c, rt, getComponentVisualConfig),
+      );
+    }
+    return accum;
+  }, [components, renderComponents]);
 
   const connectionRenderList = useMemo(() => {
     return connections.map((conn) => {
-      const fromComp = components.find((c) => c.id === conn.from);
-      const toComp = components.find((c) => c.id === conn.to);
+      const fromComp = renderComponents.find((c) => c.id === conn.from);
+      const toComp = renderComponents.find((c) => c.id === conn.to);
       if (!fromComp || !toComp) {
         // eslint-disable-next-line no-console
         console.warn('[Canvas] connection skipped (missing component)', conn.id, conn.from, conn.to);
@@ -327,7 +399,7 @@ const Canvas = forwardRef(({
         isEnergized
       };
     }).filter(Boolean);
-  }, [connections, components, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds]);
+  }, [connections, renderComponents, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds]);
 
   const [draggingComponent, setDraggingComponent] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -462,6 +534,26 @@ const Canvas = forwardRef(({
     // Regular click = Start dragging and select (clears multi-selection)
     onMultiSelect(component.id, false); // Clear multi-selection
     onClearConnectionMultiSelection();
+    if (
+      component.type === 'tie-breaker-network' &&
+      Array.isArray(component.properties?.tieGroup?.memberIds) &&
+      component.properties.tieGroup.memberIds.length > 0 &&
+      component.properties.tieGroup.collapsed !== false
+    ) {
+      tieTapCandidateRef.current = {
+        componentId: component.id,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        movedBeyondTapThreshold: false,
+      };
+    } else {
+      tieTapCandidateRef.current = {
+        componentId: null,
+        startClientX: 0,
+        startClientY: 0,
+        movedBeyondTapThreshold: false,
+      };
+    }
     setDraggingComponent(component.id);
     const rect = canvasRef.current.getBoundingClientRect();
     setDragOffset({
@@ -669,6 +761,19 @@ const Canvas = forwardRef(({
     }
     
     if (draggingComponent) {
+      const cand = tieTapCandidateRef.current;
+      if (
+        cand.componentId &&
+        draggingComponent === cand.componentId &&
+        !cand.movedBeyondTapThreshold
+      ) {
+        const dx = e.clientX - cand.startClientX;
+        const dy = e.clientY - cand.startClientY;
+        if (dx * dx + dy * dy > 64) {
+          cand.movedBeyondTapThreshold = true;
+        }
+      }
+
       const rect = canvasRef.current.getBoundingClientRect();
       const rawX = (e.clientX - rect.left - pan.x) / zoom - dragOffset.x;
       const rawY = (e.clientY - rect.top - pan.y) / zoom - dragOffset.y;
@@ -696,6 +801,37 @@ const Canvas = forwardRef(({
   };
 
   const handleCanvasMouseUp = (e) => {
+    const dragId = draggingComponent;
+    if (
+      dragId &&
+      mode === 'design' &&
+      onUpdateComponent &&
+      tieTapCandidateRef.current.componentId === dragId &&
+      !tieTapCandidateRef.current.movedBeyondTapThreshold
+    ) {
+      const comp = components.find((c) => c.id === dragId);
+      if (
+        comp?.type === 'tie-breaker-network' &&
+        comp.properties?.tieGroup?.memberIds?.length &&
+        comp.properties.tieGroup.collapsed !== false
+      ) {
+        onUpdateComponent(comp.id, {
+          properties: {
+            ...comp.properties,
+            tieGroup: {
+              ...comp.properties.tieGroup,
+              collapsed: false,
+            },
+          },
+        });
+      }
+    }
+    tieTapCandidateRef.current = {
+      componentId: null,
+      startClientX: 0,
+      startClientY: 0,
+      movedBeyondTapThreshold: false,
+    };
     if (draggingComponent) {
       setDraggingComponent(null);
     }
@@ -867,6 +1003,12 @@ const Canvas = forwardRef(({
   const stableOnUpdateComponent = useCallback((componentId, updates) => {
     onUpdateComponentLatestRef.current?.(componentId, updates);
   }, []);
+
+  const stableDesignSelectSingle = useCallback((c) => {
+    onClearConnectionMultiSelection();
+    onMultiSelect(c.id, false);
+    onSelectComponent(c);
+  }, [onClearConnectionMultiSelection, onMultiSelect, onSelectComponent]);
 
   const handleCanvasClick = (e) => {
     if (connecting) {
@@ -1167,7 +1309,7 @@ const Canvas = forwardRef(({
                   x={(fromCenterX + toCenterX) / 2}
                   y={(fromCenterY + toCenterY) / 2 + 18}
                   fill="#b0bec5"
-                  fontSize="11"
+                  fontSize={adjSvgFontPx(11, fontPxDelta)}
                   textAnchor="middle"
                   pointerEvents="none"
                 >
@@ -1210,6 +1352,28 @@ const Canvas = forwardRef(({
                   ));
                 })()}
               </g>
+            );
+          })}
+
+          {tieCollapsedStubSegments.map((seg) => {
+            const rst = tieCollapsedStubRenderResolved;
+            const endStop = rst.stops[rst.stops.length - 1];
+            return (
+              <line
+                key={seg.key}
+                x1={seg.x1}
+                y1={seg.y1}
+                x2={seg.x2}
+                y2={seg.y2}
+                stroke={endStop.color}
+                strokeOpacity={endStop.opacity == null ? 1 : endStop.opacity}
+                strokeWidth={rst.strokeWidth}
+                strokeLinecap="round"
+                pointerEvents="none"
+                style={
+                  rst.dropShadowCss ? { filter: rst.dropShadowCss } : undefined
+                }
+              />
             );
           })}
 
@@ -1262,7 +1426,7 @@ const Canvas = forwardRef(({
           })()}
 
           {/* Render components */}
-            {components.map((component) => (
+            {renderComponents.map((component) => (
             <CanvasBlock
               key={component.id}
               component={component}
@@ -1283,6 +1447,7 @@ const Canvas = forwardRef(({
               onOpenChart={stableOnOpenChart}
               onUpdateComponent={stableOnUpdateComponent}
               onResizeStart={setResizingComponent}
+              designSelectSingle={stableDesignSelectSingle}
             />
           ))}
         </g>

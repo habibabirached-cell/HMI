@@ -19,6 +19,8 @@ import {
 } from '../../utils/ensembleCrossMemberChart';
 import { cellFloat } from '../../utils/csvRowAccess';
 import { ENSEMBLE_COLUMN_SEP } from '../../utils/simulationLazyApi';
+import { bumpPlotlyFonts } from '../../utils/plotlyFontBump';
+import { useFontPxDelta } from '../../contexts/FontScaleContext';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
@@ -91,6 +93,7 @@ const ChartPanel = ({
   insetLeft = 0,
   insetRight = 0,
 }) => {
+  const fontPxDelta = useFontPxDelta();
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ y: 0, height: 0 });
   /** Minimize to a thin bar; charts tray stays above the canvas (z-index) either way. */
@@ -2255,8 +2258,8 @@ const ChartPanel = ({
               {!loadingCharts[chart.id] && chartDataReadyToPlot(chart) && (() => {
                 const data = getChartData(chart);
                 const dataLayout = dataForPlotlyLayout(chart);
-                const plotlyData = generatePlotlyData(chart, data);
-                const layout = generatePlotlyLayout(chart, dataLayout);
+                const plotlyData = bumpPlotlyFonts(generatePlotlyData(chart, data), fontPxDelta);
+                const layout = bumpPlotlyFonts(generatePlotlyLayout(chart, dataLayout), fontPxDelta);
                 const supportsSelection = chart.chartType === '2d' || chart.chartType === 'nd' || chart.chartType === 'stacked-nd' || (chart.isMultiComponent && chart.chartType === 'multi-line-chart');
                 return (
                   <Plot
@@ -2376,8 +2379,8 @@ const ChartPanel = ({
                     {!loadingCharts[chart.id] && chartDataReadyToPlot(chart) && (() => {
                       const data = getChartData(chart);
                       const dataLayout = dataForPlotlyLayout(chart);
-                      const plotlyData = generatePlotlyData(chart, data);
-                      const layout = generatePlotlyLayout(chart, dataLayout);
+                      const plotlyData = bumpPlotlyFonts(generatePlotlyData(chart, data), fontPxDelta);
+                      const layout = bumpPlotlyFonts(generatePlotlyLayout(chart, dataLayout), fontPxDelta);
                       const supportsSelection = chart.chartType === '2d' || chart.chartType === 'nd' || chart.chartType === 'stacked-nd' || (chart.isMultiComponent && chart.chartType === 'multi-line-chart');
                       return (
                         <Plot data={plotlyData} layout={layout} config={plotlyConfig} style={{ width: '100%', height: '100%' }} useResizeHandler={true}

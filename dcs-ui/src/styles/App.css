@@ -28,6 +28,8 @@
   --vernova-border: #2a3a3a;       /* Teal-tinted borders */
   --vernova-text: #e0e0e0;         /* Primary text */
   --vernova-text-dim: #999;        /* Secondary text */
+  /** Toolbar font +/−: `FontScaleProvider` writes this on documentElement (persisted px shift). */
+  --global-font-px-shift: 0px;
 }
 
 body {
@@ -85,7 +87,7 @@ body {
 }
 
 .app-header h1 {
-  font-size: 17px;
+  font-size: calc(17px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   color: var(--vernova-primary);
   letter-spacing: 0.04em;
@@ -107,7 +109,7 @@ body {
 .view-badge {
   padding: 6px 14px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   letter-spacing: 1px;
 }
@@ -136,14 +138,14 @@ body {
 }
 
 .config-status-badge .config-name {
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   color: var(--vernova-text);
   letter-spacing: 0.5px;
 }
 
 .config-status-badge .csv-status {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 4px;
@@ -179,7 +181,7 @@ body {
 
 .design-view-tri-state .tri-state-btn {
   padding: 6px 14px;
-  font-size: 16px;
+  font-size: calc(16px + var(--global-font-px-shift, 0px));
   line-height: 1;
   background: transparent;
   color: var(--vernova-text-dim);
@@ -369,13 +371,13 @@ body {
 }
 
 .app-right-rail__hinge-chev {
-  font-size: 15px;
+  font-size: calc(15px + var(--global-font-px-shift, 0px));
   line-height: 1;
   font-weight: 700;
 }
 
 .app-right-rail__hinge-vlabel {
-  font-size: 10px;
+  font-size: calc(10px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -428,7 +430,7 @@ body {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -542,7 +544,7 @@ body {
 }
 
 .saving-text {
-  font-size: 18px;
+  font-size: calc(18px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   color: #4caf50;
   letter-spacing: 1px;
@@ -550,7 +552,7 @@ body {
 }
 
 .saving-subtext {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #999;
   letter-spacing: 0.5px;
 }
@@ -576,7 +578,7 @@ body {
 }
 
 .saving-subtext.derived-variable-commit-hint {
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: var(--vernova-text-dim);
   max-width: min(480px, 94vw);
   text-align: center;

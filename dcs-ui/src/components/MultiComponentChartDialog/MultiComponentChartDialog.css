@@ -64,7 +64,7 @@
 
 .dialog-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: calc(18px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   color: var(--vernova-accent, #00d4a8);
   letter-spacing: 0.5px;
@@ -74,7 +74,7 @@
   background: transparent;
   border: none;
   color: #666;
-  font-size: 24px;
+  font-size: calc(24px + var(--global-font-px-shift, 0px));
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -122,7 +122,7 @@
   border: 1px solid rgba(220, 53, 69, 0.4);
   border-radius: 6px;
   color: #ff6b6b;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   margin-bottom: 20px;
   animation: error-shake 0.4s;
 }
@@ -144,13 +144,13 @@
   border: 1px solid rgba(0, 94, 96, 0.3);
   border-radius: 6px;
   color: var(--vernova-accent, #00d4a8);
-  font-size: 14px;
+  font-size: calc(14px + var(--global-font-px-shift, 0px));
 }
 
 .dialog-label {
   display: block;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   color: var(--vernova-secondary, #1a8b8d);
   text-transform: uppercase;
@@ -159,7 +159,7 @@
 
 .dialog-label-hint {
   color: #666;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   font-weight: 400;
   margin-left: 8px;
   text-transform: none;
@@ -184,7 +184,7 @@
   border: 1px solid rgba(0, 94, 96, 0.3);
   border-radius: 6px;
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: calc(14px + var(--global-font-px-shift, 0px));
   font-family: inherit;
   transition: all 0.2s;
 }
@@ -238,14 +238,14 @@
 }
 
 .component-icon {
-  font-size: 16px;
+  font-size: calc(16px + var(--global-font-px-shift, 0px));
   flex-shrink: 0;
 }
 
 .component-name {
   font-weight: 600;
   color: #fff;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -253,13 +253,13 @@
 
 .component-type {
   color: #888;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   flex-shrink: 0;
 }
 
 .mapping-arrow {
   color: var(--vernova-accent, #00d4a8);
-  font-size: 18px;
+  font-size: calc(18px + var(--global-font-px-shift, 0px));
   flex-shrink: 0;
 }
 
@@ -267,7 +267,7 @@
   flex: 1;
   max-width: 250px;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
 }
 
 /* Preview Section */
@@ -280,7 +280,7 @@
 }
 
 .preview-header {
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   color: var(--vernova-accent, #00d4a8);
   text-transform: uppercase;
@@ -295,7 +295,7 @@
 }
 
 .preview-item {
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #ccc;
 }
 
@@ -318,7 +318,7 @@
 .dialog-btn {
   padding: 10px 24px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: calc(14px + var(--global-font-px-shift, 0px));
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;

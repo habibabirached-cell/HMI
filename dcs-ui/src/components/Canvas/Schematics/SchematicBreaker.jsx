@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
  * One-line diagram style breaker: horizontal bar + diagonal blade.
@@ -12,6 +14,7 @@ function SchematicBreaker({
   primaryLabel,
   secondaryLabel,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   /** Nudge symbol down so labels don’t touch the blade / hinge line. */
   const symY = height / 2 + 6;
@@ -51,7 +54,7 @@ function SchematicBreaker({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -62,7 +65,7 @@ function SchematicBreaker({
         y={height - 10}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {secondaryLabel}

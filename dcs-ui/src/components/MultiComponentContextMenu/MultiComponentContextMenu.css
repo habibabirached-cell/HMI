@@ -38,7 +38,7 @@
   padding: 14px 16px;
   background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 102, 255, 0.05) 100%);
   border-bottom: 1px solid rgba(0, 102, 255, 0.3);
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   color: #0099ff;
   text-transform: uppercase;
@@ -46,7 +46,7 @@
 }
 
 .context-menu-subtitle {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #666;
   font-weight: 400;
   margin-top: 4px;
@@ -67,7 +67,7 @@
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: #e0e0e0;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -105,7 +105,7 @@
 }
 
 .context-menu-icon {
-  font-size: 16px;
+  font-size: calc(16px + var(--global-font-px-shift, 0px));
   width: 20px;
   display: flex;
   align-items: center;

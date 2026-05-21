@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
 const LABEL_ART_GAP = 5;
@@ -25,6 +27,7 @@ function SchematicGSU({
   strokeWidthVal = 3,
   presentationOffline = false,
 }) {
+  const fontPxDelta = useFontPxDelta();
   const cx = width / 2;
   const voltageRatioLabel = transformerVoltageRatioLabel(component);
   const textureUrl =
@@ -56,7 +59,7 @@ function SchematicGSU({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize="11"
+        fontSize={adjSvgFontPx(11, fontPxDelta)}
         fontWeight="600"
         pointerEvents="none"
       >
@@ -68,7 +71,7 @@ function SchematicGSU({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#bdbdbd"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         fontWeight="500"
         pointerEvents="none"
       >
@@ -98,7 +101,7 @@ function SchematicGSU({
         y={mvaY}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize={adjSvgFontPx(10, fontPxDelta)}
         pointerEvents="none"
       >
         {mvaLabel}

@@ -55,7 +55,7 @@
 
 .view-data-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: calc(20px + var(--global-font-px-shift, 0px));
   color: #00d4a8;
   font-weight: 600;
 }
@@ -64,7 +64,7 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #aaa;
-  font-size: 24px;
+  font-size: calc(24px + var(--global-font-px-shift, 0px));
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -83,7 +83,7 @@
 
 .view-data-subtitle {
   padding: 10px 24px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
   color: #7a9a9a;
   flex-shrink: 0;
 }
@@ -97,7 +97,7 @@
 .view-data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
 }
 
 .view-data-table thead {

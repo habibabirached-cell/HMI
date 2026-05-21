@@ -30,7 +30,7 @@
 }
 
 .mode-label {
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   color: #999;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -39,7 +39,7 @@
 .mode-badge {
   padding: 6px 14px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   letter-spacing: 1px;
 }
@@ -62,7 +62,7 @@
   border: 1px solid #444;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -85,7 +85,7 @@
   padding: 8px 20px;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 700;
@@ -126,12 +126,24 @@
 }
 
 .zoom-label {
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   color: #999;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
   min-width: 70px;
+}
+
+.toolbar-font-shift-label {
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  min-width: 64px;
+  margin-left: 8px;
+  padding-left: 12px;
+  border-left: 1px solid #333;
 }
 
 .btn-zoom {
@@ -141,7 +153,7 @@
   border: 1px solid #444;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 16px;
+  font-size: calc(16px + var(--global-font-px-shift, 0px));
   font-weight: 700;
   border-radius: 4px;
   display: flex;
@@ -154,6 +166,12 @@
   background: #2a2a2a;
   border-color: #005E60;
   color: #005E60;
+}
+
+.btn-zoom:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Save dropdown: icon trigger + menu */
@@ -169,7 +187,7 @@
   border: 1px solid #444;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 18px;
+  font-size: calc(18px + var(--global-font-px-shift, 0px));
   line-height: 1;
   border-radius: 4px;
   display: flex;
@@ -207,7 +225,7 @@
   background: transparent;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
@@ -242,7 +260,7 @@
   border: 1px solid #444;
   color: #e0e0e0;
   cursor: pointer;
-  font-size: 11px;
+  font-size: calc(11px + var(--global-font-px-shift, 0px));
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -263,18 +281,18 @@
 
 .btn-save-as {
   padding: 6px 10px;
-  font-size: 13px;
+  font-size: calc(13px + var(--global-font-px-shift, 0px));
 }
 
 /* Snapshot of chart UI into the active scenario’s .sim.json (not a full design directory copy). */
 .btn-save-sim-config {
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
 }
 
 .btn-copy-scenario-link {
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: calc(12px + var(--global-font-px-shift, 0px));
 }
 
 .btn-save:hover,
