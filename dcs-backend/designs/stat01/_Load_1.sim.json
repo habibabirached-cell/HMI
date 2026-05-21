@@ -15,7 +15,7 @@
   "data_row_count": 501,
   "data_column_count": 11,
   "chart_stacks": [],
-  "chart_sample_default": 128,
+  "chart_sample_default": 1,
   "chart_panel_height": 622,
   "chart_panel_opacity": 1.0,
   "chart_card_width": 500,
@@ -33,7 +33,7 @@
       }
     ],
     "chart_stacks": [],
-    "chart_sample_default": 128,
+    "chart_sample_default": 1,
     "chart_panel_height": 622,
     "chart_panel_opacity": 1.0,
     "chart_card_width": 500,

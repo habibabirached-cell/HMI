@@ -28,9 +28,14 @@ export function secondaryLabelText(component, visualConfig) {
 }
 
 export function primaryLabelText(component, visualConfig) {
-  return visualConfig.canvasPrimaryLabel != null
-    ? visualConfig.canvasPrimaryLabel
-    : component.name;
+  let text =
+    visualConfig.canvasPrimaryLabel != null
+      ? visualConfig.canvasPrimaryLabel
+      : component.name;
+  if (component?.type === 'breaker-bess' && typeof text === 'string') {
+    text = text.replace(/\s+(?:Left|Right|[LR])$/i, '').trim();
+  }
+  return text;
 }
 
 export function strokeForStatus(component, isSelected, presentationOffline = false) {
@@ -69,6 +74,31 @@ export function resolveTextureUrl(visualConfig) {
   const href = visualConfig.backgroundTexture;
   if (href == null || href === '') return null;
   return `${process.env.PUBLIC_URL || ''}${href}`;
+}
+
+/**
+ * Per-component-**type** scale for design mode: multiplies saved/default width × height for
+ * every instance of that type. Font sizes stay fixed so larger boxes add internal padding.
+ */
+export function getCanvasBlockTypeScale(scaleMap, componentType) {
+  if (scaleMap == null || componentType == null) return 1;
+  const v = scaleMap[componentType];
+  if (v == null || !Number.isFinite(v) || v <= 0) return 1;
+  return v;
+}
+
+/**
+ * Raw dimensions from `visualOverrides` or catalog, multiplied by the type scale map.
+ */
+export function getScaledCanvasBlockDimensions(component, visualConfig, scaleMap = {}) {
+  const rawW = component.visualOverrides?.width ?? visualConfig.width;
+  const rawH = component.visualOverrides?.height ?? visualConfig.height;
+  const s = getCanvasBlockTypeScale(scaleMap, component.type);
+  return {
+    width: rawW * s,
+    height: rawH * s,
+    scale: s,
+  };
 }
 
 export function getTextureOpacity(visualConfig) {

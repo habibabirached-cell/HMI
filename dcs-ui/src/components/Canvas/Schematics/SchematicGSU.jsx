@@ -1,6 +1,8 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
+import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
 const LABEL_ART_GAP = 5;
@@ -28,6 +30,12 @@ function SchematicGSU({
   presentationOffline = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
+  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const fsP = adjSvgFontPx(11, fontPxDelta);
+  const fsR = adjSvgFontPx(10, fontPxDelta);
+  const fsM = adjSvgFontPx(10, fontPxDelta);
+  const maxW = width * 0.92;
+  const ratioDy = fsP * 1.12;
   const cx = width / 2;
   const voltageRatioLabel = transformerVoltageRatioLabel(component);
   const textureUrl =
@@ -36,18 +44,23 @@ function SchematicGSU({
       : null;
   const artH = Math.max(32, height * 0.34);
   const primaryY = Math.max(7, height * 0.045);
-  const ratioY = primaryY + 12;
-  /** ~10px line for ratio (font 10) + gap before art */
-  const artY = ratioY + 10 + LABEL_ART_GAP;
+  const topLabelBlockH =
+    fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
+  const artY = primaryY + topLabelBlockH + LABEL_ART_GAP;
   const artBottom = artY + artH;
   /** Baseline below art; ~8px cap height keeps a small visual gap from art bottom */
   const mvaY = Math.min(height - 6, artBottom + ART_MVA_GAP + 8);
+
+  const fullTitle = [primaryLabel, voltageRatioLabel, mvaLabel]
+    .filter(Boolean)
+    .join(' · ');
 
   const artW = width * 0.84;
   const outlineW = Math.min(width - 2, artW + 2 * HUG_PAD_X);
   const outlineX = (width - outlineW) / 2;
   const outlineY = primaryY - HUG_PAD_TOP;
-  const outlineH = mvaY + HUG_PAD_BOT - outlineY;
+  const outlineBottom = hideSupplementary ? artBottom + HUG_PAD_BOT : mvaY + HUG_PAD_BOT;
+  const outlineH = Math.max(1, outlineBottom - outlineY);
   const outlineRx = Math.min(4, outlineH / 2);
 
   return (
@@ -59,23 +72,27 @@ function SchematicGSU({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize={adjSvgFontPx(11, fontPxDelta)}
+        fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
+        {...fittedLineAttrs(maxW, squeezeText)}
       >
-        {primaryLabel}
-      </text>
-      <text
-        x={cx}
-        y={ratioY}
-        textAnchor="middle"
-        dominantBaseline="hanging"
-        fill="#bdbdbd"
-        fontSize={adjSvgFontPx(10, fontPxDelta)}
-        fontWeight="500"
-        pointerEvents="none"
-      >
-        {voltageRatioLabel}
+        <SvgHoverTitle>{fullTitle}</SvgHoverTitle>
+        <tspan x={cx} dy={0}>
+          {primaryLabel}
+        </tspan>
+        {!hideSupplementary ? (
+          <tspan
+            x={cx}
+            dy={ratioDy}
+            fill="#bdbdbd"
+            fontSize={fsR}
+            fontWeight="500"
+            {...fittedLineAttrs(maxW, squeezeText)}
+          >
+            {voltageRatioLabel}
+          </tspan>
+        ) : null}
       </text>
       {textureUrl ? (
         <image
@@ -96,16 +113,19 @@ function SchematicGSU({
           <FallbackTransformerGraphic color={lineColor} />
         </g>
       )}
-      <text
-        x={cx}
-        y={mvaY}
-        textAnchor="middle"
-        fill="#999"
-        fontSize={adjSvgFontPx(10, fontPxDelta)}
-        pointerEvents="none"
-      >
-        {mvaLabel}
-      </text>
+      {!hideSupplementary ? (
+        <text
+          x={cx}
+          y={mvaY}
+          textAnchor="middle"
+          fill="#999"
+          fontSize={fsM}
+          pointerEvents="none"
+          {...fittedLineAttrs(maxW, squeezeText)}
+        >
+          {mvaLabel}
+        </text>
+      ) : null}
       <rect
         x={outlineX + 0.5}
         y={outlineY + 0.5}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
+import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 const PAD_TOP = 4;
 const PAD_BOT = 4;
@@ -21,6 +23,11 @@ function SchematicLm2500Andritz({
   strokeWidthVal,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
+  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const fsP = adjSvgFontPx(11, fontPxDelta);
+  const fsMw = adjSvgFontPx(10, fontPxDelta);
+  const maxW = width * 0.92;
+  const fullTooltip = [primaryLabel, mwLabel].filter(Boolean).join(' · ');
   const cx = width / 2;
   const textureUrl =
     textureHref != null && textureHref !== ''
@@ -53,23 +60,30 @@ function SchematicLm2500Andritz({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize={adjSvgFontPx(11, fontPxDelta)}
+        fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
+        {...fittedLineAttrs(maxW, squeezeText)}
       >
+        {hideSupplementary && mwLabel ? (
+          <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
+        ) : null}
         {primaryLabel}
       </text>
-      <text
-        x={cx}
-        y={height - PAD_BOT}
-        textAnchor="middle"
-        dominantBaseline="auto"
-        fill="#999"
-        fontSize={adjSvgFontPx(10, fontPxDelta)}
-        pointerEvents="none"
-      >
-        {mwLabel}
-      </text>
+      {!hideSupplementary && mwLabel ? (
+        <text
+          x={cx}
+          y={height - PAD_BOT}
+          textAnchor="middle"
+          dominantBaseline="auto"
+          fill="#999"
+          fontSize={fsMw}
+          pointerEvents="none"
+          {...fittedLineAttrs(maxW, squeezeText)}
+        >
+          {mwLabel}
+        </text>
+      ) : null}
       <rect
         width={width}
         height={height}

@@ -68,6 +68,10 @@ import {
 } from './contexts/FontScaleContext';
 import './styles/App.css';
 
+/** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
+const CANVAS_ZOOM_MIN = 0.5;
+const CANVAS_ZOOM_MAX = 10;
+
 /** Verbose trace for deep links / session restore / copy-link debugging — filter console by `[DCS:` */
 function dcsSimDbg(phase, payload) {
   console.log(`[DCS:sim] ${phase}`, payload ?? '');
@@ -222,6 +226,11 @@ function App() {
 
   // Canvas state
   const [canvasComponents, setCanvasComponents] = useState([]);
+  /**
+   * Design-only: multiply width×height for all blocks of a given `component.type`.
+   * Persists with design save; font sizes stay fixed (more internal padding when > 1).
+   */
+  const [canvasBlockTypeScale, setCanvasBlockTypeScale] = useState({});
   /** Always use for chart-to-component resolution inside async loaders (state can lag one beat behind Load Design). */
   const canvasComponentsRef = useRef([]);
   useLayoutEffect(() => {
@@ -263,6 +272,12 @@ function App() {
   // Canvas viewport
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  /** Pixel pan + pinch-zoom updates (same limits as toolbar zoom). */
+  const applyCanvasViewport = useCallback((nextZoom, nextPan) => {
+    setZoom(Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, nextZoom)));
+    setPan(nextPan);
+  }, []);
 
   /** UI chrome (panels/dialogs/charts); diagram uses `canvasFontPxShift` via context. Persisted + saved with design `systemState`. */
   const [uiFontPxShift, setUiFontPxShift] = useState(() => readStoredUiCanvasFontPxShifts().ui);
@@ -443,6 +458,13 @@ function App() {
   const simulationRawRowsSimIdRef = useRef(null);
   /** Deep link calls the same loader as the dialog but must not also run localStorage session-restore for the same navigation. */
   const loadSkipSessionRestoreRef = useRef(false);
+  /**
+   * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
+   * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
+   */
+  const pendingDesignUiRestoreRef = useRef(null);
+  /** Set when GET /ensembles finishes for `designApiPath` so post-load restore can distinguish “still fetching” from “empty list”. */
+  const ensemblesHydratedForPathRef = useRef(null);
   const [saveSimConfigDialogOpen, setSaveSimConfigDialogOpen] = useState(false);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
@@ -511,6 +533,7 @@ function App() {
    */
   useEffect(() => {
     let cancelled = false;
+    ensemblesHydratedForPathRef.current = null;
     (async () => {
       if (!designApiPath || !csvStatus?.use_design_dir) {
         if (!cancelled) {
@@ -528,9 +551,13 @@ function App() {
         const data = await r.json();
         if (!cancelled) {
           setDesignEnsembles(Array.isArray(data.ensembles) ? data.ensembles : []);
+          ensemblesHydratedForPathRef.current = designApiPath;
         }
       } catch {
-        if (!cancelled) setDesignEnsembles([]);
+        if (!cancelled) {
+          setDesignEnsembles([]);
+          ensemblesHydratedForPathRef.current = designApiPath;
+        }
       }
     })();
     return () => {
@@ -612,6 +639,21 @@ function App() {
     setSelectedComponent(prev =>
       prev?.id === componentId ? { ...prev, ...updates } : prev
     );
+  }, []);
+
+  const handleNudgeCanvasBlockTypeScale = useCallback((componentType, factor) => {
+    if (componentType == null || !Number.isFinite(factor) || factor <= 0) return;
+    setCanvasBlockTypeScale((prev) => {
+      const cur = prev[componentType] ?? 1;
+      let next = cur * factor;
+      next = Math.round(next * 10000) / 10000;
+      const clamped = Math.min(4, Math.max(0.25, next));
+      if (Math.abs(clamped - 1) < 0.0005) {
+        const { [componentType]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [componentType]: clamped };
+    });
   }, []);
 
   // Delete component
@@ -4452,6 +4494,51 @@ function App() {
       setConnections(data.connections);
     }
 
+    if (
+      data.canvasBlockTypeScale != null &&
+      typeof data.canvasBlockTypeScale === 'object' &&
+      !Array.isArray(data.canvasBlockTypeScale)
+    ) {
+      setCanvasBlockTypeScale(data.canvasBlockTypeScale);
+    } else {
+      setCanvasBlockTypeScale({});
+    }
+
+    const gss = data.globalSampleStep;
+    if (typeof gss === 'number' && Number.isFinite(gss) && gss >= 1) {
+      setGlobalSampleStep(Math.min(65536, Math.max(1, Math.round(gss))));
+    } else {
+      setGlobalSampleStep(128);
+    }
+
+    if (
+      data.perChartSampleStep != null &&
+      typeof data.perChartSampleStep === 'object' &&
+      !Array.isArray(data.perChartSampleStep)
+    ) {
+      const cleaned = {};
+      for (const [chartId, v] of Object.entries(data.perChartSampleStep)) {
+        if (typeof v === 'number' && Number.isFinite(v) && v >= 1) {
+          cleaned[chartId] = Math.min(65536, Math.max(1, Math.round(v)));
+        }
+      }
+      setPerChartSampleStep(cleaned);
+    } else {
+      setPerChartSampleStep({});
+    }
+
+    const dus = data.designUiSession;
+    if (
+      dus &&
+      typeof dus === 'object' &&
+      typeof dus.ensembleId === 'string' &&
+      dus.ensembleId.trim() !== ''
+    ) {
+      pendingDesignUiRestoreRef.current = { ensembleId: dus.ensembleId.trim() };
+    } else {
+      pendingDesignUiRestoreRef.current = null;
+    }
+
     if (Array.isArray(data.variableDrivenPresence)) {
       setVariableDrivenPresence(
         data.variableDrivenPresence.map((r) => ({
@@ -4469,7 +4556,12 @@ function App() {
       
       // Apply zoom and pan if they exist
       if (data.systemState.zoom !== undefined) {
-        setZoom(data.systemState.zoom);
+        const z = Number(data.systemState.zoom);
+        setZoom(
+          Number.isFinite(z)
+            ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
+            : 1,
+        );
       }
       if (data.systemState.pan) {
         setPan(data.systemState.pan);
@@ -4485,7 +4577,8 @@ function App() {
         setCanvasFontPxShift(clampFontPxShift(Math.round(c)));
     }
     
-    // Never restore charts on load: design only. Charts appear when user clicks a simulation.
+    // Chart tray is filled when user picks a scenario, or restored below via `pendingDesignUiRestoreRef`
+    // + handleSelectEnsemble when the design was saved with an active ensemble.
     setOpenCharts([]);
     setDesignViewMode('canvas');
     
@@ -4537,6 +4630,15 @@ function App() {
       canvasComponents,
       connections,
       variableDrivenPresence,
+      canvasBlockTypeScale,
+      globalSampleStep,
+      perChartSampleStep,
+      designUiSession: {
+        ensembleId:
+          simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
+            ? simulationMetadata.ensembleId
+            : null,
+      },
       systemState: {
         simulationRunning,
         zoom,
@@ -4731,6 +4833,26 @@ function App() {
       dcsSimDbg('session restore ⏸ gated', { sessionRestoreTrigger, designApiPath, use_design_dir: csvStatus?.use_design_dir });
       return;
     }
+
+    const wantEnsId = pendingDesignUiRestoreRef.current?.ensembleId;
+    if (wantEnsId) {
+      if (ensemblesHydratedForPathRef.current !== designApiPath) {
+        dcsSimDbg('post-load restore ⏸ waiting for ensembles list', { wantEns: wantEnsId, designApiPath });
+        return;
+      }
+      const ens = designEnsembles.find((e) => e.id === wantEnsId);
+      pendingDesignUiRestoreRef.current = null;
+      if (ens) {
+        setSessionRestoreTrigger(0);
+        dcsSimDbg('post-load restore → ensemble', { ensembleId: ens.id });
+        void handleSelectEnsemble(ens);
+        return;
+      }
+      dcsSimDbg('post-load restore ⏹ ensemble id not in design; falling back to localStorage scenario', {
+        wantEns: wantEnsId,
+      });
+    }
+
     if (availableSimulations.length === 0) {
       dcsSimDbg('session restore ⏸ wait simulations list', { designApiPath });
       return;
@@ -4771,7 +4893,14 @@ function App() {
       note: 'This runs after Load Design; can overlap with SaveLoad 1s dialog close',
     });
     setSimDeepLinkFollowup({ sim: simId, config: namedConfig });
-  }, [sessionRestoreTrigger, designApiPath, csvStatus?.use_design_dir, availableSimulations]);
+  }, [
+    sessionRestoreTrigger,
+    designApiPath,
+    csvStatus?.use_design_dir,
+    availableSimulations,
+    designEnsembles,
+    handleSelectEnsemble,
+  ]);
 
   const handleCopyScenarioLink = useCallback(async () => {
     if (!designApiPath || !simulationMetadata?.id) return;
@@ -4888,8 +5017,8 @@ function App() {
           onStartSimulation={handleStartSimulation}
           onStopSimulation={handleStopSimulation}
           zoom={zoom}
-          onZoomIn={() => setZoom(prev => Math.min(prev + 0.1, 2))}
-          onZoomOut={() => setZoom(prev => Math.max(prev - 0.1, 0.5))}
+          onZoomIn={() => setZoom((prev) => Math.min(prev + 0.1, CANVAS_ZOOM_MAX))}
+          onZoomOut={() => setZoom((prev) => Math.max(prev - 0.1, CANVAS_ZOOM_MIN))}
           onResetView={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
@@ -4952,10 +5081,13 @@ function App() {
               ensembleColumnGroups={ensembleColumnGroups}
               onConfigureConnectionReadout={(comp) => setConnectionReadoutContext(comp)}
               zoom={zoom}
-              onZoomIn={() => setZoom((prev) => Math.min(prev + 0.1, 2))}
-              onZoomOut={() => setZoom((prev) => Math.max(prev - 0.1, 0.5))}
+              onZoomIn={() => setZoom((prev) => Math.min(prev + 0.1, CANVAS_ZOOM_MAX))}
+              onZoomOut={() => setZoom((prev) => Math.max(prev - 0.1, CANVAS_ZOOM_MIN))}
               pan={pan}
               onPan={setPan}
+              canvasZoomMin={CANVAS_ZOOM_MIN}
+              canvasZoomMax={CANVAS_ZOOM_MAX}
+              onCanvasViewport={applyCanvasViewport}
               mode={mode}
               viewMode={viewMode}
               simulationRunning={simulationRunning}
@@ -4968,6 +5100,8 @@ function App() {
               variableDrivenPresence={variableDrivenPresence}
               onOpenVariablePresenceDialog={handleOpenVariablePresenceDialog}
               onOpenVariablePresenceDialogConnections={handleOpenVariablePresenceDialogConnections}
+              canvasBlockTypeScale={canvasBlockTypeScale}
+              onNudgeCanvasBlockTypeScale={handleNudgeCanvasBlockTypeScale}
             />
           )}
         </div>

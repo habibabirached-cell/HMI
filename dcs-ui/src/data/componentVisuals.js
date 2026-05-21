@@ -462,21 +462,21 @@ export const COMPONENT_VISUAL_CONFIG = {
   },
   'breaker-dc': {
     width: 50,
-    height: 50,
+    height: 88,
     icon: '⏚',
     color: '#8bc34a',
     shape: 'schematic-earth-breaker'
   },
   'breaker-bess': {
     width: 50,
-    height: 50,
+    height: 88,
     icon: '⏚',
     color: '#f44336',
     shape: 'schematic-earth-breaker'
   },
   'breaker-gen-13.8': {
     width: 50,
-    height: 50,
+    height: 88,
     icon: '⏚',
     color: '#ff9800',
     shape: 'schematic-breaker',
@@ -554,7 +554,7 @@ export const COMPONENT_VISUAL_CONFIG = {
   // ============================================================================
   'current-transformer': {
     width: 50,
-    height: 50,
+    height: 100,
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',
@@ -563,7 +563,7 @@ export const COMPONENT_VISUAL_CONFIG = {
   },
   ct: {
     width: 50,
-    height: 50,
+    height: 100,
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',
@@ -572,7 +572,7 @@ export const COMPONENT_VISUAL_CONFIG = {
   },
   'current-transformer-800': {
     width: 50,
-    height: 50,
+    height: 100,
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',
@@ -581,7 +581,7 @@ export const COMPONENT_VISUAL_CONFIG = {
   },
   'current-transformer-1500': {
     width: 55,
-    height: 55,
+    height: 100,
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',
@@ -590,7 +590,7 @@ export const COMPONENT_VISUAL_CONFIG = {
   },
   'current-transformer-2000': {
     width: 60,
-    height: 60,
+    height: 100,
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',

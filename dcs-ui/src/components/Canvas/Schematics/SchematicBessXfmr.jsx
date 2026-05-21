@@ -1,6 +1,8 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
+import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
 const LABEL_ART_GAP = 5;
@@ -24,6 +26,13 @@ function SchematicBessXfmr({
   textureOpacity = 1,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
+  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const fsP = adjSvgFontPx(11, fontPxDelta);
+  const fsR = adjSvgFontPx(10, fontPxDelta);
+  const fsM = adjSvgFontPx(10, fontPxDelta);
+  const fsBolt = adjSvgFontPx(15, fontPxDelta);
+  const maxW = width * 0.92;
+  const ratioDy = fsP * 1.12;
   const cx = width / 2;
   const voltageRatioLabel = transformerVoltageRatioLabel(component);
   const textureUrl =
@@ -33,18 +42,23 @@ function SchematicBessXfmr({
 
   const boltY = Math.max(3, height * 0.02);
   const primaryY = boltY + BOLT_ROW_H;
-  /** Extra gap below title so ratio line does not collide with descenders */
-  const ratioY = primaryY + 15;
+  const topLabelBlockH =
+    fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
   const artH = Math.max(30, height * 0.32);
-  const artY = ratioY + 10 + LABEL_ART_GAP;
+  const artY = primaryY + topLabelBlockH + LABEL_ART_GAP;
   const artBottom = artY + artH;
   const mvaY = Math.min(height - 6, artBottom + ART_MVA_GAP + 8);
+
+  const fullTitle = [primaryLabel, voltageRatioLabel, mvaLabel]
+    .filter(Boolean)
+    .join(' · ');
 
   const artW = width * 0.84;
   const outlineW = Math.min(width - 2, artW + 2 * HUG_PAD_X);
   const outlineX = (width - outlineW) / 2;
   const outlineY = boltY - HUG_PAD_TOP;
-  const outlineH = mvaY + HUG_PAD_BOT - outlineY;
+  const outlineBottom = hideSupplementary ? artBottom + HUG_PAD_BOT : mvaY + HUG_PAD_BOT;
+  const outlineH = Math.max(1, outlineBottom - outlineY);
   const outlineRx = Math.min(4, outlineH / 2);
 
   return (
@@ -56,7 +70,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#FFC107"
-        fontSize={adjSvgFontPx(15, fontPxDelta)}
+        fontSize={fsBolt}
         fontWeight="700"
         pointerEvents="none"
       >
@@ -68,7 +82,7 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#FF9800"
-        fontSize={adjSvgFontPx(15, fontPxDelta)}
+        fontSize={fsBolt}
         fontWeight="700"
         pointerEvents="none"
       >
@@ -80,23 +94,27 @@ function SchematicBessXfmr({
         textAnchor="middle"
         dominantBaseline="hanging"
         fill="#e0e0e0"
-        fontSize={adjSvgFontPx(11, fontPxDelta)}
+        fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
+        {...fittedLineAttrs(maxW, squeezeText)}
       >
-        {primaryLabel}
-      </text>
-      <text
-        x={cx}
-        y={ratioY}
-        textAnchor="middle"
-        dominantBaseline="hanging"
-        fill="#bdbdbd"
-        fontSize={adjSvgFontPx(10, fontPxDelta)}
-        fontWeight="500"
-        pointerEvents="none"
-      >
-        {voltageRatioLabel}
+        <SvgHoverTitle>{fullTitle}</SvgHoverTitle>
+        <tspan x={cx} dy={0}>
+          {primaryLabel}
+        </tspan>
+        {!hideSupplementary ? (
+          <tspan
+            x={cx}
+            dy={ratioDy}
+            fill="#bdbdbd"
+            fontSize={fsR}
+            fontWeight="500"
+            {...fittedLineAttrs(maxW, squeezeText)}
+          >
+            {voltageRatioLabel}
+          </tspan>
+        ) : null}
       </text>
       {textureUrl ? (
         <image
@@ -117,16 +135,19 @@ function SchematicBessXfmr({
           <FallbackTransformerGraphic color={lineColor} />
         </g>
       )}
-      <text
-        x={cx}
-        y={mvaY}
-        textAnchor="middle"
-        fill="#999"
-        fontSize={adjSvgFontPx(10, fontPxDelta)}
-        pointerEvents="none"
-      >
-        {mvaLabel}
-      </text>
+      {!hideSupplementary ? (
+        <text
+          x={cx}
+          y={mvaY}
+          textAnchor="middle"
+          fill="#999"
+          fontSize={fsM}
+          pointerEvents="none"
+          {...fittedLineAttrs(maxW, squeezeText)}
+        >
+          {mvaLabel}
+        </text>
+      ) : null}
       <rect
         x={outlineX + 0.5}
         y={outlineY + 0.5}

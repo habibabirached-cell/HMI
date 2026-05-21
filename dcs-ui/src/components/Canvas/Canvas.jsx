@@ -20,6 +20,9 @@ import {
 } from '../../utils/tieBreakerNetwork';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
+import { getCanvasLabelFlags } from '../../utils/canvasLabelPolicy';
+import { fittedLineAttrs } from './shapes/canvasSvgLabelHelpers';
+import { getCanvasBlockTypeScale } from './shapes/canvasBlockUtils';
 import './Canvas.css';
 
 function sanitizeSvgGradientId(connId) {
@@ -166,10 +169,11 @@ function orthogonalEdgeConnection(
 }
 
 /** Width/height used for grid snapping — must match build_fullblock_conf.snap_component_to_grid. */
-function getLayoutDimensionsForSnap(comp) {
+function getLayoutDimensionsForSnap(comp, canvasBlockTypeScale = {}) {
   const base = getComponentVisualConfig(comp.type);
-  const bw = comp.visualOverrides?.width ?? base.width;
-  const bh = comp.visualOverrides?.height ?? base.height;
+  const s = getCanvasBlockTypeScale(canvasBlockTypeScale, comp.type);
+  const bw = (comp.visualOverrides?.width ?? base.width) * s;
+  const bh = (comp.visualOverrides?.height ?? base.height) * s;
   return tieEffectiveDimensions(comp, bw, bh);
 }
 
@@ -222,6 +226,9 @@ const Canvas = forwardRef(({
   onZoomOut,
   pan,
   onPan,
+  canvasZoomMin = 0.5,
+  canvasZoomMax = 10,
+  onCanvasViewport,
   mode,
   viewMode,
   simulationRunning,
@@ -234,11 +241,16 @@ const Canvas = forwardRef(({
   variableDrivenPresence = [],
   onOpenVariablePresenceDialog,
   onOpenVariablePresenceDialogConnections,
+  canvasBlockTypeScale = {},
+  onNudgeCanvasBlockTypeScale,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
   const canvasRef = useRef(null);
-  /** Keep latest pan for native wheel/touch handlers (avoids stale closures). */
+  const zoomRef = useRef(zoom);
+  /** Keep latest pan + zoom for native wheel/touch/gesture handlers (avoid stale closures). */
   const panForGesturesRef = useRef(pan);
+  zoomRef.current = zoom;
+  panForGesturesRef.current = pan;
   const twoTouchPanRef = useRef(null);
   /** Stable identities for React.memo(CanvasBlock) — latest implementation swapped in each render. */
   const handleComponentMouseDownLatestRef = useRef(null);
@@ -306,10 +318,18 @@ const Canvas = forwardRef(({
       const fromVisual = getComponentVisualConfig(fromComp.type);
       const toVisual = getComponentVisualConfig(toComp.type);
 
-      const fromWidth = fromComp.visualOverrides?.width || fromVisual.width;
-      const fromHeight = fromComp.visualOverrides?.height || fromVisual.height;
-      const toWidth = toComp.visualOverrides?.width || toVisual.width;
-      const toHeight = toComp.visualOverrides?.height || toVisual.height;
+      const fromWidth =
+        (fromComp.visualOverrides?.width || fromVisual.width) *
+        getCanvasBlockTypeScale(canvasBlockTypeScale, fromComp.type);
+      const fromHeight =
+        (fromComp.visualOverrides?.height || fromVisual.height) *
+        getCanvasBlockTypeScale(canvasBlockTypeScale, fromComp.type);
+      const toWidth =
+        (toComp.visualOverrides?.width || toVisual.width) *
+        getCanvasBlockTypeScale(canvasBlockTypeScale, toComp.type);
+      const toHeight =
+        (toComp.visualOverrides?.height || toVisual.height) *
+        getCanvasBlockTypeScale(canvasBlockTypeScale, toComp.type);
 
       let fromCenterX = fromComp.position.x + fromWidth / 2;
       let fromCenterY = fromComp.position.y + fromHeight / 2;
@@ -399,7 +419,7 @@ const Canvas = forwardRef(({
         isEnergized
       };
     }).filter(Boolean);
-  }, [connections, renderComponents, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds]);
+  }, [connections, renderComponents, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds, canvasBlockTypeScale]);
 
   const [draggingComponent, setDraggingComponent] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -446,8 +466,9 @@ const Canvas = forwardRef(({
     const rawY = (e.clientY - rect.top - pan.y) / zoom;
 
     const base = getComponentVisualConfig(component.type || component.id);
-    const width = component.visualOverrides?.width ?? base.width;
-    const height = component.visualOverrides?.height ?? base.height;
+    const s = getCanvasBlockTypeScale(canvasBlockTypeScale, component.type || component.id);
+    const width = (component.visualOverrides?.width ?? base.width) * s;
+    const height = (component.visualOverrides?.height ?? base.height) * s;
     const snapped = snapCenterToGrid(rawX, rawY, width, height);
 
     onAddComponent(component, snapped);
@@ -780,7 +801,7 @@ const Canvas = forwardRef(({
 
       const comp = components.find(c => c.id === draggingComponent);
       const { width, height } = comp
-        ? getLayoutDimensionsForSnap(comp)
+        ? getLayoutDimensionsForSnap(comp, canvasBlockTypeScale)
         : { width: 100, height: 60 };
       const snapped = snapCenterToGrid(rawX, rawY, width, height);
 
@@ -900,19 +921,45 @@ const Canvas = forwardRef(({
     };
   }, [resizingComponent, onUpdateComponent]);
 
-  useEffect(() => {
-    panForGesturesRef.current = pan;
-  }, [pan]);
-
-  // Two-finger trackpad (wheel) and two-finger touch: pan the canvas. Native listeners
-  // with { passive: false } are required so we can preventDefault and avoid the page
-  // scrolling. Ctrl/Meta+wheel (pinch / browser zoom) is left alone.
+  // Two-finger trackpad pan; Ctrl/Meta+wheel pinch zoom; touch two-finger pan/pinch;
+  // Safari trackpad pinch (GestureEvent). Same zoom bounds as toolbar (50%–1000%).
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
 
+    const PINCH_DIST_PX = 6;
+
+    const clampZ = (z) =>
+      Math.max(canvasZoomMin, Math.min(canvasZoomMax, z));
+
+    /**
+     * Zoom toward a canvas-local point (lx, ly in px relative to SVG top-left)
+     * so the diagram point under the cursor/focal stays fixed.
+     */
+    const zoomAtLocalPoint = (lx, ly, nextZoom) => {
+      if (!onCanvasViewport) return;
+      const prevZ = zoomRef.current;
+      const prevP = panForGesturesRef.current;
+      const nz = clampZ(nextZoom);
+      const cx = (lx - prevP.x) / prevZ;
+      const cy = (ly - prevP.y) / prevZ;
+      onCanvasViewport(nz, { x: lx - cx * nz, y: ly - cy * nz });
+    };
+
     const onWheel = (e) => {
-      if (e.ctrlKey || e.metaKey) return;
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        let dy = e.deltaY;
+        if (e.deltaMode === 1) dy *= 16;
+        else if (e.deltaMode === 2) dy *= 80;
+        const scale = Math.exp(-dy * 0.002);
+        const rect = el.getBoundingClientRect();
+        const lx = e.clientX - rect.left;
+        const ly = e.clientY - rect.top;
+        zoomAtLocalPoint(lx, ly, zoomRef.current * scale);
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       let dx = e.deltaX;
@@ -927,15 +974,37 @@ const Canvas = forwardRef(({
       onPan((p) => ({ x: p.x - dx, y: p.y - dy }));
     };
 
+    /** Safari (macOS / iOS): trackpad pinch uses GestureEvent, not ctrl+wheel. */
+    const gestureStartZoomRef = { current: 1 };
+    const onGestureStart = (e) => {
+      e.preventDefault();
+      gestureStartZoomRef.current = zoomRef.current;
+    };
+    const onGestureChange = (e) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const lx = e.clientX - rect.left;
+      const ly = e.clientY - rect.top;
+      const nz = clampZ(gestureStartZoomRef.current * e.scale);
+      zoomAtLocalPoint(lx, ly, nz);
+    };
+
     const onTouchStart = (e) => {
       if (e.touches.length !== 2) return;
       e.preventDefault();
       const t0 = e.touches[0];
       const t1 = e.touches[1];
-      const midX = (t0.clientX + t1.clientX) / 2;
-      const midY = (t0.clientY + t1.clientY) / 2;
+      const midClientX = (t0.clientX + t1.clientX) / 2;
+      const midClientY = (t0.clientY + t1.clientY) / 2;
+      const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
       const p0 = panForGesturesRef.current;
-      twoTouchPanRef.current = { midX, midY, startPan: { x: p0.x, y: p0.y } };
+      twoTouchPanRef.current = {
+        phase: 'undecided',
+        startMidClientX: midClientX,
+        startMidClientY: midClientY,
+        startDist: dist,
+        startPan: { x: p0.x, y: p0.y },
+      };
     };
 
     const onTouchMove = (e) => {
@@ -944,12 +1013,38 @@ const Canvas = forwardRef(({
       e.preventDefault();
       const t0 = e.touches[0];
       const t1 = e.touches[1];
-      const midX = (t0.clientX + t1.clientX) / 2;
-      const midY = (t0.clientY + t1.clientY) / 2;
-      onPan({
-        x: s.startPan.x + (midX - s.midX),
-        y: s.startPan.y + (midY - s.midY),
-      });
+      const midClientX = (t0.clientX + t1.clientX) / 2;
+      const midClientY = (t0.clientY + t1.clientY) / 2;
+      const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+      const rect = el.getBoundingClientRect();
+      const lx = midClientX - rect.left;
+      const ly = midClientY - rect.top;
+
+      if (s.phase === 'undecided') {
+        const dDist = Math.abs(dist - s.startDist);
+        if (dDist >= PINCH_DIST_PX) {
+          s.phase = 'pinch';
+          s.pinchAnchorZoom = zoomRef.current;
+          s.pinchBaseDist = dist;
+        } else {
+          s.phase = 'pan';
+        }
+      } else if (s.phase === 'pan' && Math.abs(dist - s.startDist) >= PINCH_DIST_PX + 2) {
+        s.phase = 'pinch';
+        s.pinchAnchorZoom = zoomRef.current;
+        s.pinchBaseDist = dist;
+      }
+
+      if (s.phase === 'pan') {
+        onPan({
+          x: s.startPan.x + (midClientX - s.startMidClientX),
+          y: s.startPan.y + (midClientY - s.startMidClientY),
+        });
+        return;
+      }
+
+      const nz = clampZ(s.pinchAnchorZoom * (dist / s.pinchBaseDist));
+      zoomAtLocalPoint(lx, ly, nz);
     };
 
     const onTouchEnd = (e) => {
@@ -964,14 +1059,29 @@ const Canvas = forwardRef(({
     el.addEventListener('touchend', onTouchEnd, { passive: true });
     el.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
+    const hasSafariGesture = typeof window !== 'undefined' && 'GestureEvent' in window;
+    if (hasSafariGesture) {
+      el.addEventListener('gesturestart', onGestureStart, { passive: false });
+      el.addEventListener('gesturechange', onGestureChange, { passive: false });
+    }
+
     return () => {
       el.removeEventListener('wheel', onWheel);
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('touchcancel', onTouchEnd);
+      if (hasSafariGesture) {
+        el.removeEventListener('gesturestart', onGestureStart);
+        el.removeEventListener('gesturechange', onGestureChange);
+      }
     };
-  }, [onPan]);
+  }, [
+    onPan,
+    onCanvasViewport,
+    canvasZoomMin,
+    canvasZoomMax,
+  ]);
 
   const handleComponentMouseUp = (e, component) => {
     if (connecting && connecting !== component.id) {
@@ -1114,7 +1224,7 @@ const Canvas = forwardRef(({
           selectedComponents.forEach(compId => {
             const comp = components.find(c => c.id === compId);
             if (comp) {
-              const { width, height } = getLayoutDimensionsForSnap(comp);
+              const { width, height } = getLayoutDimensionsForSnap(comp, canvasBlockTypeScale);
               const snapped = snapCenterToGrid(
                 comp.position.x + dx,
                 comp.position.y + dy,
@@ -1143,6 +1253,7 @@ const Canvas = forwardRef(({
     onZoomOut,
     contextMenu,
     showMultiChartDialog,
+    canvasBlockTypeScale,
   ]);
   
   // Click outside handler for multi-component context menu
@@ -1262,6 +1373,13 @@ const Canvas = forwardRef(({
               : endStop.color;
             const segmentStrokeOpacity = useGradientStroke ? undefined : endStop.opacity;
 
+            const { squeezeText } = getCanvasLabelFlags(fontPxDelta);
+            const wireLen = segments.reduce(
+              (s, [ax, ay, bx, by]) => s + Math.hypot(bx - ax, by - ay),
+              0,
+            );
+            const voltLabelMaxW = Math.max(48, wireLen * 0.92);
+
             return (
               <g
                 key={conn.id}
@@ -1312,6 +1430,7 @@ const Canvas = forwardRef(({
                   fontSize={adjSvgFontPx(11, fontPxDelta)}
                   textAnchor="middle"
                   pointerEvents="none"
+                  {...fittedLineAttrs(voltLabelMaxW, squeezeText)}
                 >
                   {conn.voltage > 0 ? `${conn.voltage} kV` : ''}
                 </text>
@@ -1383,8 +1502,9 @@ const Canvas = forwardRef(({
             if (!fromComp) return null;
 
             const fromVisual = getComponentVisualConfig(fromComp.type);
-            const fromWidth = fromComp.visualOverrides?.width || fromVisual.width;
-            const fromHeight = fromComp.visualOverrides?.height || fromVisual.height;
+            const s0 = getCanvasBlockTypeScale(canvasBlockTypeScale, fromComp.type);
+            const fromWidth = (fromComp.visualOverrides?.width || fromVisual.width) * s0;
+            const fromHeight = (fromComp.visualOverrides?.height || fromVisual.height) * s0;
             const fromCenterX = fromComp.position.x + fromWidth / 2;
             const fromCenterY = fromComp.position.y + fromHeight / 2;
             const mx = connectingTo.x;
@@ -1448,6 +1568,8 @@ const Canvas = forwardRef(({
               onUpdateComponent={stableOnUpdateComponent}
               onResizeStart={setResizingComponent}
               designSelectSingle={stableDesignSelectSingle}
+              blockTypeScale={canvasBlockTypeScale}
+              onNudgeCanvasBlockTypeScale={onNudgeCanvasBlockTypeScale}
             />
           ))}
         </g>

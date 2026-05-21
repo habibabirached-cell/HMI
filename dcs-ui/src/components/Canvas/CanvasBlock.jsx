@@ -9,11 +9,15 @@ import {
 } from '../../utils/tieBreakerNetwork';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
-import { strokeForStatus } from './shapes/canvasBlockUtils';
+import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
 const STRETCHABLE_HORIZONTAL = ['bus-hv'];
+/** Buses use explicit resize handles; type-scale controls would fight saved raw dimensions. */
+const TYPE_SCALE_EXCLUDED = new Set([...STRETCHABLE_VERTICAL, ...STRETCHABLE_HORIZONTAL]);
+
+const BLOCK_TYPE_NUDGE = 1.02;
 
 /**
  * One schematic block on the canvas: body, labels, status, chart shortcuts, resize handles.
@@ -39,12 +43,17 @@ function CanvasBlock({
   onUpdateComponent,
   onResizeStart,
   designSelectSingle,
+  blockTypeScale = {},
+  onNudgeCanvasBlockTypeScale,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
   const stripMode = isTieStripMode(component);
   const visualConfig = getComponentVisualConfig(component.type);
-  const baseWidth = component.visualOverrides?.width || visualConfig.width;
-  const baseHeight = component.visualOverrides?.height || visualConfig.height;
+  const { width: baseWidth, height: baseHeight } = getScaledCanvasBlockDimensions(
+    component,
+    visualConfig,
+    blockTypeScale,
+  );
   const { width, height } = tieEffectiveDimensions(component, baseWidth, baseHeight);
   const rotation = component.visualOverrides?.rotation || 0;
 
@@ -52,6 +61,14 @@ function CanvasBlock({
   const centerY = height / 2;
   const presentationOffline = presenceForcedOffline;
   const { strokeColor, strokeWidthVal } = strokeForStatus(component, isSelected, presentationOffline);
+
+  const showBlockTypeScaleUi =
+    mode === 'design' &&
+    isSelected &&
+    !isMultiSelected &&
+    onNudgeCanvasBlockTypeScale &&
+    !stripMode &&
+    !TYPE_SCALE_EXCLUDED.has(component.type);
 
   return (
     <g
@@ -372,6 +389,79 @@ function CanvasBlock({
               </>
             )}
           </>
+        )}
+
+        {showBlockTypeScaleUi && (
+          <g
+            className="canvas-block-type-scale-ui"
+            pointerEvents="all"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <g transform={`translate(${Math.max(4, width - 46)}, 4)`}>
+              <title>
+                Enlarge every {component.type} block (~{Math.round((BLOCK_TYPE_NUDGE - 1) * 100)}%) —
+                font size unchanged
+              </title>
+              <rect
+                x={0}
+                y={0}
+                width={18}
+                height={16}
+                rx={3}
+                fill="rgba(0, 0, 0, 0.72)"
+                stroke="rgba(0, 212, 168, 0.85)"
+                strokeWidth={1}
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNudgeCanvasBlockTypeScale(component.type, BLOCK_TYPE_NUDGE);
+                }}
+              />
+              <text
+                x={9}
+                y={12}
+                textAnchor="middle"
+                fill="#e8f7f4"
+                fontSize={adjSvgFontPx(12, fontPxDelta)}
+                fontWeight="700"
+                pointerEvents="none"
+              >
+                +
+              </text>
+            </g>
+            <g transform={`translate(${Math.max(4, width - 26)}, 4)`}>
+              <title>
+                Shrink every {component.type} block (~{Math.round((1 - 1 / BLOCK_TYPE_NUDGE) * 100)}%) —
+                font size unchanged
+              </title>
+              <rect
+                x={0}
+                y={0}
+                width={18}
+                height={16}
+                rx={3}
+                fill="rgba(0, 0, 0, 0.72)"
+                stroke="rgba(0, 212, 168, 0.85)"
+                strokeWidth={1}
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNudgeCanvasBlockTypeScale(component.type, 1 / BLOCK_TYPE_NUDGE);
+                }}
+              />
+              <text
+                x={9}
+                y={12}
+                textAnchor="middle"
+                fill="#e8f7f4"
+                fontSize={adjSvgFontPx(12, fontPxDelta)}
+                fontWeight="700"
+                pointerEvents="none"
+              >
+                −
+              </text>
+            </g>
+          </g>
         )}
       </g>
 
