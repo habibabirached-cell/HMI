@@ -1,6 +1,15 @@
 /** Min height for the bottom chart tray (px). */
 export const CHART_PANEL_MIN_HEIGHT = 200;
 
+/** Min width for the vertical chart dock beside the right “Controls” rail (px). */
+export const CHART_PANEL_MIN_SIDE_WIDTH = 280;
+
+/** Allow a wide strip but leave room for canvas + right rail. */
+export function getChartPanelMaxSideWidthPx() {
+  if (typeof window === 'undefined') return 900;
+  return Math.floor(window.innerWidth * 0.55);
+}
+
 /** Fraction of viewport height the tray may use when resizing (user-requested ~90%). */
 export const CHART_PANEL_MAX_HEIGHT_VIEWPORT = 0.9;
 

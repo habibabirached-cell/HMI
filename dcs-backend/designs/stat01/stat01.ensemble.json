@@ -45,7 +45,8 @@
               "_LM2500_1 — P_g1"
             ],
             "title": "34.5kV Bus L - nD",
-            "ensemble_cross_member": true
+            "ensemble_cross_member": true,
+            "ui_drawer": "chart2"
           }
         ],
         "chart_stacks": [],

@@ -3562,8 +3562,8 @@
       "name": "LM2500 #1",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": 358.5825,
-        "y": 439.055
+        "x": 375,
+        "y": 450
       },
       "status": "idle",
       "properties": {
@@ -3716,8 +3716,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 741.42,
-        "y": 441.42
+        "x": 750,
+        "y": 450
       },
       "status": "idle",
       "properties": {
@@ -3741,8 +3741,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 3141.42,
-        "y": 441.42
+        "x": 3150,
+        "y": 450
       },
       "status": "idle",
       "properties": {
@@ -3812,8 +3812,8 @@
       "name": "LM2500 #2",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": 358.5825,
-        "y": 589.055
+        "x": 375,
+        "y": 600
       },
       "status": "idle",
       "properties": {
@@ -3991,8 +3991,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 3141.42,
-        "y": 591.42
+        "x": 3150,
+        "y": 600
       },
       "status": "idle",
       "properties": {
@@ -4062,8 +4062,8 @@
       "name": "LM2500 #3",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": 358.5825,
-        "y": 889.055
+        "x": 375,
+        "y": 900
       },
       "status": "idle",
       "properties": {
@@ -4216,8 +4216,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 741.42,
-        "y": 891.42
+        "x": 750,
+        "y": 900
       },
       "status": "idle",
       "properties": {
@@ -4241,8 +4241,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 3141.42,
-        "y": 891.42
+        "x": 3150,
+        "y": 900
       },
       "status": "idle",
       "properties": {
@@ -4312,8 +4312,8 @@
       "name": "LM2500 #4",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": 358.5825,
-        "y": 1039.055
+        "x": 375,
+        "y": 1050
       },
       "status": "idle",
       "properties": {
@@ -4466,8 +4466,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 741.42,
-        "y": 1041.42
+        "x": 750,
+        "y": 1050
       },
       "status": "idle",
       "properties": {
@@ -4491,8 +4491,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 3141.42,
-        "y": 1041.42
+        "x": 3150,
+        "y": 1050
       },
       "status": "idle",
       "properties": {
@@ -4562,8 +4562,8 @@
       "name": "BESS #1",
       "fullName": "Battery Energy Storage System 50MW",
       "position": {
-        "x": 367.2,
-        "y": 744.8
+        "x": 375,
+        "y": 750
       },
       "status": "idle",
       "properties": {
@@ -4686,8 +4686,8 @@
       "name": "BESS #2",
       "fullName": "Battery Energy Storage System 50MW",
       "position": {
-        "x": 3717.2,
-        "y": 744.8
+        "x": 3525,
+        "y": 750
       },
       "status": "idle",
       "properties": {
@@ -4765,8 +4765,8 @@
       "name": "BESS Xfmr R",
       "fullName": "BESS Transformer",
       "position": {
-        "x": 3140.25,
-        "y": 740.25
+        "x": 3150,
+        "y": 750
       },
       "status": "idle",
       "properties": {
@@ -5104,8 +5104,8 @@
       "name": "GSU",
       "fullName": "GSU 34.5 kV : 480 V 100 MVA",
       "position": {
-        "x": 791.42,
-        "y": 1191.42
+        "x": 800,
+        "y": 1200
       },
       "status": "idle",
       "properties": {
@@ -5647,8 +5647,8 @@
       "name": "GSU",
       "fullName": "GSU 34.5 kV : 480 V 100 MVA",
       "position": {
-        "x": 3091.42,
-        "y": 1191.42
+        "x": 3100,
+        "y": 1200
       },
       "status": "idle",
       "properties": {
@@ -8546,8 +8546,8 @@
     "simulationRunning": false,
     "zoom": 1.065654576017702,
     "pan": {
-      "x": -571.8220402135044,
-      "y": 46.39284518905242
+      "x": 122.17795978649565,
+      "y": 109.39284518905242
     },
     "mode": "design",
     "uiFontPxShift": 2,

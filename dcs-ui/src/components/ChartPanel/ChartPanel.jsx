@@ -3,7 +3,9 @@ import Plot from 'react-plotly.js';
 import { API_BASE_URL } from '../../apiConfig';
 import {
   CHART_PANEL_MIN_HEIGHT,
+  CHART_PANEL_MIN_SIDE_WIDTH,
   getChartPanelMaxHeightPx,
+  getChartPanelMaxSideWidthPx,
   clampChartPanelOpacity,
   CHART_PANEL_OPACITY_DEFAULT,
 } from '../../utils/chartPanelLimits';
@@ -21,6 +23,10 @@ import { cellFloat } from '../../utils/csvRowAccess';
 import { ENSEMBLE_COLUMN_SEP } from '../../utils/simulationLazyApi';
 import { bumpPlotlyFonts } from '../../utils/plotlyFontBump';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
+import {
+  remapStacksPerDrawerRow,
+  buildDisplayUnitsFromStacks,
+} from '../../utils/chartPanelDrawerBuckets';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
@@ -41,6 +47,11 @@ const selectionListenersByChart = new Map();
  * - onPanelOpacityChange: (opacity) => void
  * - chartCardWidth / onChartCardWidthChange: tray chart column width (px), persisted from App
  * - onPerChartCardWidthChange(chartId, widthPx | null): this chart only; null = follow top bar (e.g. double-click resize edge)
+ * - layoutMode: 'bottom' (default) | 'sideRight' (vertical strip left of Controls rail) | 'top'
+ * - headerBottomPx: top offset below app header (fixed positioning)
+ * - sidePanelWidth / onSidePanelWidthChange: width when layoutMode is sideRight
+ * - dualChartDrawers: workspace conf1/conf2 → two labeled strips (chart1 / chart2)
+ * - onMoveChartDrawer(chartId, 'chart1' | 'chart2'): move chart between drawers
  */
 const ChartPanel = ({ 
   charts, 
@@ -92,6 +103,12 @@ const ChartPanel = ({
   /** Insets (px) so the fixed panel does not cover the left component library or right control rail. */
   insetLeft = 0,
   insetRight = 0,
+  layoutMode = 'bottom',
+  headerBottomPx = 64,
+  sidePanelWidth = 420,
+  onSidePanelWidthChange,
+  dualChartDrawers = false,
+  onMoveChartDrawer,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
   const [isResizing, setIsResizing] = useState(false);
@@ -117,6 +134,10 @@ const ChartPanel = ({
     });
   };
   const CHART_COLLAPSED_MIN_PX = 60;
+  /** Side-dock collapsed: rail-style vertical hinge only (matches Controls rail ~30px). */
+  const CHART_SIDE_COLLAPSED_PX = 30;
+  /** Bottom-dock collapsed: thin horizontal hinge only (no chart toolbar). */
+  const CHART_BOTTOM_RAIL_COLLAPSED_H_PX = 22;
   /** Inline label editor: { chartId, title, xLabel, yLabel } | null */
   const [editingLabels, setEditingLabels] = useState(null);
   /** Per-chart last known Plotly axis ranges, for pre-populating the axis range editor. */
@@ -1812,6 +1833,58 @@ const ChartPanel = ({
     document.removeEventListener('mouseup', handleResizeEnd);
   };
 
+  const handleResizeMoveSide = (e) => {
+    const { x, width: startWidth } = resizeStartRef.current;
+    const delta = x - e.clientX;
+    const newWidth = Math.max(
+      CHART_PANEL_MIN_SIDE_WIDTH,
+      Math.min(getChartPanelMaxSideWidthPx(), startWidth + delta),
+    );
+    onSidePanelWidthChange?.(newWidth);
+  };
+
+  const handleResizeEndSide = () => {
+    setIsResizing(false);
+    document.removeEventListener('mousemove', handleResizeMoveSide);
+    document.removeEventListener('mouseup', handleResizeEndSide);
+  };
+
+  const handleResizeStartSide = (e) => {
+    if (isCollapsed) return;
+    if (e.target.closest('button, select, input, label')) return;
+    e.preventDefault();
+    resizeStartRef.current = { x: e.clientX, width: sidePanelWidth };
+    setIsResizing(true);
+    document.addEventListener('mousemove', handleResizeMoveSide);
+    document.addEventListener('mouseup', handleResizeEndSide);
+  };
+
+  const handleResizeMoveTop = (e) => {
+    const { y, height: startHeight } = resizeStartRef.current;
+    const deltaY = e.clientY - y;
+    const newHeight = Math.max(
+      CHART_PANEL_MIN_HEIGHT,
+      Math.min(getChartPanelMaxHeightPx(), startHeight + deltaY),
+    );
+    onHeightChange(newHeight);
+  };
+
+  const handleResizeEndTop = () => {
+    setIsResizing(false);
+    document.removeEventListener('mousemove', handleResizeMoveTop);
+    document.removeEventListener('mouseup', handleResizeEndTop);
+  };
+
+  const handleResizeStartTop = (e) => {
+    if (isCollapsed) return;
+    if (e.target.closest('button, select, input, label')) return;
+    e.preventDefault();
+    resizeStartRef.current = { y: e.clientY, height };
+    setIsResizing(true);
+    document.addEventListener('mousemove', handleResizeMoveTop);
+    document.addEventListener('mouseup', handleResizeEndTop);
+  };
+
   /**
    * Handle fullscreen toggle for a chart
    */
@@ -1844,22 +1917,31 @@ const ChartPanel = ({
     return null;
   }
 
-  /** Build display structure: array of { type: 'stack'|'single', charts: Chart[], minIndex } */
-  const emitted = new Set();
-  const units = [];
-  chartStacks.forEach(stack => {
-    const stackCharts = stack.map(i => charts[i]).filter(Boolean);
-    if (stackCharts.length >= 2) {
-      const minIdx = Math.min(...stack);
-      units.push({ type: 'stack', charts: stackCharts, minIndex: minIdx });
-      stack.forEach(i => emitted.add(i));
-    }
-  });
-  charts.forEach((chart, i) => {
-    if (!emitted.has(i)) units.push({ type: 'single', charts: [chart], minIndex: i });
-  });
-  units.sort((a, b) => a.minIndex - b.minIndex);
-  const displayUnits = units;
+  /** Two labeled drawers (chart1 / chart2) for workspace conf 1–2 · same chart map for each bucket. */
+  const drawerRowsConfig = !dualChartDrawers
+    ? [
+        {
+          drawerKey: 'all',
+          drawerLabel: '',
+          units: buildDisplayUnitsFromStacks(charts, chartStacks),
+        },
+      ]
+    : (() => {
+        const row1 = remapStacksPerDrawerRow(charts, chartStacks, false);
+        const row2 = remapStacksPerDrawerRow(charts, chartStacks, true);
+        return [
+          {
+            drawerKey: 'chart1',
+            drawerLabel: 'chart1',
+            units: buildDisplayUnitsFromStacks(row1.subset, row1.stacks),
+          },
+          {
+            drawerKey: 'chart2',
+            drawerLabel: 'chart2',
+            units: buildDisplayUnitsFromStacks(row2.subset, row2.stacks),
+          },
+        ];
+      })();
 
   const toggleChartSelection = (chartId) => {
     setSelectedChartIds(prev => {
@@ -1881,16 +1963,46 @@ const ChartPanel = ({
 
   const shellA = clampChartPanelOpacity(panelOpacity);
 
+  const layoutClass =
+    layoutMode === 'sideRight'
+      ? 'chart-panel--layout-side-right'
+      : layoutMode === 'top'
+        ? 'chart-panel--layout-top'
+        : 'chart-panel--layout-bottom';
+
+  const shellPositionStyle =
+    layoutMode === 'sideRight'
+      ? {
+          top: `${headerBottomPx}px`,
+          bottom: 0,
+          left: 'auto',
+          right: typeof insetRight === 'number' ? `${insetRight}px` : undefined,
+          width: isCollapsed ? `${CHART_SIDE_COLLAPSED_PX}px` : `${sidePanelWidth}px`,
+          height: 'auto',
+        }
+      : layoutMode === 'top'
+        ? {
+            top: `${headerBottomPx}px`,
+            bottom: 'auto',
+            left: typeof insetLeft === 'number' ? `${insetLeft}px` : undefined,
+            right: typeof insetRight === 'number' ? `${insetRight}px` : undefined,
+            height: isCollapsed ? 'auto' : `${height}px`,
+            minHeight: isCollapsed ? CHART_COLLAPSED_MIN_PX : undefined,
+          }
+        : {
+            left: typeof insetLeft === 'number' ? `${insetLeft}px` : undefined,
+            right: typeof insetRight === 'number' ? `${insetRight}px` : undefined,
+            height: isCollapsed ? 'auto' : `${height}px`,
+            minHeight: isCollapsed ? CHART_BOTTOM_RAIL_COLLAPSED_H_PX : undefined,
+          };
+
   return (
     <div
-      className={`chart-panel ${isResizing ? 'resizing' : ''} chart-panel--on-top-canvas${
+      className={`chart-panel ${layoutClass} ${isResizing ? 'resizing' : ''} chart-panel--on-top-canvas${
         isCollapsed ? ' chart-panel--collapsed' : ''
       }`}
       style={{
-        left: typeof insetLeft === 'number' ? `${insetLeft}px` : undefined,
-        right: typeof insetRight === 'number' ? `${insetRight}px` : undefined,
-        height: isCollapsed ? 'auto' : `${height}px`,
-        minHeight: isCollapsed ? CHART_COLLAPSED_MIN_PX : undefined,
+        ...shellPositionStyle,
         zIndex: CHART_PANEL_Z_STACK,
         '--chart-panel-shell-a': String(shellA),
         '--chart-panel-card-a': String(shellA),
@@ -1899,7 +2011,7 @@ const ChartPanel = ({
       }}
       onMouseDown={handlePanelMouseDown}
     >
-      {!isCollapsed && (
+      {!isCollapsed && layoutMode === 'bottom' && (
         <div
           className="chart-panel-resize-handle"
           onMouseDown={handleResizeStart}
@@ -1907,71 +2019,168 @@ const ChartPanel = ({
           <div className="chart-panel-resize-bar"></div>
         </div>
       )}
+      {!isCollapsed && layoutMode === 'top' && (
+        <div
+          className="chart-panel-resize-handle chart-panel-resize-handle--bottom"
+          onMouseDown={handleResizeStartTop}
+        >
+          <div className="chart-panel-resize-bar" />
+        </div>
+      )}
 
       {isCollapsed ? (
-        <div
-          className="chart-panel-collapsed-stack"
-          onMouseDown={(e) => {
-            if (e.target.closest('button:not(.chart-panel-close)')) return;
-            onFocus?.(e);
-          }}
-        >
+        layoutMode === 'bottom' ? (
           <button
             type="button"
-            className="chart-panel-hinge chart-panel-hinge--expand"
+            className="chart-panel-rail-hinge chart-panel-rail-hinge--horizontal chart-panel-rail-hinge--expand"
             onClick={(e) => {
               e.stopPropagation();
               toggleChartCollapse();
             }}
             onMouseDown={(e) => e.stopPropagation()}
-            title="Click to show chart tray"
-            aria-label="Expand chart tray"
+            title="Show charts"
+            aria-label="Expand chart panel"
           >
-            <span className="chart-panel-hinge__glyph" aria-hidden>
+            <span className="chart-panel-rail-hinge__chev" aria-hidden>
               ▲
             </span>
-            <span className="chart-panel-hinge__label">Click or tap to expand charts</span>
+            <span className="chart-panel-rail-hinge__hlabel">Charts</span>
           </button>
-          <div className="chart-panel-header chart-panel-header--collapsed">
-            <div className="chart-panel-header-left">
-              <div className="chart-panel-title">📊 Charts ({charts.length})</div>
-            </div>
-            <div className="chart-panel-header-right">
-              <button
-                type="button"
-                className="chart-panel-close"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose?.();
-                }}
-                title="Close chart panel"
-              >
-                ×
-              </button>
+        ) : layoutMode === 'sideRight' ? (
+          <button
+            type="button"
+            className="chart-panel-rail-hinge chart-panel-rail-hinge--vertical chart-panel-rail-hinge--expand"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleChartCollapse();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            title="Show charts"
+            aria-label="Expand chart panel"
+          >
+            <span className="chart-panel-rail-hinge__chev" aria-hidden>
+              »
+            </span>
+            <span className="chart-panel-rail-hinge__vlabel">Charts</span>
+          </button>
+        ) : (
+          <div
+            className="chart-panel-collapsed-stack"
+            onMouseDown={(e) => {
+              if (e.target.closest('button:not(.chart-panel-close)')) return;
+              onFocus?.(e);
+            }}
+          >
+            <button
+              type="button"
+              className="chart-panel-hinge chart-panel-hinge--expand"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleChartCollapse();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Click to show chart tray"
+              aria-label="Expand chart tray"
+            >
+              <span className="chart-panel-hinge__glyph" aria-hidden>
+                ▲
+              </span>
+              <span className="chart-panel-hinge__label">Click or tap to expand charts</span>
+            </button>
+            <div className="chart-panel-header chart-panel-header--collapsed">
+              <div className="chart-panel-header-left">
+                <div className="chart-panel-title">📊 Charts ({charts.length})</div>
+              </div>
+              <div className="chart-panel-header-right">
+                <button
+                  type="button"
+                  className="chart-panel-close"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose?.();
+                  }}
+                  title="Close chart panel"
+                >
+                  ×
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )
       ) : (
         <>
-      {/* Full-width hinge (like the right rail): click anywhere on the bar to minimize the tray. */}
-      <button
-        type="button"
-        className="chart-panel-hinge chart-panel-hinge--collapse"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleChartCollapse();
-        }}
-        onMouseDown={(e) => e.stopPropagation()}
-        title="Click to minimize chart tray"
-        aria-label="Minimize chart tray"
+          {layoutMode === 'sideRight' && (
+            <button
+              type="button"
+              className="chart-panel-rail-hinge chart-panel-rail-hinge--vertical"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleChartCollapse();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Hide charts"
+              aria-label="Collapse chart panel"
+            >
+              <span className="chart-panel-rail-hinge__chev" aria-hidden>
+                «
+              </span>
+              <span className="chart-panel-rail-hinge__vlabel">Charts</span>
+            </button>
+          )}
+          <div
+            className={
+              layoutMode === 'sideRight' ? 'chart-panel-side-inner' : 'chart-panel-expand-body'
+            }
+          >
+            {layoutMode === 'sideRight' && (
+              <div
+                className="chart-panel-resize-handle chart-panel-resize-handle--left"
+                onMouseDown={handleResizeStartSide}
+              >
+                <div className="chart-panel-resize-bar" />
+              </div>
+            )}
+            {layoutMode === 'bottom' && (
+              <button
+                type="button"
+                className="chart-panel-rail-hinge chart-panel-rail-hinge--horizontal"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleChartCollapse();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Hide charts"
+                aria-label="Collapse chart panel"
+              >
+                <span className="chart-panel-rail-hinge__chev" aria-hidden>
+                  ▼
+                </span>
+                <span className="chart-panel-rail-hinge__hlabel">Charts</span>
+              </button>
+            )}
+            {layoutMode === 'top' && (
+              <button
+                type="button"
+                className="chart-panel-hinge chart-panel-hinge--collapse"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleChartCollapse();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Click to minimize chart tray"
+                aria-label="Minimize chart tray"
+              >
+                <span className="chart-panel-hinge__glyph" aria-hidden>
+                  ▼
+                </span>
+                <span className="chart-panel-hinge__label">Click or tap to minimize</span>
+              </button>
+            )}
+      {/* Panel Header — bottom layout: drag header to resize height; side/top use edge handles only */}
+      <div
+        className="chart-panel-header"
+        onMouseDown={layoutMode === 'bottom' ? handleResizeStart : undefined}
       >
-        <span className="chart-panel-hinge__glyph" aria-hidden>
-          ▼
-        </span>
-        <span className="chart-panel-hinge__label">Click or tap to minimize</span>
-      </button>
-      {/* Panel Header - also draggable for resize */}
-      <div className="chart-panel-header" onMouseDown={handleResizeStart}>
         <div className="chart-panel-header-left">
           <div className="chart-panel-title">
             📊 Charts ({charts.length})
@@ -2152,8 +2361,35 @@ const ChartPanel = ({
       </div>
 
       {/* Each chart sets its own --chart-* vars (own width or top-bar default). */}
-      <div className="chart-panel-content">
-        {displayUnits.map((unit) => (
+      {/* Dual mode: chart1 + chart2 are side‑by‑side columns so both use full tray height.
+          Single strip: wrapper uses display:contents so layout is unchanged vs one merged row */}
+      <div
+        className={dualChartDrawers ? 'chart-panel-drawers-row' : undefined}
+        style={!dualChartDrawers ? { display: 'contents' } : undefined}
+      >
+      {drawerRowsConfig.map(({ drawerKey, drawerLabel, units: drawerUnits }) => (
+        <div
+          key={drawerKey}
+          className={dualChartDrawers ? 'chart-panel-drawer-slot' : undefined}
+          style={!dualChartDrawers ? { display: 'contents' } : undefined}
+        >
+          {dualChartDrawers ? (
+            <div className="chart-panel-drawer-label">{drawerLabel}</div>
+          ) : null}
+          <div
+            className={
+              dualChartDrawers
+                ? 'chart-panel-content chart-panel-content--dual-drawer'
+                : 'chart-panel-content'
+            }
+          >
+            {dualChartDrawers && drawerUnits.length === 0 ? (
+              <div className="chart-panel-drawer-empty-hint">
+                {drawerKey === 'chart2'
+                  ? 'Empty — click “▸ chart2” on a chart in chart1'
+                  : 'No charts'}
+              </div>
+            ) : drawerUnits.map((unit) => (
           unit.type === 'stack' ? (
             <div key={`stack-${unit.charts.map(c => c.id).join('-')}`} className="chart-panel-stack">
               {unit.charts.map((chart) => {
@@ -2218,6 +2454,23 @@ const ChartPanel = ({
                   <option key={n} value={n}>1 in {n}</option>
                 ))}
               </select>
+              {dualChartDrawers && typeof onMoveChartDrawer === 'function' && (
+                <button
+                  type="button"
+                  className="chart-drawer-shift-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveChartDrawer(chart.id, chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2');
+                  }}
+                  title={
+                    chart.uiDrawer === 'chart2'
+                      ? 'Move to chart1 drawer'
+                      : 'Move to chart2 drawer'
+                  }
+                >
+                  {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
+                </button>
+              )}
               <button 
                 className="chart-panel-chart-close"
                 onClick={() => onRemoveChart(chart.id)}
@@ -2362,6 +2615,23 @@ const ChartPanel = ({
                         <option key={n} value={n}>1 in {n}</option>
                       ))}
                     </select>
+                    {dualChartDrawers && typeof onMoveChartDrawer === 'function' && (
+                      <button
+                        type="button"
+                        className="chart-drawer-shift-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onMoveChartDrawer(chart.id, chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2');
+                        }}
+                        title={
+                          chart.uiDrawer === 'chart2'
+                            ? 'Move to chart1 drawer'
+                            : 'Move to chart2 drawer'
+                        }
+                      >
+                        {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
+                      </button>
+                    )}
                     <button className="chart-panel-chart-close" onClick={() => onRemoveChart(chart.id)} title="Remove Chart">×</button>
                   </div>
                   <div className="chart-panel-chart-body">
@@ -2409,7 +2679,11 @@ const ChartPanel = ({
             })()
           )
         ))}
+          </div>
+        </div>
+      ))}
       </div>
+          </div>
         </>
       )}
     </div>

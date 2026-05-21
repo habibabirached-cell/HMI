@@ -29,6 +29,159 @@
   -webkit-user-select: none;
 }
 
+/* Workspace layouts: default tray is bottom (see .chart-panel). */
+.chart-panel--layout-side-right {
+  border-top: none;
+  border-left: 2px solid #005e60;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.5);
+  animation: none;
+}
+
+.chart-panel--layout-side-right:not(.chart-panel--collapsed) {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.chart-panel--layout-side-right.chart-panel--collapsed {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.chart-panel--layout-side-right.chart-panel--collapsed .chart-panel-rail-hinge--vertical {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.chart-panel-side-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.chart-panel-expand-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Same idea as app-right-rail hinge — thin strip to show/hide the main panel */
+.chart-panel-rail-hinge {
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  color: #00d4a8;
+  background: #1a1a1a;
+  padding: 0;
+  margin: 0;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.chart-panel-rail-hinge:hover {
+  background: #252525;
+  color: #fff;
+}
+
+.chart-panel-rail-hinge--vertical {
+  width: 18px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-right: 1px solid rgba(0, 94, 96, 0.45);
+}
+
+.chart-panel-rail-hinge--horizontal {
+  width: 100%;
+  height: 22px;
+  min-height: 22px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(0, 94, 96, 0.45);
+}
+
+.chart-panel-rail-hinge__chev {
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.chart-panel-rail-hinge__vlabel {
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #999;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  user-select: none;
+}
+
+.chart-panel-rail-hinge__hlabel {
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.chart-panel--layout-side-right.chart-panel--on-top-canvas {
+  box-shadow:
+    -4px 0 16px rgba(0, 0, 0, 0.5),
+    -2px 0 12px rgba(0, 212, 168, 0.12);
+}
+
+.chart-panel--layout-top {
+  border-top: none;
+  border-bottom: 2px solid #005e60;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  animation: chart-panel-slide-down 0.28s ease-out;
+}
+
+@keyframes chart-panel-slide-down {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.chart-panel-side-inner .chart-panel-content {
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.chart-panel-side-inner .chart-panel-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chart-panel-side-inner .chart-panel-chart {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 260px;
+  height: auto;
+  max-width: none;
+}
+
 /* Resize handle */
 .chart-panel-resize-handle {
   position: absolute;
@@ -45,6 +198,35 @@
 
 .chart-panel-resize-handle:hover .chart-panel-resize-bar {
   background: #005e60;
+  height: 4px;
+}
+
+.chart-panel-resize-handle--left {
+  left: 0;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  height: auto;
+  cursor: ew-resize;
+}
+
+.chart-panel-resize-handle--left:hover .chart-panel-resize-bar {
+  width: 4px;
+  height: 56px;
+}
+
+.chart-panel-resize-handle--bottom {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  height: 10px;
+  cursor: ns-resize;
+}
+
+.chart-panel-resize-handle--bottom:hover .chart-panel-resize-bar {
+  width: 56px;
   height: 4px;
 }
 
@@ -71,6 +253,11 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+}
+
+.chart-panel--layout-side-right .chart-panel-header,
+.chart-panel--layout-top .chart-panel-header {
+  cursor: default;
 }
 
 /* Title + named presets share one row (presets immediately after “Charts (N)”); wraps only inside this block if needed. */
@@ -602,6 +789,102 @@
 
 .chart-panel-content::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Dual drawers: chart1 | chart2 as two columns filling tray height (conf 1 bottom + conf 2 side dock) */
+
+.chart-panel-drawers-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.chart-panel-drawer-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  gap: 2px;
+  padding: 4px 0 6px;
+  border-right: 1px solid rgba(0, 94, 96, 0.28);
+  border-bottom: none;
+}
+
+.chart-panel-drawer-slot:last-of-type {
+  border-right: none;
+  padding-bottom: 2px;
+}
+
+.chart-panel-drawer-label {
+  flex-shrink: 0;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6a8a87;
+  padding: 2px 12px 2px;
+  user-select: none;
+}
+
+.chart-panel-content.chart-panel-content--dual-drawer {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* Bottom tray / side dock (same strip behavior as chart1, per column) */
+.chart-panel-drawers-row > .chart-panel-drawer-slot .chart-panel-content--dual-drawer {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.chart-panel-side-inner .chart-panel-drawers-row > .chart-panel-drawer-slot .chart-panel-content--dual-drawer {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.chart-panel-drawer-empty-hint {
+  flex: 1 1 auto;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 16px 6px;
+  padding: 12px;
+  border: 1px dashed rgba(0, 94, 96, 0.35);
+  border-radius: 6px;
+  color: #778088;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  text-align: center;
+}
+
+.chart-drawer-shift-btn {
+  flex-shrink: 0;
+  margin-right: 32px;
+  padding: 2px 8px;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  line-height: 1.25;
+  color: #7ec4b8;
+  background: rgba(0, 94, 96, 0.2);
+  border: 1px solid rgba(0, 94, 96, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.chart-drawer-shift-btn:hover {
+  background: rgba(0, 94, 96, 0.35);
+  color: #e8fffa;
+  border-color: rgba(0, 212, 168, 0.55);
 }
 
 /* Individual chart card: width bounds come from --chart-* (set in JSX); fallback matches full-bleed panel content, not a fixed 600px cap. */

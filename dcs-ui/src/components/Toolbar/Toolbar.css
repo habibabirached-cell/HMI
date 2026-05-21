@@ -18,6 +18,36 @@
   border-left: none;
 }
 
+.toolbar-workspace-layout {
+  gap: 6px;
+}
+
+.btn-workspace-layout {
+  padding: 6px 12px;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #121818;
+  color: #8ec4b8;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.btn-workspace-layout:hover {
+  border-color: #005e60;
+  color: #e0f7f1;
+}
+
+.btn-workspace-layout--active {
+  border-color: #00a896;
+  background: rgba(0, 94, 96, 0.35);
+  color: #00d4a8;
+  box-shadow: 0 0 0 1px rgba(0, 212, 168, 0.25);
+}
+
 /* Push fullscreen button to the far right */
 .toolbar-section-right {
   margin-left: auto;

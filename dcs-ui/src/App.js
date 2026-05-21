@@ -37,12 +37,15 @@ import {
 } from './utils/simulationLazyApi';
 import {
   CHART_PANEL_MIN_HEIGHT,
+  CHART_PANEL_MIN_SIDE_WIDTH,
   getChartPanelMaxHeightPx,
+  getChartPanelMaxSideWidthPx,
   clampChartPanelOpacity,
   CHART_PANEL_OPACITY_DEFAULT,
 } from './utils/chartPanelLimits';
 import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSessionStorageKey } from './utils/simDeepLink';
 import { computePlaybackClockOriginSeconds } from './utils/playbackClockOrigin';
+import { sanitizeStacksForDrawers } from './utils/chartPanelDrawerBuckets';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
@@ -112,7 +115,12 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
         ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
       };
       const pcw = chartCardWidthFromDef(chartDef);
-      return pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
+      const drawer =
+        chartDef.ui_drawer === 'chart2' || chartDef.uiDrawer === 'chart2'
+          ? { uiDrawer: 'chart2' }
+          : {};
+      const multiBase = pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
+      return { ...multiBase, ...drawer };
     }
     const component = canvasComponents.find((c) => c.id === chartDef.component_id);
     if (!component) return null;
@@ -176,7 +184,12 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
     };
     const pcw = chartCardWidthFromDef(chartDef);
-    return pcw != null ? { ...single, chartCardWidth: pcw } : single;
+    const drawer2 =
+      chartDef.ui_drawer === 'chart2' || chartDef.uiDrawer === 'chart2'
+        ? { uiDrawer: 'chart2' }
+        : {};
+    const singleBase = pcw != null ? { ...single, chartCardWidth: pcw } : single;
+    return { ...singleBase, ...drawer2 };
   }).filter(Boolean);
   return { newCharts, initialPerChart };
 }
@@ -221,6 +234,80 @@ function App() {
     setRightRailWidthPx(el.offsetWidth);
     return () => ro.disconnect();
   }, [rightRailCollapsed, viewMode]);
+  /** Pixel position below the app header bar — chart panel fixed positioning for top / side docks. */
+  const appHeaderRef = useRef(null);
+  const [headerBottomPx, setHeaderBottomPx] = useState(72);
+  useLayoutEffect(() => {
+    const el = appHeaderRef.current;
+    if (!el) return undefined;
+    const sync = () => setHeaderBottomPx(el.getBoundingClientRect().bottom);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    window.addEventListener('resize', sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', sync);
+    };
+  }, [viewMode]);
+  /** Toolbar: conf 1 = charts bottom (default); conf 2 = vertical chart strip left of Controls rail; conf 3 = charts top. */
+  const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState(() => {
+    try {
+      const v = window.localStorage?.getItem('dcsWorkspaceLayoutPreset');
+      if (v === 'conf2' || v === 'conf3') return v;
+    } catch {
+      /* ignore */
+    }
+    return 'conf1';
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dcsWorkspaceLayoutPreset', workspaceLayoutPreset);
+    } catch {
+      /* ignore */
+    }
+  }, [workspaceLayoutPreset]);
+  const [chartSideDockWidth, setChartSideDockWidth] = useState(() => {
+    try {
+      const n = Number(window.localStorage?.getItem('dcsChartSideDockWidth'));
+      if (Number.isFinite(n)) {
+        const maxW =
+          typeof window !== 'undefined'
+            ? getChartPanelMaxSideWidthPx()
+            : 900;
+        return Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(n)));
+      }
+    } catch {
+      /* ignore */
+    }
+    return 420;
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dcsChartSideDockWidth', String(chartSideDockWidth));
+    } catch {
+      /* ignore */
+    }
+  }, [chartSideDockWidth]);
+  const chartPanelLayoutMode = useMemo(() => {
+    if (workspaceLayoutPreset === 'conf2') return 'sideRight';
+    if (workspaceLayoutPreset === 'conf3') return 'top';
+    return 'bottom';
+  }, [workspaceLayoutPreset]);
+  /** conf1 & conf2: split chart tray into chart1 / chart2 drawers */
+  const dualWorkspaceDrawers =
+    workspaceLayoutPreset === 'conf1' || workspaceLayoutPreset === 'conf2';
+  const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
+    if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3') {
+      setWorkspaceLayoutPreset(preset);
+    }
+  }, []);
+  const handleChartSideDockWidthChange = useCallback((w) => {
+    const maxW = getChartPanelMaxSideWidthPx();
+    setChartSideDockWidth(
+      Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(w))),
+    );
+  }, []);
   const chartPanelLeftInset = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
   const chartPanelRightInset = rightRailWidthPx;
 
@@ -2934,6 +3021,7 @@ function App() {
           }
           if (Object.keys(rangeObj).length) base.axis_range = rangeObj;
         }
+        if (c.uiDrawer === 'chart2') base.ui_drawer = 'chart2';
         return base;
       });
       const body = {
@@ -4402,6 +4490,14 @@ function App() {
       .filter(i => i >= 0)
       .sort((a, b) => a - b);
     if (indices.length < 2) return;
+    if (dualWorkspaceDrawers) {
+      const drawerOf = (i) => (openCharts[i]?.uiDrawer === 'chart2' ? 'chart2' : 'chart1');
+      const d0 = drawerOf(indices[0]);
+      if (indices.some((i) => drawerOf(i) !== d0)) {
+        alert('You can only stack charts that are in the same drawer (chart1 or chart2).');
+        return;
+      }
+    }
     const selectedSet = new Set(indices);
     const nextStacks = chartStacks
       .map(stack => stack.filter(i => !selectedSet.has(i)))
@@ -4421,6 +4517,26 @@ function App() {
       .filter(stack => stack.length >= 2);
     setChartStacks(nextStacks);
     persistChartsToSimJson(openCharts, { chart_stacks: nextStacks });
+  };
+
+  /** Move chart between chart1 / chart2 drawers (conf1 bottom + conf2 side). */
+  const handleMoveChartDrawer = (chartId, drawer) => {
+    if (!chartId || (drawer !== 'chart1' && drawer !== 'chart2')) return;
+    setOpenCharts((prev) => {
+      const nextCharts = prev.map((c) => {
+        if (c.id !== chartId) return c;
+        if (drawer === 'chart2') return { ...c, uiDrawer: 'chart2' };
+        const next = { ...c };
+        delete next.uiDrawer;
+        return next;
+      });
+      setChartStacks((prevStacks) => {
+        const nextStacks = sanitizeStacksForDrawers(nextCharts, prevStacks);
+        persistChartsToSimJson(nextCharts, { chart_stacks: nextStacks });
+        return nextStacks;
+      });
+      return nextCharts;
+    });
   };
 
   /**
@@ -4954,7 +5070,7 @@ function App() {
       setCanvasFontPxShift={setCanvasFontPxShift}
     >
     <div className="app-container">
-      <header className="app-header">
+      <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 
             src="/ge-vernova-logo.svg" 
@@ -5010,6 +5126,8 @@ function App() {
           <SimulationFetchStatusBar />
         </div>
         <Toolbar
+          workspaceLayoutPreset={workspaceLayoutPreset}
+          onWorkspaceLayoutPresetChange={handleWorkspaceLayoutPresetChange}
           mode={mode}
           onToggleMode={handleToggleMode}
           viewMode={viewMode}
@@ -5380,6 +5498,12 @@ function App() {
           }
           insetLeft={chartPanelLeftInset}
           insetRight={chartPanelRightInset}
+          layoutMode={chartPanelLayoutMode}
+          headerBottomPx={headerBottomPx}
+          sidePanelWidth={chartSideDockWidth}
+          onSidePanelWidthChange={handleChartSideDockWidthChange}
+          dualChartDrawers={dualWorkspaceDrawers}
+          onMoveChartDrawer={handleMoveChartDrawer}
         />
       )}
 

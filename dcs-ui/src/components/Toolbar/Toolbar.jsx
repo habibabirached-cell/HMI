@@ -3,6 +3,8 @@ import { useFontScaleToolbar } from '../../contexts/FontScaleContext';
 import './Toolbar.css';
 
 const Toolbar = ({
+  workspaceLayoutPreset = 'conf1',
+  onWorkspaceLayoutPresetChange,
   mode,
   onToggleMode,
   viewMode,
@@ -85,6 +87,26 @@ const Toolbar = ({
 
   return (
     <div className="toolbar">
+      <div className="toolbar-section toolbar-workspace-layout" role="group" aria-label="Chart and panel layout">
+        {(['conf1', 'conf2', 'conf3']).map((id) => (
+          <button
+            key={id}
+            type="button"
+            className={`btn-workspace-layout${workspaceLayoutPreset === id ? ' btn-workspace-layout--active' : ''}`}
+            onClick={() => onWorkspaceLayoutPresetChange?.(id)}
+            title={
+              id === 'conf1'
+                ? 'Conf 1: charts along the bottom (default)'
+                : id === 'conf2'
+                  ? 'Conf 2: vertical chart drawer to the left of Controls'
+                  : 'Conf 3: charts along the top'
+            }
+          >
+            {id === 'conf1' ? 'conf 1' : id === 'conf2' ? 'conf 2' : 'conf 3'}
+          </button>
+        ))}
+      </div>
+
       {/* In Customer view, show Start/Stop Simulation buttons */}
       {viewMode === 'customer' && (
         <div className="toolbar-section">
