@@ -7,6 +7,8 @@
  */
 
 const TIE_STRIP_EXPANDED_WIDTH = 34;
+/** Short bbox for collapse affordance only (dots + halo); authored height is unchanged in JSON. */
+const TIE_STRIP_EXPANDED_HEIGHT = 24;
 
 /** Suffix pattern for VoltVer-style tie bays (middle rungs). */
 const VOLTVER_TIE_SUFFIXES = [
@@ -78,7 +80,7 @@ export function getTieHiddenMemberIdSet(components) {
 
 export function tieEffectiveDimensions(component, baseWidth, baseHeight) {
   if (isTieStripMode(component)) {
-    return { width: TIE_STRIP_EXPANDED_WIDTH, height: baseHeight };
+    return { width: TIE_STRIP_EXPANDED_WIDTH, height: TIE_STRIP_EXPANDED_HEIGHT };
   }
   return { width: baseWidth, height: baseHeight };
 }

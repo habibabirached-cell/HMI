@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
@@ -16,7 +16,7 @@ function SchematicEarthBreaker({
   /** One-line square frame (e.g. sectional CB on bus), width/height = one grid cell. */
   showFrame = false,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const cx = width / 2;
   /** Slight downward shift + compact bars so top/bottom labels clear the graphic. */
   const symY = height / 2 + 1;

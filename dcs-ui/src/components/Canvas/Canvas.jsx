@@ -18,7 +18,7 @@ import {
   isTieNetworkCollapsed,
   hasTieStubLinks,
 } from '../../utils/tieBreakerNetwork';
-import { useFontPxDelta } from '../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import './Canvas.css';
 
@@ -235,7 +235,7 @@ const Canvas = forwardRef(({
   onOpenVariablePresenceDialog,
   onOpenVariablePresenceDialogConnections,
 }, ref) => {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const canvasRef = useRef(null);
   /** Keep latest pan for native wheel/touch handlers (avoids stale closures). */
   const panForGesturesRef = useRef(pan);

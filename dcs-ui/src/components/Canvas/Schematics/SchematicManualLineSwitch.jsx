@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
@@ -14,7 +14,7 @@ function SchematicManualLineSwitch({
   primaryLabel,
   secondaryLabel,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const midY = height / 2 + 2;
   const gapL = width * 0.34;
   const gapR = width * 0.66;

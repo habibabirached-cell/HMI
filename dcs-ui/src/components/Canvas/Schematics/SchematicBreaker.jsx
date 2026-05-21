@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
@@ -14,7 +14,7 @@ function SchematicBreaker({
   primaryLabel,
   secondaryLabel,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const cx = width / 2;
   /** Nudge symbol down so labels don’t touch the blade / hinge line. */
   const symY = height / 2 + 6;

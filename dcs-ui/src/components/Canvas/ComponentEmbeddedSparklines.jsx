@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useFontPxDelta } from '../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { findColumnKey, cellFloat } from '../../utils/csvRowAccess';
 import { parseEnsembleQualifiedColumn } from '../../utils/simulationLazyApi';
@@ -158,7 +158,7 @@ function SparkBand({
   simulationTime,
   simulationRunning,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const rowsForSpark = useMemo(() => {
     if (spark.ensembleCrossMember) {
       return [];

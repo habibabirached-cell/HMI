@@ -61,7 +61,11 @@ import {
 } from './utils/perfDebug';
 import { usePresenceForcedOfflineIds } from './hooks/usePresenceForcedOfflineIds';
 import VariablePresenceRuleDialog from './components/VariablePresenceRuleDialog/VariablePresenceRuleDialog';
-import { FontScaleProvider } from './contexts/FontScaleContext';
+import {
+  FontScaleProvider,
+  readStoredUiCanvasFontPxShifts,
+  clampFontPxShift,
+} from './contexts/FontScaleContext';
 import './styles/App.css';
 
 /** Verbose trace for deep links / session restore / copy-link debugging — filter console by `[DCS:` */
@@ -259,7 +263,13 @@ function App() {
   // Canvas viewport
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  
+
+  /** UI chrome (panels/dialogs/charts); diagram uses `canvasFontPxShift` via context. Persisted + saved with design `systemState`. */
+  const [uiFontPxShift, setUiFontPxShift] = useState(() => readStoredUiCanvasFontPxShifts().ui);
+  const [canvasFontPxShift, setCanvasFontPxShift] = useState(
+    () => readStoredUiCanvasFontPxShifts().canvas,
+  );
+
   // Simulation state
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [systemState, setSystemState] = useState({});
@@ -4467,6 +4477,12 @@ function App() {
       if (data.systemState.simulationRunning !== undefined) {
         setSimulationRunning(data.systemState.simulationRunning);
       }
+
+      const u = data.systemState.uiFontPxShift;
+      const c = data.systemState.canvasFontPxShift;
+      if (typeof u === 'number' && Number.isFinite(u)) setUiFontPxShift(clampFontPxShift(Math.round(u)));
+      if (typeof c === 'number' && Number.isFinite(c))
+        setCanvasFontPxShift(clampFontPxShift(Math.round(c)));
     }
     
     // Never restore charts on load: design only. Charts appear when user clicks a simulation.
@@ -4525,8 +4541,10 @@ function App() {
         simulationRunning,
         zoom,
         pan,
-        mode
-      }
+        mode,
+        uiFontPxShift,
+        canvasFontPxShift,
+      },
     };
   };
 
@@ -4800,7 +4818,12 @@ function App() {
   }, [designApiPath, simulationMetadata?.id]);
 
   return (
-    <FontScaleProvider>
+    <FontScaleProvider
+      uiFontPxShift={uiFontPxShift}
+      canvasFontPxShift={canvasFontPxShift}
+      setUiFontPxShift={setUiFontPxShift}
+      setCanvasFontPxShift={setCanvasFontPxShift}
+    >
     <div className="app-container">
       <header className="app-header">
         <div className="header-left">

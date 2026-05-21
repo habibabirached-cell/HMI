@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 const PAD_TOP = 4;
@@ -20,7 +20,7 @@ function SchematicLm2500Andritz({
   strokeColor,
   strokeWidthVal,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const cx = width / 2;
   const textureUrl =
     textureHref != null && textureHref !== ''

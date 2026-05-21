@@ -523,7 +523,9 @@ export const COMPONENT_VISUAL_CONFIG = {
     height: 90,
     icon: '⟷',
     color: '#4caf50',
-    shape: 'shape-rounded-rect'
+    shape: 'shape-rounded-rect',
+    /** Long narrow aggregate — primary label rotated so it stays inside the slot. */
+    canvasPrimaryLabelVertical: true,
   },
   'recloser': {
     width: 50,

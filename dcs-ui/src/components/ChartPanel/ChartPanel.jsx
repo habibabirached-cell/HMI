@@ -20,7 +20,7 @@ import {
 import { cellFloat } from '../../utils/csvRowAccess';
 import { ENSEMBLE_COLUMN_SEP } from '../../utils/simulationLazyApi';
 import { bumpPlotlyFonts } from '../../utils/plotlyFontBump';
-import { useFontPxDelta } from '../../contexts/FontScaleContext';
+import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
@@ -93,7 +93,7 @@ const ChartPanel = ({
   insetLeft = 0,
   insetRight = 0,
 }) => {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useUiFontPxDelta();
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ y: 0, height: 0 });
   /** Minimize to a thin bar; charts tray stays above the canvas (z-index) either way. */

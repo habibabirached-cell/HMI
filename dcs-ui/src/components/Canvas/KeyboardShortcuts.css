@@ -40,7 +40,7 @@
 }
 
 .shortcuts-title {
-  font-size: calc(13px + var(--global-font-px-shift, 0px));
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
   font-weight: 700;
   color: var(--vernova-accent, #00d4a8);
   text-transform: uppercase;
@@ -51,7 +51,7 @@
   background: transparent;
   border: none;
   color: #666;
-  font-size: calc(20px + var(--global-font-px-shift, 0px));
+  font-size: calc(20px + var(--ui-font-px-shift, 0px));
   cursor: pointer;
   width: 24px;
   height: 24px;
@@ -91,7 +91,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   color: #e0e0e0;
   font-family: 'Courier New', monospace;
@@ -102,12 +102,12 @@
 
 .key-plus {
   color: #666;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 700;
 }
 
 .shortcut-desc {
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   color: #999;
   flex: 1;
   text-align: right;
@@ -127,7 +127,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(20px + var(--global-font-px-shift, 0px));
+  font-size: calc(20px + var(--ui-font-px-shift, 0px));
   color: #fff;
   z-index: 9998;
   transition: all 0.3s;

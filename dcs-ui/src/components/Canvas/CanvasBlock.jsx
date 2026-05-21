@@ -7,7 +7,7 @@ import {
   isTieStripMode,
   isTieBreakerNetwork,
 } from '../../utils/tieBreakerNetwork';
-import { useFontPxDelta } from '../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus } from './shapes/canvasBlockUtils';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
@@ -40,7 +40,7 @@ function CanvasBlock({
   onResizeStart,
   designSelectSingle,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const stripMode = isTieStripMode(component);
   const visualConfig = getComponentVisualConfig(component.type);
   const baseWidth = component.visualOverrides?.width || visualConfig.width;
@@ -113,85 +113,75 @@ function CanvasBlock({
 
         {stripMode && (
           <g className="tiebreaker-network-strip">
-            <rect
-              width={width}
-              height={height}
-              rx={Math.min(4, width / 4)}
-              fill="rgba(8,42,43,0.96)"
-              stroke={strokeColor}
-              strokeWidth={strokeWidthVal}
-              pointerEvents="none"
-            />
-            <rect
-              x={width * 0.28}
-              y={height * 0.04}
-              width={Math.max(2, width * 0.15)}
-              height={height * 0.92}
-              fill="#00cfa4"
-              fillOpacity={0.38}
-              rx={2}
-              pointerEvents="none"
-            />
-            <foreignObject
-              width={width}
-              height={height}
-              style={{ overflow: 'visible', pointerEvents: 'all' }}
-            >
-              <div
-                xmlns="http://www.w3.org/1999/xhtml"
-                role="button"
-                style={{
-                  width: `${width}px`,
-                  height: `${height}px`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: mode === 'design' ? 'pointer' : 'default',
-                  boxSizing: 'border-box',
-                  padding: '2px 0',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                }}
-                tabIndex={-1}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  if (mode === 'design' && typeof designSelectSingle === 'function') {
-                    designSelectSingle(component);
-                  }
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!onUpdateComponent || !isTieBreakerNetwork(component)) return;
-                  const tg = component.properties?.tieGroup;
-                  if (!tg?.memberIds?.length) return;
-                  onUpdateComponent(component.id, {
-                    properties: {
-                      ...component.properties,
-                      tieGroup: { ...tg, collapsed: true },
-                    },
-                  });
-                }}
-                title={
-                  mode === 'design'
-                    ? 'Click to collapse into full-height summary block'
-                    : undefined
-                }
-              >
-                <span
-                  style={{
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'mixed',
-                    fontSize: `${adjSvgFontPx(Math.min(12, Math.max(9, width * 0.32)), fontPxDelta)}px`,
-                    fontWeight: 650,
-                    letterSpacing: '0.06em',
-                    color: '#c8fcf2',
-                  }}
-                >
-                  Collapse ◀
-                </span>
-              </div>
-            </foreignObject>
+            {/** Narrow strip bbox (see tieEffectiveDimensions); only collapse dots occupy it. */}
+            <defs>
+              <filter id={`tie-strip-dot-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`} x="-120%" y="-120%" width="340%" height="340%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            {(() => {
+              const glowPad = 4;
+              const cy = Math.max(9, Math.min(12, height * 0.38));
+              const r = Math.max(2.2, Math.min(3.2, width * 0.1));
+              const spread = Math.min(Math.max(width * 0.24, 5.5), 11);
+              const mid = width / 2;
+              const hitH = Math.min(height, Math.ceil(cy + r + glowPad + 2));
+              const glowId = `tie-strip-dot-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+              return (
+                <>
+                  <rect
+                    x={0}
+                    y={0}
+                    width={width}
+                    height={Math.min(hitH, height)}
+                    fill="transparent"
+                    stroke="none"
+                    style={{ cursor: mode === 'design' ? 'pointer' : 'default' }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      if (mode === 'design' && typeof designSelectSingle === 'function') {
+                        designSelectSingle(component);
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!onUpdateComponent || !isTieBreakerNetwork(component)) return;
+                      const tg = component.properties?.tieGroup;
+                      if (!tg?.memberIds?.length) return;
+                      onUpdateComponent(component.id, {
+                        properties: {
+                          ...component.properties,
+                          tieGroup: { ...tg, collapsed: true },
+                        },
+                      });
+                    }}
+                  >
+                    {mode === 'design' ? (
+                      <title>Collapse into tie summary block — click dots at top</title>
+                    ) : null}
+                  </rect>
+                  {[mid - spread, mid, mid + spread].map((cx, idx) => (
+                    <circle
+                      key={`tie-strip-dot-${idx}`}
+                      cx={cx}
+                      cy={cy}
+                      r={r}
+                      fill="#2ee6d3"
+                      fillOpacity={0.55}
+                      stroke={strokeColor}
+                      strokeWidth={strokeWidthVal * 0.55}
+                      filter={`url(#${glowId})`}
+                      opacity={0.92}
+                      pointerEvents="none"
+                    />
+                  ))}
+                </>
+              );
+            })()}
           </g>
         )}
 

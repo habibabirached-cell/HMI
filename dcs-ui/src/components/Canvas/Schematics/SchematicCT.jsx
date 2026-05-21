@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 
 /**
@@ -16,7 +16,7 @@ function SchematicCT({
   primaryLabel,
   secondaryLabel,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const cx = width / 2;
   const wireY = height / 2;
   const margin = Math.max(2, width * 0.08);

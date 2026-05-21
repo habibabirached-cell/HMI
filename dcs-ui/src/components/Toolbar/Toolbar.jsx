@@ -24,11 +24,16 @@ const Toolbar = ({
   canCopyScenarioLink, // Scenario running from design dir: copy ?design=&sim=&config= link
 }) => {
   const {
-    increaseFont,
-    decreaseFont,
-    canDecrease: canDecreaseFont,
-    canIncrease: canIncreaseFont,
-    delta: fontPxShift,
+    increaseUiFont,
+    decreaseUiFont,
+    increaseCanvasFont,
+    decreaseCanvasFont,
+    canDecreaseUi: canDecreaseUiFont,
+    canIncreaseUi: canIncreaseUiFont,
+    canDecreaseCanvas: canDecreaseCanvasFont,
+    canIncreaseCanvas: canIncreaseCanvasFont,
+    uiDelta: uiFontPxShift,
+    canvasDelta: canvasFontPxShift,
   } = useFontScaleToolbar();
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const saveDropdownRef = useRef(null);
@@ -183,27 +188,54 @@ const Toolbar = ({
         <button className="btn-zoom" onClick={onResetView} title="Reset View">
           ⊙
         </button>
-        <span className="toolbar-font-shift-label" title="Increase or decrease UI and diagram label font sizes (~1 px each step); persisted for this browser">
-          Font: {fontPxShift >= 0 ? '+' : ''}
-          {fontPxShift}
+        <span className="toolbar-font-shift-label toolbar-font-shift-label--ui">
+          UI: {uiFontPxShift >= 0 ? '+' : ''}
+          {uiFontPxShift}
         </span>
         <button
           className="btn-zoom"
           type="button"
-          onClick={decreaseFont}
-          disabled={!canDecreaseFont}
-          title="Smaller fonts (diagram labels + panels)"
-          aria-label="Decrease global font size"
+          onClick={decreaseUiFont}
+          disabled={!canDecreaseUiFont}
+          title="Smaller font for menus, dialogs, charts, libraries"
+          aria-label="Decrease UI font size"
         >
           −
         </button>
         <button
           className="btn-zoom"
           type="button"
-          onClick={increaseFont}
-          disabled={!canIncreaseFont}
-          title="Larger fonts (diagram labels + panels)"
-          aria-label="Increase global font size"
+          onClick={increaseUiFont}
+          disabled={!canIncreaseUiFont}
+          title="Larger font for menus, dialogs, charts, libraries"
+          aria-label="Increase UI font size"
+        >
+          +
+        </button>
+        <span
+          className="toolbar-font-shift-label toolbar-font-shift-label--canvas"
+          title="Diagram (schematic SVG) font — saved with design"
+        >
+          Diagram: {canvasFontPxShift >= 0 ? '+' : ''}
+          {canvasFontPxShift}
+        </span>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={decreaseCanvasFont}
+          disabled={!canDecreaseCanvasFont}
+          title="Smaller schematic labels on the diagram (saved with design)"
+          aria-label="Decrease diagram font size"
+        >
+          −
+        </button>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={increaseCanvasFont}
+          disabled={!canIncreaseCanvasFont}
+          title="Larger schematic labels on the diagram (saved with design)"
+          aria-label="Increase diagram font size"
         >
           +
         </button>

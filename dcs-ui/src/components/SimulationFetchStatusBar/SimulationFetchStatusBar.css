@@ -44,7 +44,7 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   line-height: 1.25;
   color: #b0e8de;
 }

@@ -105,7 +105,7 @@
 .chart-panel-named-config-copy-link {
   flex-shrink: 0;
   padding: 2px 6px;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   text-transform: none;
   border: 1px solid #555;
@@ -122,7 +122,7 @@
 
 .chart-panel-named-config-btn {
   padding: 3px 10px;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   text-transform: none;
   border: 1px solid #444;
@@ -170,7 +170,7 @@
 }
 
 .chart-panel-paging-hint {
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   color: #888;
   font-weight: 400;
   text-transform: none;
@@ -182,7 +182,7 @@
 .chart-panel-paging-load-btn {
   margin-left: 6px;
   padding: 2px 8px;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   background: rgba(0, 94, 96, 0.35);
   border: 1px solid #005e60;
   color: #00d4a8;
@@ -198,7 +198,7 @@
 .chart-panel-title {
   flex: 0 0 auto;
   color: #005e60;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -243,7 +243,7 @@
 }
 
 .chart-panel-aot-label {
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   color: #999;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -337,7 +337,7 @@
   background: linear-gradient(180deg, #1a2424 0%, #121616 100%);
   border-bottom: 1px solid rgba(0, 94, 96, 0.85);
   color: #00d4a8;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   letter-spacing: 0.04em;
   transition: background 0.15s ease, color 0.15s ease;
@@ -357,14 +357,14 @@
 }
 
 .chart-panel-hinge__glyph {
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   line-height: 1;
   opacity: 0.95;
   flex-shrink: 0;
 }
 
 .chart-panel-hinge__label {
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -387,13 +387,13 @@
   align-items: center;
   gap: 6px;
   color: #999;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-stack-btn,
 .chart-panel-unstack-btn {
   padding: 4px 10px;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   background: rgba(0, 94, 96, 0.3);
   border: 1px solid #005e60;
   color: #00d4a8;
@@ -451,7 +451,7 @@
   border: 1px solid #444;
   border-radius: 4px;
   color: #e0e0e0;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   padding: 4px 8px;
 }
 
@@ -476,7 +476,7 @@
 
 .chart-panel-opacity-label {
   color: #777;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -509,7 +509,7 @@
 
 .chart-panel-width-label {
   color: #777;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -524,7 +524,7 @@
   border: 1px solid #005e60;
   color: #00d4a8;
   border-radius: 4px;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -546,7 +546,7 @@
   border-radius: 4px;
   color: #999;
   padding: 4px 10px;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
@@ -566,7 +566,7 @@
   background: none;
   border: none;
   color: #999;
-  font-size: calc(24px + var(--global-font-px-shift, 0px));
+  font-size: calc(24px + var(--ui-font-px-shift, 0px));
   line-height: 1;
   cursor: pointer;
   transition: color 0.2s;
@@ -718,18 +718,18 @@
 }
 
 .chart-panel-chart-icon {
-  font-size: calc(14px + var(--global-font-px-shift, 0px));
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-chart-name {
   color: #e0e0e0;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
 }
 
 .chart-panel-chart-type {
   color: #005e60;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
 }
 
@@ -739,7 +739,7 @@
   gap: 6px;
   color: #666;
   font-family: "Courier New", monospace;
-  font-size: calc(9px + var(--global-font-px-shift, 0px));
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-chart-csv {
@@ -760,7 +760,7 @@
   border: 1px solid #444;
   border-radius: 4px;
   color: #e0e0e0;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   padding: 2px 6px;
   margin-right: 8px;
 }
@@ -801,7 +801,7 @@
   background: none;
   border: none;
   color: #666;
-  font-size: calc(18px + var(--global-font-px-shift, 0px));
+  font-size: calc(18px + var(--ui-font-px-shift, 0px));
   line-height: 1;
   cursor: pointer;
   transition: color 0.2s;
@@ -882,7 +882,7 @@
   justify-content: center;
   gap: 12px;
   color: #999;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-spinner {
@@ -907,11 +907,11 @@
   justify-content: center;
   gap: 12px;
   color: #f44336;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-error-icon {
-  font-size: calc(48px + var(--global-font-px-shift, 0px));
+  font-size: calc(48px + var(--ui-font-px-shift, 0px));
   opacity: 0.5;
 }
 
@@ -923,11 +923,11 @@
   justify-content: center;
   gap: 12px;
   color: #666;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-panel-empty-icon {
-  font-size: calc(48px + var(--global-font-px-shift, 0px));
+  font-size: calc(48px + var(--ui-font-px-shift, 0px));
   opacity: 0.3;
 }
 
@@ -943,14 +943,14 @@
 }
 
 .chart-panel-chart-placeholder-icon {
-  font-size: calc(48px + var(--global-font-px-shift, 0px));
+  font-size: calc(48px + var(--ui-font-px-shift, 0px));
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
 .chart-panel-chart-placeholder-text {
   color: #999;
-  font-size: calc(13px + var(--global-font-px-shift, 0px));
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
   margin-bottom: 16px;
   text-align: center;
 }
@@ -961,7 +961,7 @@
   gap: 4px;
   color: #666;
   font-family: "Courier New", monospace;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   text-align: center;
 }
 
@@ -970,7 +970,7 @@
   background: none;
   border: none;
   color: #555;
-  font-size: calc(14px + var(--global-font-px-shift, 0px));
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
   cursor: pointer;
   padding: 0 2px;
   line-height: 1;
@@ -1010,7 +1010,7 @@
 }
 
 .chart-label-editor-row span {
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   color: #999;
   width: 46px;
   flex-shrink: 0;
@@ -1022,7 +1022,7 @@
   border: 1px solid #444;
   border-radius: 4px;
   color: #e0e0e0;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   padding: 4px 8px;
   outline: none;
 }
@@ -1043,7 +1043,7 @@
   border: 1px solid #444;
   border-radius: 4px;
   color: #ccc;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   padding: 4px 12px;
   cursor: pointer;
   transition: all 0.15s;
@@ -1055,7 +1055,7 @@
 }
 
 .chart-label-editor-section-title {
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   color: #005E60;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1070,7 +1070,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   color: #777;
   cursor: default;
 }
@@ -1088,7 +1088,7 @@
 /* ── Axis Range Button ─────────────────────────────────────────── */
 .chart-axis-range-btn {
   opacity: 0.55;
-  font-size: calc(14px + var(--global-font-px-shift, 0px));
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
 }
 
 .chart-axis-range-btn--active {
@@ -1134,7 +1134,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   color: #999;
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 700;
   cursor: pointer;
   text-align: center;
@@ -1157,7 +1157,7 @@
 }
 
 .chart-axis-range-editor-title {
-  font-size: calc(11px + var(--global-font-px-shift, 0px));
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 700;
   color: #ffb74d;
   text-transform: uppercase;
@@ -1166,7 +1166,7 @@
 }
 
 .chart-axis-range-editor-hint {
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   font-weight: 400;
   color: #777;
   text-transform: none;
@@ -1184,7 +1184,7 @@
 }
 
 .chart-axis-range-editor-row span {
-  font-size: calc(10px + var(--global-font-px-shift, 0px));
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1195,7 +1195,7 @@
   border: 1px solid rgba(255, 183, 77, 0.3);
   border-radius: 4px;
   color: #e0e0e0;
-  font-size: calc(12px + var(--global-font-px-shift, 0px));
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
   padding: 4px 6px;
   outline: none;
   width: 100%;

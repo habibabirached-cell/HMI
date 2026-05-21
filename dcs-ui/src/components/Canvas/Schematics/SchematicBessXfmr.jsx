@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFontPxDelta } from '../../../contexts/FontScaleContext';
+import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
@@ -23,7 +23,7 @@ function SchematicBessXfmr({
   textureHref,
   textureOpacity = 1,
 }) {
-  const fontPxDelta = useFontPxDelta();
+  const fontPxDelta = useCanvasFontPxDelta();
   const cx = width / 2;
   const voltageRatioLabel = transformerVoltageRatioLabel(component);
   const textureUrl =
