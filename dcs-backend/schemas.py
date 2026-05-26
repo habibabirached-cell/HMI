@@ -376,6 +376,11 @@ class UpdateSimulationConfigRequest(BaseModel):
         default=None,
         description="UI view mode persisted inside current_configuration; omit to keep previous value",
     )
+    simulation_speed: Optional[float] = Field(
+        default=None,
+        description="Playback speed multiplier (0.001–10000); persisted in current_configuration / named presets",
+        gt=0,
+    )
 
 
 # ------------------------------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import { pickTimeColumn } from './simulationLazyApi';
+import { getChartXThreshold } from './chartVariableStyles';
 
 /**
  * First sample on the CSV / shared time axis (playback + scrub origin).
@@ -49,4 +50,22 @@ export function computePlaybackClockOriginSeconds(
   }
 
   return Number.isFinite(best) ? best : 0;
+}
+
+/**
+ * Playback start time: CSV origin raised to the lowest xThreshold on open charts (if any).
+ */
+export function computePlaybackStartSeconds(tOrigin, openCharts) {
+  const base = Number.isFinite(tOrigin) ? tOrigin : 0;
+  let minThr = null;
+  for (const c of openCharts || []) {
+    const thr = getChartXThreshold(c);
+    if (thr != null) {
+      minThr = minThr == null ? thr : Math.min(minThr, thr);
+    }
+  }
+  if (minThr != null) {
+    return Math.max(base, minThr);
+  }
+  return base;
 }

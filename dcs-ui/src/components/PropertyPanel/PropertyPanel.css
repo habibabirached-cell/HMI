@@ -24,6 +24,7 @@
 }
 
 .panel-header {
+  flex-shrink: 0;
   padding: 20px;
   border-bottom: 1px solid #333;
   display: flex;
@@ -60,6 +61,7 @@
 
 .panel-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
 }

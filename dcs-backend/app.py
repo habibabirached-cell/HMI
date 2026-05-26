@@ -273,6 +273,8 @@ def save_config_to_design_dir(
         _gs = data.get("globalSampleStep")
         _pcs = data.get("perChartSampleStep")
         _dus = data.get("designUiSession")
+        _qsb = data.get("quickScenarioButtons")
+        _hdq = data.get("hiddenDefaultQuickScenarios")
         _ensemble_id = None
         if isinstance(_dus, dict):
             _e = _dus.get("ensembleId")
@@ -291,6 +293,8 @@ def save_config_to_design_dir(
             else 128,
             "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
             "designUiSession": {"ensembleId": _ensemble_id},
+            "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
+            "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
         }
         with open(conf_path, 'w') as f:
             json.dump(conf_data, f, indent=2)
@@ -311,6 +315,8 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _gs = conf.get("globalSampleStep")
     _pcs = conf.get("perChartSampleStep")
     _dus = conf.get("designUiSession")
+    _qsb = conf.get("quickScenarioButtons")
+    _hdq = conf.get("hiddenDefaultQuickScenarios")
     _ensemble_id = None
     if isinstance(_dus, dict):
         _e = _dus.get("ensembleId")
@@ -330,6 +336,8 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         else 128,
         "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
         "designUiSession": {"ensembleId": _ensemble_id},
+        "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
+        "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
     }
 
 
@@ -1520,6 +1528,7 @@ async def get_design_ensembles(design_name: str):
             cp = ent.get("chart_panel")
             if isinstance(cp, dict):
                 row["chart_panel"] = copy.deepcopy(cp)
+            row["named_configuration_keys"] = _list_ensemble_named_configuration_keys(ent)
             ensembles_out.append(row)
         return {
             "version": data.get("version", 1),
@@ -1953,6 +1962,8 @@ async def update_ensemble_chart_panel(
             panel["derived_variables"] = [
                 {"name": d["name"], "formula": d["formula"]} for d in (body.derived_variables or [])
             ]
+        if body.simulation_speed is not None:
+            panel["simulation_speed"] = float(body.simulation_speed)
 
         target["chart_panel"] = panel
         with open(ens_path, "w", encoding="utf-8") as fp:
@@ -2470,6 +2481,19 @@ SIM_JSON_RESERVED_ROOT_KEYS = frozenset(
 
 NAMED_SIM_CONFIG_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
+# Extra keys on one ensemble entry in {leaf}.ensemble.json (not user preset names).
+ENSEMBLE_ENTRY_RESERVED_KEYS = frozenset(
+    {
+        "id",
+        "name",
+        "display_name",
+        "displayName",
+        "member_simulations",
+        "members",
+        "chart_panel",
+    }
+)
+
 
 def _looks_like_configuration_snapshot(obj) -> bool:
     """Named presets reuse the same object shape as current_configuration (must include charts_to_display)."""
@@ -2485,6 +2509,28 @@ def _list_named_configuration_keys(sim_config: dict) -> list[str]:
         if _looks_like_configuration_snapshot(v):
             out.append(k)
     return sorted(out)
+
+
+def _list_ensemble_named_configuration_keys(ent: dict) -> list[str]:
+    """Return sorted preset names stored as extra keys on one ensemble entry."""
+    out = []
+    for k, v in ent.items():
+        if k in ENSEMBLE_ENTRY_RESERVED_KEYS:
+            continue
+        if _looks_like_configuration_snapshot(v):
+            out.append(k)
+    return sorted(out)
+
+
+def _find_ensemble_entry(raw_list: list, ensemble_id: str):
+    want = str(ensemble_id).strip()
+    for idx, ent in enumerate(raw_list):
+        if not isinstance(ent, dict):
+            continue
+        eid = ent.get("id") or ent.get("name")
+        if eid and str(eid).strip() == want:
+            return ent, idx
+    return None, None
 
 
 def _validate_named_configuration_name(name: str) -> None:
@@ -2543,6 +2589,10 @@ def _normalize_sim_config_current_configuration(sim_config: dict) -> None:
     if event_markers is None:
         event_markers = dict(sim_config.get("event_markers") or {})
 
+    simulation_speed = cc.get("simulation_speed")
+    if simulation_speed is None:
+        simulation_speed = sim_config.get("simulation_speed")
+
     sim_config["current_configuration"] = {
         "view_mode": vm,
         "charts_to_display": charts_to_display,
@@ -2553,6 +2603,7 @@ def _normalize_sim_config_current_configuration(sim_config: dict) -> None:
         "chart_card_width": chart_card_width,
         "derived_variables": derived_variables,
         "event_markers": event_markers,
+        "simulation_speed": simulation_speed,
     }
     if sim_config.get("chart_card_width") is None and chart_card_width is not None:
         sim_config["chart_card_width"] = chart_card_width
@@ -2564,12 +2615,16 @@ def _refresh_current_configuration_snapshot(sim_config: dict, view_mode_override
     """
     prev = sim_config.get("current_configuration")
     prev_vm = prev.get("view_mode") if isinstance(prev, dict) else None
+    prev_speed = prev.get("simulation_speed") if isinstance(prev, dict) else None
     if view_mode_override in ("designer", "customer"):
         vm = view_mode_override
     elif prev_vm in ("designer", "customer"):
         vm = prev_vm
     else:
         vm = "designer"
+
+    root_speed = sim_config.get("simulation_speed")
+    simulation_speed = root_speed if root_speed is not None else prev_speed
 
     sim_config["current_configuration"] = {
         "view_mode": vm,
@@ -2581,6 +2636,7 @@ def _refresh_current_configuration_snapshot(sim_config: dict, view_mode_override
         "chart_card_width": sim_config.get("chart_card_width"),
         "derived_variables": list(sim_config.get("derived_variables") or []),
         "event_markers": dict(sim_config.get("event_markers") or {}),
+        "simulation_speed": simulation_speed,
     }
 
 
@@ -2612,6 +2668,8 @@ async def update_simulation_config(design_name: str, sim_name: str, body: Update
             sim_config["chart_card_width"] = int(body.chart_card_width)
         if body.derived_variables is not None:
             sim_config["derived_variables"] = [{"name": d["name"], "formula": d["formula"]} for d in body.derived_variables]
+        if body.simulation_speed is not None:
+            sim_config["simulation_speed"] = float(body.simulation_speed)
 
         # Keep the draft snapshot aligned with root keys + optional view_mode from the PUT body.
         _refresh_current_configuration_snapshot(sim_config, body.view_mode)
@@ -2650,6 +2708,8 @@ def _apply_snapshot_to_sim_roots(sim_config: dict, snap: dict) -> None:
         sim_config["derived_variables"] = copy.deepcopy(snap["derived_variables"])
     if "event_markers" in snap:
         sim_config["event_markers"] = copy.deepcopy(snap["event_markers"])
+    if "simulation_speed" in snap:
+        sim_config["simulation_speed"] = snap["simulation_speed"]
 
 
 @app.post("/api/designs/{design_name:path}/simulations/{sim_name}/named-configurations")
@@ -2688,6 +2748,95 @@ async def save_named_simulation_configuration(
         raise
     except Exception as e:
         print(f"❌ Error saving named simulation config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/designs/{design_name:path}/ensembles/{ensemble_id}/named-configurations")
+async def save_named_ensemble_configuration(
+    design_name: str, ensemble_id: str, body: SaveNamedSimulationConfigRequest
+):
+    """
+    Store a copy of the ensemble's chart_panel under a new key on that ensemble entry
+    inside {leaf}.ensemble.json (same snapshot shape as scenario presets).
+    """
+    try:
+        name = body.name.strip()
+        _validate_named_configuration_name(name)
+        dir_path, _catalog_rel = resolve_design_storage_from_api(design_name)
+        ens_path = _ensemble_sidecar_path(dir_path)
+        data = _load_ensemble_sidecar_dict(ens_path)
+        raw_list = data.get("ensembles") or []
+        target, _idx = _find_ensemble_entry(raw_list, ensemble_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail=f"Ensemble not found: {ensemble_id}")
+        panel = target.get("chart_panel")
+        if not isinstance(panel, dict) or "charts_to_display" not in panel:
+            raise HTTPException(
+                status_code=400,
+                detail="Ensemble has no chart_panel draft to save; open charts and try again",
+            )
+        existing = target.get(name)
+        if existing is not None:
+            if not body.overwrite:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Preset '{name}' already exists; resend with overwrite=true to replace it",
+                )
+            if not _looks_like_configuration_snapshot(existing):
+                raise HTTPException(status_code=409, detail=f"Key '{name}' exists but is not a preset snapshot")
+        target[name] = copy.deepcopy(panel)
+        with open(ens_path, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, indent=2, ensure_ascii=False)
+        keys = _list_ensemble_named_configuration_keys(target)
+        print(f"✅ Saved named ensemble preset '{name}' on {ensemble_id}")
+        return {
+            "design_name": design_name,
+            "ensemble_id": ensemble_id,
+            "name": name,
+            "named_configuration_keys": keys,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error saving named ensemble config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post(
+    "/api/designs/{design_name:path}/ensembles/{ensemble_id}/named-configurations/{config_name}/activate"
+)
+async def activate_named_ensemble_configuration(
+    design_name: str, ensemble_id: str, config_name: str
+):
+    """Copy a saved ensemble preset onto chart_panel so the UI can reload charts normally."""
+    try:
+        cfg = config_name.strip()
+        _validate_named_configuration_name(cfg)
+        dir_path, _catalog_rel = resolve_design_storage_from_api(design_name)
+        ens_path = _ensemble_sidecar_path(dir_path)
+        data = _load_ensemble_sidecar_dict(ens_path)
+        raw_list = data.get("ensembles") or []
+        target, _idx = _find_ensemble_entry(raw_list, ensemble_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail=f"Ensemble not found: {ensemble_id}")
+        snap = target.get(cfg)
+        if not _looks_like_configuration_snapshot(snap):
+            raise HTTPException(status_code=404, detail=f"Preset '{cfg}' not found or invalid")
+        target["chart_panel"] = copy.deepcopy(snap)
+        with open(ens_path, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, indent=2, ensure_ascii=False)
+        keys = _list_ensemble_named_configuration_keys(target)
+        print(f"✅ Activated ensemble preset '{cfg}' on {ensemble_id}")
+        return {
+            "design_name": design_name,
+            "ensemble_id": ensemble_id,
+            "chart_panel": copy.deepcopy(target["chart_panel"]),
+            "named_configuration_keys": keys,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error activating named ensemble config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -11,6 +11,11 @@ import ColumnPickerDialog from './components/ColumnPickerDialog/ColumnPickerDial
 import ConnectionReadoutDialog from './components/ConnectionReadoutDialog/ConnectionReadoutDialog';
 import ViewDataModal from './components/ViewDataModal/ViewDataModal';
 import SaveSimulationConfigDialog from './components/SaveSimulationConfigDialog/SaveSimulationConfigDialog';
+import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenarioAsDialog';
+import {
+  normalizeQuickScenarioButtons,
+  normalizeHiddenDefaultQuickScenarios,
+} from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
@@ -44,8 +49,13 @@ import {
   CHART_PANEL_OPACITY_DEFAULT,
 } from './utils/chartPanelLimits';
 import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSessionStorageKey } from './utils/simDeepLink';
-import { computePlaybackClockOriginSeconds } from './utils/playbackClockOrigin';
+import {
+  computePlaybackClockOriginSeconds,
+  computePlaybackStartSeconds,
+} from './utils/playbackClockOrigin';
+import { readSimulationSpeedFromConfig } from './utils/simulationSpeed';
 import { sanitizeStacksForDrawers } from './utils/chartPanelDrawerBuckets';
+import { normalizeVariableStylesFromDef } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
@@ -91,6 +101,14 @@ function chartCardWidthFromDef(chartDef) {
   return Math.min(4000, Math.max(200, Math.round(n)));
 }
 
+/** Global / per-chart sample stride from .sim.json, ensemble chart_panel, or design .conf.json. */
+function normalizeSampleStep(raw, fallback = 128) {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 1) {
+    return Math.min(65536, Math.max(1, Math.round(raw)));
+  }
+  return fallback;
+}
+
 /**
  * Build openCharts + per-chart sample map from backend charts_to_display (green scenario or ensemble).
  * resolveCsvName(chartDef) returns the tray csvName e.g. "LM2500_1.data.csv".
@@ -99,7 +117,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
   const initialPerChart = {};
   const newCharts = (chartsToDisplay || []).map((chartDef, index) => {
     const chartId = `sim-chart-${Date.now()}-${index}`;
-    if (chartDef.sample_step != null) initialPerChart[chartId] = chartDef.sample_step;
+    if (chartDef.sample_step != null) {
+      initialPerChart[chartId] = normalizeSampleStep(chartDef.sample_step);
+    }
     const csvName = resolveCsvName(chartDef);
     if (chartDef.type === 'multi') {
       const multi = {
@@ -155,6 +175,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.x_label != null && { xLabel: chartDef.x_label }),
       ...(chartDef.y_label != null && { yLabel: chartDef.y_label }),
       ...(chartDef.legend_labels != null && typeof chartDef.legend_labels === 'object' && { legendLabels: chartDef.legend_labels }),
+      ...(() => {
+        const vs = normalizeVariableStylesFromDef(chartDef.variable_styles);
+        return vs ? { variableStyles: vs } : {};
+      })(),
       ...(chartDef.axis_range != null
         ? (() => {
             const a = chartDef.axis_range;
@@ -164,6 +188,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
               axisRange: {
                 xLocked: xL,
                 yLocked: yL,
+                ...(a.x_threshold != null && Number.isFinite(Number(a.x_threshold))
+                  ? { xThreshold: Number(a.x_threshold) }
+                  : {}),
                 ...(xL
                   ? {
                       ...(a.x_min != null && { xMin: a.x_min }),
@@ -224,16 +251,11 @@ function App() {
       return next;
     });
   }, []);
-  useLayoutEffect(() => {
-    const el = rightRailRef.current;
-    if (!el) return undefined;
-    const ro = new ResizeObserver(() => {
-      setRightRailWidthPx(el.offsetWidth);
-    });
-    ro.observe(el);
-    setRightRailWidthPx(el.offsetWidth);
-    return () => ro.disconnect();
-  }, [rightRailCollapsed, viewMode]);
+  /** Fade property + simulation panels to show canvas grid; scenario/speed strips stay visible. */
+  const [rightRailGridPeek, setRightRailGridPeek] = useState(false);
+  const toggleRightRailGridPeek = useCallback(() => {
+    setRightRailGridPeek((p) => !p);
+  }, []);
   /** Pixel position below the app header bar — chart panel fixed positioning for top / side docks. */
   const appHeaderRef = useRef(null);
   const [headerBottomPx, setHeaderBottomPx] = useState(72);
@@ -250,7 +272,7 @@ function App() {
       window.removeEventListener('resize', sync);
     };
   }, [viewMode]);
-  /** Toolbar: conf 1 = charts bottom (default); conf 2 = vertical chart strip left of Controls rail; conf 3 = charts top. */
+  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = charts top + Controls bottom-left. */
   const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState(() => {
     try {
       const v = window.localStorage?.getItem('dcsWorkspaceLayoutPreset');
@@ -297,6 +319,11 @@ function App() {
   /** conf1 & conf2: split chart tray into chart1 / chart2 drawers */
   const dualWorkspaceDrawers =
     workspaceLayoutPreset === 'conf1' || workspaceLayoutPreset === 'conf2';
+  /** conf1: Controls full-height on the right; conf2/conf3: bottom-half vertical strip on the left. */
+  const controlsDockRight = workspaceLayoutPreset === 'conf1';
+  const controlsDockLeftBottom =
+    workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf3';
+  const controlsLeftInsetPx = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
   const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
     if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3') {
       setWorkspaceLayoutPreset(preset);
@@ -308,8 +335,21 @@ function App() {
       Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(w))),
     );
   }, []);
+  /** conf2: fixed gap between Controls rail and the right-hand chart strip (not a second margin on the chart). */
+  const CONTROLS_CHART_GAP_PX = 10;
+  /** Chart strip insets: component library on the left; conf1 reserves the right Controls rail. */
   const chartPanelLeftInset = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
-  const chartPanelRightInset = rightRailWidthPx;
+  const chartPanelRightInset = controlsDockRight ? rightRailWidthPx : 0;
+  useLayoutEffect(() => {
+    const el = rightRailRef.current;
+    if (!el) return undefined;
+    const ro = new ResizeObserver(() => {
+      setRightRailWidthPx(el.offsetWidth);
+    });
+    ro.observe(el);
+    setRightRailWidthPx(el.offsetWidth);
+    return () => ro.disconnect();
+  }, [rightRailCollapsed, viewMode, workspaceLayoutPreset]);
 
   // Canvas state
   const [canvasComponents, setCanvasComponents] = useState([]);
@@ -376,11 +416,17 @@ function App() {
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [systemState, setSystemState] = useState({});
   const [simulationTime, setSimulationTime] = useState(0); // Current simulation time in seconds
-  const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 1x, 10x, 100x, 1000x
+  const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 0.001× … 10000×
   const simulationSpeedRef = useRef(1);
   useLayoutEffect(() => {
     simulationSpeedRef.current = simulationSpeed;
   }, [simulationSpeed]);
+
+  useEffect(() => {
+    if (!simulationRunning) {
+      setActiveQuickScenarioPlaying(null);
+    }
+  }, [simulationRunning]);
 
   /** Last simulation time (seconds) from metadata / loaded CSV — drives playback loop when reached. */
   const playbackMaxTimeRef = useRef(null);
@@ -533,6 +579,10 @@ function App() {
 
   // Chart Panel state
   const [openCharts, setOpenCharts] = useState([]); // Charts currently displayed in bottom panel
+  const openChartsRef = useRef([]);
+  useEffect(() => {
+    openChartsRef.current = openCharts;
+  }, [openCharts]);
   const [chartStacks, setChartStacks] = useState([]); // Array of stacks; each stack = array of chart indices
   // Step 2: named UI presets live as extra keys inside each scenario’s *.sim.json (parallel to current_configuration).
   const [namedSimulationConfigs, setNamedSimulationConfigs] = useState([]);
@@ -553,6 +603,13 @@ function App() {
   /** Set when GET /ensembles finishes for `designApiPath` so post-load restore can distinguish “still fetching” from “empty list”. */
   const ensemblesHydratedForPathRef = useRef(null);
   const [saveSimConfigDialogOpen, setSaveSimConfigDialogOpen] = useState(false);
+  const [saveScenarioAsDialogOpen, setSaveScenarioAsDialogOpen] = useState(false);
+  /** User shortcuts in Quick Scenarios → named chart presets (persisted in design .conf.json). */
+  const [quickScenarioButtons, setQuickScenarioButtons] = useState([]);
+  /** Default quick-scenario ids hidden for this design until reload without saved design. */
+  const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
+  /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
+  const [activeQuickScenarioPlaying, setActiveQuickScenarioPlaying] = useState(null);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -906,8 +963,9 @@ function App() {
         simulationDataRef.current?.length ? simulationDataRef.current : [],
         ensembleMemberSimulationDataRef.current,
       );
+      const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
       setSimulationRunning(true);
-      setSimulationTime(tOrigin);
+      setSimulationTime(tStart);
 
       resetPlaybackVisualsRef.current();
 
@@ -944,11 +1002,61 @@ function App() {
     start();
   };
 
+  const handleStartSimulationRef = useRef(handleStartSimulation);
+  handleStartSimulationRef.current = handleStartSimulation;
+
   // Stop simulation
   const handleStopSimulation = () => {
     setSimulationRunning(false);
     stopSimulationClock();
   };
+
+  /*
+   * Apply chart_panel blob from an ensemble entry (select or named-preset activate).
+   */
+  const applyEnsembleChartPanelCp = useCallback((cp, primaryMemberId) => {
+    if (!cp || typeof cp !== 'object') {
+      setChartStacks([]);
+      setOpenCharts([]);
+      setPerChartSampleStep({});
+      return;
+    }
+    setChartStacks(Array.isArray(cp.chart_stacks) ? cp.chart_stacks : []);
+    setGlobalSampleStep(normalizeSampleStep(cp.chart_sample_default));
+    const panelMax = getChartPanelMaxHeightPx();
+    if (cp.chart_panel_height != null && cp.chart_panel_height >= CHART_PANEL_MIN_HEIGHT) {
+      setChartPanelHeight(Math.min(cp.chart_panel_height, panelMax));
+    }
+    if (cp.chart_panel_opacity != null) {
+      setChartPanelOpacity(clampChartPanelOpacity(cp.chart_panel_opacity));
+    } else {
+      setChartPanelOpacity(CHART_PANEL_OPACITY_DEFAULT);
+    }
+    const wRaw = cp.chart_card_width;
+    if (wRaw != null && Number.isFinite(Number(wRaw))) {
+      setChartCardWidth(Math.min(4000, Math.max(200, Math.round(Number(wRaw)))));
+    } else {
+      setChartCardWidth(500);
+    }
+    if (cp.view_mode === 'designer' || cp.view_mode === 'customer') {
+      setViewMode(cp.view_mode);
+    }
+    const savedSpeed = readSimulationSpeedFromConfig(cp);
+    if (savedSpeed != null) {
+      simulationSpeedRef.current = savedSpeed;
+      setSimulationSpeed(savedSpeed);
+    }
+    const chartsToDisplay = cp.charts_to_display || [];
+    const canvas = canvasComponentsRef.current;
+    const { newCharts, initialPerChart } = buildOpenChartsFromChartsToDisplay(
+      chartsToDisplay,
+      canvas,
+      (def) =>
+        def.ensemble_sim_id ? `${def.ensemble_sim_id}.data.csv` : `${primaryMemberId}.data.csv`,
+    );
+    setOpenCharts(newCharts);
+    setPerChartSampleStep(initialPerChart);
+  }, []);
 
   /*
    * Purple ensemble tab: clear charts/clock, fetch metadata only for every member (headers + row counts).
@@ -1070,41 +1178,9 @@ function App() {
 
         const cp = ensemble.chart_panel;
         const primary = members[0];
-        if (cp && typeof cp === 'object') {
-          setChartStacks(Array.isArray(cp.chart_stacks) ? cp.chart_stacks : []);
-          setGlobalSampleStep(cp.chart_sample_default > 1 ? cp.chart_sample_default : 128);
-          const panelMax = getChartPanelMaxHeightPx();
-          if (
-            cp.chart_panel_height != null &&
-            cp.chart_panel_height >= CHART_PANEL_MIN_HEIGHT
-          ) {
-            setChartPanelHeight(Math.min(cp.chart_panel_height, panelMax));
-          }
-          if (cp.chart_panel_opacity != null) {
-            setChartPanelOpacity(clampChartPanelOpacity(cp.chart_panel_opacity));
-          } else {
-            setChartPanelOpacity(CHART_PANEL_OPACITY_DEFAULT);
-          }
-          const wRaw = cp.chart_card_width;
-          if (wRaw != null && Number.isFinite(Number(wRaw))) {
-            setChartCardWidth(Math.min(4000, Math.max(200, Math.round(Number(wRaw)))));
-          } else {
-            setChartCardWidth(500);
-          }
-          if (cp.view_mode === 'designer' || cp.view_mode === 'customer') {
-            setViewMode(cp.view_mode);
-          }
-          const chartsToDisplay = cp.charts_to_display || [];
-          const canvas = canvasComponentsRef.current;
-          const { newCharts, initialPerChart } = buildOpenChartsFromChartsToDisplay(
-            chartsToDisplay,
-            canvas,
-            (def) =>
-              def.ensemble_sim_id ? `${def.ensemble_sim_id}.data.csv` : `${primary}.data.csv`,
-          );
-          setOpenCharts(newCharts);
-          setPerChartSampleStep(initialPerChart);
-        }
+        applyEnsembleChartPanelCp(cp, primary);
+        await preloadEnsembleChartPanelColumnsRef.current?.(cp, primary);
+        setNamedSimulationConfigs(ensemble.named_configuration_keys || []);
 
         setSimulationLoadProgress({
           simulationId: progressId,
@@ -1133,7 +1209,7 @@ function App() {
         alert(`Could not load ensemble:\n\n${e.message || e}`);
       }
     },
-    [designApiPath],
+    [designApiPath, applyEnsembleChartPanelCp],
   );
 
   const handleDeleteEnsemble = useCallback(
@@ -1229,13 +1305,14 @@ function App() {
           simulationDataRef.current?.length ? simulationDataRef.current : [],
           ensembleMemberSimulationDataRef.current,
         );
+        const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
         if (
           Number.isFinite(tMax) &&
-          tMax > tOrigin &&
+          tMax > tStart &&
           next >= tMax
         ) {
           queueMicrotask(() => resetPlaybackVisualsRef.current());
-          return tOrigin;
+          return tStart;
         }
         return next;
       });
@@ -1247,6 +1324,29 @@ function App() {
       clearInterval(simulationIntervalRef.current);
       simulationIntervalRef.current = null;
     }
+  };
+
+  /** Stop playback, rewind to CSV time origin, reset canvas visuals, then press Play. */
+  const restartSimulationPlaybackFromStart = async () => {
+    stopSimulationClock();
+    setSimulationRunning(false);
+
+    const tOrigin = computePlaybackClockOriginSeconds(
+      simulationMetadataRef.current,
+      simulationDataRef.current?.length ? simulationDataRef.current : [],
+      ensembleMemberSimulationDataRef.current,
+    );
+    const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
+    setSimulationTime(tStart);
+    resetPlaybackVisualsRef.current();
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+
+    handleStartSimulationRef.current();
   };
   
   // Update simulation speed
@@ -1981,6 +2081,10 @@ function App() {
       // scenario’s .sim.json current_configuration and surprises users. View mode stays as-is until
       // they use the header toggle (still persisted per scenario when they toggle).
       const cc = scenarioConfig.current_configuration;
+      const savedSpeed = readSimulationSpeedFromConfig(scenarioConfig);
+      if (savedSpeed != null) {
+        simulationSpeedRef.current = savedSpeed;
+      }
 
       const timeFromRowKeys = (r) => {
         if (!r || typeof r !== 'object') return NaN;
@@ -2024,6 +2128,9 @@ function App() {
       };
 
       startTransition(() => {
+        if (savedSpeed != null) {
+          setSimulationSpeed(savedSpeed);
+        }
         setSimulationData(augmentedRows);
         setSimulationMetadata(simulationMetadata);
         setSimulationTime(Number.isFinite(tMin) ? tMin : 0);
@@ -2042,7 +2149,9 @@ function App() {
         });
 
         setChartStacks(scenarioConfig.chart_stacks || []);
-        setGlobalSampleStep(scenarioConfig.chart_sample_default > 1 ? scenarioConfig.chart_sample_default : 128);
+        setGlobalSampleStep(
+          normalizeSampleStep(scenarioConfig.chart_sample_default ?? cc?.chart_sample_default),
+        );
         const panelMax = getChartPanelMaxHeightPx();
         if (
           scenarioConfig.chart_panel_height != null &&
@@ -2065,57 +2174,12 @@ function App() {
         }
         const initialPerChart = {};
         if (chartsToDisplay.length > 0) {
-          const newCharts = chartsToDisplay.map((chartDef, index) => {
-            const chartId = `sim-chart-${Date.now()}-${index}`;
-            if (chartDef.sample_step != null) initialPerChart[chartId] = chartDef.sample_step;
-            if (chartDef.type === 'multi') {
-              const multi = {
-                id: chartId,
-                type: 'multi-component',
-                chartType: chartDef.chart_type || 'multi-bar-chart',
-                title: chartDef.title || 'Multi-Component Chart',
-                csvName: csvNameForCharts,
-                timeColumn: chartDef.x_column,
-                components: chartDef.components || [],
-                isMultiComponent: true,
-                ...(chartDef.ensemble_sim_id && !chartDef.ensemble_cross_member && { ensembleSimId: chartDef.ensemble_sim_id }),
-                ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
-              };
-              const pcw = chartCardWidthFromDef(chartDef);
-              return pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
-            }
-            const component = canvasComponentsRef.current.find((c) => c.id === chartDef.component_id);
-            if (!component) {
-              dcsSimDbg('handleRunSimulation ⚠ chart dropped — no canvas component for chartDef.component_id', {
-                wantedId: chartDef.component_id,
-                chartTitle: chartDef.title,
-                chartType: chartDef.chart_type,
-              });
-              return null;
-            }
-            const isNd = chartDef.chart_type === 'nd' && chartDef.y_columns?.length;
-            const isPie = chartDef.chart_type === 'pie' && chartDef.y_columns?.length;
-            const isStackedNd = chartDef.chart_type === 'stacked-nd' && chartDef.y_columns?.length;
-            const single = {
-              id: chartId,
-              componentId: component.id,
-              componentName: component.name,
-              chartType: chartDef.chart_type || '2d',
-              csvName: csvNameForCharts,
-              xColumn: chartDef.x_column,
-              ...(isNd || isPie ? { yColumns: chartDef.y_columns } : isStackedNd ? {} : { yColumn: chartDef.y_column }),
-              ...(isStackedNd ?  {
-                yColumns: chartDef.y_columns,
-                splitBy: chartDef.split_by || 'phase',
-                ...(chartDef.split_by === 'manual' && chartDef.manual_group_breaks?.length && { manualGroupBreaks: chartDef.manual_group_breaks })
-              } : {}),
-              title: chartDef.title || (isNd ? `${component.name} - nD` : isPie ? `${component.name} - Pie` : isStackedNd ? `${component.name} - Stacked nD` : `${component.name} - ${chartDef.y_column}`),
-              ...(chartDef.ensemble_sim_id && !chartDef.ensemble_cross_member && { ensembleSimId: chartDef.ensemble_sim_id }),
-              ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
-            };
-            const pcw = chartCardWidthFromDef(chartDef);
-            return pcw != null ? { ...single, chartCardWidth: pcw } : single;
-          }).filter(Boolean);
+          const { newCharts, initialPerChart: ipc } = buildOpenChartsFromChartsToDisplay(
+            chartsToDisplay,
+            canvasComponentsRef.current,
+            () => csvNameForCharts,
+          );
+          Object.assign(initialPerChart, ipc);
           dcsSimDbg('handleRunSimulation ◈ openCharts build', {
             requestedCharts: chartsToDisplay.length,
             builtCharts: newCharts.length,
@@ -2234,10 +2298,17 @@ function App() {
     });
 
     const cc = scenarioConfig.current_configuration;
+    const savedSpeed = readSimulationSpeedFromConfig(scenarioConfig);
+    if (savedSpeed != null) {
+      simulationSpeedRef.current = savedSpeed;
+    }
 
     const timeValues = augmentedRows.map((r) => Number(r['Time (s)'] ?? r.time_sec) ?? 0);
     const { min: tMin, max: tMax } = arrayFiniteMinMax(timeValues);
     startTransition(() => {
+      if (savedSpeed != null) {
+        setSimulationSpeed(savedSpeed);
+      }
       setSimulationData(augmentedRows);
       setSimulationMetadata((prev) => {
         const row0Keys = Object.keys(augmentedRows[0] || {});
@@ -2289,7 +2360,9 @@ function App() {
       const chartsToDisplay = scenarioConfig.charts_to_display || [];
       const csvNameForCharts = `${simulationId}.data.csv`;
       setChartStacks(scenarioConfig.chart_stacks || []);
-      setGlobalSampleStep(scenarioConfig.chart_sample_default > 1 ? scenarioConfig.chart_sample_default : 128);
+      setGlobalSampleStep(
+        normalizeSampleStep(scenarioConfig.chart_sample_default ?? cc?.chart_sample_default),
+      );
       const panelMax = getChartPanelMaxHeightPx();
       if (
         scenarioConfig.chart_panel_height != null &&
@@ -2313,65 +2386,12 @@ function App() {
 
       const initialPerChart = {};
       if (chartsToDisplay.length > 0) {
-        const newCharts = chartsToDisplay
-          .map((chartDef, index) => {
-            const chartId = `sim-chart-${Date.now()}-${index}`;
-            if (chartDef.sample_step != null) initialPerChart[chartId] = chartDef.sample_step;
-            if (chartDef.type === 'multi') {
-              const multi = {
-                id: chartId,
-                type: 'multi-component',
-                chartType: chartDef.chart_type || 'multi-bar-chart',
-                title: chartDef.title || 'Multi-Component Chart',
-                csvName: csvNameForCharts,
-                timeColumn: chartDef.x_column,
-                components: chartDef.components || [],
-                isMultiComponent: true,
-                ...(chartDef.ensemble_sim_id && !chartDef.ensemble_cross_member && { ensembleSimId: chartDef.ensemble_sim_id }),
-                ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
-              };
-              const pcw = chartCardWidthFromDef(chartDef);
-              return pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
-            }
-            const component = canvasComponentsRef.current.find((c) => c.id === chartDef.component_id);
-            if (!component) return null;
-            const isNd = chartDef.chart_type === 'nd' && chartDef.y_columns?.length;
-            const isPie = chartDef.chart_type === 'pie' && chartDef.y_columns?.length;
-            const isStackedNd = chartDef.chart_type === 'stacked-nd' && chartDef.y_columns?.length;
-            const single = {
-              id: chartId,
-              componentId: component.id,
-              componentName: component.name,
-              chartType: chartDef.chart_type || '2d',
-              csvName: csvNameForCharts,
-              xColumn: chartDef.x_column,
-              ...(isNd || isPie ? { yColumns: chartDef.y_columns } : isStackedNd ? {} : { yColumn: chartDef.y_column }),
-              ...(isStackedNd
-                ? {
-                    yColumns: chartDef.y_columns,
-                    splitBy: chartDef.split_by || 'phase',
-                    ...(chartDef.split_by === 'manual' &&
-                      chartDef.manual_group_breaks?.length && {
-                        manualGroupBreaks: chartDef.manual_group_breaks,
-                      }),
-                  }
-                : {}),
-              title:
-                chartDef.title ||
-                (isNd
-                  ? `${component.name} - nD`
-                  : isPie
-                    ? `${component.name} - Pie`
-                    : isStackedNd
-                      ? `${component.name} - Stacked nD`
-                      : `${component.name} - ${chartDef.y_column}`),
-              ...(chartDef.ensemble_sim_id && !chartDef.ensemble_cross_member && { ensembleSimId: chartDef.ensemble_sim_id }),
-              ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
-            };
-            const pcw = chartCardWidthFromDef(chartDef);
-            return pcw != null ? { ...single, chartCardWidth: pcw } : single;
-          })
-          .filter(Boolean);
+        const { newCharts, initialPerChart: ipc } = buildOpenChartsFromChartsToDisplay(
+          chartsToDisplay,
+          canvasComponentsRef.current,
+          () => csvNameForCharts,
+        );
+        Object.assign(initialPerChart, ipc);
         setOpenCharts(newCharts);
         setPerChartSampleStep(initialPerChart);
       } else {
@@ -2393,18 +2413,22 @@ function App() {
    * (no chart-panel teardown); otherwise falls back to a full scenario load.
    */
   const handleActivateNamedSimulationConfig = async (presetName) => {
-    if (!simulationMetadata?.id || !designApiPath) return;
+    if (!simulationMetadata?.id || !designApiPath) return false;
+    const isEnsembleTab = Boolean(
+      simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
+    );
     const t0 = performance.now();
     console.log('[DCS:perf] activateNamedPreset ▶ START', {
       presetName,
       simId: simulationMetadata.id,
+      isEnsembleTab,
       note: 'Progress bar is NOT shown for in-place preset apply — only handleRunSimulation sets simulationLoadProgress',
     });
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simulationMetadata.id)}/named-configurations/${encodeURIComponent(presetName)}/activate`,
-        { method: 'POST' },
-      );
+      const activateUrl = isEnsembleTab
+        ? `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/ensembles/${encodeURIComponent(simulationMetadata.ensembleId)}/named-configurations/${encodeURIComponent(presetName)}/activate`
+        : `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simulationMetadata.id)}/named-configurations/${encodeURIComponent(presetName)}/activate`;
+      const res = await fetch(activateUrl, { method: 'POST' });
       console.log('[DCS:perf] activateNamedPreset POST /activate done', {
         ms: Math.round(performance.now() - t0),
         ok: res.ok,
@@ -2412,9 +2436,32 @@ function App() {
       if (!res.ok) {
         const msg = await res.text();
         alert(msg || `Failed to activate preset (${res.status})`);
-        return;
+        return false;
       }
       const activated = await res.json();
+      if (isEnsembleTab) {
+        const cp = activated.chart_panel;
+        const primary = simulationMetadata.memberSimulations?.[0];
+        if (primary) {
+          applyEnsembleChartPanelCp(cp, primary);
+          await preloadEnsembleChartPanelColumnsRef.current?.(cp, primary);
+        }
+        setNamedSimulationConfigs(activated.named_configuration_keys || []);
+        setDesignEnsembles((prev) =>
+          prev.map((ent) =>
+            ent.id === simulationMetadata.ensembleId
+              ? {
+                  ...ent,
+                  chart_panel: cp,
+                  named_configuration_keys: activated.named_configuration_keys || [],
+                }
+              : ent,
+          ),
+        );
+        setActiveNamedSimulationConfig(presetName);
+        setLastNamedPresetForUi(presetName);
+        return true;
+      }
       await mergeCachedSimulationAfterActivate(designApiPath, simulationMetadata.id, activated);
       console.log('[DCS:perf] activateNamedPreset after mergeCachedSimulationAfterActivate', {
         ms: Math.round(performance.now() - t0),
@@ -2471,48 +2518,269 @@ function App() {
       } catch (_) {
         /* ignore */
       }
+      return true;
     } catch (e) {
       console.warn(e);
       alert('Failed to activate preset');
+      return false;
     }
   };
 
   /**
-   * Flush the live draft to current_configuration on disk, then duplicate that subtree under a user-chosen top-level key.
+   * Flush chart draft and store a named preset on the active scenario or ensemble (shared by both save dialogs).
    */
-  const handleConfirmSaveSimulationConfig = async ({ name, overwrite }) => {
-    if (!simulationMetadata?.id || !designApiPath) return;
-    try {
-      if (persistChartCardWidthRef.current) {
-        clearTimeout(persistChartCardWidthRef.current);
-        persistChartCardWidthRef.current = null;
-      }
-      if (persistPerChartCardWidthRef.current) {
-        clearTimeout(persistPerChartCardWidthRef.current);
-        persistPerChartCardWidthRef.current = null;
-      }
-      await persistChartsToSimJson(openCharts, { chart_card_width: chartCardWidth });
-      const res = await fetch(
-        `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simulationMetadata.id)}/named-configurations`,
-        {
+  const saveNamedSimulationPreset = async ({ name, overwrite }) => {
+    if (!simulationMetadata?.id || !designApiPath) {
+      throw new Error('No active scenario or design folder');
+    }
+    const isEnsembleTab = Boolean(
+      simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
+    );
+    if (persistChartCardWidthRef.current) {
+      clearTimeout(persistChartCardWidthRef.current);
+      persistChartCardWidthRef.current = null;
+    }
+    if (persistPerChartCardWidthRef.current) {
+      clearTimeout(persistPerChartCardWidthRef.current);
+      persistPerChartCardWidthRef.current = null;
+    }
+    await persistChartsToSimJson(openCharts, {
+      chart_card_width: chartCardWidth,
+      chart_sample_default: globalSampleStep,
+      perChartSampleStep,
+      simulation_speed: simulationSpeed,
+    });
+    const saveUrl = isEnsembleTab
+      ? `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/ensembles/${encodeURIComponent(simulationMetadata.ensembleId)}/named-configurations`
+      : `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simulationMetadata.id)}/named-configurations`;
+    const res = await fetch(saveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, overwrite }),
+    });
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg || `Save failed (${res.status})`);
+    }
+    const data = await res.json();
+    setNamedSimulationConfigs(data.named_configuration_keys || []);
+    if (isEnsembleTab) {
+      setDesignEnsembles((prev) =>
+        prev.map((ent) =>
+          ent.id === simulationMetadata.ensembleId
+            ? {
+                ...ent,
+                named_configuration_keys: data.named_configuration_keys || [],
+              }
+            : ent,
+        ),
+      );
+    }
+    setActiveNamedSimulationConfig(name);
+    setLastNamedPresetForUi(name);
+    return data;
+  };
+
+  const persistQuickScenarioUiToDesign = useCallback(
+    async (buttons, hiddenDefaults) => {
+      if (!currentConfigName) return false;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, overwrite }),
-        },
-      );
-      if (!res.ok) {
-        const msg = await res.text();
-        alert(msg || `Save failed (${res.status})`);
-        return;
+          body: JSON.stringify({
+            name: currentConfigName,
+            data: {
+              canvasComponents,
+              connections,
+              variableDrivenPresence,
+              canvasBlockTypeScale,
+              globalSampleStep,
+              perChartSampleStep,
+              quickScenarioButtons: buttons,
+              hiddenDefaultQuickScenarios: hiddenDefaults,
+              designUiSession: {
+                ensembleId:
+                  simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
+                    ? simulationMetadata.ensembleId
+                    : null,
+              },
+              systemState: {
+                simulationRunning,
+                zoom,
+                pan,
+                mode,
+                uiFontPxShift,
+                canvasFontPxShift,
+              },
+            },
+          }),
+        });
+        if (!res.ok) {
+          console.warn('persistQuickScenarioUiToDesign failed', await res.text());
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('persistQuickScenarioUiToDesign error', e);
+        return false;
       }
-      const data = await res.json();
-      setNamedSimulationConfigs(data.named_configuration_keys || []);
-      setActiveNamedSimulationConfig(name);
-      setLastNamedPresetForUi(name);
+    },
+    [
+      currentConfigName,
+      canvasComponents,
+      connections,
+      variableDrivenPresence,
+      canvasBlockTypeScale,
+      globalSampleStep,
+      perChartSampleStep,
+      simulationMetadata?.isEnsemble,
+      simulationMetadata?.ensembleId,
+      simulationRunning,
+      zoom,
+      pan,
+      mode,
+      uiFontPxShift,
+      canvasFontPxShift,
+    ],
+  );
+
+  const handleConfirmSaveSimulationConfig = async ({ name, overwrite }) => {
+    try {
+      await saveNamedSimulationPreset({ name, overwrite });
       setSaveSimConfigDialogOpen(false);
     } catch (e) {
       console.warn(e);
-      alert('Failed to save named configuration');
+      alert(e.message || 'Failed to save named configuration');
+    }
+  };
+
+  const handleConfirmSaveScenarioAs = async ({ label, presetName, overwrite, color, icon }) => {
+    if (!simulationMetadata?.id || !designApiPath) return;
+    const isEnsembleTab = Boolean(
+      simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
+    );
+    try {
+      await saveNamedSimulationPreset({ name: presetName, overwrite });
+      const shortcut = {
+        id: `qs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        label,
+        icon,
+        color,
+        presetName,
+        targetType: isEnsembleTab ? 'ensemble' : 'simulation',
+        ...(isEnsembleTab
+          ? { ensembleId: simulationMetadata.ensembleId }
+          : { simulationId: simulationMetadata.id }),
+      };
+      const nextButtons = [
+        ...quickScenarioButtons.filter(
+          (b) =>
+            !(
+              b.presetName === presetName &&
+              b.targetType === shortcut.targetType &&
+              (isEnsembleTab
+                ? b.ensembleId === shortcut.ensembleId
+                : b.simulationId === shortcut.simulationId)
+            ),
+        ),
+        shortcut,
+      ];
+      setQuickScenarioButtons(nextButtons);
+      if (currentConfigName) {
+        const ok = await persistQuickScenarioUiToDesign(
+          nextButtons,
+          hiddenDefaultQuickScenarios,
+        );
+        if (!ok) {
+          alert('Preset saved, but Quick Scenario button could not be written to the design file.');
+        }
+      }
+      setSaveScenarioAsDialogOpen(false);
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to save scenario');
+    }
+  };
+
+  const handleQuickScenarioShortcutClick = async (shortcut) => {
+    if (!shortcut?.presetName || !designApiPath) return;
+    handleStopSimulation();
+    try {
+      if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
+        const ensemble = designEnsembles.find((e) => e.id === shortcut.ensembleId);
+        if (!ensemble) {
+          alert('This ensemble no longer exists in the design.');
+          return;
+        }
+        if (simulationMetadata?.ensembleId !== shortcut.ensembleId) {
+          await handleSelectEnsemble(ensemble);
+        }
+        const ensembleOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
+        if (ensembleOk) {
+          await restartSimulationPlaybackFromStart();
+          setActiveQuickScenarioPlaying(shortcut);
+        }
+        return;
+      }
+      const simId = shortcut.simulationId;
+      if (!simId) return;
+      const onThisSim =
+        !simulationMetadata?.isEnsemble && simulationMetadata?.id === simId;
+      if (!onThisSim) {
+        await handleRunSimulation(simId);
+      }
+      const presetOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
+      if (presetOk) {
+        await restartSimulationPlaybackFromStart();
+        setActiveQuickScenarioPlaying(shortcut);
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to load scenario shortcut');
+    }
+  };
+
+  const handleSaveQuickScenarioPreset = async (shortcut) => {
+    if (!shortcut?.presetName || !designApiPath) return;
+    if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
+      if (simulationMetadata?.ensembleId !== shortcut.ensembleId) {
+        alert('Load this quick scenario first, then save its configuration.');
+        return;
+      }
+    } else if (shortcut.simulationId) {
+      if (
+        simulationMetadata?.isEnsemble ||
+        simulationMetadata?.id !== shortcut.simulationId
+      ) {
+        alert('Load this quick scenario first, then save its configuration.');
+        return;
+      }
+    }
+    try {
+      await saveNamedSimulationPreset({ name: shortcut.presetName, overwrite: true });
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to save quick scenario configuration');
+    }
+  };
+
+  const handleDeleteQuickScenarioButton = async (buttonId) => {
+    const nextButtons = quickScenarioButtons.filter((b) => b.id !== buttonId);
+    setQuickScenarioButtons(nextButtons);
+    if (currentConfigName) {
+      await persistQuickScenarioUiToDesign(nextButtons, hiddenDefaultQuickScenarios);
+    }
+  };
+
+  const handleHideDefaultQuickScenario = async (defaultId) => {
+    const nextHidden = normalizeHiddenDefaultQuickScenarios([
+      ...hiddenDefaultQuickScenarios,
+      defaultId,
+    ]);
+    setHiddenDefaultQuickScenarios(nextHidden);
+    if (currentConfigName) {
+      await persistQuickScenarioUiToDesign(quickScenarioButtons, nextHidden);
     }
   };
 
@@ -2865,7 +3133,7 @@ function App() {
       return;
     }
 
-    // Quick save to existing config
+    const SAVE_SPINNER_MIN_MS = 1000;
     setIsSaving(true);
     const saveStartTime = Date.now();
 
@@ -2893,14 +3161,7 @@ function App() {
 
       const savedConfig = await response.json();
 
-      // Ensure minimum 3-second spinner display
-      const elapsed = Date.now() - saveStartTime;
-      const remainingTime = Math.max(0, 3000 - elapsed);
-
-      await new Promise(resolve => setTimeout(resolve, remainingTime));
-
       console.log(`✅ Configuration saved: ${savedConfig.name}`);
-      alert(`✅ Configuration "${savedConfig.name}" saved successfully!`);
 
       // Persist current simulation's charts + sample rates to .sim.json
       if (simulationMetadata?.id && openCharts.length >= 0) {
@@ -2910,6 +3171,11 @@ function App() {
       console.error('❌ Error saving configuration:', error);
       alert(`❌ Failed to save: ${error.message}`);
     } finally {
+      const elapsed = Date.now() - saveStartTime;
+      const remaining = Math.max(0, SAVE_SPINNER_MIN_MS - elapsed);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
       setIsSaving(false);
     }
   };
@@ -2943,6 +3209,7 @@ function App() {
     const effectiveStacks = overrides.chart_stacks ?? chartStacks;
     const effectiveDerived = overrides.derived_variables ?? simulationMetadata?.derivedVariables;
     const effectiveViewMode = overrides.view_mode ?? viewMode;
+    const effectiveSpeed = overrides.simulation_speed ?? simulationSpeed;
     const isEnsembleTab = Boolean(
       simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
     );
@@ -2997,7 +3264,11 @@ function App() {
             ...(c.ensembleCrossMember && { ensemble_cross_member: true }),
           };
         }
-        if (effectivePerChart[c.id] != null) base.sample_step = effectivePerChart[c.id];
+        if (effectivePerChart[c.id] != null) {
+          base.sample_step = normalizeSampleStep(effectivePerChart[c.id]);
+        } else {
+          base.sample_step = normalizeSampleStep(effectiveGlobal);
+        }
         if (c.chartCardWidth != null && Number.isFinite(Number(c.chartCardWidth))) {
           base.chart_card_width = Math.min(4000, Math.max(200, Math.round(Number(c.chartCardWidth))));
         }
@@ -3006,9 +3277,15 @@ function App() {
         if (c.legendLabels != null && typeof c.legendLabels === 'object' && Object.keys(c.legendLabels).length) {
           base.legend_labels = c.legendLabels;
         }
+        if (c.variableStyles != null && typeof c.variableStyles === 'object' && Object.keys(c.variableStyles).length) {
+          base.variable_styles = c.variableStyles;
+        }
         if (c.axisRange != null) {
-          const { xMin, xMax, yMin, yMax, xLocked, yLocked } = c.axisRange;
+          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold } = c.axisRange;
           const rangeObj = {};
+          if (xThreshold != null && !Number.isNaN(xThreshold)) {
+            rangeObj.x_threshold = xThreshold;
+          }
           if (xLocked) {
             if (xMin != null && !Number.isNaN(xMin)) rangeObj.x_min = xMin;
             if (xMax != null && !Number.isNaN(xMax)) rangeObj.x_max = xMax;
@@ -3032,6 +3309,7 @@ function App() {
         chart_panel_opacity: effectiveOpacity,
         chart_card_width: effectiveCardWidth,
         view_mode: effectiveViewMode,
+        simulation_speed: effectiveSpeed,
         ...(effectiveDerived != null && { derived_variables: effectiveDerived }),
       };
       const url = isEnsembleTab
@@ -3061,6 +3339,7 @@ function App() {
                       chart_panel_opacity: effectiveOpacity,
                       chart_card_width: effectiveCardWidth,
                       view_mode: effectiveViewMode,
+                      simulation_speed: effectiveSpeed,
                       ...(effectiveDerived != null && { derived_variables: effectiveDerived }),
                     },
                   }
@@ -3086,6 +3365,7 @@ function App() {
     chartCardWidth,
     chartStacks,
     viewMode,
+    simulationSpeed,
     refreshSimulationsList,
   ]);
 
@@ -3574,6 +3854,30 @@ function App() {
     },
     [collectEnsembleChartLoadPlan, ensureEnsembleMemberColumnsLoaded],
   );
+
+  /** Preload all CSV columns referenced by an ensemble chart_panel before playback. */
+  const preloadEnsembleChartPanelColumnsRef = useRef(async () => {});
+
+  const preloadEnsembleChartPanelColumns = useCallback(
+    async (chartPanel, primaryMemberId) => {
+      const chartsToDisplay = chartPanel?.charts_to_display || [];
+      if (!chartsToDisplay.length || !primaryMemberId) return;
+      const { newCharts } = buildOpenChartsFromChartsToDisplay(
+        chartsToDisplay,
+        canvasComponentsRef.current,
+        (def) =>
+          def.ensemble_sim_id ? `${def.ensemble_sim_id}.data.csv` : `${primaryMemberId}.data.csv`,
+      );
+      await Promise.all(
+        newCharts.filter(Boolean).map((chart) => onEnsureEnsembleChartColumns(chart)),
+      );
+    },
+    [onEnsureEnsembleChartColumns],
+  );
+
+  useLayoutEffect(() => {
+    preloadEnsembleChartPanelColumnsRef.current = preloadEnsembleChartPanelColumns;
+  }, [preloadEnsembleChartPanelColumns]);
 
   /**
    * STEP 1 + STEP 4: Gate and column picker flow
@@ -4621,11 +4925,7 @@ function App() {
     }
 
     const gss = data.globalSampleStep;
-    if (typeof gss === 'number' && Number.isFinite(gss) && gss >= 1) {
-      setGlobalSampleStep(Math.min(65536, Math.max(1, Math.round(gss))));
-    } else {
-      setGlobalSampleStep(128);
-    }
+    setGlobalSampleStep(normalizeSampleStep(gss));
 
     if (
       data.perChartSampleStep != null &&
@@ -4654,6 +4954,11 @@ function App() {
     } else {
       pendingDesignUiRestoreRef.current = null;
     }
+
+    setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
+    setHiddenDefaultQuickScenarios(
+      normalizeHiddenDefaultQuickScenarios(data.hiddenDefaultQuickScenarios),
+    );
 
     if (Array.isArray(data.variableDrivenPresence)) {
       setVariableDrivenPresence(
@@ -4734,7 +5039,10 @@ function App() {
 
     // Persist current simulation's charts + sample rates to .sim.json
     if (simulationMetadata?.id) {
-      persistChartsToSimJson(openCharts);
+      persistChartsToSimJson(openCharts, {
+        chart_sample_default: globalSampleStep,
+        perChartSampleStep,
+      });
     }
   };
 
@@ -4755,6 +5063,8 @@ function App() {
             ? simulationMetadata.ensembleId
             : null,
       },
+      quickScenarioButtons,
+      hiddenDefaultQuickScenarios,
       systemState: {
         simulationRunning,
         zoom,
@@ -5062,6 +5372,145 @@ function App() {
     window.prompt('Copy this preset link (select, then Ctrl+C / ⌘C):', fullUrl);
   }, [designApiPath, simulationMetadata?.id]);
 
+  const controlsRail = (
+    <div
+      className={`app-right-rail ${rightRailCollapsed ? 'app-right-rail--collapsed' : ''} ${
+        rightRailGridPeek ? 'app-right-rail--grid-peek' : ''
+      } ${
+        controlsDockRight
+          ? 'app-right-rail--dock-right'
+          : 'app-right-rail--dock-left-bottom'
+      }`}
+      ref={rightRailRef}
+      style={
+        controlsDockLeftBottom
+          ? {
+              left: `${controlsLeftInsetPx}px`,
+              ['--controls-left-inset']: `${controlsLeftInsetPx}px`,
+              ['--chart-side-dock-width']:
+                workspaceLayoutPreset === 'conf2' ? `${chartSideDockWidth}px` : '0px',
+              ['--controls-chart-gap']: `${CONTROLS_CHART_GAP_PX}px`,
+            }
+          : undefined
+      }
+    >
+      <button
+        type="button"
+        className={`app-right-rail__hinge ${rightRailCollapsed ? 'app-right-rail__hinge--collapsed' : ''}`}
+        onClick={toggleRightRail}
+        title={rightRailCollapsed ? 'Show property & simulation panels' : 'Hide property & simulation panels'}
+        aria-expanded={!rightRailCollapsed}
+        aria-label={
+          rightRailCollapsed ? 'Expand controls panels' : 'Collapse controls panels'
+        }
+      >
+        <span className="app-right-rail__hinge-chev" aria-hidden>
+          {rightRailCollapsed
+            ? controlsDockRight
+              ? '«'
+              : '»'
+            : controlsDockRight
+              ? '»'
+              : '«'}
+        </span>
+        {rightRailCollapsed && (
+          <span className="app-right-rail__hinge-vlabel">Controls</span>
+        )}
+      </button>
+      <div className="app-right-rail__panels">
+        <div
+          className="panel-focus-wrapper"
+          style={{ position: 'relative', zIndex: focusedPanel === 'property' ? 1100 : 10 }}
+          onMouseDown={(e) => handlePanelFocus('property', e)}
+        >
+          <PropertyPanel
+            selectedComponent={selectedComponent}
+            selectedConnection={selectedConnection}
+            simulationMetadata={simulationMetadata}
+            simulationColumns={simulationMetadata?.columns || []}
+            ensembleColumnGroups={ensembleColumnGroups}
+            derivedVariables={simulationMetadata?.derivedVariables || []}
+            variableDrivenPresence={variableDrivenPresence}
+            onRemoveVariableDrivenPresenceRule={handleRemoveVariableDrivenPresenceRule}
+            onAddDerivedVariable={handleAddDerivedVariable}
+            onRemoveScenarioColumn={handleRemoveScenarioColumn}
+            onRemoveEnsembleLiveDerived={handleRemoveEnsembleLiveDerived}
+            canvasComponents={canvasComponents}
+            onUpdateComponent={handleUpdateComponent}
+            onUpdateConnection={handleUpdateConnection}
+            onDeleteComponent={handleDeleteComponent}
+            onDeleteConnection={handleDeleteConnection}
+            onAddChartFromBuilder={handleAddChartFromBuilder}
+            onClose={() => {
+              setSelectedComponent(null);
+              setSelectedConnection(null);
+              setSelectedConnections([]);
+            }}
+            disabled={mode === 'simulation'}
+          />
+        </div>
+
+        <div
+          className="panel-focus-wrapper"
+          style={{ position: 'relative', zIndex: focusedPanel === 'simulation' ? 1100 : 10 }}
+          onMouseDown={(e) => handlePanelFocus('simulation', e)}
+        >
+          <SimulationControls
+            mode={mode}
+            viewMode={viewMode}
+            simulationRunning={simulationRunning}
+            activeSimulationId={
+              simulationMetadata?.isEnsemble ? null : (simulationMetadata?.id ?? null)
+            }
+            activeEnsembleId={simulationMetadata?.isEnsemble ? simulationMetadata.ensembleId : null}
+            designEnsembles={designEnsembles}
+            onSelectEnsemble={handleSelectEnsemble}
+            onDeleteEnsemble={handleDeleteEnsemble}
+            designApiPath={designApiPath}
+            onRefreshDesignEnsembles={refreshDesignEnsembles}
+            selectedComponent={selectedComponent}
+            onTripComponent={handleTripComponent}
+            onRestartComponent={handleRestartComponent}
+            onOpenBreaker={handleOpenBreaker}
+            onCloseBreaker={handleCloseBreaker}
+            onTripBreaker={handleTripBreaker}
+            onTripRandomTurbine={handleTripRandomTurbine}
+            onTripAllTurbines={handleTripAllTurbines}
+            onGridLoss={handleGridLoss}
+            onOpenAllBreakers={handleOpenAllBreakers}
+            simulationTime={simulationTime}
+            simulationSpeed={simulationSpeed}
+            onSetSimulationSpeed={handleSetSimulationSpeed}
+            availableSimulations={availableSimulations}
+            simConfig={simConfig}
+            onRunSimulation={handleRunSimulation}
+            useDesignDir={!!csvStatus?.use_design_dir}
+            currentConfigName={currentConfigName}
+            onUploadSimData={handleUploadSimData}
+            onDeleteSimulation={handleDeleteSimulation}
+            onDeleteAllSimulations={handleDeleteAllSimulations}
+            onClearSimulationCache={handleClearSimulationCache}
+            onViewSimData={handleViewSimData}
+            onAddSimulation={handleAddSimulation}
+            onAddSimulationsFromXlsx={handleAddSimulationsFromXlsx}
+            onAddSimulationsFromPkl={handleAddSimulationsFromPkl}
+            onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
+            simulationLoadProgress={simulationLoadProgress}
+            quickScenarioButtons={quickScenarioButtons}
+            hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
+            activeQuickScenarioPlaying={activeQuickScenarioPlaying}
+            onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
+            onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
+            onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
+            onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
+            rightRailGridPeek={rightRailGridPeek}
+            onToggleRightRailGridPeek={toggleRightRailGridPeek}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <FontScaleProvider
       uiFontPxShift={uiFontPxShift}
@@ -5144,10 +5593,12 @@ function App() {
           onSave={handleQuickSave}
           onSaveAs={handleOpenSaveDialog}
           onSaveSimulationConfig={() => setSaveSimConfigDialogOpen(true)}
+          onSaveScenarioAs={() => setSaveScenarioAsDialogOpen(true)}
           onLoad={handleOpenLoadDialog}
           hasComponents={canvasComponents.length > 0}
           canSave={currentConfigName !== null}
           canSaveSimulationConfig={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
+          canSaveScenarioAs={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
           onCopyScenarioLink={handleCopyScenarioLink}
           canCopyScenarioLink={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
         />
@@ -5160,6 +5611,8 @@ function App() {
             disabled={mode === 'simulation'}
           />
         )}
+
+        {controlsDockLeftBottom && controlsRail}
 
         <div
           className={`panel-focus-wrapper design-view-wrapper ${designImageUrl ? `mode-${designViewMode}` : ''}`}
@@ -5224,155 +5677,7 @@ function App() {
           )}
         </div>
 
-        <div
-          className={`app-right-rail ${rightRailCollapsed ? 'app-right-rail--collapsed' : ''}`}
-          ref={rightRailRef}
-        >
-          <button
-            type="button"
-            className={`app-right-rail__hinge ${rightRailCollapsed ? 'app-right-rail__hinge--collapsed' : ''}`}
-            onClick={toggleRightRail}
-            title={rightRailCollapsed ? 'Show property & simulation panels' : 'Hide property & simulation panels'}
-            aria-expanded={!rightRailCollapsed}
-            aria-label={
-              rightRailCollapsed ? 'Expand right panels' : 'Collapse right panels'
-            }
-          >
-            <span className="app-right-rail__hinge-chev" aria-hidden>
-              {rightRailCollapsed ? '»' : '«'}
-            </span>
-            {rightRailCollapsed && (
-              <span className="app-right-rail__hinge-vlabel">Controls</span>
-            )}
-          </button>
-          <div className="app-right-rail__panels">
-        <div
-          className="panel-focus-wrapper"
-          style={{ position: 'relative', zIndex: focusedPanel === 'property' ? 1100 : 10 }}
-          onMouseDown={(e) => handlePanelFocus('property', e)}
-        >
-          <PropertyPanel
-            selectedComponent={selectedComponent}
-            selectedConnection={selectedConnection}
-            simulationMetadata={simulationMetadata}
-            simulationColumns={simulationMetadata?.columns || []}
-            ensembleColumnGroups={ensembleColumnGroups}
-            derivedVariables={simulationMetadata?.derivedVariables || []}
-            variableDrivenPresence={variableDrivenPresence}
-            onRemoveVariableDrivenPresenceRule={handleRemoveVariableDrivenPresenceRule}
-            onAddDerivedVariable={handleAddDerivedVariable}
-            onRemoveScenarioColumn={handleRemoveScenarioColumn}
-            onRemoveEnsembleLiveDerived={handleRemoveEnsembleLiveDerived}
-            canvasComponents={canvasComponents}
-            onUpdateComponent={handleUpdateComponent}
-            onUpdateConnection={handleUpdateConnection}
-            onDeleteComponent={handleDeleteComponent}
-            onDeleteConnection={handleDeleteConnection}
-            onAddChartFromBuilder={handleAddChartFromBuilder}
-            onClose={() => {
-              setSelectedComponent(null);
-              setSelectedConnection(null);
-              setSelectedConnections([]);
-            }}
-            disabled={mode === 'simulation'}
-          />
-        </div>
-
-        {/* ================================================================
-            SIMULATION CONTROLS PANEL
-            ================================================================
-            This is the control panel on the right side that shows buttons
-            for triggering failures (like "Trip Turbine").
-            
-            PROPS WE'RE PASSING:
-            - mode: Tells it if we're in 'design' or 'simulation' mode
-            - selectedComponent: Which component the user clicked on
-            - onTripComponent: A FUNCTION we're passing down (called a callback)
-            - onRestartComponent: NEW! Function to bring components back online
-            
-            REACT CONCEPT - Passing Functions as Props:
-            We pass handleTripComponent as a prop called "onTripComponent".
-            This lets the child component (SimulationControls) call our
-            function when the user clicks a button. It's like giving the
-            child a phone number to call back to the parent.
-            
-            When the user clicks "Trip Turbine", this chain happens:
-            1. SimulationControls calls onTripComponent(turbineId)
-            2. That calls our handleTripComponent function here in App.js
-            3. handleTripComponent updates the state
-            4. React re-renders everything with the new state
-            5. The turbine appears red on screen!
-            
-            When the user clicks "Restart Turbine", similar chain happens:
-            1. SimulationControls calls onRestartComponent(turbineId)
-            2. That calls our handleRestartComponent function here in App.js
-            3. handleRestartComponent updates the state (offline → normal)
-            4. React re-renders everything
-            5. The turbine appears grey/normal on screen!
-            When you click a simulation scenario (e.g. "Low-Voltage Ride-Through"), that scenario’s data and config are loaded. 
-            To show clearly which scenario is active, the matching button in the Simulation Controls panel gets a bright “active” style (brighter gradient, glow). 
-            The activeSimulationId prop is the ID of the loaded simulation and is passed from App to SimulationControls so the correct button can be styled.
-
-        ================================================================ */}
-        {/* STEP 2: Pass which simulation  (simulationMetadata?.id ) is currently loaded so the Controls panel can highlight that button.
-            When the user clicks a scenario (e.g. "Low-Voltage Ride-Through"), simulationMetadata is set with its id.
-            Passing activeSimulationId lets SimulationControls show a bright, glowing style on the active button
-            so the user always knows which simulation they're viewing and editing charts for. */}
-        <div
-          className="panel-focus-wrapper"
-          style={{ position: 'relative', zIndex: focusedPanel === 'simulation' ? 1100 : 10 }}
-          onMouseDown={(e) => handlePanelFocus('simulation', e)}
-        >
-          {/*
-            Ensemble: activeEnsembleId outlines member scenarios. Variable lists for charts are in PropertyPanel.
-          */}
-          <SimulationControls
-            mode={mode}
-            viewMode={viewMode}
-            simulationRunning={simulationRunning}
-            activeSimulationId={
-              simulationMetadata?.isEnsemble ? null : (simulationMetadata?.id ?? null)
-            }
-            activeEnsembleId={simulationMetadata?.isEnsemble ? simulationMetadata.ensembleId : null}
-            designEnsembles={designEnsembles}
-            onSelectEnsemble={handleSelectEnsemble}
-            onDeleteEnsemble={handleDeleteEnsemble}
-            designApiPath={designApiPath}
-            onRefreshDesignEnsembles={refreshDesignEnsembles}
-            selectedComponent={selectedComponent}
-            onTripComponent={handleTripComponent}
-            onRestartComponent={handleRestartComponent}
-            onOpenBreaker={handleOpenBreaker}
-            onCloseBreaker={handleCloseBreaker}
-            onTripBreaker={handleTripBreaker}
-            onTripRandomTurbine={handleTripRandomTurbine}
-            onTripAllTurbines={handleTripAllTurbines}
-            onGridLoss={handleGridLoss}
-            onOpenAllBreakers={handleOpenAllBreakers}
-            onResetSystem={handleResetSystem}
-            simulationTime={simulationTime}
-            simulationSpeed={simulationSpeed}
-            onSetSimulationSpeed={handleSetSimulationSpeed}
-            availableSimulations={availableSimulations}
-            simConfig={simConfig}
-            onRunSimulation={handleRunSimulation}
-            useDesignDir={!!csvStatus?.use_design_dir}
-            currentConfigName={currentConfigName}
-            onUploadSimData={handleUploadSimData}
-            onDeleteSimulation={handleDeleteSimulation}
-            onDeleteAllSimulations={handleDeleteAllSimulations}
-            onClearSimulationCache={handleClearSimulationCache}
-            onViewSimData={handleViewSimData}
-            onAddSimulation={handleAddSimulation}
-            onAddSimulationsFromXlsx={handleAddSimulationsFromXlsx}
-            onAddSimulationsFromPkl={handleAddSimulationsFromPkl}
-            onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
-            /* Drives the “Loading data” linear bar under the scenario list while handleRunSimulation runs. */
-            simulationLoadProgress={simulationLoadProgress}
-          />
-        </div>
-          </div>
-        </div>
+        {controlsDockRight && controlsRail}
       </div>
 
       {/* Save/Load Dialog */}
@@ -5385,6 +5690,7 @@ function App() {
           getCurrentConfiguration={getCurrentConfiguration}
           currentConfiguration={getCurrentConfiguration()}
           currentConfigName={currentConfigName}
+          setSavingOverlay={setIsSaving}
         />
       )}
 
@@ -5512,6 +5818,13 @@ function App() {
         existingNames={namedSimulationConfigs}
         onClose={() => setSaveSimConfigDialogOpen(false)}
         onSave={handleConfirmSaveSimulationConfig}
+      />
+
+      <SaveScenarioAsDialog
+        open={saveScenarioAsDialogOpen}
+        existingPresetNames={namedSimulationConfigs}
+        onClose={() => setSaveScenarioAsDialogOpen(false)}
+        onSave={handleConfirmSaveScenarioAs}
       />
 
       {/* Saving Spinner Overlay */}

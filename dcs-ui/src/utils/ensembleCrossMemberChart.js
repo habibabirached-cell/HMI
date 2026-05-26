@@ -3,11 +3,14 @@
  * Rows are aligned by index (0..n-1) across members, like a virtual join on row number.
  */
 import { ENSEMBLE_COLUMN_SEP, parseEnsembleColumnSelections } from './simulationLazyApi';
-import { cellFloat } from './csvRowAccess';
-
-const CHART_COLORS = ['#005E60', '#FF6B35', '#4ECDC4', '#F7B731', '#5F27CD', '#00D2FF', '#C23616', '#0FB9B1'];
-const SELECTION_HIGHLIGHT_COLOR = '#FFD700';
-const SELECTION_MARKER_SIZE = 10;
+import { cellFloat, findColumnKey } from './csvRowAccess';
+import {
+  buildScatterMarkerStyle,
+  buildTraceLineStyle,
+  DEFAULT_CHART_COLORS,
+  getChartXThreshold,
+  resolveVariableStyle,
+} from './chartVariableStyles';
 
 export function getCrossMemberBindingsForChart(chart) {
   const parts = [chart.xColumn, chart.yColumn, ...(chart.yColumns || [])].filter(
@@ -25,9 +28,12 @@ export function crossMemberDataReady(chart, ensembleMemberSimulationData) {
   if (!items?.length) {
     return false;
   }
-  for (const { simId } of items) {
+  for (const { simId, column } of items) {
     const rows = ensembleMemberSimulationData[simId];
     if (!rows?.length) {
+      return false;
+    }
+    if (column && findColumnKey(rows[0], column) == null) {
       return false;
     }
   }
@@ -49,14 +55,31 @@ export function layoutDataForEnsembleCrossChart(chart, memberData) {
   return memberData?.[items[0].simId] || [];
 }
 
-function buildSteppedRowIndices(nMin, items, memberData, simulationRunning, simulationTime, sampleStep) {
+function buildSteppedRowIndices(
+  nMin,
+  items,
+  memberData,
+  simulationRunning,
+  simulationTime,
+  sampleStep,
+  rigid = false,
+  xThreshold = null,
+) {
   let rowIdx = Array.from({ length: nMin }, (_, i) => i);
-  if (simulationRunning && simulationTime !== undefined) {
+  if (!rigid && simulationRunning && simulationTime !== undefined) {
     const x0 = items[0];
     const rows = memberData[x0.simId];
     rowIdx = rowIdx.filter((i) => {
       const v = cellFloat(rows[i], x0.column);
       return !Number.isNaN(v) && v <= simulationTime;
+    });
+  }
+  if (xThreshold != null && items[0]) {
+    const x0 = items[0];
+    const rows = memberData[x0.simId];
+    rowIdx = rowIdx.filter((i) => {
+      const v = cellFloat(rows[i], x0.column);
+      return !Number.isNaN(v) && v > xThreshold;
     });
   }
   const step = sampleStep > 1 ? sampleStep : 1;
@@ -104,12 +127,26 @@ export function buildCross2dTraces({
   if (nMin <= 0) {
     return [];
   }
-  const rowIdx = buildSteppedRowIndices(nMin, items, memberData, simulationRunning, simulationTime, sampleStep);
   const [xb, yb] = [items[0], items[1]];
+  const yKey = chart.yColumn || yb.column;
+  const style = buildTraceLineStyle(chart, yKey, 0);
+  const rigid = resolveVariableStyle(chart, yKey, 0).rigid;
+  const xThreshold = getChartXThreshold(chart);
+  const rowIdx = buildSteppedRowIndices(
+    nMin,
+    items,
+    memberData,
+    simulationRunning,
+    simulationTime,
+    sampleStep,
+    rigid,
+    xThreshold,
+  );
   const xValues = mapXForIndices(rowIdx, xb.simId, xb.column, memberData);
   const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
   const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
   const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
+  const traceColor = style.color || lineColor;
   return [
     {
       x: xValues,
@@ -118,14 +155,14 @@ export function buildCross2dTraces({
       type: 'scatter',
       mode: 'lines+markers',
       name: chart.componentName,
-      line: { color: lineColor, width: 2 },
-      marker: hasSelection
-        ? {
-            color: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-            size: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-            opacity: rowIdx.map((ri) => (selectedSet.has(ri) ? 1 : 0.15)),
-          }
-        : { color: lineColor, size: 4, opacity: 0.7 },
+      line: style.line,
+      marker: buildScatterMarkerStyle({
+        lineColor: traceColor,
+        intensity: style.intensity,
+        sampledRowIndices: rowIdx,
+        selectedSet,
+        hasSelection,
+      }),
     },
   ];
 }
@@ -145,16 +182,27 @@ export function buildCrossNdTraces({
   if (!items || items.length < 2) return [];
   const nMin = Math.min(...items.map(({ simId }) => memberData[simId]?.length ?? 0));
   if (nMin <= 0) return [];
-  const rowIdx = buildSteppedRowIndices(nMin, items, memberData, simulationRunning, simulationTime, sampleStep);
   const [xItem, ...yItems] = items;
-  const xValues = mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData);
+  const xThreshold = getChartXThreshold(chart);
   const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
   const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
 
   return yItems.map((yb, index) => {
-    const lineColor = CHART_COLORS[index % CHART_COLORS.length];
-    const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
     const yKey = chart.yColumns?.[index] ?? yb.column;
+    const style = buildTraceLineStyle(chart, yKey, index);
+    const rigid = resolveVariableStyle(chart, yKey, index).rigid;
+    const rowIdx = buildSteppedRowIndices(
+      nMin,
+      items,
+      memberData,
+      simulationRunning,
+      simulationTime,
+      sampleStep,
+      rigid,
+      xThreshold,
+    );
+    const xValues = mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData);
+    const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
     const yLabel = chart.legendLabels?.[yKey] ?? yKey;
     return {
       x: xValues,
@@ -163,14 +211,14 @@ export function buildCrossNdTraces({
       type: 'scatter',
       mode: 'lines+markers',
       name: yLabel,
-      line: { color: lineColor, width: 2 },
-      marker: hasSelection
-        ? {
-            color: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-            size: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-            opacity: rowIdx.map((ri) => (selectedSet.has(ri) ? 1 : 0.15)),
-          }
-        : { color: lineColor, size: 4, opacity: 0.7 },
+      line: style.line,
+      marker: buildScatterMarkerStyle({
+        lineColor: style.color,
+        intensity: style.intensity,
+        sampledRowIndices: rowIdx,
+        selectedSet,
+        hasSelection,
+      }),
     };
   });
 }
@@ -192,9 +240,7 @@ export function buildCrossStackedNdTraces({
   if (!items || items.length < 2) return [];
   const nMin = Math.min(...items.map(({ simId }) => memberData[simId]?.length ?? 0));
   if (nMin <= 0) return [];
-  const rowIdx = buildSteppedRowIndices(nMin, items, memberData, simulationRunning, simulationTime, sampleStep);
   const [xItem, ...yItems] = items;
-  const xValues = mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData);
   const yColsQ = chart.yColumns || [];
   const yLabelToItem = new Map();
   for (let j = 0; j < yItems.length; j += 1) {
@@ -202,6 +248,7 @@ export function buildCrossStackedNdTraces({
   }
   const groups = groupFn(yColsQ, chart.splitBy || 'phase', chart.manualGroupBreaks);
   if (!groups.length) return [];
+  const xThreshold = getChartXThreshold(chart);
   const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
   const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
   const traces = [];
@@ -210,26 +257,38 @@ export function buildCrossStackedNdTraces({
     grp.cols.forEach((yColKey, colIdx) => {
       const yb = yLabelToItem.get(yColKey);
       if (!yb) return;
-      const lineColor = CHART_COLORS[colIdx % CHART_COLORS.length];
-      const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
+      const style = buildTraceLineStyle(chart, yColKey, colIdx);
+      const rigid = resolveVariableStyle(chart, yColKey, colIdx).rigid;
+      const traceRowIdx = buildSteppedRowIndices(
+        nMin,
+        items,
+        memberData,
+        simulationRunning,
+        simulationTime,
+        sampleStep,
+        rigid,
+        xThreshold,
+      );
+      const traceX = mapXForIndices(traceRowIdx, xItem.simId, xItem.column, memberData);
+      const yValues = mapYForIndices(traceRowIdx, yb.simId, yb.column, memberData);
       const traceName = chart.legendLabels?.[yColKey] ?? yColKey;
       traces.push({
-        x: xValues,
+        x: traceX,
         y: yValues,
-        customdata: rowIdx,
+        customdata: traceRowIdx,
         type: 'scatter',
         mode: 'lines+markers',
         name: traceName,
         xaxis: 'x',
         yaxis: yAxis,
-        line: { color: lineColor, width: 2 },
-        marker: hasSelection
-          ? {
-              color: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-              size: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-              opacity: rowIdx.map((ri) => (selectedSet.has(ri) ? 1 : 0.15)),
-            }
-          : { color: lineColor, size: 4, opacity: 0.7 },
+        line: style.line,
+        marker: buildScatterMarkerStyle({
+          lineColor: style.color,
+          intensity: style.intensity,
+          sampledRowIndices: traceRowIdx,
+          selectedSet,
+          hasSelection,
+        }),
       });
       });
   });
@@ -253,15 +312,27 @@ export function buildCrossMultiLineTraces({
   if (!items || items.length < 2) return [];
   const nMin = Math.min(...items.map(({ simId }) => memberData[simId]?.length ?? 0));
   if (nMin <= 0) return [];
-  const rowIdx = buildSteppedRowIndices(nMin, items, memberData, simulationRunning, simulationTime, sampleStep);
   const [tItem, ...yItems] = items;
-  const xValues = mapXForIndices(rowIdx, tItem.simId, tItem.column, memberData);
+  const xThreshold = getChartXThreshold(chart);
   const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
   const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
   return (chart.components || []).map((comp, index) => {
     const yb = yItems[index];
     if (!yb) return null;
-    const lineColor = CHART_COLORS[index % CHART_COLORS.length];
+    const colKey = comp.columnName;
+    const style = buildTraceLineStyle(chart, colKey, index);
+    const rigid = resolveVariableStyle(chart, colKey, index).rigid;
+    const rowIdx = buildSteppedRowIndices(
+      nMin,
+      items,
+      memberData,
+      simulationRunning,
+      simulationTime,
+      sampleStep,
+      rigid,
+      xThreshold,
+    );
+    const xValues = mapXForIndices(rowIdx, tItem.simId, tItem.column, memberData);
     const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
     return {
       x: xValues,
@@ -270,14 +341,14 @@ export function buildCrossMultiLineTraces({
       type: 'scatter',
       mode: 'lines+markers',
       name: comp.name,
-      line: { color: lineColor, width: 2 },
-      marker: hasSelection
-        ? {
-            color: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-            size: rowIdx.map((ri) => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-            opacity: rowIdx.map((ri) => (selectedSet.has(ri) ? 1 : 0.15)),
-          }
-        : { color: lineColor, size: 4, opacity: 0.7 },
+      line: style.line,
+      marker: buildScatterMarkerStyle({
+        lineColor: style.color,
+        intensity: style.intensity,
+        sampledRowIndices: rowIdx,
+        selectedSet,
+        hasSelection,
+      }),
     };
   }).filter(Boolean);
 }
@@ -297,18 +368,33 @@ export function buildCrossPieTraces({ chart, memberData, simulationRunning, simu
 
   const xItem = items[0];
   const yItems = items.slice(1);
+  const xThreshold = getChartXThreshold(chart);
 
   let rowIndex = 0;
   let bestTime = -Infinity;
+  const rows = memberData[xItem.simId];
   if (simulationRunning && simulationTime !== undefined) {
-    const rows = memberData[xItem.simId];
     for (let i = 0; i < nMin; i++) {
       const xv = cellFloat(rows[i], xItem.column);
-      if (!Number.isNaN(xv) && xv <= simulationTime && xv >= bestTime) {
+      if (Number.isNaN(xv)) continue;
+      if (xThreshold != null && xv <= xThreshold) continue;
+      if (xv <= simulationTime && xv >= bestTime) {
         bestTime = xv;
         rowIndex = i;
       }
     }
+    if (bestTime === -Infinity) return [];
+  } else if (xThreshold != null) {
+    let found = false;
+    for (let i = 0; i < nMin; i++) {
+      const xv = cellFloat(rows[i], xItem.column);
+      if (!Number.isNaN(xv) && xv > xThreshold) {
+        rowIndex = i;
+        found = true;
+        break;
+      }
+    }
+    if (!found) return [];
   }
 
   const labels = yItems.map(({ column }) => sliceCrossMemberColumnLabel(column));
@@ -325,7 +411,7 @@ export function buildCrossPieTraces({ chart, memberData, simulationRunning, simu
       labels,
       values,
       marker: {
-        colors: CHART_COLORS.slice(0, Math.max(labels.length, 1)),
+        colors: DEFAULT_CHART_COLORS.slice(0, Math.max(labels.length, 1)),
       },
       textinfo: 'label+percent',
       hovertemplate:

@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "ensembles": [
+    {
+      "id": "all",
+      "display_name": "all",
+      "member_simulations": [
+        "n_LM2500_1",
+        "n_LM2500_2",
+        "n_LM2500_3",
+        "n_LM2500_4",
+        "n_LM2500_5",
+        "n_LM2500_6",
+        "n_LM2500_7",
+        "n_LM2500_8",
+        "n_Load_1",
+        "n_Load_2",
+        "n_Load_3",
+        "n_Load_4",
+        "n_Main",
+        "n_STATCOM_1",
+        "n_STATCOM_2",
+        "sb_BESS_1",
+        "sb_BESS_2",
+        "sb_LM2500_1",
+        "sb_LM2500_2",
+        "sb_LM2500_3",
+        "sb_LM2500_4",
+        "sb_LM2500_5",
+        "sb_LM2500_6",
+        "sb_LM2500_7",
+        "sb_LM2500_8",
+        "sb_Load_1",
+        "sb_Load_2",
+        "sb_Load_3",
+        "sb_Load_4",
+        "sb_Main",
+        "sb_STATCOM_1",
+        "sb_STATCOM_2"
+      ],
+      "chart_panel": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-bus-left",
+            "chart_type": "nd",
+            "x_column": "n_LM2500_1 — t",
+            "y_columns": [
+              "sb_LM2500_1 — Tm_1"
+            ],
+            "title": "Torque with Bess and Statcom",
+            "ensemble_cross_member": true,
+            "sample_step": 8,
+            "x_label": "time, seconds",
+            "y_label": "Torque, pu",
+            "variable_styles": {
+              "sb_LM2500_1 — Tm_1": {
+                "color": "#15932a"
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-bus-left",
+            "chart_type": "nd",
+            "x_column": "n_LM2500_1 — t",
+            "y_columns": [
+              "n_LM2500_1 — Tmout",
+              "n_LM2500_2 — Tm_1",
+              "sb_LM2500_1 — Tm_1"
+            ],
+            "title": "Mechanical Torque Comparison",
+            "ensemble_cross_member": true,
+            "sample_step": 8,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "variable_styles": {
+              "n_LM2500_1 — Tmout": {
+                "rigid": true
+              },
+              "n_LM2500_2 — Tm_1": {
+                "color": "#005E60",
+                "rigid": true
+              },
+              "sb_LM2500_1 — Tm_1": {
+                "color": "#24bc26"
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            },
+            "ui_drawer": "chart2"
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 8,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 900,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "noBessNoStatcom": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-bus-left",
+            "chart_type": "nd",
+            "x_column": "n_LM2500_1 — t",
+            "y_columns": [
+              "n_LM2500_1 — Tmout",
+              "n_LM2500_2 — Tm_1"
+            ],
+            "title": "Mechanical Torque Comparison",
+            "ensemble_cross_member": true,
+            "sample_step": 8,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "variable_styles": {
+              "n_LM2500_2 — Tm_1": {
+                "color": "#005E60"
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 8,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 900,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "withBessandStatCom": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-bus-left",
+            "chart_type": "nd",
+            "x_column": "n_LM2500_1 — t",
+            "y_columns": [
+              "sb_LM2500_1 — Tm_1"
+            ],
+            "title": "Torque with Bess and Statcom",
+            "ensemble_cross_member": true,
+            "sample_step": 8,
+            "x_label": "time, seconds",
+            "y_label": "Torque, pu",
+            "variable_styles": {
+              "sb_LM2500_1 — Tm_1": {
+                "color": "#15932a"
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-bus-left",
+            "chart_type": "nd",
+            "x_column": "n_LM2500_1 — t",
+            "y_columns": [
+              "n_LM2500_1 — Tmout",
+              "n_LM2500_2 — Tm_1",
+              "sb_LM2500_1 — Tm_1"
+            ],
+            "title": "Mechanical Torque Comparison",
+            "ensemble_cross_member": true,
+            "sample_step": 8,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "variable_styles": {
+              "n_LM2500_1 — Tmout": {
+                "rigid": true
+              },
+              "n_LM2500_2 — Tm_1": {
+                "color": "#005E60",
+                "rigid": true
+              },
+              "sb_LM2500_1 — Tm_1": {
+                "color": "#24bc26"
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            },
+            "ui_drawer": "chart2"
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 8,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 900,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      }
+    }
+  ]
+}

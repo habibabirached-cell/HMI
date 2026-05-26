@@ -55,7 +55,9 @@ body {
   align-items: center;
   gap: 16px;
   box-shadow: 0 2px 8px rgba(0, 94, 96, 0.3);
-  z-index: 100;
+  position: relative;
+  /* Above chart tray (5000) and controls rail (1200) so toolbar dropdowns stay visible. */
+  z-index: 6000;
 }
 
 /* Center: non-blocking simulation fetch indicator (metadata + /data) */
@@ -336,16 +338,59 @@ body {
   flex-direction: column;
 }
 
-/* Right rail: property (320) + simulation (320), one collapse for both. Chart panel inset uses measured width. */
+/* Controls rail (Property + Simulation): dock varies by workspace preset. */
 .app-right-rail {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  height: 100%;
   min-height: 0;
   flex-shrink: 0;
   background: #141414;
+  position: relative;
+  /* Stay above focused canvas (z-index 1100) so the hinge stays clickable. */
+  z-index: 1200;
+}
+
+/* conf1 — full-height column on the right (after canvas). */
+.app-right-rail--dock-right {
+  height: 100%;
   border-left: 2px solid var(--vernova-border);
+  transition: width 0.22s ease;
+}
+
+.app-right-rail--dock-right:not(.app-right-rail--collapsed) {
+  width: 50vw;
+  max-width: 50vw;
+}
+
+/* conf2/conf3 — fixed vertical strip on the left, bottom half of the viewport. */
+.app-right-rail--dock-left-bottom {
+  position: fixed;
+  top: 50%;
+  bottom: 0;
+  height: auto;
+  border-right: 2px solid var(--vernova-border);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+  transition: width 0.22s ease;
+  /* Above chart tray (5000) so trash / scenario actions stay clickable at the seam. */
+  z-index: 5200;
+}
+
+.app-right-rail--dock-left-bottom:not(.app-right-rail--collapsed) {
+  /*
+   * Fill space between the component library and the chart strip (conf2), leaving only
+   * --controls-chart-gap (10px) — not a fixed narrow width and not a large empty band.
+   */
+  width: calc(
+    100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
+      var(--controls-chart-gap, 10px)
+  );
+  max-width: calc(
+    100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
+      var(--controls-chart-gap, 10px)
+  );
+  min-width: 300px;
+  box-sizing: border-box;
 }
 
 .app-right-rail__hinge {
@@ -398,7 +443,9 @@ body {
   display: flex;
   flex-direction: row;
   min-width: 0;
+  min-height: 0;
   flex: 1 1 auto;
+  align-self: stretch;
   transition: max-width 0.22s ease, opacity 0.18s ease, flex-basis 0.22s ease;
 }
 
@@ -414,8 +461,120 @@ body {
 .panel-focus-wrapper {
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+.app-right-rail__panels > .panel-focus-wrapper {
+  flex-shrink: 0;
+}
+
+/* Expanded: stretch both columns evenly to the screen midpoint. */
+.app-right-rail:not(.app-right-rail--collapsed) .app-right-rail__panels > .panel-focus-wrapper {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.app-right-rail:not(.app-right-rail--collapsed) .property-panel,
+.app-right-rail:not(.app-right-rail--collapsed) .simulation-controls {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.app-right-rail--dock-left-bottom:not(.app-right-rail--collapsed) .simulation-controls {
+  border-right: none;
+}
+
+/* Grid peek: 50% gray / 50% see-through so the canvas grid still reads behind controls. */
+.app-right-rail--grid-peek {
+  background: rgba(20, 20, 20, 0.5);
+  border-color: rgba(42, 58, 58, 0.35);
+  box-shadow: none;
+}
+
+.app-right-rail--grid-peek .app-right-rail__hinge {
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.app-right-rail--grid-peek .app-right-rail__panels {
+  background: rgba(20, 20, 20, 0.5);
+}
+
+.app-right-rail--grid-peek .app-right-rail__panels > .panel-focus-wrapper:first-child {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.app-right-rail--grid-peek .app-right-rail__panels > .panel-focus-wrapper:last-child {
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.app-right-rail--grid-peek .simulation-controls {
+  background: rgba(26, 26, 26, 0.5);
+  border-color: rgba(51, 51, 51, 0.45);
+  pointer-events: none;
+  transition: background 0.22s ease;
+}
+
+.app-right-rail--grid-peek .simulation-controls .controls-header {
+  pointer-events: auto;
+  background: rgba(26, 26, 26, 0.5);
+  border-bottom-color: rgba(51, 51, 51, 0.45);
+}
+
+.app-right-rail--grid-peek .simulation-controls .controls-header h3 {
+  opacity: 0.65;
+}
+
+.app-right-rail--grid-peek .simulation-controls .controls-grid-peek-toggle {
+  opacity: 1;
+  background: rgba(30, 30, 30, 0.5);
+}
+
+.app-right-rail--grid-peek .simulation-controls .controls-body {
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.app-right-rail--grid-peek
+  .simulation-controls
+  .controls-body
+  > *:not(.scenario-playing-now-section):not(.quick-scenarios-section--top):not(.simulation-speed-section--after-quick-scenarios) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.app-right-rail--grid-peek .simulation-controls .scenario-playing-now-section,
+.app-right-rail--grid-peek .simulation-controls .quick-scenarios-section--top,
+.app-right-rail--grid-peek .simulation-controls .simulation-speed-section--after-quick-scenarios {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(26, 26, 26, 0.5);
+  border-color: rgba(51, 51, 51, 0.45);
+}
+
+.app-right-rail--grid-peek .simulation-controls .simulation-time-display {
+  background: rgba(0, 94, 96, 0.25);
+}
+
+.app-right-rail--grid-peek .simulation-controls .speed-btn {
+  background: rgba(42, 42, 42, 0.5);
+}
+
+.app-right-rail--grid-peek .simulation-controls .speed-btn:hover {
+  background: rgba(58, 58, 58, 0.5);
+}
+
+.app-right-rail--grid-peek .simulation-controls .speed-btn.active {
+  background: rgba(0, 94, 96, 0.5);
+}
+
+.app-right-rail--grid-peek .simulation-controls .quick-scenario-save,
+.app-right-rail--grid-peek .simulation-controls .quick-scenario-trash {
+  background: rgba(42, 42, 42, 0.5);
 }
 
 /* Utility classes */

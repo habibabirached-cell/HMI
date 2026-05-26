@@ -227,6 +227,15 @@ export const COMPONENT_VISUAL_CONFIG = {
     backgroundTexture: '/component-textures/bess-line-art.png',
     backgroundTextureOpacity: 0.88
   },
+  'gfme-statcom': {
+    width: 150,
+    height: 100,
+    icon: '⚡',
+    color: '#2e7d7d',
+    shape: 'shape-rounded-rect',
+    backgroundTexture: '/component-textures/statcom-line-art.svg',
+    backgroundTextureOpacity: 0.92
+  },
   'battery-rack': {
     width: 80,
     height: 100,  // Tall rack

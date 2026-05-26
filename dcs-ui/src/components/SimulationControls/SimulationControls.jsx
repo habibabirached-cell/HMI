@@ -2,6 +2,7 @@ import React from 'react';
 import './SimulationControls.css';
 import EnsembleEditorDialog from '../EnsembleEditorDialog/EnsembleEditorDialog';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
+import { DEFAULT_QUICK_SCENARIOS } from '../../data/quickScenarioUi';
 
 /**
  * SIMULATION CONTROLS COMPONENT
@@ -46,7 +47,6 @@ const SimulationControls = ({
   onTripAllTurbines,
   onGridLoss,
   onOpenAllBreakers,
-  onResetSystem,
   simulationTime,
   simulationSpeed,
   onSetSimulationSpeed,
@@ -83,14 +83,42 @@ const SimulationControls = ({
   // Set by App while a scenario CSV is downloading or being processed. Used to render the linear meter,
   // show the current phase in plain language, and prevent double-clicks on another scenario mid-load.
   simulationLoadProgress = null,
+  quickScenarioButtons = [],
+  hiddenDefaultQuickScenarios = [],
+  activeQuickScenarioPlaying = null,
+  onQuickScenarioShortcutClick,
+  onSaveQuickScenarioPreset,
+  onDeleteQuickScenarioButton,
+  onHideDefaultQuickScenario,
+  rightRailGridPeek = false,
+  onToggleRightRailGridPeek,
 }) => {
   const [showAddSimForm, setShowAddSimForm] = React.useState(false);
   const [newSimName, setNewSimName] = React.useState('');
   const [ensembleEditor, setEnsembleEditor] = React.useState(null);
   const [importSampleStep, setImportSampleStep] = React.useState(1);
+  const [simScenariosCollapsed, setSimScenariosCollapsed] = React.useState(() => {
+    try {
+      return window.localStorage?.getItem('dcsSimScenariosCollapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
   const xlsxInputRef = React.useRef(null);
   const pklInputRef = React.useRef(null);
   const pkl2InputRef = React.useRef(null);
+
+  const toggleSimScenariosCollapsed = () => {
+    setSimScenariosCollapsed((collapsed) => {
+      const next = !collapsed;
+      try {
+        window.localStorage?.setItem('dcsSimScenariosCollapsed', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   React.useLayoutEffect(() => {
     if (mode !== 'simulation' && viewMode !== 'customer') return;
@@ -408,12 +436,209 @@ const SimulationControls = ({
       {/* Header bar with title */}
       <div className="controls-header">
         <h3>Simulation Controls</h3>
+        {onToggleRightRailGridPeek && (
+          <button
+            type="button"
+            className="controls-grid-peek-toggle"
+            onClick={onToggleRightRailGridPeek}
+            title={
+              rightRailGridPeek
+                ? 'Show property panel and full simulation controls'
+                : 'Hide panels to view canvas grid (scenarios and simulation speed stay visible)'
+            }
+            aria-pressed={rightRailGridPeek}
+          >
+            {rightRailGridPeek ? 'Reveal' : 'Hide'}
+          </button>
+        )}
       </div>
 
       {/* Body area where buttons appear */}
       <div className="controls-body">
         {/* ================================================================
-            ADD SIMULATION SCENARIO (at top)
+            SCENARIO PLAYING NOW + QUICK SCENARIOS (top of panel)
+            ================================================================ */}
+        <div className="scenario-playing-now-section">
+          <h4 className="scenarios-title">Scenario playing now:</h4>
+          {activeQuickScenarioPlaying && simulationRunning ? (
+            <div className="scenario-playing-now-display">
+              <div
+                className="scenario-playing-now-btn quick-scenario-playing-btn"
+                style={{ '--scenario-play-color': activeQuickScenarioPlaying.color }}
+                role="status"
+                aria-label={`Playing: ${activeQuickScenarioPlaying.label}`}
+              >
+                <span className="quick-scenario-playing-shimmer" aria-hidden="true" />
+                <span className="quick-scenario-playing-label">
+                  {activeQuickScenarioPlaying.icon} {activeQuickScenarioPlaying.label}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="scenario-playing-now-empty">—</p>
+          )}
+        </div>
+
+        <div className="quick-scenarios-section quick-scenarios-section--top">
+          <h4 className="scenarios-title">Quick Scenarios</h4>
+
+          <div className="control-buttons">
+            {DEFAULT_QUICK_SCENARIOS.filter(
+              (def) => !hiddenDefaultQuickScenarios.includes(def.id),
+            ).map((def) => {
+              const runDefault = () => {
+                if (def.action === 'tripRandom') onTripRandomTurbine?.();
+                else if (def.action === 'tripAll') onTripAllTurbines?.();
+                else if (def.action === 'gridLoss') onGridLoss?.();
+                else if (def.action === 'openAll') onOpenAllBreakers?.();
+              };
+              return (
+                <div key={def.id} className="quick-scenario-row">
+                  <button
+                    type="button"
+                    className={`control-btn control-btn-${def.variant}`}
+                    onClick={runDefault}
+                    title={def.label}
+                  >
+                    {def.icon} {def.label}
+                  </button>
+                  {onHideDefaultQuickScenario && (
+                    <button
+                      type="button"
+                      className="quick-scenario-trash"
+                      title="Remove this button from Quick Scenarios (saved with design)"
+                      aria-label={`Remove ${def.label}`}
+                      onClick={() => onHideDefaultQuickScenario(def.id)}
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {quickScenarioButtons
+              .filter((shortcut) => {
+                const isPlaying =
+                  simulationRunning &&
+                  activeQuickScenarioPlaying?.id === shortcut.id;
+                return !isPlaying;
+              })
+              .map((shortcut) => (
+              <div key={shortcut.id} className="quick-scenario-row">
+                  <button
+                    type="button"
+                    className="control-btn quick-scenario-shortcut"
+                    style={{ background: shortcut.color }}
+                    onClick={() => onQuickScenarioShortcutClick?.(shortcut)}
+                    title={`Load chart preset “${shortcut.presetName}”${
+                      shortcut.targetType === 'ensemble'
+                        ? ` (ensemble ${shortcut.ensembleId})`
+                        : ` (scenario ${shortcut.simulationId})`
+                    }`}
+                  >
+                    {shortcut.icon} {shortcut.label}
+                  </button>
+                  {onSaveQuickScenarioPreset && (
+                    <button
+                      type="button"
+                      className="quick-scenario-save"
+                      title={`Save current charts and panel settings as “${shortcut.presetName}”`}
+                      aria-label={`Save configuration for ${shortcut.label}`}
+                      onClick={() => onSaveQuickScenarioPreset(shortcut)}
+                    >
+                      💾
+                    </button>
+                  )}
+                  {onDeleteQuickScenarioButton && (
+                    <button
+                      type="button"
+                      className="quick-scenario-trash"
+                      title="Delete this shortcut"
+                      aria-label={`Delete ${shortcut.label}`}
+                      onClick={() => onDeleteQuickScenarioButton(shortcut.id)}
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Simulation time + speed — pinned below quick scenarios; stays visible in grid peek */}
+        {simulationRunning && (
+          <div className="simulation-speed-section simulation-speed-section--after-quick-scenarios">
+            <h4 className="scenarios-title">Simulation Speed</h4>
+
+            <div className="simulation-time-display">
+              <div className="time-label">Simulation Time:</div>
+              <div className="time-value">{simulationTime?.toFixed(1) || '0.0'} seconds</div>
+            </div>
+
+            <div className="speed-buttons">
+              <button
+                className={`speed-btn ${Math.abs(simulationSpeed - 0.001) < 1e-9 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.001)}
+                title="1000× slower (0.001× speed)"
+              >
+                0.001×
+              </button>
+              <button
+                className={`speed-btn ${Math.abs(simulationSpeed - 0.01) < 1e-9 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.01)}
+                title="100× slower (0.01× speed)"
+              >
+                0.01×
+              </button>
+              <button
+                className={`speed-btn ${Math.abs(simulationSpeed - 0.1) < 1e-9 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.1)}
+                title="10× slower (0.1× speed)"
+              >
+                0.1×
+              </button>
+              <button
+                className={`speed-btn ${simulationSpeed === 1 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1)}
+                title="Real-time speed"
+              >
+                1×
+              </button>
+              <button
+                className={`speed-btn ${simulationSpeed === 10 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10)}
+                title="10× speed"
+              >
+                10×
+              </button>
+              <button
+                className={`speed-btn ${simulationSpeed === 100 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(100)}
+                title="100× speed"
+              >
+                100×
+              </button>
+              <button
+                className={`speed-btn ${simulationSpeed === 1000 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1000)}
+                title="1000× speed"
+              >
+                1000×
+              </button>
+              <button
+                className={`speed-btn ${simulationSpeed === 10000 ? 'active' : ''}`}
+                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10000)}
+                title="10000× speed"
+              >
+                10000×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================
+            ADD SIMULATION SCENARIO
             ================================================================ */}
         {useDesignDir && currentConfigName && onAddSimulation && (
           <div className="add-sim-section">
@@ -661,7 +886,9 @@ const SimulationControls = ({
             SIMULATION SCENARIOS SECTION (at top)
             ================================================================ */}
         {availableSimulations && availableSimulations.length > 0 && (
-          <div className="simulation-scenarios-section">
+          <div
+            className={`simulation-scenarios-section${simScenariosCollapsed ? ' simulation-scenarios-section--collapsed' : ''}`}
+          >
             <div className="scenarios-title-row">
               {useDesignDir && currentConfigName && onDeleteAllSimulations && (
                 <button
@@ -689,7 +916,34 @@ const SimulationControls = ({
                 </button>
               )}
               <h4 className="scenarios-title">Simulation Scenarios</h4>
+              {simScenariosCollapsed && (
+                <span className="scenarios-title-collapsed-count">
+                  ({availableSimulations.length})
+                </span>
+              )}
+              <button
+                type="button"
+                className="scenarios-section-collapse-toggle"
+                onClick={toggleSimScenariosCollapsed}
+                title={
+                  simScenariosCollapsed
+                    ? 'Expand simulation scenarios list'
+                    : 'Collapse simulation scenarios list'
+                }
+                aria-expanded={!simScenariosCollapsed}
+                aria-label={
+                  simScenariosCollapsed
+                    ? 'Expand simulation scenarios'
+                    : 'Collapse simulation scenarios'
+                }
+              >
+                <span className="scenarios-collapse-glyph" aria-hidden>
+                  ↔
+                </span>
+              </button>
             </div>
+            {!simScenariosCollapsed && (
+              <>
             <div className="scenarios-info">
               {availableSimulations.length} scenario(s) detected
             </div>
@@ -852,154 +1106,14 @@ const SimulationControls = ({
                 </div>
               </div>
             )}
+              </>
+            )}
           </div>
         )}
 
         {/* Call our function to fill this area with the right content */}
         {renderComponentControls()}
 
-        {/* ================================================================
-            SIMULATION SPEED CONTROLS
-            ================================================================
-            Shows current simulation time and speed multiplier controls.
-            Only visible when simulation is running.
-        ================================================================ */}
-        {simulationRunning && (
-          <div className="simulation-speed-section">
-            <h4 className="scenarios-title">Simulation Speed</h4>
-            
-            <div className="simulation-time-display">
-              <div className="time-label">Simulation Time:</div>
-              <div className="time-value">{simulationTime?.toFixed(1) || '0.0'} seconds</div>
-            </div>
-            
-            <div className="speed-buttons">
-              <button
-                className={`speed-btn ${simulationSpeed === 1 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1)}
-                title="Real-time speed"
-              >
-                1×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 10 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10)}
-                title="10× speed"
-              >
-                10×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 100 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(100)}
-                title="100× speed"
-              >
-                100×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 1000 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1000)}
-                title="1000× speed"
-              >
-                1000×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 10000 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10000)}
-                title="10000× speed"
-              >
-                10000×
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================================
-            QUICK SCENARIOS SECTION
-            ================================================================
-            This section shows pre-built scenario buttons that work
-            WITHOUT needing to select a specific component.
-            
-            These are always visible (when in simulation mode) and let
-            you quickly test common failure scenarios with one click.
-        ================================================================ */}
-        <div className="quick-scenarios-section">
-          <h4 className="scenarios-title">Quick Scenarios</h4>
-          
-          <div className="control-buttons">
-            {/* Trip Random Turbine - Tests unexpected single turbine failure */}
-            <button 
-              className="control-btn control-btn-danger"
-              onClick={() => {
-                console.log('🎲 Quick Scenario: Trip Random Turbine');
-                onTripRandomTurbine();
-              }}
-              title="Randomly trips one turbine to test system response"
-            >
-              🎲 Trip Random Turbine
-            </button>
-
-            {/* Trip All Turbines - Total generation loss scenario */}
-            <button 
-              className="control-btn control-btn-danger"
-              onClick={() => {
-                console.log('💥 Quick Scenario: Trip All Turbines');
-                onTripAllTurbines();
-              }}
-              title="Trips all turbines - worst case blackout scenario"
-            >
-              💥 Trip All Turbines
-            </button>
-
-            {/* Grid Loss - Utility grid disconnection */}
-            <button 
-              className="control-btn control-btn-danger"
-              onClick={() => {
-                console.log('⚡ Quick Scenario: Grid Loss');
-                onGridLoss();
-              }}
-              title="Simulates losing utility grid connection"
-            >
-              ⚡ Grid Loss
-            </button>
-
-            {/* Open All Breakers - System sectioning */}
-            <button 
-              className="control-btn control-btn-warning"
-              onClick={() => {
-                console.log('🟠 Quick Scenario: Open All Breakers');
-                onOpenAllBreakers();
-              }}
-              title="Opens all breakers - complete system isolation"
-            >
-              🔌 Open All Breakers
-            </button>
-          </div>
-
-          {/* ================================================================
-              RESET SYSTEM BUTTON
-              ================================================================
-              This button appears separately at the bottom of the Quick
-              Scenarios section. It's styled differently (blue/grey) to
-              distinguish it from failure scenarios.
-              
-              PURPOSE:
-              After running multiple failure scenarios, this provides a
-              quick way to return everything to normal without having to
-              manually restart each component.
-          ================================================================ */}
-          <div className="reset-section">
-            <button 
-              className="control-btn control-btn-reset"
-              onClick={() => {
-                console.log('🔄 Reset System button clicked');
-                onResetSystem();
-              }}
-              title="Reset all components back to normal state"
-            >
-              🔄 Reset System
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

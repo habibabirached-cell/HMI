@@ -29,6 +29,8 @@ function SaveLoadDialog({
   /** If set, called at save click (and for preview) so payload always matches latest canvas state. */
   getCurrentConfiguration,
   currentConfigName,
+  /** Full-screen saving overlay (same as toolbar quick save). */
+  setSavingOverlay,
 }) {
   const [saveName, setSaveName] = useState('');
   const [saveDescription, setSaveDescription] = useState('');
@@ -121,6 +123,9 @@ function SaveLoadDialog({
 
     setSaving(true);
     setMessage(null);
+    setSavingOverlay?.(true);
+    const saveStartTime = Date.now();
+    const SAVE_SPINNER_MIN_MS = 1000;
 
     try {
       const newName = saveName.trim();
@@ -162,23 +167,23 @@ function SaveLoadDialog({
       const savedConfig = await response.json();
 
       console.log(`✅ Configuration saved with ID: ${savedConfig.id}`);
-      setMessage({
-        type: 'success',
-        text: `Configuration "${savedConfig.name}" saved successfully!`,
-      });
 
       if (onSave) {
         onSave(savedConfig);
       }
 
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      onClose();
     } catch (error) {
       console.error('❌ Error saving configuration:', error);
       setMessage({ type: 'error', text: `Failed to save: ${error.message}` });
     } finally {
+      const elapsed = Date.now() - saveStartTime;
+      const remaining = Math.max(0, SAVE_SPINNER_MIN_MS - elapsed);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
       setSaving(false);
+      setSavingOverlay?.(false);
     }
   };
 

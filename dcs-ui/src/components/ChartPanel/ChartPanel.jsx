@@ -20,6 +20,16 @@ import {
   layoutDataForEnsembleCrossChart,
 } from '../../utils/ensembleCrossMemberChart';
 import { cellFloat } from '../../utils/csvRowAccess';
+import {
+  buildScatterMarkerStyle,
+  buildTraceLineStyle,
+  compactVariableStylesForSave,
+  getChartVariableKeys,
+  getChartXThreshold,
+  rowPassesXThreshold,
+  sampleIndexedRowsForVariable,
+  seedVariableStylesForEditor,
+} from '../../utils/chartVariableStyles';
 import { ENSEMBLE_COLUMN_SEP } from '../../utils/simulationLazyApi';
 import { bumpPlotlyFonts } from '../../utils/plotlyFontBump';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
@@ -47,7 +57,7 @@ const selectionListenersByChart = new Map();
  * - onPanelOpacityChange: (opacity) => void
  * - chartCardWidth / onChartCardWidthChange: tray chart column width (px), persisted from App
  * - onPerChartCardWidthChange(chartId, widthPx | null): this chart only; null = follow top bar (e.g. double-click resize edge)
- * - layoutMode: 'bottom' (default) | 'sideRight' (vertical strip left of Controls rail) | 'top'
+ * - layoutMode: 'bottom' (default) | 'sideRight' (vertical strip on the right) | 'top'
  * - headerBottomPx: top offset below app header (fixed positioning)
  * - sidePanelWidth / onSidePanelWidthChange: width when layoutMode is sideRight
  * - dualChartDrawers: workspace conf1/conf2 → two labeled strips (chart1 / chart2)
@@ -158,18 +168,21 @@ const ChartPanel = ({
       yMax: fmt(live?.yMax ?? saved?.yMax),
       xLocked: saved?.xLocked ?? false,
       yLocked: saved?.yLocked ?? false,
+      xThreshold: fmt(saved?.xThreshold),
     });
   };
 
   const commitAxisRangeEdit = () => {
     if (!editingAxisRange) return;
-    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked } = editingAxisRange;
+    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold } = editingAxisRange;
     const p = (v) => (v === '' || v == null ? undefined : Number(v));
+    const xThr = p(xThreshold);
     // Only persist min/max for a locked axis; Plotly "Home" uses saved range on locked
     // axes and autorange on unlocked axes, so we must not store unused box values.
     const axisRange = {
       xLocked,
       yLocked,
+      ...(xThr != null && !Number.isNaN(xThr) ? { xThreshold: xThr } : {}),
       ...(xLocked ? { xMin: p(xMin), xMax: p(xMax) } : {}),
       ...(yLocked ? { yMin: p(yMin), yMax: p(yMax) } : {}),
     };
@@ -177,7 +190,8 @@ const ChartPanel = ({
       (xLocked && (axisRange.xMin != null || axisRange.xMax != null)) ||
       (yLocked && (axisRange.yMin != null || axisRange.yMax != null));
     const hasLock = xLocked || yLocked;
-    onUpdateChart?.(chartId, { axisRange: (hasRange || hasLock) ? axisRange : null });
+    const hasXThreshold = axisRange.xThreshold != null;
+    onUpdateChart?.(chartId, { axisRange: (hasRange || hasLock || hasXThreshold) ? axisRange : null });
     setEditingAxisRange(null);
   };
 
@@ -266,6 +280,23 @@ const ChartPanel = ({
           </label>
         </div>
 
+        <div className="chart-axis-range-threshold-row">
+          <label className="chart-axis-range-threshold-label">
+            <span>Show data above xThreshold</span>
+            <input
+              className="chart-axis-range-editor-input chart-axis-range-threshold-input"
+              type="number"
+              value={editingAxisRange.xThreshold}
+              onChange={(e) => setEditingAxisRange((p) => ({ ...p, xThreshold: e.target.value }))}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitAxisRangeEdit(); if (e.key === 'Escape') setEditingAxisRange(null); }}
+              placeholder="none"
+            />
+          </label>
+          <span className="chart-axis-range-threshold-hint">
+            Points at or below this X value are hidden
+          </span>
+        </div>
+
         <div className="chart-axis-range-editor-actions">
           <button className="chart-label-editor-btn chart-label-editor-btn--save" onClick={commitAxisRangeEdit}>Apply</button>
           {(chart.axisRange) && (
@@ -279,32 +310,139 @@ const ChartPanel = ({
 
   const openLabelEditor = (chart, e) => {
     e.stopPropagation();
-    const yKeys = chart.yColumns || (chart.yColumn ? [chart.yColumn] : []);
+    const yKeys = getChartVariableKeys(chart);
     setEditingLabels({
       chartId: chart.id,
+      yKeys,
       title: chart.title || chart.componentName || '',
       xLabel: chart.xLabel ?? chart.xColumn ?? '',
       yLabel: chart.yLabel ?? (chart.chartType === 'nd' ? 'Value' : (chart.yColumn ?? '')),
-      legendLabels: yKeys.length > 1
+      legendLabels: yKeys.length
         ? Object.fromEntries(yKeys.map((k) => [k, chart.legendLabels?.[k] ?? '']))
         : null,
+      variableStyles: yKeys.length ? seedVariableStylesForEditor(chart, yKeys) : null,
+      selectedVarKeys: [],
     });
   };
 
   const commitLabelEdit = () => {
     if (!editingLabels) return;
+    const yKeys = editingLabels.yKeys || [];
+    const chart = charts.find((c) => c.id === editingLabels.chartId);
     const legendLabels = editingLabels.legendLabels
       ? Object.fromEntries(
           Object.entries(editingLabels.legendLabels).filter(([, v]) => v.trim())
         )
       : undefined;
-    onUpdateChart?.(editingLabels.chartId, {
+    const variableStyles = compactVariableStylesForSave(editingLabels.variableStyles, yKeys);
+    const patch = {
       title: editingLabels.title,
       xLabel: editingLabels.xLabel || undefined,
       yLabel: editingLabels.yLabel || undefined,
       ...(legendLabels && Object.keys(legendLabels).length ? { legendLabels } : { legendLabels: undefined }),
-    });
+      ...(variableStyles ? { variableStyles } : { variableStyles: undefined }),
+    };
+    if (chart?.yColumns?.length || (chart?.chartType === 'nd' || chart?.chartType === 'pie' || chart?.chartType === 'stacked-nd')) {
+      patch.yColumns = yKeys;
+    } else if (chart?.yColumn != null) {
+      patch.yColumn = yKeys[0];
+    }
+    if (chart?.isMultiComponent && chart.components) {
+      patch.components = yKeys.map((k) => {
+        const existing = chart.components.find((c) => c.columnName === k);
+        return existing || { name: k.split(' \u2014 ').pop(), columnName: k };
+      });
+    }
+    onUpdateChart?.(editingLabels.chartId, patch);
     setEditingLabels(null);
+  };
+
+  const removeVariableFromEditor = (colKey) => {
+    setEditingLabels((p) => {
+      const yKeys = (p.yKeys || []).filter((k) => k !== colKey);
+      if (!yKeys.length) {
+        return p;
+      }
+      const nextStyles = { ...p.variableStyles };
+      delete nextStyles[colKey];
+      const nextLegend = p.legendLabels ? { ...p.legendLabels } : null;
+      if (nextLegend) delete nextLegend[colKey];
+      return {
+        ...p,
+        yKeys,
+        variableStyles: nextStyles,
+        ...(nextLegend ? { legendLabels: nextLegend } : {}),
+        selectedVarKeys: (p.selectedVarKeys || []).filter((k) => k !== colKey),
+      };
+    });
+  };
+
+  const cloneVariableColorFrom = (targetKey, sourceKey) => {
+    if (!sourceKey || targetKey === sourceKey) return;
+    setEditingLabels((p) => {
+      const src = p.variableStyles?.[sourceKey];
+      if (!src) return p;
+      return {
+        ...p,
+        variableStyles: {
+          ...p.variableStyles,
+          [targetKey]: {
+            ...p.variableStyles[targetKey],
+            color: src.color,
+            intensity: src.intensity,
+          },
+        },
+      };
+    });
+  };
+
+  const toggleVariableSelection = (colKey, extendRange = false) => {
+    setEditingLabels((p) => {
+      const keys = Object.keys(p.variableStyles || {});
+      const prev = p.selectedVarKeys || [];
+      if (extendRange && prev.length > 0) {
+        const anchor = prev[prev.length - 1];
+        const i0 = keys.indexOf(anchor);
+        const i1 = keys.indexOf(colKey);
+        if (i0 >= 0 && i1 >= 0) {
+          const lo = Math.min(i0, i1);
+          const hi = Math.max(i0, i1);
+          const range = keys.slice(lo, hi + 1);
+          const merged = new Set([...prev, ...range]);
+          return { ...p, selectedVarKeys: [...merged] };
+        }
+      }
+      const next = prev.includes(colKey)
+        ? prev.filter((k) => k !== colKey)
+        : [...prev, colKey];
+      return { ...p, selectedVarKeys: next };
+    });
+  };
+
+  const applyColorToSelectedVariables = (color, intensity = null) => {
+    setEditingLabels((p) => {
+      const targets = p.selectedVarKeys?.length
+        ? p.selectedVarKeys
+        : [];
+      if (!targets.length) return p;
+      const nextStyles = { ...p.variableStyles };
+      for (const k of targets) {
+        if (!nextStyles[k]) continue;
+        nextStyles[k] = {
+          ...nextStyles[k],
+          color,
+          ...(intensity != null ? { intensity } : {}),
+        };
+      }
+      return { ...p, variableStyles: nextStyles };
+    });
+  };
+
+  const selectAllVariables = (select) => {
+    setEditingLabels((p) => ({
+      ...p,
+      selectedVarKeys: select ? Object.keys(p.variableStyles || {}) : [],
+    }));
   };
 
   const renderLabelEditorForm = () => (
@@ -339,24 +477,189 @@ const ChartPanel = ({
           placeholder="default (column name)"
         />
       </label>
-      {editingLabels.legendLabels && (
+      {editingLabels.variableStyles && (
         <>
-          <div className="chart-label-editor-section-title">Legend labels</div>
-          {Object.keys(editingLabels.legendLabels).map((colKey) => (
-            <label key={colKey} className="chart-label-editor-row chart-label-editor-row--legend">
-              <span className="chart-label-editor-legend-key" title={colKey}>{colKey.split(' \u2014 ').pop()}</span>
-              <input
-                className="chart-label-editor-input"
-                value={editingLabels.legendLabels[colKey]}
-                onChange={(e) => setEditingLabels((p) => ({
-                  ...p,
-                  legendLabels: { ...p.legendLabels, [colKey]: e.target.value },
-                }))}
-                onKeyDown={(e) => { if (e.key === 'Escape') setEditingLabels(null); }}
-                placeholder={colKey.split(' \u2014 ').pop()}
-              />
-            </label>
-          ))}
+          <div className="chart-label-editor-section-head">
+            <div className="chart-label-editor-section-title">Variables</div>
+            <div className="chart-var-select-actions">
+              <button type="button" className="chart-var-select-link" onClick={() => selectAllVariables(true)}>
+                All
+              </button>
+              <button type="button" className="chart-var-select-link" onClick={() => selectAllVariables(false)}>
+                None
+              </button>
+            </div>
+          </div>
+          {(editingLabels.selectedVarKeys?.length ?? 0) > 0 && (
+            <div className="chart-var-bulk-bar">
+              <span className="chart-var-bulk-count">
+                {editingLabels.selectedVarKeys.length} selected — assign color:
+              </span>
+              <label className="chart-var-style-color-wrap" title="Apply color to all selected variables">
+                <input
+                  type="color"
+                  className="chart-var-style-color chart-var-bulk-color"
+                  defaultValue="#005E60"
+                  onChange={(e) => applyColorToSelectedVariables(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="chart-var-select-link"
+                onClick={() => setEditingLabels((p) => ({ ...p, selectedVarKeys: [] }))}
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+          <div className="chart-var-style-list">
+          {Object.keys(editingLabels.variableStyles).map((colKey) => {
+            const shortKey = colKey.split(' \u2014 ').pop();
+            const style = editingLabels.variableStyles[colKey];
+            const otherKeys = Object.keys(editingLabels.variableStyles).filter((k) => k !== colKey);
+            const isSelected = editingLabels.selectedVarKeys?.includes(colKey);
+            return (
+              <div
+                key={colKey}
+                className={`chart-var-style-block${isSelected ? ' chart-var-style-block--selected' : ''}`}
+                title={colKey}
+                onClick={(e) => {
+                  if (e.target.closest('input, select, button, label')) return;
+                  toggleVariableSelection(colKey, e.shiftKey);
+                }}
+              >
+                <div className="chart-var-style-head">
+                  <label
+                    className="chart-var-select-wrap"
+                    title="Select for bulk color"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!isSelected}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleVariableSelection(colKey, e.shiftKey);
+                      }}
+                    />
+                  </label>
+                  <span className="chart-label-editor-legend-key">{shortKey}</span>
+                  {editingLabels.legendLabels && (
+                    <input
+                      className="chart-label-editor-input chart-var-style-label-input"
+                      value={editingLabels.legendLabels[colKey] ?? ''}
+                      onChange={(e) => setEditingLabels((p) => ({
+                        ...p,
+                        legendLabels: { ...p.legendLabels, [colKey]: e.target.value },
+                      }))}
+                      placeholder={shortKey}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    className="chart-var-remove-btn"
+                    title="Remove this variable from the chart"
+                    aria-label={`Remove ${shortKey}`}
+                    disabled={(editingLabels.yKeys?.length ?? 0) <= 1}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeVariableFromEditor(colKey);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="chart-var-style-controls">
+                  <label className="chart-var-style-color-wrap" title="Line color">
+                    <input
+                      type="color"
+                      className="chart-var-style-color"
+                      value={style.color}
+                      onChange={(e) => {
+                        const color = e.target.value;
+                        setEditingLabels((p) => {
+                          const multi =
+                            p.selectedVarKeys?.includes(colKey) &&
+                            (p.selectedVarKeys?.length ?? 0) > 1;
+                          if (multi) {
+                            const nextStyles = { ...p.variableStyles };
+                            for (const k of p.selectedVarKeys) {
+                              if (nextStyles[k]) {
+                                nextStyles[k] = { ...nextStyles[k], color };
+                              }
+                            }
+                            return { ...p, variableStyles: nextStyles };
+                          }
+                          return {
+                            ...p,
+                            variableStyles: {
+                              ...p.variableStyles,
+                              [colKey]: { ...p.variableStyles[colKey], color },
+                            },
+                          };
+                        });
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </label>
+                  <label className="chart-var-style-intensity" title="Color intensity">
+                    <span>Int</span>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      value={Math.round((style.intensity ?? 1) * 100)}
+                      onChange={(e) => setEditingLabels((p) => ({
+                        ...p,
+                        variableStyles: {
+                          ...p.variableStyles,
+                          [colKey]: {
+                            ...p.variableStyles[colKey],
+                            intensity: Number(e.target.value) / 100,
+                          },
+                        },
+                      }))}
+                    />
+                  </label>
+                  {otherKeys.length > 0 && (
+                    <label className="chart-var-style-clone" title="Copy another variable's color">
+                      <span>Clone</span>
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          const src = e.target.value;
+                          if (src) cloneVariableColorFrom(colKey, src);
+                          e.target.value = '';
+                        }}
+                      >
+                        <option value="">from…</option>
+                        {otherKeys.map((k) => (
+                          <option key={k} value={k}>{k.split(' \u2014 ').pop()}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label className="chart-var-style-rigid" title="Rigid: draw full trace at Simulate; unchecked = progressive">
+                    <input
+                      type="checkbox"
+                      checked={!!style.rigid}
+                      onChange={(e) => setEditingLabels((p) => ({
+                        ...p,
+                        variableStyles: {
+                          ...p.variableStyles,
+                          [colKey]: { ...p.variableStyles[colKey], rigid: e.target.checked },
+                        },
+                      }))}
+                    />
+                    <span>Rigid</span>
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+          </div>
         </>
       )}
       <div className="chart-label-editor-actions">
@@ -368,46 +671,64 @@ const ChartPanel = ({
   /** Always above canvas / side panel stacking (10–1100); below modals (10k+). */
   const CHART_PANEL_Z_STACK = 5000;
 
-  // Remember the browser width so “wider” can grow cards up to nearly the full screen and limits stay correct after resize.
-  // During SSR we pick a neutral default; the first client paint and resize listener correct it.
+  // Remember viewport size so card limits stay correct after resize.
   const [viewportInnerWidth, setViewportInnerWidth] = useState(
     () => (typeof window !== 'undefined' ? window.innerWidth : 1200),
   );
+  const [viewportInnerHeight, setViewportInnerHeight] = useState(
+    () => (typeof window !== 'undefined' ? window.innerHeight : 800),
+  );
   useEffect(() => {
-    const onResize = () => setViewportInnerWidth(window.innerWidth);
+    const onResize = () => {
+      setViewportInnerWidth(window.innerWidth);
+      setViewportInnerHeight(window.innerHeight);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // One chart column: tray width is viewport minus horizontal insets and panel padding.
+  const isVerticalChartLayout = layoutMode === 'sideRight';
+
+  // Bottom/top tray: card width. Side-right strip (conf 2): card height (width is fixed by the dock).
   const chartCardMaxWidthPx = Math.max(
     320,
     viewportInnerWidth - insetLeft - insetRight - 32,
   );
-  // Card CSS uses max-width ≈ chartCardWidth + 150px; clamp range so drag-resize stays sane when the window is tiny.
-  const chartWidthStateMin = 200;
-  const chartWidthStateMax = Math.max(chartWidthStateMin, chartCardMaxWidthPx - 150);
+  const chartCardMaxLengthPx = Math.max(
+    320,
+    viewportInnerHeight - headerBottomPx - 48,
+  );
+  const chartSizeStateMin = 200;
+  const chartSizeStateMax = isVerticalChartLayout
+    ? Math.max(chartSizeStateMin, chartCardMaxLengthPx - 50)
+    : Math.max(chartSizeStateMin, chartCardMaxWidthPx - 150);
 
   useEffect(() => {
     if (!onChartCardWidthChange) return;
-    const clamped = Math.min(chartCardWidth, chartWidthStateMax);
+    const clamped = Math.min(chartCardWidth, chartSizeStateMax);
     if (clamped !== chartCardWidth) onChartCardWidthChange(clamped);
-  }, [chartWidthStateMax, chartCardWidth, onChartCardWidthChange]);
+  }, [chartSizeStateMax, chartCardWidth, onChartCardWidthChange]);
 
-  /** “How wide is THIS chart’s box?” — its own number, or if it has none, the big number from the top bar. */
-  const effectiveCardWidthPx = (chart) => {
+  /** Card width (horizontal tray) or height (vertical side strip) for one chart — own override or top-bar default. */
+  const effectiveCardSizePx = (chart) => {
     const own = chart.chartCardWidth;
     const raw =
       own != null && Number.isFinite(Number(own)) ? Number(own) : chartCardWidth;
     const clamped = Math.min(4000, Math.max(200, Math.round(raw)));
-    return Math.min(chartWidthStateMax, Math.max(chartWidthStateMin, clamped));
+    return Math.min(chartSizeStateMax, Math.max(chartSizeStateMin, clamped));
   };
 
-  const cardWidthCssVars = (chart) => {
-    const w = effectiveCardWidthPx(chart);
+  const cardSizeCssVars = (chart) => {
+    const size = effectiveCardSizePx(chart);
+    if (isVerticalChartLayout) {
+      return {
+        '--chart-height': `${size}px`,
+        '--chart-min-height': `${Math.max(200, size - 50)}px`,
+      };
+    }
     return {
-      '--chart-min-width': `${Math.max(200, w - 150)}px`,
-      '--chart-max-width': `${Math.min(chartCardMaxWidthPx, w + 150)}px`,
+      '--chart-min-width': `${Math.max(200, size - 150)}px`,
+      '--chart-max-width': `${Math.min(chartCardMaxWidthPx, size + 150)}px`,
     };
   };
 
@@ -417,9 +738,10 @@ const ChartPanel = ({
     const onMove = (e) => {
       const t = chartResizeDragRef.current;
       if (!t) return;
+      const delta = t.vertical ? e.clientY - t.startY : e.clientX - t.startX;
       const next = Math.min(
-        chartWidthStateMax,
-        Math.max(chartWidthStateMin, Math.round(t.startW + (e.clientX - t.startX))),
+        chartSizeStateMax,
+        Math.max(chartSizeStateMin, Math.round(t.startSize + delta)),
       );
       if (next !== t.lastApplied) {
         t.lastApplied = next;
@@ -437,21 +759,25 @@ const ChartPanel = ({
       window.removeEventListener('pointerup', endDrag);
       window.removeEventListener('pointercancel', endDrag);
     };
-  }, [chartWidthStateMin, chartWidthStateMax, onPerChartCardWidthChange]);
+  }, [chartSizeStateMin, chartSizeStateMax, onPerChartCardWidthChange]);
 
   const chartResizeEdge = (chart) => (
     <div
-      className="chart-panel-chart-resize-edge"
+      className={`chart-panel-chart-resize-edge${
+        isVerticalChartLayout ? ' chart-panel-chart-resize-edge--vertical' : ''
+      }`}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
-        const startW = effectiveCardWidthPx(chart);
+        const startSize = effectiveCardSizePx(chart);
         chartResizeDragRef.current = {
           chartId: chart.id,
           startX: e.clientX,
-          startW,
-          lastApplied: startW,
+          startY: e.clientY,
+          startSize,
+          lastApplied: startSize,
+          vertical: isVerticalChartLayout,
         };
       }}
       onDoubleClick={(e) => {
@@ -459,7 +785,11 @@ const ChartPanel = ({
         e.stopPropagation();
         onPerChartCardWidthChange?.(chart.id, null);
       }}
-      title="Drag right edge to resize · Double-click = use top-bar default width"
+      title={
+        isVerticalChartLayout
+          ? 'Drag bottom edge to resize height · Double-click = use top-bar default length'
+          : 'Drag right edge to resize · Double-click = use top-bar default width'
+      }
     />
   );
 
@@ -511,12 +841,14 @@ const ChartPanel = ({
    * Skip fetch when simulationData is provided (design dir flow)
    */
   useEffect(() => {
-    if (simulationData && simulationData.length > 0) return;
     charts.forEach((chart) => {
       if (simulationMetadata?.isEnsemble && chart.ensembleCrossMember) {
         if (!crossMemberDataReady(chart, ensembleMemberSimulationData)) {
           void onEnsureEnsembleChartColumns?.(chart);
         }
+        return;
+      }
+      if (simulationData && simulationData.length > 0) {
         return;
       }
       if (
@@ -652,39 +984,39 @@ const ChartPanel = ({
    * Adds customdata (row indices) for cross-chart selection; opacity highlights selected points
    */
   const generateMultiComponentLineChart = (chart, data) => {
-    const colors = ['#005E60', '#FF6B35', '#4ECDC4', '#F7B731', '#5F27CD', '#00D2FF', '#C23616', '#0FB9B1'];
     const indexed = data.map((row, i) => ({ row, i }));
-    let filtered = indexed;
-    if (simulationRunning && simulationTime !== undefined) {
-      filtered = indexed.filter(({ row }) => {
-        const t = parseFloat(row[chart.timeColumn]);
-        return !isNaN(t) && t <= simulationTime;
-      });
-    }
     const step = getSampleStep(chart.id);
-    const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
-    const sampledData = sampled.map(({ row }) => row);
-    const sampledRowIndices = sampled.map(({ i }) => i);
     const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
     const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
 
     return chart.components.map((comp, index) => {
-      const lineColor = colors[index % colors.length];
+      const colKey = comp.columnName;
+      const { sampledData, sampledRowIndices } = sampleIndexedRowsForVariable({
+        indexed,
+        chart,
+        colKey,
+        index,
+        xColumn: chart.timeColumn,
+        simulationRunning,
+        simulationTime,
+        sampleStep: step,
+      });
+      const style = buildTraceLineStyle(chart, colKey, index);
       return {
-        x: sampledData.map(row => parseFloat(row[chart.timeColumn]) || 0),
-        y: sampledData.map(row => parseFloat(row[comp.columnName]) || 0),
+        x: sampledData.map((row) => parseFloat(row[chart.timeColumn]) || 0),
+        y: sampledData.map((row) => parseFloat(row[comp.columnName]) || 0),
         customdata: sampledRowIndices,
         type: 'scatter',
         mode: 'lines+markers',
         name: comp.name,
-        line: { color: lineColor, width: 2 },
-        marker: hasSelection
-          ? {
-              color: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-              size: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-              opacity: sampledRowIndices.map(ri => (selectedSet.has(ri) ? 1 : 0.15))
-            }
-          : { color: lineColor, size: 4, opacity: 0.7 }
+        line: style.line,
+        marker: buildScatterMarkerStyle({
+          lineColor: style.color,
+          intensity: style.intensity,
+          sampledRowIndices,
+          selectedSet,
+          hasSelection,
+        }),
       };
     });
   };
@@ -748,20 +1080,8 @@ const ChartPanel = ({
     const groups = groupColumnsBySplit(chart.yColumns, chart.splitBy || 'phase', chart.manualGroupBreaks);
     if (groups.length === 0) return [];
 
-    const colors = ['#005E60', '#FF6B35', '#4ECDC4', '#F7B731', '#5F27CD', '#00D2FF', '#C23616', '#0FB9B1'];
     const indexed = data.map((row, i) => ({ row, i }));
-    let filtered = indexed;
-    if (simulationRunning && simulationTime !== undefined) {
-      filtered = indexed.filter(({ row }) => {
-        const xVal = parseFloat(row[chart.xColumn]);
-        return !isNaN(xVal) && xVal <= simulationTime;
-      });
-    }
     const step = getSampleStep(chart.id);
-    const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
-    const sampledData = sampled.map(({ row }) => row);
-    const sampledRowIndices = sampled.map(({ i }) => i);
-    const xValues = sampledData.map(row => parseFloat(row[chart.xColumn]) || 0);
     const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
     const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
 
@@ -769,8 +1089,21 @@ const ChartPanel = ({
     groups.forEach((grp, rowIdx) => {
       const yAxis = rowIdx === 0 ? 'y' : `y${rowIdx + 1}`;
       grp.cols.forEach((yCol, colIdx) => {
-        const lineColor = colors[colIdx % colors.length];
-        const yValues = sampledData.map(row => parseFloat(row[yCol]) || 0);
+        const globalIndex = chart.yColumns.indexOf(yCol);
+        const styleIndex = globalIndex >= 0 ? globalIndex : colIdx;
+        const { sampledData, sampledRowIndices } = sampleIndexedRowsForVariable({
+          indexed,
+          chart,
+          colKey: yCol,
+          index: styleIndex,
+          xColumn: chart.xColumn,
+          simulationRunning,
+          simulationTime,
+          sampleStep: step,
+        });
+        const style = buildTraceLineStyle(chart, yCol, styleIndex);
+        const xValues = sampledData.map((row) => parseFloat(row[chart.xColumn]) || 0);
+        const yValues = sampledData.map((row) => parseFloat(row[yCol]) || 0);
         traces.push({
           x: xValues,
           y: yValues,
@@ -778,14 +1111,16 @@ const ChartPanel = ({
           type: 'scatter',
           mode: 'lines+markers',
           name: chart.legendLabels?.[yCol] ?? yCol,
-          line: { color: lineColor, width: 2 },
-          marker: hasSelection
-            ? {
-                color: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-                size: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-                opacity: sampledRowIndices.map(ri => (selectedSet.has(ri) ? 1 : 0.15))
-              }
-            : { color: lineColor, size: 4, opacity: 0.7 }
+          xaxis: 'x',
+          yaxis: yAxis,
+          line: style.line,
+          marker: buildScatterMarkerStyle({
+            lineColor: style.color,
+            intensity: style.intensity,
+            sampledRowIndices,
+            selectedSet,
+            hasSelection,
+          }),
         });
       });
     });
@@ -796,26 +1131,25 @@ const ChartPanel = ({
    * Generate nD chart data – one trace per Y column, shared X axis
    */
   const generateNdChartData = (chart, data) => {
-    const colors = ['#005E60', '#FF6B35', '#4ECDC4', '#F7B731', '#5F27CD', '#00D2FF', '#C23616', '#0FB9B1'];
     const indexed = data.map((row, i) => ({ row, i }));
-    let filtered = indexed;
-    if (simulationRunning && simulationTime !== undefined) {
-      filtered = indexed.filter(({ row }) => {
-        const xVal = parseFloat(row[chart.xColumn]);
-        return !isNaN(xVal) && xVal <= simulationTime;
-      });
-    }
     const step = getSampleStep(chart.id);
-    const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
-    const sampledData = sampled.map(({ row }) => row);
-    const sampledRowIndices = sampled.map(({ i }) => i);
-    const xValues = sampledData.map(row => parseFloat(row[chart.xColumn]) || 0);
     const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
     const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
 
     return chart.yColumns.map((yCol, index) => {
-      const lineColor = colors[index % colors.length];
-      const yValues = sampledData.map(row => parseFloat(row[yCol]) || 0);
+      const { sampledData, sampledRowIndices } = sampleIndexedRowsForVariable({
+        indexed,
+        chart,
+        colKey: yCol,
+        index,
+        xColumn: chart.xColumn,
+        simulationRunning,
+        simulationTime,
+        sampleStep: step,
+      });
+      const style = buildTraceLineStyle(chart, yCol, index);
+      const xValues = sampledData.map((row) => parseFloat(row[chart.xColumn]) || 0);
+      const yValues = sampledData.map((row) => parseFloat(row[yCol]) || 0);
       return {
         x: xValues,
         y: yValues,
@@ -823,14 +1157,14 @@ const ChartPanel = ({
         type: 'scatter',
         mode: 'lines+markers',
         name: chart.legendLabels?.[yCol] ?? yCol,
-        line: { color: lineColor, width: 2 },
-        marker: hasSelection
-          ? {
-              color: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-              size: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-              opacity: sampledRowIndices.map(ri => (selectedSet.has(ri) ? 1 : 0.15))
-            }
-          : { color: lineColor, size: 4, opacity: 0.7 }
+        line: style.line,
+        marker: buildScatterMarkerStyle({
+          lineColor: style.color,
+          intensity: style.intensity,
+          sampledRowIndices,
+          selectedSet,
+          hasSelection,
+        }),
       };
     });
   };
@@ -939,16 +1273,31 @@ const ChartPanel = ({
     if (!data?.length || !chart.yColumns?.length) return [];
     const xCol = chart.xColumn;
     const yCols = chart.yColumns;
+    const xThreshold = getChartXThreshold(chart);
     let rowIndex = 0;
     let bestTime = -Infinity;
     if (simulationRunning && simulationTime !== undefined) {
       for (let i = 0; i < data.length; i++) {
         const xv = cellFloat(data[i], xCol);
-        if (!Number.isNaN(xv) && xv <= simulationTime && xv >= bestTime) {
+        if (Number.isNaN(xv)) continue;
+        if (xThreshold != null && xv <= xThreshold) continue;
+        if (xv <= simulationTime && xv >= bestTime) {
           bestTime = xv;
           rowIndex = i;
         }
       }
+      if (bestTime === -Infinity) return [];
+    } else if (xThreshold != null && xCol) {
+      let found = false;
+      for (let i = 0; i < data.length; i++) {
+        const xv = cellFloat(data[i], xCol);
+        if (!Number.isNaN(xv) && xv > xThreshold) {
+          rowIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found) return [];
     }
     const row = data[rowIndex];
     const labels = yCols.map((c) => slicePieColumnLabel(c));
@@ -1052,27 +1401,43 @@ const ChartPanel = ({
 
     // Filter data (keep row indices for cross-chart selection)
     const indexed = data.map((row, i) => ({ row, i }));
-    let filtered = indexed;
-    if (simulationRunning && simulationTime !== undefined) {
-      filtered = indexed.filter(({ row }) => {
-        const xValue = cellFloat(row, chart.xColumn);
-        return !isNaN(xValue) && xValue <= simulationTime;
-      });
-    }
     const step = getSampleStep(chart.id);
-    const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
-    const sampledData = sampled.map(({ row }) => row);
-    const sampledRowIndices = sampled.map(({ i }) => i);
-
-    const xValues = sampledData.map((row) => cellFloat(row, chart.xColumn));
-    const yValues = sampledData.map((row) => cellFloat(row, chart.yColumn));
-
     const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
     const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
 
+    let filtered = indexed;
+    const xThr = getChartXThreshold(chart);
+    if (xThr != null && chart.xColumn) {
+      filtered = filtered.filter(({ row }) => rowPassesXThreshold(row, chart.xColumn, xThr));
+    }
+    if (simulationRunning && simulationTime !== undefined) {
+      filtered = filtered.filter(({ row }) => {
+        const xValue = cellFloat(row, chart.xColumn);
+        return !Number.isNaN(xValue) && xValue <= simulationTime;
+      });
+    }
+    const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
+    const sampledData = sampled.map(({ row }) => row);
+    const sampledRowIndicesLegacy = sampled.map(({ i }) => i);
+    const xValues = sampledData.map((row) => cellFloat(row, chart.xColumn));
+    const yValues = sampledData.map((row) => cellFloat(row, chart.yColumn));
+
     switch (chart.chartType) {
       case '2d': {
-        const lineColor = '#005E60';
+        const colKey = chart.yColumn;
+        const { sampledData, sampledRowIndices } = sampleIndexedRowsForVariable({
+          indexed,
+          chart,
+          colKey,
+          index: 0,
+          xColumn: chart.xColumn,
+          simulationRunning,
+          simulationTime,
+          sampleStep: step,
+        });
+        const style = buildTraceLineStyle(chart, colKey, 0);
+        const xValues = sampledData.map((row) => cellFloat(row, chart.xColumn));
+        const yValues = sampledData.map((row) => cellFloat(row, chart.yColumn));
         return [{
           x: xValues,
           y: yValues,
@@ -1080,14 +1445,14 @@ const ChartPanel = ({
           type: 'scatter',
           mode: 'lines+markers',
           name: chart.componentName,
-          line: { color: lineColor, width: 2 },
-          marker: hasSelection
-            ? {
-                color: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_HIGHLIGHT_COLOR : lineColor)),
-                size: sampledRowIndices.map(ri => (selectedSet.has(ri) ? SELECTION_MARKER_SIZE : 4)),
-                opacity: sampledRowIndices.map(ri => (selectedSet.has(ri) ? 1 : 0.15))
-              }
-            : { color: lineColor, size: 4, opacity: 0.7 }
+          line: style.line,
+          marker: buildScatterMarkerStyle({
+            lineColor: style.color,
+            intensity: style.intensity,
+            sampledRowIndices,
+            selectedSet,
+            hasSelection,
+          }),
         }];
       }
 
@@ -2314,25 +2679,33 @@ const ChartPanel = ({
                 aria-label="Chart panel opacity"
               />
             </div>
-            {/* Step chart column width by 50px, clamped between chartWidthStateMin and chartWidthStateMax (viewport-based). */}
+            {/* Step chart size by 50px — width in bottom/top tray, height in conf 2 side strip. */}
             <div
               className="chart-panel-width-controls"
-              title="Chart column width — ◀ narrower, ▶ wider (all cards in the tray)"
+              title={
+                isVerticalChartLayout
+                  ? 'Chart height — ◀ shorter, ▶ taller (all cards in the strip)'
+                  : 'Chart column width — ◀ narrower, ▶ wider (all cards in the tray)'
+              }
             >
-              <span className="chart-panel-width-label">Width</span>
+              <span className="chart-panel-width-label">
+                {isVerticalChartLayout ? 'Length' : 'Width'}
+              </span>
               <button
                 type="button"
                 className="chart-panel-size-arrow"
                 onClick={() =>
                   onChartCardWidthChange?.(
                     Math.min(
-                      chartWidthStateMax,
-                      Math.max(chartWidthStateMin, chartCardWidth - 50),
+                      chartSizeStateMax,
+                      Math.max(chartSizeStateMin, chartCardWidth - 50),
                     ),
                   )
                 }
-                disabled={chartCardWidth <= chartWidthStateMin}
-                aria-label="Narrower chart windows"
+                disabled={chartCardWidth <= chartSizeStateMin}
+                aria-label={
+                  isVerticalChartLayout ? 'Shorter chart windows' : 'Narrower chart windows'
+                }
               >
                 ◀
               </button>
@@ -2342,13 +2715,15 @@ const ChartPanel = ({
                 onClick={() =>
                   onChartCardWidthChange?.(
                     Math.min(
-                      chartWidthStateMax,
-                      Math.max(chartWidthStateMin, chartCardWidth + 50),
+                      chartSizeStateMax,
+                      Math.max(chartSizeStateMin, chartCardWidth + 50),
                     ),
                   )
                 }
-                disabled={chartCardWidth >= chartWidthStateMax}
-                aria-label="Wider chart windows"
+                disabled={chartCardWidth >= chartSizeStateMax}
+                aria-label={
+                  isVerticalChartLayout ? 'Taller chart windows' : 'Wider chart windows'
+                }
               >
                 ▶
               </button>
@@ -2400,7 +2775,7 @@ const ChartPanel = ({
                     key={chart.id} 
                     id={`chart-${chart.id}`} 
                     className={`chart-panel-chart chart-in-stack ${isHighlighted ? 'highlighted' : ''} ${isSelected ? 'selected' : ''}`}
-                    style={cardWidthCssVars(chart)}
+                    style={cardSizeCssVars(chart)}
                   >
                     <div className="chart-panel-chart-header">
                       <input
@@ -2431,7 +2806,7 @@ const ChartPanel = ({
                   <button
                     className="chart-label-edit-btn"
                     onClick={(e) => openLabelEditor(chart, e)}
-                    title="Edit title and axis labels"
+                    title="Edit chart: titles, colors, rigid/progressive traces"
                   >✎</button>
                 )}
                 {onUpdateChart && (
@@ -2562,7 +2937,7 @@ const ChartPanel = ({
                   key={chart.id}
                   id={`chart-${chart.id}`}
                   className={`chart-panel-chart ${isHighlighted ? 'highlighted' : ''} ${isSelected ? 'selected' : ''}`}
-                  style={cardWidthCssVars(chart)}
+                  style={cardSizeCssVars(chart)}
                 >
                   <div className="chart-panel-chart-header">
                     <input
@@ -2592,7 +2967,7 @@ const ChartPanel = ({
                         <button
                           className="chart-label-edit-btn"
                           onClick={(e) => openLabelEditor(chart, e)}
-                          title="Edit title and axis labels"
+                          title="Edit chart: titles, colors, rigid/progressive traces"
                         >✎</button>
                       )}
                       {onUpdateChart && (

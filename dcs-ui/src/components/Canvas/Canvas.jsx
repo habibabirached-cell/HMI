@@ -264,6 +264,12 @@ const Canvas = forwardRef(({
     startClientY: 0,
     movedBeyondTapThreshold: false,
   });
+  const dragMoveCandidateRef = useRef({
+    componentId: null,
+    startClientX: 0,
+    startClientY: 0,
+    movedBeyondDragThreshold: false,
+  });
 
   const hiddenTieMemberIds = useMemo(
     () => getTieHiddenMemberIdSet(components),
@@ -509,11 +515,14 @@ const Canvas = forwardRef(({
       markSelectionInteractionStart();
     }
 
+    const authoredComponent =
+      components.find((c) => c.id === component.id) ?? component;
+
     // IN SIMULATION MODE: Only allow selection, nothing else
     if (mode === 'simulation') {
       console.log('🖱️ Clicked in simulation mode:', component.name);
       onClearConnectionMultiSelection();
-      onSelectComponent(component);  // Allow selecting
+      onSelectComponent(authoredComponent);
       return;  // But block dragging and connecting
     }
     
@@ -576,12 +585,19 @@ const Canvas = forwardRef(({
       };
     }
     setDraggingComponent(component.id);
+    dragMoveCandidateRef.current = {
+      componentId: component.id,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      movedBeyondDragThreshold: false,
+    };
     const rect = canvasRef.current.getBoundingClientRect();
+    // Blocks are drawn with render-only tie-collapse shift; drag must use authored JSON position.
     setDragOffset({
-      x: (e.clientX - rect.left - pan.x) / zoom - component.position.x,
-      y: (e.clientY - rect.top - pan.y) / zoom - component.position.y
+      x: (e.clientX - rect.left - pan.x) / zoom - authoredComponent.position.x,
+      y: (e.clientY - rect.top - pan.y) / zoom - authoredComponent.position.y,
     });
-    onSelectComponent(component);
+    onSelectComponent(authoredComponent);
   };
 
   /**
@@ -795,6 +811,20 @@ const Canvas = forwardRef(({
         }
       }
 
+      const dragCand = dragMoveCandidateRef.current;
+      if (
+        dragCand.componentId === draggingComponent &&
+        !dragCand.movedBeyondDragThreshold
+      ) {
+        const dx = e.clientX - dragCand.startClientX;
+        const dy = e.clientY - dragCand.startClientY;
+        if (dx * dx + dy * dy > 64) {
+          dragCand.movedBeyondDragThreshold = true;
+        } else {
+          return;
+        }
+      }
+
       const rect = canvasRef.current.getBoundingClientRect();
       const rawX = (e.clientX - rect.left - pan.x) / zoom - dragOffset.x;
       const rawY = (e.clientY - rect.top - pan.y) / zoom - dragOffset.y;
@@ -852,6 +882,12 @@ const Canvas = forwardRef(({
       startClientX: 0,
       startClientY: 0,
       movedBeyondTapThreshold: false,
+    };
+    dragMoveCandidateRef.current = {
+      componentId: null,
+      startClientX: 0,
+      startClientY: 0,
+      movedBeyondDragThreshold: false,
     };
     if (draggingComponent) {
       setDraggingComponent(null);
@@ -1117,8 +1153,9 @@ const Canvas = forwardRef(({
   const stableDesignSelectSingle = useCallback((c) => {
     onClearConnectionMultiSelection();
     onMultiSelect(c.id, false);
-    onSelectComponent(c);
-  }, [onClearConnectionMultiSelection, onMultiSelect, onSelectComponent]);
+    const authored = components.find((x) => x.id === c.id) ?? c;
+    onSelectComponent(authored);
+  }, [components, onClearConnectionMultiSelection, onMultiSelect, onSelectComponent]);
 
   const handleCanvasClick = (e) => {
     if (connecting) {

@@ -18,12 +18,14 @@
    It appears on the right side of the screen below the Property Panel. */
 .simulation-controls {
   width: 440px;                    /* Fixed width - same as Property Panel */
+  height: 100%;
+  min-height: 0;
   background: #1a1a1a;             /* Dark grey background */
   border-left: 2px solid #333;     /* Separator line from canvas */
   border-top: 1px solid #333;      /* Top border for definition */
   display: flex;                   /* Use flexbox layout */
   flex-direction: column;          /* Stack header and body vertically */
-  max-height: 1900px;               /* Increased from 400px to accommodate all controls */
+  overflow: hidden;
 }
 
 /* ----------------------------------------------------------------------------
@@ -31,17 +33,51 @@
    ----------------------------------------------------------------------------
    The green title bar at the top that says "Simulation Controls" */
 .controls-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 20px;                   /* Space around the title */
   border-bottom: 1px solid #333;   /* Line separating header from body */
 }
 
 /* The "Simulation Controls" title text */
 .controls-header h3 {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
   font-size: calc(15px + var(--ui-font-px-shift, 0px));                 /* Slightly larger than body text */
   color: #4caf50;                  /* Green - indicates active system */
   text-transform: uppercase;       /* ALL CAPS for industrial look */
   letter-spacing: 1px;             /* Space out letters for readability */
   font-weight: 600;                /* Semi-bold weight */
+}
+
+.controls-grid-peek-toggle {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: rgba(30, 30, 30, 0.92);
+  color: #e0e0e0;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.controls-grid-peek-toggle:hover {
+  background: rgba(0, 94, 96, 0.45);
+  border-color: #00d4a8;
+  color: #fff;
+}
+
+.controls-grid-peek-toggle[aria-pressed='true'] {
+  border-color: #ff9800;
+  color: #ffcc80;
 }
 
 /* ----------------------------------------------------------------------------
@@ -51,6 +87,7 @@
 .controls-body {
   padding: 20px;                   /* Space around content */
   flex: 1;                         /* Take up remaining vertical space */
+  min-height: 0;                   /* Allow flex child to shrink so overflow scroll works */
   overflow-y: auto;                /* Scroll if content is too tall */
 }
 
@@ -189,6 +226,150 @@
 }
 
 /* ============================================================================
+   SCENARIO PLAYING NOW + QUICK SCENARIOS (top of simulation controls)
+   ============================================================================ */
+
+.scenario-playing-now-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #333;
+}
+
+.scenario-playing-now-empty {
+  margin: 0;
+  padding: 10px 0 4px;
+  color: #666;
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
+  font-style: italic;
+}
+
+.scenario-playing-now-display {
+  padding-top: 2px;
+}
+
+.scenario-playing-now-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 18px;
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  background: var(--scenario-play-color, #2e7d32);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.quick-scenario-playing-btn {
+  animation: quickScenarioLinearGlow 2.4s linear infinite;
+}
+
+.quick-scenario-playing-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #000;
+  opacity: 0;
+  animation: quickScenarioLinearFade 2.4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.quick-scenario-playing-shimmer {
+  position: absolute;
+  top: 50%;
+  left: -40%;
+  width: 38%;
+  height: 1px;
+  transform: translateY(-50%);
+  opacity: 1;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.1) 20%,
+    rgba(186, 230, 253, 1) 50%,
+    rgba(56, 189, 248, 0.1) 80%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 4px rgba(56, 189, 248, 0.95),
+    0 0 10px rgba(56, 189, 248, 0.65),
+    0 0 18px rgba(56, 189, 248, 0.35);
+  animation: quickScenarioWaveLine 2.2s linear infinite alternate;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.quick-scenario-playing-label {
+  position: relative;
+  z-index: 3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes quickScenarioLinearFade {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes quickScenarioLinearGlow {
+  0% {
+    filter: brightness(1);
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  50% {
+    filter: brightness(0.04);
+    border-color: rgba(0, 0, 0, 0.8);
+  }
+  100% {
+    filter: brightness(1.45);
+    box-shadow:
+      0 0 8px rgba(255, 255, 255, 0.28),
+      inset 0 0 10px rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.32);
+  }
+}
+
+@keyframes quickScenarioWaveLine {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 102%;
+  }
+}
+
+.quick-scenarios-section--top {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #333;
+}
+
+/* Remove obsolete playing-row highlight — active shortcut moves to Scenario playing now */
+
+/* ============================================================================
    QUICK SCENARIOS SECTION
    ============================================================================
    This section appears below component-specific controls and provides
@@ -215,12 +396,73 @@
   padding: 10px 14px;
 }
 
+.quick-scenario-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.quick-scenario-row .control-btn {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-scenario-shortcut {
+  color: #fff;
+  border: none;
+}
+
+.quick-scenario-shortcut:hover {
+  filter: brightness(1.08);
+}
+
+.quick-scenario-trash {
+  flex: 0 0 36px;
+  width: 36px;
+  padding: 0;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #ccc;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.quick-scenario-trash:hover {
+  background: #3d2020;
+  border-color: #c62828;
+  color: #ff8a80;
+}
+
+.quick-scenario-save {
+  flex: 0 0 36px;
+  width: 36px;
+  padding: 0;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #ccc;
+  font-size: 15px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.quick-scenario-save:hover {
+  background: #1a3334;
+  border-color: #00d4a8;
+  color: #00d4a8;
+}
+
 /* ============================================================================
-   RESET SYSTEM SECTION & BUTTON
-   ============================================================================
-   The Reset button is visually distinct from failure scenario buttons.
-   It uses a blue/grey color scheme instead of red/orange to indicate
-   it's a restorative action, not a failure action. */
+   RESET SYSTEM SECTION & BUTTON (legacy — reset moved out of Quick Scenarios)
+   ============================================================================ */
 
 .reset-section {
   margin-top: 16px;
@@ -247,12 +489,21 @@
 /* ============================================================================
    SIMULATION SPEED CONTROLS
    ============================================================================
-   Shows simulation time and speed multiplier buttons (1×, 10×, 100×, 1000×) */
+   Shows simulation time and speed multiplier buttons (0.001× … 10000×) */
 
 .simulation-speed-section {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 2px solid #333;
+}
+
+.simulation-speed-section--after-quick-scenarios {
+  margin-top: 0;
+  padding-top: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-top: none;
+  border-bottom: 2px solid #333;
 }
 
 .simulation-time-display {
@@ -281,7 +532,7 @@
 
 .speed-buttons {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
@@ -540,6 +791,58 @@
   margin-bottom: 12px;
 }
 
+.simulation-scenarios-section--collapsed {
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.simulation-scenarios-section--collapsed .scenarios-title-row {
+  margin-bottom: 0;
+}
+
+.scenarios-title-collapsed-count {
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  color: #888;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.scenarios-section-collapse-toggle {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 212, 168, 0.4);
+  background: rgba(0, 94, 96, 0.25);
+  color: #5fd4c0;
+  cursor: pointer;
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.scenarios-section-collapse-toggle:hover {
+  background: rgba(0, 212, 168, 0.2);
+  border-color: #00d4a8;
+  color: #b2fff0;
+}
+
+.scenarios-collapse-glyph {
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.simulation-scenarios-section--collapsed .scenarios-section-collapse-toggle {
+  background: rgba(0, 212, 168, 0.15);
+  border-color: #00d4a8;
+}
+
 .simulation-scenarios-section .scenarios-title {
   color: #00d4a8;
   font-size: calc(13px + var(--ui-font-px-shift, 0px));
@@ -640,10 +943,13 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
 }
 
 .scenario-button-row .control-btn-scenario {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Stacked title + (columns, rows) under scenario name */

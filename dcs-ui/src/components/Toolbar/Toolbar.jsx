@@ -18,11 +18,13 @@ const Toolbar = ({
   onSave,
   onSaveAs,
   onSaveSimulationConfig,
+  onSaveScenarioAs,
   onCopyScenarioLink,
   onLoad,
   hasComponents,
   canSave, // Whether we can do a quick save (config name exists)
   canSaveSimulationConfig, // Design-dir scenario loaded: open “Save configuration as” for .sim.json presets
+  canSaveScenarioAs, // Same as above + creates a Quick Scenarios shortcut button
   canCopyScenarioLink, // Scenario running from design dir: copy ?design=&sim=&config= link
 }) => {
   const {
@@ -96,10 +98,10 @@ const Toolbar = ({
             onClick={() => onWorkspaceLayoutPresetChange?.(id)}
             title={
               id === 'conf1'
-                ? 'Conf 1: charts along the bottom (default)'
+                ? 'Conf 1: charts bottom, Controls full-height on the right'
                 : id === 'conf2'
-                  ? 'Conf 2: vertical chart drawer to the left of Controls'
-                  : 'Conf 3: charts along the top'
+                  ? 'Conf 2: charts on the right, Controls bottom-left'
+                  : 'Conf 3: charts top, Controls bottom-left'
             }
           >
             {id === 'conf1' ? 'conf 1' : id === 'conf2' ? 'conf 2' : 'conf 3'}
@@ -175,6 +177,20 @@ const Toolbar = ({
                   }}
                 >
                   Save configuration as
+                </button>
+              )}
+              {canSaveScenarioAs && (
+                <button
+                  type="button"
+                  className="toolbar-save-menu-item"
+                  role="menuitem"
+                  title="Save scenario as: same chart preset as above, plus a Quick Scenarios button with custom name, color, and icon"
+                  onClick={() => {
+                    closeSaveMenu();
+                    onSaveScenarioAs();
+                  }}
+                >
+                  Save scenario as
                 </button>
               )}
               {canCopyScenarioLink && (
