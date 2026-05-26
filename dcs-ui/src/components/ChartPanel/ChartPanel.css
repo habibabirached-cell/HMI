@@ -888,6 +888,41 @@
   border-color: rgba(0, 212, 168, 0.55);
 }
 
+.chart-drawer-shift-btn:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+
+.chart-panel-chart--drawer-fly-source {
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.chart-drawer-fly-ghost {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 2px solid rgba(0, 212, 168, 0.65);
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.96), rgba(0, 94, 96, 0.35));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.chart-drawer-fly-ghost__title {
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  color: #e0e0e0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* Individual chart card: width bounds come from --chart-* (set in JSX); fallback matches full-bleed panel content, not a fixed 600px cap. */
 .chart-panel-chart {
   flex: 1 1;
@@ -1721,6 +1756,35 @@
   font-size: calc(10px + var(--ui-font-px-shift, 0px));
   color: #777;
   font-style: italic;
+}
+
+.chart-danger-y-threshold-alert {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1001;
+  padding: 5px 10px;
+  border: 1px solid #ffb300;
+  border-radius: 4px;
+  background: rgba(255, 179, 0, 0.92);
+  color: #1a1200;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(255, 179, 0, 0.45);
+  animation: chart-danger-y-threshold-blink 1s ease-in-out infinite;
+}
+
+@keyframes chart-danger-y-threshold-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .chart-axis-range-editor-actions {

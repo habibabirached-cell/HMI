@@ -46,31 +46,8 @@
             "chart_type": "nd",
             "x_column": "n_LM2500_1 — t",
             "y_columns": [
-              "sb_LM2500_1 — Tm_1"
-            ],
-            "title": "Torque with Bess and Statcom",
-            "ensemble_cross_member": true,
-            "sample_step": 8,
-            "x_label": "time, seconds",
-            "y_label": "Torque, pu",
-            "variable_styles": {
-              "sb_LM2500_1 — Tm_1": {
-                "color": "#15932a"
-              }
-            },
-            "axis_range": {
-              "x_threshold": 8
-            }
-          },
-          {
-            "type": "single",
-            "component_id": "comp-bus-left",
-            "chart_type": "nd",
-            "x_column": "n_LM2500_1 — t",
-            "y_columns": [
               "n_LM2500_1 — Tmout",
-              "n_LM2500_2 — Tm_1",
-              "sb_LM2500_1 — Tm_1"
+              "n_LM2500_2 — Tm_1"
             ],
             "title": "Mechanical Torque Comparison",
             "ensemble_cross_member": true,
@@ -78,21 +55,14 @@
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "variable_styles": {
-              "n_LM2500_1 — Tmout": {
-                "rigid": true
-              },
               "n_LM2500_2 — Tm_1": {
-                "color": "#005E60",
-                "rigid": true
-              },
-              "sb_LM2500_1 — Tm_1": {
-                "color": "#24bc26"
+                "color": "#005E60"
               }
             },
             "axis_range": {
-              "x_threshold": 8
-            },
-            "ui_drawer": "chart2"
+              "x_threshold": 8,
+              "danger_y_threshold": 0.7
+            }
           }
         ],
         "chart_stacks": [],
@@ -126,7 +96,8 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "danger_y_threshold": 0.7
             }
           }
         ],
@@ -160,7 +131,8 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "danger_y_threshold": 0.7
             }
           },
           {
@@ -191,7 +163,8 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "danger_y_threshold": 0.7
             },
             "ui_drawer": "chart2"
           }

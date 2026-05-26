@@ -32,11 +32,18 @@ import {
 } from '../../utils/chartVariableStyles';
 import { ENSEMBLE_COLUMN_SEP } from '../../utils/simulationLazyApi';
 import { bumpPlotlyFonts } from '../../utils/plotlyFontBump';
+import {
+  applyDangerYThresholdLayout,
+  chartExceedsDangerYThreshold,
+  chartSupportsDangerYThreshold,
+  getChartDangerYThreshold,
+} from '../../utils/chartDangerYThreshold';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
   buildDisplayUnitsFromStacks,
 } from '../../utils/chartPanelDrawerBuckets';
+import { flyChartToDrawer } from '../../utils/chartDrawerFlyTransition';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
@@ -121,6 +128,8 @@ const ChartPanel = ({
   onMoveChartDrawer,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
+  const panelRootRef = useRef(null);
+  const [flyingChartId, setFlyingChartId] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ y: 0, height: 0 });
   /** Minimize to a thin bar; charts tray stays above the canvas (z-index) either way. */
@@ -169,20 +178,24 @@ const ChartPanel = ({
       xLocked: saved?.xLocked ?? false,
       yLocked: saved?.yLocked ?? false,
       xThreshold: fmt(saved?.xThreshold),
+      dangerYThreshold: fmt(saved?.dangerYThreshold),
     });
   };
 
   const commitAxisRangeEdit = () => {
     if (!editingAxisRange) return;
-    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold } = editingAxisRange;
+    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold } =
+      editingAxisRange;
     const p = (v) => (v === '' || v == null ? undefined : Number(v));
     const xThr = p(xThreshold);
+    const yDanger = p(dangerYThreshold);
     // Only persist min/max for a locked axis; Plotly "Home" uses saved range on locked
     // axes and autorange on unlocked axes, so we must not store unused box values.
     const axisRange = {
       xLocked,
       yLocked,
       ...(xThr != null && !Number.isNaN(xThr) ? { xThreshold: xThr } : {}),
+      ...(yDanger != null && !Number.isNaN(yDanger) ? { dangerYThreshold: yDanger } : {}),
       ...(xLocked ? { xMin: p(xMin), xMax: p(xMax) } : {}),
       ...(yLocked ? { yMin: p(yMin), yMax: p(yMax) } : {}),
     };
@@ -191,7 +204,10 @@ const ChartPanel = ({
       (yLocked && (axisRange.yMin != null || axisRange.yMax != null));
     const hasLock = xLocked || yLocked;
     const hasXThreshold = axisRange.xThreshold != null;
-    onUpdateChart?.(chartId, { axisRange: (hasRange || hasLock || hasXThreshold) ? axisRange : null });
+    const hasDangerY = axisRange.dangerYThreshold != null;
+    onUpdateChart?.(chartId, {
+      axisRange: hasRange || hasLock || hasXThreshold || hasDangerY ? axisRange : null,
+    });
     setEditingAxisRange(null);
   };
 
@@ -294,6 +310,28 @@ const ChartPanel = ({
           </label>
           <span className="chart-axis-range-threshold-hint">
             Points at or below this X value are hidden
+          </span>
+        </div>
+
+        <div className="chart-axis-range-threshold-row">
+          <label className="chart-axis-range-threshold-label">
+            <span>Danger yThreshold</span>
+            <input
+              className="chart-axis-range-editor-input chart-axis-range-threshold-input"
+              type="number"
+              value={editingAxisRange.dangerYThreshold}
+              onChange={(e) =>
+                setEditingAxisRange((p) => ({ ...p, dangerYThreshold: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitAxisRangeEdit();
+                if (e.key === 'Escape') setEditingAxisRange(null);
+              }}
+              placeholder="none"
+            />
+          </label>
+          <span className="chart-axis-range-threshold-hint">
+            Red line at Y = y0; amber alert when a non-rigid trace reaches Y ≥ y0 during playback
           </span>
         </div>
 
@@ -1661,7 +1699,31 @@ const ChartPanel = ({
   /**
    * Generate professional Plotly layout
    */
+  const renderDangerYThresholdAlert = (chart) => {
+    if (!simulationRunning || getChartDangerYThreshold(chart) == null) return null;
+    const exceeds = chartExceedsDangerYThreshold({
+      chart,
+      simulationRunning,
+      simulationTime,
+      data: chart.ensembleCrossMember ? null : getChartData(chart),
+      ensembleMemberSimulationData: chart.ensembleCrossMember
+        ? ensembleMemberSimulationData
+        : null,
+    });
+    if (!exceeds) return null;
+    return (
+      <div className="chart-danger-y-threshold-alert" role="status" aria-live="polite">
+        EXCEEDS THRESHOLD
+      </div>
+    );
+  };
+
   const generatePlotlyLayout = (chart, data) => {
+    const withDangerY = (layout) =>
+      chartSupportsDangerYThreshold(chart)
+        ? applyDangerYThresholdLayout(layout, chart)
+        : layout;
+
     const o = clampChartPanelOpacity(panelOpacity);
     const rgba = (r, g, b, a = o) => `rgba(${r},${g},${b},${a})`;
     const paperRgba = rgba(13, 13, 13);
@@ -1804,7 +1866,7 @@ const ChartPanel = ({
           ...axisStyle
         };
       }
-      return layout;
+      return withDangerY(layout);
     }
 
     // Multi-line 2D chart layout – X = time, Y = values (Y-axis title in margin, legend colors)
@@ -1812,7 +1874,7 @@ const ChartPanel = ({
       const eventShapes = generateEventMarkerShapes();
       const yLabelHTML = getMultiBarYAxisLabelHTML(chart);
       const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart.axisRange);
-      return {
+      return withDangerY({
         ...baseLayout,
         shapes: eventShapes,
         xaxis: {
@@ -1861,14 +1923,14 @@ const ChartPanel = ({
           bordercolor: rgba(0, 94, 96, 0.5 * o),
           borderwidth: 2
         }
-      };
+      });
     }
 
     // Multi-component bar chart layout (fixed Y range so bars animate, not scale; Y-axis label rotated 90°)
     if (chart.isMultiComponent && chart.chartType === 'multi-bar-chart') {
       const yRange = data && getMultiBarYRange(chart, data);
       const yLabel = getMultiBarYAxisLabel(chart);
-      return {
+      return withDangerY({
         ...baseLayout,
         annotations: [
           {
@@ -1955,7 +2017,7 @@ const ChartPanel = ({
             family: 'Arial, sans-serif'
           }
         }]
-      };
+      });
     }
 
     // Chart-specific layout
@@ -1963,7 +2025,7 @@ const ChartPanel = ({
       const eventShapes = generateEventMarkerShapes();
       const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart.axisRange);
       
-      return {
+      return withDangerY({
         ...baseLayout,
         xaxis: {
           title: {
@@ -2018,7 +2080,7 @@ const ChartPanel = ({
           ...yLockProps
         },
         shapes: eventShapes // Add event marker shapes
-      };
+      });
     } else if (chart.chartType === 'histogram') {
       return {
         ...baseLayout,
@@ -2064,7 +2126,7 @@ const ChartPanel = ({
         }
       };
     } else if (chart.chartType === 'box') {
-      return {
+      return withDangerY({
         ...baseLayout,
         yaxis: {
           title: {
@@ -2086,10 +2148,10 @@ const ChartPanel = ({
             color: '#999'
           }
         }
-      };
+      });
     }
 
-    return baseLayout;
+    return withDangerY(baseLayout);
   };
 
   /**
@@ -2328,6 +2390,39 @@ const ChartPanel = ({
 
   const shellA = clampChartPanelOpacity(panelOpacity);
 
+  const requestDrawerMove = (chart, targetDrawer, e) => {
+    e.stopPropagation();
+    if (!onMoveChartDrawer || flyingChartId) return;
+
+    const fromDrawer = chart.uiDrawer === 'chart2' ? 'chart2' : 'chart1';
+    if (fromDrawer === targetDrawer) return;
+
+    const sourceEl = document.getElementById(`chart-${chart.id}`);
+    const targetContent = panelRootRef.current?.querySelector(
+      `[data-chart-drawer="${targetDrawer}"] .chart-panel-content`,
+    );
+
+    const commit = () => onMoveChartDrawer(chart.id, targetDrawer);
+
+    if (!sourceEl || !targetContent) {
+      commit();
+      return;
+    }
+
+    setFlyingChartId(chart.id);
+    flyChartToDrawer({
+      sourceEl,
+      targetDrawerContentEl: targetContent,
+      chartTitle: chart.isMultiComponent
+        ? chart.title
+        : chart.title || chart.componentName || 'Chart',
+      onComplete: () => {
+        setFlyingChartId(null);
+        commit();
+      },
+    });
+  };
+
   const layoutClass =
     layoutMode === 'sideRight'
       ? 'chart-panel--layout-side-right'
@@ -2363,6 +2458,7 @@ const ChartPanel = ({
 
   return (
     <div
+      ref={panelRootRef}
       className={`chart-panel ${layoutClass} ${isResizing ? 'resizing' : ''} chart-panel--on-top-canvas${
         isCollapsed ? ' chart-panel--collapsed' : ''
       }`}
@@ -2747,6 +2843,7 @@ const ChartPanel = ({
           key={drawerKey}
           className={dualChartDrawers ? 'chart-panel-drawer-slot' : undefined}
           style={!dualChartDrawers ? { display: 'contents' } : undefined}
+          {...(dualChartDrawers ? { 'data-chart-drawer': drawerKey } : {})}
         >
           {dualChartDrawers ? (
             <div className="chart-panel-drawer-label">{drawerLabel}</div>
@@ -2833,14 +2930,18 @@ const ChartPanel = ({
                 <button
                   type="button"
                   className="chart-drawer-shift-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveChartDrawer(chart.id, chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2');
-                  }}
+                  disabled={flyingChartId === chart.id}
+                  onClick={(e) =>
+                    requestDrawerMove(
+                      chart,
+                      chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2',
+                      e,
+                    )
+                  }
                   title={
                     chart.uiDrawer === 'chart2'
-                      ? 'Move to chart1 drawer'
-                      : 'Move to chart2 drawer'
+                      ? 'Fly chart to chart1 drawer'
+                      : 'Fly chart to chart2 drawer'
                   }
                 >
                   {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
@@ -2890,6 +2991,8 @@ const ChartPanel = ({
                 const layout = bumpPlotlyFonts(generatePlotlyLayout(chart, dataLayout), fontPxDelta);
                 const supportsSelection = chart.chartType === '2d' || chart.chartType === 'nd' || chart.chartType === 'stacked-nd' || (chart.isMultiComponent && chart.chartType === 'multi-line-chart');
                 return (
+                  <>
+                  {renderDangerYThresholdAlert(chart)}
                   <Plot
                     data={plotlyData}
                     layout={layout}
@@ -2911,6 +3014,7 @@ const ChartPanel = ({
                       onInitialized: (fig, gd) => attachSelectionListeners(chart.id, gd)
                     } : {})}
                   />
+                  </>
                 );
               })()}
 
@@ -2994,14 +3098,18 @@ const ChartPanel = ({
                       <button
                         type="button"
                         className="chart-drawer-shift-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onMoveChartDrawer(chart.id, chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2');
-                        }}
+                        disabled={flyingChartId === chart.id}
+                        onClick={(e) =>
+                          requestDrawerMove(
+                            chart,
+                            chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2',
+                            e,
+                          )
+                        }
                         title={
                           chart.uiDrawer === 'chart2'
-                            ? 'Move to chart1 drawer'
-                            : 'Move to chart2 drawer'
+                            ? 'Fly chart to chart1 drawer'
+                            : 'Fly chart to chart2 drawer'
                         }
                       >
                         {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
@@ -3028,6 +3136,8 @@ const ChartPanel = ({
                       const layout = bumpPlotlyFonts(generatePlotlyLayout(chart, dataLayout), fontPxDelta);
                       const supportsSelection = chart.chartType === '2d' || chart.chartType === 'nd' || chart.chartType === 'stacked-nd' || (chart.isMultiComponent && chart.chartType === 'multi-line-chart');
                       return (
+                        <>
+                        {renderDangerYThresholdAlert(chart)}
                         <Plot data={plotlyData} layout={layout} config={plotlyConfig} style={{ width: '100%', height: '100%' }} useResizeHandler={true}
                           onRelayout={(rd) => {
                             if (rd['xaxis.range[0]'] != null || rd['yaxis.range[0]'] != null) {
@@ -3042,6 +3152,7 @@ const ChartPanel = ({
                           {...(chart.isMultiComponent ? plotlyTransition : {})}
                           {...(supportsSelection && onSelectionChange ? { onInitialized: (fig, gd) => attachSelectionListeners(chart.id, gd) } : {})}
                         />
+                        </>
                       );
                     })()}
                     {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && (

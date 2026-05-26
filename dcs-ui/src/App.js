@@ -191,6 +191,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
                 ...(a.x_threshold != null && Number.isFinite(Number(a.x_threshold))
                   ? { xThreshold: Number(a.x_threshold) }
                   : {}),
+                ...(a.danger_y_threshold != null &&
+                Number.isFinite(Number(a.danger_y_threshold))
+                  ? { dangerYThreshold: Number(a.danger_y_threshold) }
+                  : {}),
                 ...(xL
                   ? {
                       ...(a.x_min != null && { xMin: a.x_min }),
@@ -3281,10 +3285,14 @@ function App() {
           base.variable_styles = c.variableStyles;
         }
         if (c.axisRange != null) {
-          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold } = c.axisRange;
+          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold } =
+            c.axisRange;
           const rangeObj = {};
           if (xThreshold != null && !Number.isNaN(xThreshold)) {
             rangeObj.x_threshold = xThreshold;
+          }
+          if (dangerYThreshold != null && !Number.isNaN(dangerYThreshold)) {
+            rangeObj.danger_y_threshold = dangerYThreshold;
           }
           if (xLocked) {
             if (xMin != null && !Number.isNaN(xMin)) rangeObj.x_min = xMin;
