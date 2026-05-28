@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gas Turbine 3D — gasT3.glb</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; color: #c9d1d9; font-family: system-ui, sans-serif; }
+    #canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    #canvas:active { cursor: grabbing; }
+    #hud {
+      position: fixed; top: 12px; left: 12px; z-index: 10;
+      padding: 10px 14px; border-radius: 8px;
+      background: rgba(13, 17, 23, 0.82); border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px; line-height: 1.5; pointer-events: none; user-select: none;
+    }
+    #hud strong { color: #58a6ff; font-weight: 600; }
+    #status {
+      position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: rgba(13, 17, 23, 0.92); text-align: center; padding: 24px;
+    }
+    #status.hidden { display: none; }
+    #status.error { color: #f85149; }
+    #status.error code {
+      display: block; margin-top: 8px; padding: 10px 14px; border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06); color: #e6edf3; font-size: 12px;
+    }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <strong>gasT3.glb</strong><br />
+    Drag — rotate &nbsp;·&nbsp; Scroll — zoom &nbsp;·&nbsp; Right-drag — pan
+  </div>
+
+  <div id="status">
+    <div class="spinner" aria-hidden="true"></div>
+    <div id="status-text">Loading model…</div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const MODEL_URL = './gasT3.glb';
+    const canvas = document.getElementById('canvas');
+    const statusEl = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
+
+    function showError(message, hint) {
+      statusEl.classList.add('error');
+      statusEl.classList.remove('hidden');
+      statusEl.querySelector('.spinner')?.remove();
+      statusText.innerHTML = message + (hint ? `<code>${hint}</code>` : '');
+    }
+
+    function hideStatus() {
+      statusEl.classList.add('hidden');
+    }
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d1117);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 5000);
+    camera.position.set(2.5, 1.5, 3.5);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 0.05;
+    controls.maxDistance = 500;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    keyLight.position.set(4, 6, 5);
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.55);
+    fillLight.position.set(-5, 2, -3);
+    scene.add(fillLight);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+    rimLight.position.set(0, -2, -6);
+    scene.add(rimLight);
+
+    function resize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function frameObject(object) {
+      const box = new THREE.Box3().setFromObject(object);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fitDist = maxDim / (2 * Math.tan((camera.fov * Math.PI) / 360));
+      const dist = fitDist * 1.35;
+
+      controls.target.copy(center);
+      camera.position.copy(center).add(new THREE.Vector3(dist * 0.85, dist * 0.45, dist));
+      camera.near = Math.max(maxDim / 1000, 0.001);
+      camera.far = Math.max(maxDim * 20, 100);
+      camera.updateProjectionMatrix();
+      controls.update();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const loader = new GLTFLoader();
+    loader.load(
+      MODEL_URL,
+      (gltf) => {
+        scene.add(gltf.scene);
+        frameObject(gltf.scene);
+        hideStatus();
+      },
+      (event) => {
+        if (event.total) {
+          const pct = Math.round((event.loaded / event.total) * 100);
+          statusText.textContent = `Loading model… ${pct}%`;
+        }
+      },
+      (err) => {
+        console.error(err);
+        const fileHint = window.location.protocol === 'file:'
+          ? 'Double-click blocked GLB loading. In Terminal, cd to this folder and run:\npython3 -m http.server 8765\n\nThen open:\nhttp://localhost:8765/'
+          : 'Make sure gasT3.glb is in the same folder as index.html.';
+        showError('Could not load gasT3.glb.', fileHint);
+      }
+    );
+  </script>
+</body>
+</html>
