@@ -5,6 +5,7 @@ import SchematicCT from '../Schematics/SchematicCT';
 import SchematicGSU from '../Schematics/SchematicGSU';
 import SchematicBessXfmr from '../Schematics/SchematicBessXfmr';
 import SchematicLm2500Andritz from '../Schematics/SchematicLm2500Andritz';
+import SchematicGasTurbine3D from '../Schematics/SchematicGasTurbine3D';
 import SchematicManualLineSwitch from '../Schematics/SchematicManualLineSwitch';
 import ShapeRoundedRect from './shape-rounded-rect';
 import ShapeRect from './shape-rect';
@@ -167,6 +168,17 @@ export default function CanvasComponentBody({
           textureOpacity={textureOpacity}
           strokeColor={strokeColor}
           strokeWidthVal={strokeWidthVal}
+        />
+      );
+
+    case 'schematic-gas-turbine-3d':
+      return (
+        <SchematicGasTurbine3D
+          width={width}
+          height={height}
+          strokeColor={strokeColor}
+          strokeWidthVal={strokeWidthVal}
+          glowFilterId={`gt3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
       );
 

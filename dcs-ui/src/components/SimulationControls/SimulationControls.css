@@ -226,7 +226,7 @@
 }
 
 /* ============================================================================
-   SCENARIO PLAYING NOW + QUICK SCENARIOS (top of simulation controls)
+   CURRENT SCENARIO + QUICK SCENARIOS (top of simulation controls)
    ============================================================================ */
 
 .scenario-playing-now-section {
@@ -367,7 +367,7 @@
   border-bottom: 2px solid #333;
 }
 
-/* Remove obsolete playing-row highlight — active shortcut moves to Scenario playing now */
+/* Remove obsolete playing-row highlight — active shortcut moves to Current scenario */
 
 /* ============================================================================
    QUICK SCENARIOS SECTION

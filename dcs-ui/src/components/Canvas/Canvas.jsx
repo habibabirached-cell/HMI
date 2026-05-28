@@ -5,9 +5,15 @@ import MultiConnectionContextMenu from '../MultiConnectionContextMenu/MultiConne
 import MultiComponentChartDialog from '../MultiComponentChartDialog/MultiComponentChartDialog';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
+import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { resolveConnectionRenderParams } from '../../utils/connectionLineStyle';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
+import {
+  clientToCanvasPoint,
+  computeMarqueeSelection,
+  normalizeCanvasRect,
+} from '../../utils/canvasDesignClipboard';
 import { markSelectionInteractionStart } from '../../utils/perfDebug';
 import {
   getTieHiddenMemberIdSet,
@@ -210,6 +216,11 @@ const Canvas = forwardRef(({
   selectedConnectionIds = [],
   isComponentMultiSelected,
   onMoveComponent,
+  onMoveComponents,
+  onMarqueeSelect,
+  onCopySelection,
+  onPasteSelection,
+  onDeleteSelection,
   onAddComponent,
   onAddConnection,
   onUpdateComponent,
@@ -270,6 +281,10 @@ const Canvas = forwardRef(({
     startClientY: 0,
     movedBeyondDragThreshold: false,
   });
+  const groupDragRef = useRef(null);
+  const [marqueeTrack, setMarqueeTrack] = useState(null);
+  const [marqueeRect, setMarqueeRect] = useState(null);
+  const MARQUEE_DRAG_PX = 5;
 
   const hiddenTieMemberIds = useMemo(
     () => getTieHiddenMemberIdSet(components),
@@ -514,6 +529,8 @@ const Canvas = forwardRef(({
     if (e.button === 0) {
       markSelectionInteractionStart();
     }
+    setMarqueeTrack(null);
+    setMarqueeRect(null);
 
     const authoredComponent =
       components.find((c) => c.id === component.id) ?? component;
@@ -561,8 +578,15 @@ const Canvas = forwardRef(({
       return;
     }
 
-    // Regular click = Start dragging and select (clears multi-selection)
-    onMultiSelect(component.id, false); // Clear multi-selection
+    // Regular click: if already part of a multi-selection, keep the group (drag all).
+    // Otherwise select only this block and clear the group.
+    const grabWholeGroup =
+      selectedComponents.length > 1 && selectedComponents.includes(component.id);
+
+    if (!grabWholeGroup) {
+      onMultiSelect(component.id, false);
+      groupDragRef.current = null;
+    }
     onClearConnectionMultiSelection();
     if (
       component.type === 'tie-breaker-network' &&
@@ -583,6 +607,18 @@ const Canvas = forwardRef(({
         startClientY: 0,
         movedBeyondTapThreshold: false,
       };
+    }
+    if (grabWholeGroup && onMoveComponents) {
+      const starts = {};
+      for (const id of selectedComponents) {
+        const c = components.find((x) => x.id === id);
+        if (c) {
+          starts[id] = { x: c.position.x, y: c.position.y };
+        }
+      }
+      groupDragRef.current = { anchorId: component.id, starts };
+    } else if (!grabWholeGroup) {
+      groupDragRef.current = null;
     }
     setDraggingComponent(component.id);
     dragMoveCandidateRef.current = {
@@ -738,11 +774,20 @@ const Canvas = forwardRef(({
       // Middle mouse or Alt+Left mouse for panning
       setPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else if (e.button === 0 && !draggingComponent && mode === 'design' && !connecting) {
+      const pt = clientToCanvasPoint(canvasRef.current, pan, zoom, e.clientX, e.clientY);
+      setMarqueeTrack({
+        x0: pt.x,
+        y0: pt.y,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        active: false,
+      });
+      setMarqueeRect(null);
     } else if (e.button === 0 && !draggingComponent) {
-      // Left click on empty canvas deselects
       onSelectComponent(null);
       onSelectConnection(null);
-      onClearMultiSelection(); // Clear multi-selection
+      onClearMultiSelection();
       onClearConnectionMultiSelection();
     }
   };
@@ -835,7 +880,39 @@ const Canvas = forwardRef(({
         : { width: 100, height: 60 };
       const snapped = snapCenterToGrid(rawX, rawY, width, height);
 
-      onMoveComponent(draggingComponent, snapped);
+      if (
+        groupDragRef.current &&
+        onMoveComponents &&
+        selectedComponents.length > 1 &&
+        selectedComponents.includes(draggingComponent)
+      ) {
+        const { starts, anchorId } = groupDragRef.current;
+        const anchorStart = starts[anchorId];
+        if (anchorStart) {
+          const dx = snapped.x - anchorStart.x;
+          const dy = snapped.y - anchorStart.y;
+          const updates = selectedComponents
+            .map((id) => {
+              const start = starts[id];
+              const c = components.find((x) => x.id === id);
+              if (!start || !c) return null;
+              const dim = getLayoutDimensionsForSnap(c, canvasBlockTypeScale);
+              return {
+                id,
+                position: snapCenterToGrid(
+                  start.x + dx,
+                  start.y + dy,
+                  dim.width,
+                  dim.height,
+                ),
+              };
+            })
+            .filter(Boolean);
+          onMoveComponents(updates);
+        }
+      } else {
+        onMoveComponent(draggingComponent, snapped);
+      }
     } else if (panning) {
       onPan({
         x: e.clientX - panStart.x,
@@ -891,6 +968,7 @@ const Canvas = forwardRef(({
     };
     if (draggingComponent) {
       setDraggingComponent(null);
+      groupDragRef.current = null;
     }
     if (resizingComponent) {
       setResizingComponent(null);
@@ -1221,6 +1299,18 @@ const Canvas = forwardRef(({
         return;
       }
       
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && mode === 'design') {
+        e.preventDefault();
+        onCopySelection?.();
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && mode === 'design') {
+        e.preventDefault();
+        onPasteSelection?.();
+        return;
+      }
+
       // Ctrl/Cmd+A - Select all components (Design mode only)
       if ((e.ctrlKey || e.metaKey) && e.key === 'a' && mode === 'design') {
         e.preventDefault();
@@ -1231,13 +1321,16 @@ const Canvas = forwardRef(({
         console.log('⌨️  Ctrl+A - Selected all', components.length, 'components');
       }
       
-      // DELETE - Delete selected components (Design mode only)
-      if (e.key === 'Delete' && mode === 'design' && selectedComponents.length > 0) {
+      // Delete / Backspace — remove selected components and/or connections (design mode)
+      if (
+        (e.key === 'Delete' || e.key === 'Backspace') &&
+        mode === 'design' &&
+        (selectedComponents.length > 0 ||
+          selectedConnectionIds.length > 0 ||
+          selectedConnection?.id)
+      ) {
         e.preventDefault();
-        console.log('⌨️  Delete -', selectedComponents.length, 'components');
-        // TODO: Implement deletion in App.js
-        // For now, just log
-        alert(`Delete ${selectedComponents.length} components? (Not yet implemented)`);
+        onDeleteSelection?.();
       }
       
       // ARROW KEYS — nudge selected components (Shift+Up/Down for vertical; Left/Right without Shift)
@@ -1291,6 +1384,95 @@ const Canvas = forwardRef(({
     contextMenu,
     showMultiChartDialog,
     canvasBlockTypeScale,
+    onCopySelection,
+    onPasteSelection,
+    onDeleteSelection,
+    selectedConnectionIds,
+    selectedConnection,
+  ]);
+
+  useEffect(() => {
+    if (!marqueeTrack || mode !== 'design') return undefined;
+
+    const session = { ...marqueeTrack };
+    const latestMarqueeRef = { current: null };
+
+    const onMove = (e) => {
+      const dist = Math.hypot(
+        e.clientX - session.clientX,
+        e.clientY - session.clientY,
+      );
+      if (!session.active && dist < MARQUEE_DRAG_PX) return;
+      session.active = true;
+      const pt = clientToCanvasPoint(
+        canvasRef.current,
+        pan,
+        zoom,
+        e.clientX,
+        e.clientY,
+      );
+      const rect = normalizeCanvasRect(session.x0, session.y0, pt.x, pt.y);
+      latestMarqueeRef.current = rect;
+      setMarqueeRect(rect);
+    };
+
+    const onUp = (e) => {
+      if (session.active && onMarqueeSelect && canvasRef.current) {
+        let rect = latestMarqueeRef.current;
+        if (!rect) {
+          const pt = clientToCanvasPoint(
+            canvasRef.current,
+            pan,
+            zoom,
+            e.clientX,
+            e.clientY,
+          );
+          rect = normalizeCanvasRect(session.x0, session.y0, pt.x, pt.y);
+        }
+        const connectionSegments = connectionRenderList
+          .filter(Boolean)
+          .map((row) => ({ conn: row.conn, segments: row.segments }));
+        const sel = computeMarqueeSelection({
+          allComponents: components,
+          renderComponents,
+          connections,
+          marquee: rect,
+          tieCollapseShiftById,
+          canvasBlockTypeScale,
+          connectionSegments,
+        });
+        onMarqueeSelect(sel);
+      } else {
+        onSelectComponent(null);
+        onSelectConnection(null);
+        onClearMultiSelection();
+        onClearConnectionMultiSelection();
+      }
+      setMarqueeTrack(null);
+      setMarqueeRect(null);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [
+    marqueeTrack,
+    mode,
+    pan,
+    zoom,
+    components,
+    renderComponents,
+    connections,
+    connectionRenderList,
+    tieCollapseShiftById,
+    canvasBlockTypeScale,
+    onMarqueeSelect,
+    onSelectComponent,
+    onClearMultiSelection,
+    onClearConnectionMultiSelection,
   ]);
   
   // Click outside handler for multi-component context menu
@@ -1361,6 +1543,17 @@ const Canvas = forwardRef(({
               ))}
           </defs>
           <rect width="10000" height="10000" fill="url(#grid)" />
+
+          {marqueeRect && marqueeRect.w > 0 && marqueeRect.h > 0 && (
+            <rect
+              x={marqueeRect.x}
+              y={marqueeRect.y}
+              width={marqueeRect.w}
+              height={marqueeRect.h}
+              className="canvas-marquee-rect"
+              pointerEvents="none"
+            />
+          )}
 
           {/* Electrical connections: static lines, role colors (producer / consumer / neutral), no flow animation */}
           {connectionRenderList.map((row) => {
@@ -1612,6 +1805,14 @@ const Canvas = forwardRef(({
         </g>
       </svg>
 
+      <GasTurbine3DOverlays
+        components={components}
+        pan={pan}
+        zoom={zoom}
+        canvasRef={canvasRef}
+        blockTypeScale={canvasBlockTypeScale}
+      />
+
       {/* Canvas info overlay */}
       <div className="canvas-info">
         <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
@@ -1619,7 +1820,7 @@ const Canvas = forwardRef(({
         <div>Connections: {connections.length}</div>
         {mode === 'design' && viewMode === 'designer' && (
           <div className="canvas-hint">
-            💡 Drag from library | Shift+Click multi-select blocks or lines | ⌘/Ctrl+Click connect | Right-click charts | Alt+Drag pan
+            💡 Drag-select · ⌘C/⌘V paste · drag any selected block to move group · Alt+Drag pan
           </div>
         )}
       </div>

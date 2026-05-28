@@ -85,6 +85,7 @@ WORKDIR /app/
 # Docker won't re-run npm install (which is slow). It uses the cached layer.
 # This makes rebuilds much faster when you only change code, not dependencies.
 COPY package.json /app/package.json
+COPY package-lock.json /app/package-lock.json
 
 ################################################################################
 # STEP 6: CONFIGURE NPM (NODE PACKAGE MANAGER)

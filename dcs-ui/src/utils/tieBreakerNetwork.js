@@ -101,6 +101,46 @@ function compWidthPx(c, getComponentVisualConfig) {
   return c.visualOverrides?.width ?? vis.width;
 }
 
+function compHeightPx(c, getComponentVisualConfig) {
+  const vis = getComponentVisualConfig(c.type);
+  return c.visualOverrides?.height ?? vis.height;
+}
+
+function verticalSpansOverlap(topA, bottomA, topB, bottomB) {
+  return topA < bottomB && bottomA > topB;
+}
+
+/** True when component bbox overlaps the tie block’s authored vertical span. */
+function componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig) {
+  const cTop = c.position?.y ?? 0;
+  const cBottom = cTop + compHeightPx(c, getComponentVisualConfig);
+  const tieTop = tie.position?.y ?? 0;
+  const tieBottom = tieTop + compHeightPx(tie, getComponentVisualConfig);
+  return verticalSpansOverlap(cTop, cBottom, tieTop, tieBottom);
+}
+
+function flankExtentsFromStubLinks(tie, components, getComponentVisualConfig) {
+  const sl = tie.properties?.tieGroup?.stubLinks;
+  if (!sl) return { leftMaxRight: NaN, rightMinLeft: NaN };
+  const byId = new Map(components.map((x) => [x.id, x]));
+  let leftMaxRight = -Infinity;
+  let rightMinLeft = Infinity;
+  for (const id of sl.leftAnchorIds || []) {
+    const c = byId.get(id);
+    if (!c) continue;
+    leftMaxRight = Math.max(leftMaxRight, anchorRightEdge(c, getComponentVisualConfig));
+  }
+  for (const id of sl.rightAnchorIds || []) {
+    const c = byId.get(id);
+    if (!c) continue;
+    rightMinLeft = Math.min(rightMinLeft, anchorLeftEdge(c));
+  }
+  if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
+    return { leftMaxRight: NaN, rightMinLeft: NaN };
+  }
+  return { leftMaxRight, rightMinLeft };
+}
+
 function anchorRightEdge(comp, getComponentVisualConfig) {
   const vis = getComponentVisualConfig(comp.type);
   const w = comp.visualOverrides?.width ?? vis.width;
@@ -117,6 +157,69 @@ function anchorCenterY(comp, getComponentVisualConfig) {
   return comp.position.y + h / 2;
 }
 
+/** Flank CBs in the same vertical band as the tie (render positions, post-collapse shift). */
+function flankStubCandidates(renderComponents, tieRenderComp, side, getComponentVisualConfig) {
+  const baseVis = getComponentVisualConfig(tieRenderComp.type);
+  const tieW = tieRenderComp.visualOverrides?.width ?? baseVis.width;
+  const tieLeft = tieRenderComp.position?.x ?? 0;
+  const tieRight = tieLeft + tieW;
+
+  return renderComponents
+    .filter((c) => {
+      if (!c?.id || c.id === tieRenderComp.id) return false;
+      if (!componentOverlapsTieVerticalSpan(c, tieRenderComp, getComponentVisualConfig)) {
+        return false;
+      }
+      const w = compWidthPx(c, getComponentVisualConfig);
+      const cx = c.position?.x ?? 0;
+      const right = cx + w;
+      const left = cx;
+      if (side === 'left') return right <= tieLeft + 1;
+      return left >= tieRight - 1;
+    })
+    .sort((a, b) => (a.position?.y ?? 0) - (b.position?.y ?? 0));
+}
+
+/**
+ * Map configured stub anchor ids to render components beside this tie.
+ * Uses the configured id when it overlaps the tie band; otherwise the i-th flank
+ * candidate in that band (copy-paste stacks still share original anchor ids).
+ */
+function resolveStubAnchorRenderComponents(
+  anchorIds,
+  side,
+  tieRenderComp,
+  renderComponents,
+  getComponentVisualConfig,
+) {
+  const pool = flankStubCandidates(
+    renderComponents,
+    tieRenderComp,
+    side,
+    getComponentVisualConfig,
+  );
+  const resolved = [];
+  for (let i = 0; i < (anchorIds || []).length; i += 1) {
+    const id = anchorIds[i];
+    let c = renderComponents.find((x) => x.id === id);
+    if (
+      c &&
+      componentOverlapsTieVerticalSpan(c, tieRenderComp, getComponentVisualConfig)
+    ) {
+      resolved.push(c);
+      continue;
+    }
+    const refType = c?.type;
+    const typed = refType != null ? pool.filter((x) => x.type === refType) : pool;
+    if (typed[i]) {
+      resolved.push(typed[i]);
+    } else if (pool[i]) {
+      resolved.push(pool[i]);
+    }
+  }
+  return resolved;
+}
+
 /**
  * When a tie network is collapsed with stubLinks, everything strictly left/right of the
  * aggregate’s horizontal span translates so inner flanks sit ~gapPx from the tie block;
@@ -126,7 +229,9 @@ function anchorCenterY(comp, getComponentVisualConfig) {
  * Left group: right edge strictly before tie left. Right group: left edge strictly after tie right.
  * Tie aggregate and tie member ids do not translate.
  *
- * Only the first collapsed tie with stubLinks is applied (covers VoltVer-style single shim).
+ * Each collapsed tie with stubLinks applies its own shim. Flank inset distances come from
+ * `stubLinks` anchor ids when present; otherwise a geometric scan. When multiple tie networks
+ * exist (e.g. copy-paste stack), only components overlapping that tie’s vertical span move.
  *
  * @returns {Map<string, number>} component id → delta x (add to position.x).
  */
@@ -139,52 +244,73 @@ export function buildTieCollapseHorizontalShiftMap(components, getComponentVisua
   );
   if (anchors.length === 0) return shiftById;
 
-  const tie = anchors[0];
-  const tg = tie.properties?.tieGroup;
-  const excluded = new Set([...(tg?.memberIds || []), tie.id]);
+  const scopeByVerticalBand =
+    components.filter((c) => isTieBreakerNetwork(c)).length > 1;
 
-  const baseVis = getComponentVisualConfig(tie.type);
-  const tieLeft = tie.position?.x ?? 0;
-  const tieW = tie.visualOverrides?.width ?? baseVis.width ?? 140;
-  const tieRight = tieLeft + tieW;
-  const gap = Number.isFinite(tg.stubLinks?.gapPx) ? tg.stubLinks.gapPx : 50;
+  for (const tie of anchors) {
+    const tg = tie.properties?.tieGroup;
+    const excluded = new Set([...(tg?.memberIds || []), tie.id]);
 
-  let leftMaxRight = -Infinity;
-  let rightMinLeft = Infinity;
-  /** @type {string[]} */
-  const leftIds = [];
-  /** @type {string[]} */
-  const rightIds = [];
+    const baseVis = getComponentVisualConfig(tie.type);
+    const tieLeft = tie.position?.x ?? 0;
+    const tieW = tie.visualOverrides?.width ?? baseVis.width ?? 140;
+    const tieRight = tieLeft + tieW;
+    const gap = Number.isFinite(tg.stubLinks?.gapPx) ? tg.stubLinks.gapPx : 50;
 
-  for (const c of components) {
-    if (!c?.id || excluded.has(c.id)) continue;
-    const w = compWidthPx(c, getComponentVisualConfig);
-    const cx = c.position?.x ?? 0;
-    const right = cx + w;
-    const left = cx;
-    if (right < tieLeft) {
-      leftIds.push(c.id);
-      leftMaxRight = Math.max(leftMaxRight, right);
-    } else if (left > tieRight) {
-      rightIds.push(c.id);
-      rightMinLeft = Math.min(rightMinLeft, left);
+    let { leftMaxRight, rightMinLeft } = flankExtentsFromStubLinks(
+      tie,
+      components,
+      getComponentVisualConfig,
+    );
+
+    if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
+      leftMaxRight = -Infinity;
+      rightMinLeft = Infinity;
+      for (const c of components) {
+        if (!c?.id || excluded.has(c.id)) continue;
+        if (
+          scopeByVerticalBand &&
+          !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
+        ) {
+          continue;
+        }
+        const w = compWidthPx(c, getComponentVisualConfig);
+        const cx = c.position?.x ?? 0;
+        const right = cx + w;
+        const left = cx;
+        if (right < tieLeft) {
+          leftMaxRight = Math.max(leftMaxRight, right);
+        } else if (left > tieRight) {
+          rightMinLeft = Math.min(rightMinLeft, left);
+        }
+      }
     }
-  }
 
-  if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
-    return shiftById;
-  }
+    if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
+      continue;
+    }
 
-  /** Δx for strictly-left components (+x pulls the left flank inward toward the tie). */
-  const dRightward = tieLeft - gap - leftMaxRight;
-  /** Tie-right flank excess: subtract from each right-flank component’s x. */
-  const dLeftward = rightMinLeft - (tieRight + gap);
+    const dRightward = tieLeft - gap - leftMaxRight;
+    const dLeftward = rightMinLeft - (tieRight + gap);
 
-  for (const id of leftIds) {
-    shiftById.set(id, dRightward);
-  }
-  for (const id of rightIds) {
-    shiftById.set(id, -dLeftward);
+    for (const c of components) {
+      if (!c?.id || excluded.has(c.id)) continue;
+      if (
+        scopeByVerticalBand &&
+        !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
+      ) {
+        continue;
+      }
+      const w = compWidthPx(c, getComponentVisualConfig);
+      const cx = c.position?.x ?? 0;
+      const right = cx + w;
+      const left = cx;
+      if (right < tieLeft) {
+        shiftById.set(c.id, dRightward);
+      } else if (left > tieRight) {
+        shiftById.set(c.id, -dLeftward);
+      }
+    }
   }
 
   return shiftById;
@@ -209,16 +335,30 @@ export function getTieCollapsedStubSegments(
   const w = tieRenderComp.visualOverrides?.width ?? baseVis.width;
   const tieLeft = tieRenderComp.position.x;
   const tieRight = tieLeft + w;
+  const tieKey = tieCompAnchors.id || tieRenderComp.id || 'tie';
+
+  const leftAnchors = resolveStubAnchorRenderComponents(
+    sl.leftAnchorIds,
+    'left',
+    tieRenderComp,
+    renderComponents,
+    getComponentVisualConfig,
+  );
+  const rightAnchors = resolveStubAnchorRenderComponents(
+    sl.rightAnchorIds,
+    'right',
+    tieRenderComp,
+    renderComponents,
+    getComponentVisualConfig,
+  );
 
   const segs = [];
   let ki = 0;
-  for (const id of sl.leftAnchorIds || []) {
-    const c = renderComponents.find((x) => x.id === id);
-    if (!c) continue;
+  for (const c of leftAnchors) {
     const x1 = anchorRightEdge(c, getComponentVisualConfig);
     const y = anchorCenterY(c, getComponentVisualConfig);
     segs.push({
-      key: `tie-stub-L-${ki}`,
+      key: `tie-stub-L-${tieKey}-${ki}`,
       x1,
       y1: y,
       x2: tieLeft,
@@ -227,13 +367,11 @@ export function getTieCollapsedStubSegments(
     ki += 1;
   }
   ki = 0;
-  for (const id of sl.rightAnchorIds || []) {
-    const c = renderComponents.find((x) => x.id === id);
-    if (!c) continue;
+  for (const c of rightAnchors) {
     const x2 = anchorLeftEdge(c);
     const y = anchorCenterY(c, getComponentVisualConfig);
     segs.push({
-      key: `tie-stub-R-${ki}`,
+      key: `tie-stub-R-${tieKey}-${ki}`,
       x1: tieRight,
       y1: y,
       x2,

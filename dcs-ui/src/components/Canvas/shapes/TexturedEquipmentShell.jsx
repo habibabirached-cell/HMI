@@ -28,6 +28,7 @@ export default function TexturedEquipmentShell({
   const canvasSecondaryText = secondaryLabelText(component, visualConfig);
 
   if (textureUrl) {
+    const labelAlongVerticalSlot = Boolean(visualConfig.canvasPrimaryLabelVertical);
     return (
       <>
         <FramedTextureCard
@@ -37,6 +38,8 @@ export default function TexturedEquipmentShell({
           textureOpacity={textureOpacity}
           strokeColor={strokeColor}
           strokeWidthVal={strokeWidthVal}
+          glowAccent={Boolean(visualConfig.textureGlowAccent)}
+          glowFilterId={`tex-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
         <StandardEquipmentLabels
           width={width}
@@ -45,7 +48,7 @@ export default function TexturedEquipmentShell({
           visualConfig={visualConfig}
           canvasPrimaryText={canvasPrimaryText}
           canvasSecondaryText={canvasSecondaryText}
-          framedTextureLayout
+          framedTextureLayout={!labelAlongVerticalSlot}
         />
       </>
     );

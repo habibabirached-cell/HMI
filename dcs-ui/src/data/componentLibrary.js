@@ -21,6 +21,7 @@ export const COMPONENT_LIBRARY = [
   {
     category: COMPONENT_CATEGORIES.GENERATION,
     components: [
+      { id: 'gas-turbine-3d', name: 'Gas Turbine', fullName: 'Gas Turbine', type: 'aeroderivative', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500', name: 'LM2500', fullName: 'Gas Turbine LM2500', type: 'aeroderivative', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-andritz', name: 'LM2500 Andritz', fullName: 'LM2500 Andritz A03 33.3MW', type: 'aeroderivative', properties: { rating: 33.3, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-plus', name: 'LM2500+', fullName: 'Gas Turbine LM2500+ / Xpress', type: 'aeroderivative', properties: { rating: 30, voltage: 13.8, unit: 'MW' } },

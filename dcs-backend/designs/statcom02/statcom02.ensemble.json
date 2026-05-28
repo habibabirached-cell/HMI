@@ -46,53 +46,23 @@
             "chart_type": "nd",
             "x_column": "n_LM2500_1 — t",
             "y_columns": [
-              "sb_LM2500_1 — Tm_1"
-            ],
-            "title": "Torque with Bess and Statcom",
-            "ensemble_cross_member": true,
-            "sample_step": 8,
-            "x_label": "time, seconds",
-            "y_label": "Torque, pu",
-            "variable_styles": {
-              "sb_LM2500_1 — Tm_1": {
-                "color": "#15932a"
-              }
-            },
-            "axis_range": {
-              "x_threshold": 8
-            }
-          },
-          {
-            "type": "single",
-            "component_id": "comp-bus-left",
-            "chart_type": "nd",
-            "x_column": "n_LM2500_1 — t",
-            "y_columns": [
               "n_LM2500_1 — Tmout",
-              "n_LM2500_2 — Tm_1",
-              "sb_LM2500_1 — Tm_1"
+              "n_LM2500_2 — Tm_1"
             ],
-            "title": "Mechanical Torque Comparison",
+            "title": "Mechanical Torque",
             "ensemble_cross_member": true,
             "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "variable_styles": {
-              "n_LM2500_1 — Tmout": {
-                "rigid": true
-              },
               "n_LM2500_2 — Tm_1": {
-                "color": "#005E60",
-                "rigid": true
-              },
-              "sb_LM2500_1 — Tm_1": {
-                "color": "#24bc26"
+                "color": "#005E60"
               }
             },
             "axis_range": {
-              "x_threshold": 8
-            },
-            "ui_drawer": "chart2"
+              "x_threshold": 8,
+              "danger_y_threshold": 0.7
+            }
           },
           {
             "type": "single",
@@ -102,77 +72,22 @@
             "y_columns": [
               "P_gall_n",
               "P_StatCom_n",
-              "P_Bess_n",
-              "P_gen_sb",
-              "P_bess_sb",
-              "P_statcom_sb"
+              "P_Bess_n"
             ],
-            "title": "34.5kV Bus L - nD",
+            "title": "Total Power ",
             "ensemble_sim_id": "formula",
             "sample_step": 8,
-            "x_label": "t",
-            "y_label": "Value",
+            "x_label": "Time, seconds",
+            "y_label": "Total Power, MW",
             "variable_styles": {
-              "P_gall_n": {
-                "rigid": true
-              },
               "P_StatCom_n": {
                 "color": "#005E60",
-                "intensity": 0.54,
-                "rigid": true
+                "intensity": 0.44
               },
               "P_Bess_n": {
                 "color": "#005E60",
-                "intensity": 0.15,
-                "rigid": true
-              },
-              "P_gen_sb": {
-                "color": "#57dd27"
-              },
-              "P_bess_sb": {
-                "color": "#57dd27",
-                "intensity": 0.4
-              },
-              "P_statcom_sb": {
-                "color": "#57dd27",
-                "intensity": 0.11
+                "intensity": 0.2
               }
-            },
-            "axis_range": {
-              "x_threshold": 8
-            },
-            "ui_drawer": "chart2"
-          },
-          {
-            "type": "single",
-            "component_id": "comp-bus-left",
-            "chart_type": "nd",
-            "x_column": "t",
-            "y_columns": [
-              "P_gen_sb",
-              "P_bess_sb",
-              "P_statcom_sb"
-            ],
-            "title": "34.5kV Bus L - nD",
-            "ensemble_sim_id": "formula",
-            "sample_step": 8,
-            "x_label": "t",
-            "y_label": "Value",
-            "variable_styles": {
-              "P_gen_sb": {
-                "color": "#14c820"
-              },
-              "P_bess_sb": {
-                "color": "#14c820",
-                "intensity": 0.45
-              },
-              "P_statcom_sb": {
-                "color": "#14c820",
-                "intensity": 0.13
-              }
-            },
-            "axis_range": {
-              "x_threshold": 8
             }
           }
         ],
@@ -221,7 +136,7 @@
               "n_LM2500_1 — Tmout",
               "n_LM2500_2 — Tm_1"
             ],
-            "title": "Mechanical Torque Comparison",
+            "title": "Mechanical Torque",
             "ensemble_cross_member": true,
             "sample_step": 8,
             "x_label": "Time, seconds",
@@ -366,11 +281,11 @@
               "P_bess_sb",
               "P_statcom_sb"
             ],
-            "title": "34.5kV Bus L - nD",
+            "title": "Power",
             "ensemble_sim_id": "formula",
             "sample_step": 8,
-            "x_label": "t",
-            "y_label": "Value",
+            "x_label": "Time, seconds",
+            "y_label": "Power MW",
             "variable_styles": {
               "P_gall_n": {
                 "rigid": true
@@ -412,11 +327,11 @@
               "P_bess_sb",
               "P_statcom_sb"
             ],
-            "title": "34.5kV Bus L - nD",
+            "title": "Power",
             "ensemble_sim_id": "formula",
             "sample_step": 8,
-            "x_label": "t",
-            "y_label": "Value",
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
             "variable_styles": {
               "P_gen_sb": {
                 "color": "#14c820"

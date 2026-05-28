@@ -5,7 +5,10 @@ const KeyboardShortcuts = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const shortcuts = [
+    { keys: ['Drag'], desc: 'Box-select components & wires (design mode)' },
     { keys: ['Shift', 'Click'], desc: 'Multi-select components' },
+    { keys: ['Ctrl/⌘', 'C'], desc: 'Copy selection (blocks, wires, sparklines)' },
+    { keys: ['Ctrl/⌘', 'V'], desc: 'Paste beside selection (repeat moves farther)' },
     { keys: ['Ctrl/⌘', 'A'], desc: 'Select all' },
     { keys: ['Esc'], desc: 'Clear selection' },
     { keys: ['↑', '↓'], desc: 'Zoom in / out' },

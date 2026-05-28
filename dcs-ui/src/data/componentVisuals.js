@@ -22,6 +22,7 @@
  * shape: 'schematic-gsu' — GSU: labels + line-art texture; ratio from properties.primaryVoltageKv / secondaryVoltageKv (kV).
  * shape: 'schematic-bess-xfmr' — BESS xfmr: lightning pair + same stack + hugging outline.
  * shape: 'schematic-lm2500-andritz' — LM2500 Andritz: card + line-art texture + title / MW (SchematicLm2500Andritz.jsx).
+ * shape: 'schematic-gas-turbine-3d' — Gas Turbine 3D: live GLB preview + title / MW (SchematicGasTurbine3D.jsx).
  *
  * Primitive shapes use the `shape-` prefix — modules `Canvas/shapes/shape-*.jsx` match these strings exactly:
  *   'shape-rounded-rect', 'shape-rect', 'shape-circle', 'shape-hexagon', 'shape-bus-bar', 'shape-dashed-rect'
@@ -42,6 +43,15 @@ export const COMPONENT_VISUAL_CONFIG = {
   // ============================================================================
   // GENERATION - Prime Movers (Wide, horizontal cylinders)
   // ============================================================================
+  'gas-turbine-3d': {
+    width: 500,
+    height: 250,
+    icon: '⚙️',
+    color: '#ff9800',
+    shape: 'schematic-gas-turbine-3d',
+    canvasPrimaryLabel: 'Gas Turbine',
+    model3dUrl: '/models/gasT3.glb',
+  },
   'gas-turbine-lm2500': {
     width: 140,
     height: 80,
@@ -530,11 +540,17 @@ export const COMPONENT_VISUAL_CONFIG = {
   'tie-breaker-network': {
     width: 140,
     height: 90,
-    icon: '⟷',
-    color: '#4caf50',
+    icon: '',
+    color: '#2e7d7d',
     shape: 'shape-rounded-rect',
-    /** Long narrow aggregate — primary label rotated so it stays inside the slot. */
+    backgroundTexture: '/component-textures/tie-breaker-network-line-art.svg',
+    backgroundTextureOpacity: 0.9,
+    textureGlowAccent: true,
+    /** Tall narrow aggregate — horizontal title at top (left → right). */
     canvasPrimaryLabelVertical: true,
+    canvasPrimaryLabelHorizontalAtTop: true,
+    canvasPrimaryLabelVerticalNoSqueeze: true,
+    canvasPrimaryLabelVerticalFontWeight: 500,
   },
   'recloser': {
     width: 50,

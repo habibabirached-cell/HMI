@@ -59,6 +59,13 @@ import { normalizeVariableStylesFromDef } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
+  buildCanvasClipboardPayload,
+  expandSelectionWithTieGroups,
+  computePasteOffsetForPayload,
+  materializeCanvasPaste,
+  scrubTieGroupReferencesAfterDelete,
+} from './utils/canvasDesignClipboard';
+import {
   getCachedSimulationPayload,
   setCachedSimulationPayload,
   deleteCachedSimulationPayload,
@@ -777,6 +784,84 @@ function App() {
     );
   }, []);
 
+  /** Move many components in one update (group drag). */
+  const handleMoveComponents = useCallback((updates) => {
+    if (!updates?.length) return;
+    const posById = new Map(updates.map((u) => [u.id, u.position]));
+    setCanvasComponents((prev) =>
+      prev.map((comp) =>
+        posById.has(comp.id) ? { ...comp, position: posById.get(comp.id) } : comp,
+      ),
+    );
+  }, []);
+
+  const canvasDesignClipboardRef = useRef(null);
+  const canvasPasteGenerationRef = useRef(0);
+
+  const handleCopyCanvasSelection = useCallback(() => {
+    if (mode !== 'design') return;
+    let componentIds = [...selectedComponents];
+    if (componentIds.length === 0 && selectedComponent?.id) {
+      componentIds = [selectedComponent.id];
+    }
+    let connectionIds = [...selectedConnections];
+    if (connectionIds.length === 0 && selectedConnection?.id) {
+      connectionIds = [selectedConnection.id];
+    }
+    for (const connId of connectionIds) {
+      const conn = connections.find((c) => c.id === connId);
+      if (conn) {
+        componentIds.push(conn.from, conn.to);
+      }
+    }
+    componentIds = expandSelectionWithTieGroups(canvasComponents, componentIds);
+    const payload = buildCanvasClipboardPayload(
+      canvasComponents,
+      connections,
+      componentIds,
+      connectionIds,
+    );
+    if (payload) {
+      canvasDesignClipboardRef.current = payload;
+      canvasPasteGenerationRef.current = 0;
+    }
+  }, [
+    mode,
+    selectedComponents,
+    selectedComponent,
+    selectedConnections,
+    selectedConnection,
+    canvasComponents,
+    connections,
+  ]);
+
+  const handlePasteCanvasSelection = useCallback(() => {
+    if (mode !== 'design') return;
+    const payload = canvasDesignClipboardRef.current;
+    if (!payload) return;
+    canvasPasteGenerationRef.current += 1;
+    const gen = canvasPasteGenerationRef.current;
+    const base = computePasteOffsetForPayload(payload, canvasBlockTypeScale);
+    const materialized = materializeCanvasPaste(payload, {
+      x: base.x * gen,
+      y: base.y * gen,
+    });
+    if (!materialized) return;
+    setCanvasComponents((prev) => [...prev, ...materialized.components]);
+    setConnections((prev) => [...prev, ...materialized.connections]);
+    setSelectedComponents(materialized.componentIds);
+    setSelectedConnections(materialized.connectionIds);
+    setSelectedComponent(materialized.components[0] ?? null);
+    setSelectedConnection(null);
+  }, [mode, canvasBlockTypeScale]);
+
+  const handleMarqueeCanvasSelect = useCallback(({ componentIds, connectionIds }) => {
+    setSelectedComponents(componentIds || []);
+    setSelectedConnections(connectionIds || []);
+    setSelectedComponent(null);
+    setSelectedConnection(null);
+  }, []);
+
   // Update component properties
   const handleUpdateComponent = useCallback((componentId, updates) => {
     setCanvasComponents(prev =>
@@ -804,16 +889,74 @@ function App() {
     });
   }, []);
 
-  // Delete component
-  const handleDeleteComponent = useCallback((componentId) => {
-    setCanvasComponents(prev => prev.filter(comp => comp.id !== componentId));
-    setConnections(prev => prev.filter(conn => 
-      conn.from !== componentId && conn.to !== componentId
-    ));
-    if (selectedComponent?.id === componentId) {
+  const deleteCanvasEntities = useCallback((componentIds, connectionIds = []) => {
+    const idsToDelete = new Set(
+      expandSelectionWithTieGroups(canvasComponents, componentIds || []),
+    );
+    const connIdsToDelete = new Set(connectionIds || []);
+
+    if (idsToDelete.size === 0 && connIdsToDelete.size === 0) return;
+
+    setCanvasComponents((prev) => {
+      const remaining = prev.filter((comp) => !idsToDelete.has(comp.id));
+      return scrubTieGroupReferencesAfterDelete(remaining, idsToDelete);
+    });
+    setConnections((prev) =>
+      prev.filter(
+        (conn) =>
+          !connIdsToDelete.has(conn.id) &&
+          !idsToDelete.has(conn.from) &&
+          !idsToDelete.has(conn.to),
+      ),
+    );
+    setSelectedComponents((prev) => prev.filter((id) => !idsToDelete.has(id)));
+    setSelectedConnections((prev) =>
+      prev.filter((id) => !connIdsToDelete.has(id)),
+    );
+    if (selectedComponent?.id && idsToDelete.has(selectedComponent.id)) {
       setSelectedComponent(null);
     }
-  }, [selectedComponent]);
+    if (
+      selectedConnection?.id &&
+      (connIdsToDelete.has(selectedConnection.id) ||
+        idsToDelete.has(selectedConnection.from) ||
+        idsToDelete.has(selectedConnection.to))
+    ) {
+      setSelectedConnection(null);
+    }
+  }, [canvasComponents, selectedComponent, selectedConnection]);
+
+  const handleDeleteCanvasSelection = useCallback(() => {
+    if (mode !== 'design') return;
+
+    const componentIds =
+      selectedComponents.length > 0
+        ? selectedComponents
+        : selectedComponent?.id
+          ? [selectedComponent.id]
+          : [];
+
+    const connectionIds = [...selectedConnections];
+    if (selectedConnection?.id && !connectionIds.includes(selectedConnection.id)) {
+      connectionIds.push(selectedConnection.id);
+    }
+
+    deleteCanvasEntities(componentIds, connectionIds);
+  }, [
+    mode,
+    selectedComponents,
+    selectedComponent,
+    selectedConnections,
+    selectedConnection,
+    deleteCanvasEntities,
+  ]);
+
+  const handleDeleteComponent = useCallback(
+    (componentId) => {
+      deleteCanvasEntities([componentId], []);
+    },
+    [deleteCanvasEntities],
+  );
 
   // Add connection
   const handleAddConnection = useCallback((fromId, toId) => {
@@ -869,13 +1012,12 @@ function App() {
   }, []);
 
   // Delete connection
-  const handleDeleteConnection = useCallback((connectionId) => {
-    setConnections(prev => prev.filter(conn => conn.id !== connectionId));
-    if (selectedConnection?.id === connectionId) {
-      setSelectedConnection(null);
-    }
-    setSelectedConnections((prev) => prev.filter((id) => id !== connectionId));
-  }, [selectedConnection]);
+  const handleDeleteConnection = useCallback(
+    (connectionId) => {
+      deleteCanvasEntities([], [connectionId]);
+    },
+    [deleteCanvasEntities],
+  );
 
   // ============================================================================
   // MULTI-SELECTION HANDLERS
@@ -5648,6 +5790,11 @@ function App() {
               selectedConnectionIds={selectedConnections}
               isComponentMultiSelected={isComponentMultiSelected}
               onMoveComponent={handleMoveComponent}
+              onMoveComponents={handleMoveComponents}
+              onMarqueeSelect={handleMarqueeCanvasSelect}
+              onCopySelection={handleCopyCanvasSelection}
+              onPasteSelection={handlePasteCanvasSelection}
+              onDeleteSelection={handleDeleteCanvasSelection}
               onAddComponent={handleAddComponent}
               onAddConnection={handleAddConnection}
               onUpdateComponent={handleUpdateComponent}

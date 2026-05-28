@@ -29,10 +29,71 @@ export default function StandardEquipmentLabels({
       ? `${canvasPrimaryText ?? ''}${canvasSecondaryText ? ` · ${canvasSecondaryText}` : ''}`.trim()
       : null;
 
-  /** Tall narrow slots: rotate the title −90° (reads upward) so horizontal width is not overrun. */
+  /** Tall narrow slots: horizontal title at top (reads left → right inside the cell). */
+  if (visualConfig.canvasPrimaryLabelHorizontalAtTop && !framedTextureLayout) {
+    const hTitleFs = adjSvgFontPx(8.5, fontPxDelta);
+    const hWeight = visualConfig.canvasPrimaryLabelVerticalFontWeight ?? 500;
+    const labelFill = visualConfig.textureGlowAccent
+      ? 'rgba(220, 235, 234, 0.92)'
+      : '#e0e0e0';
+    const labelY = Math.max(hTitleFs + 5, height * 0.045);
+    const hMaxW = width * 0.9;
+    const hSqueeze =
+      !visualConfig.canvasPrimaryLabelVerticalNoSqueeze && squeezeText;
+    return (
+      <>
+        <text
+          x={centerX}
+          y={labelY}
+          textAnchor="middle"
+          dominantBaseline="hanging"
+          fill={labelFill}
+          fontSize={hTitleFs}
+          fontWeight={hWeight}
+          fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+          letterSpacing="0.03em"
+          pointerEvents="none"
+          {...fittedLineAttrs(hMaxW, hSqueeze)}
+        >
+          {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
+          {canvasPrimaryText}
+        </text>
+        {!hideSupplementary && canvasSecondaryText ? (
+          <text
+            x={centerX}
+            y={height - Math.max(5, hTitleFs * 0.45)}
+            textAnchor="middle"
+            dominantBaseline="auto"
+            fill="#999"
+            fontSize={adjSvgFontPx(10, fontPxDelta)}
+            pointerEvents="none"
+            {...fittedLineAttrs(hMaxW, hSqueeze)}
+          >
+            {canvasSecondaryText}
+          </text>
+        ) : null}
+      </>
+    );
+  }
+
+  /** Tall narrow slots: rotate title along the cell (default −90° upward). */
   if (visualConfig.canvasPrimaryLabelVertical && !framedTextureLayout) {
-    const vTitleFs = adjSvgFontPx(10.5, fontPxDelta);
-    const vIconFs = adjSvgFontPx(20, fontPxDelta);
+    const vTitleFs = adjSvgFontPx(9, fontPxDelta);
+    const vIconFs = adjSvgFontPx(18, fontPxDelta);
+    const vAngle =
+      Number.isFinite(visualConfig.canvasPrimaryLabelVerticalAngle)
+        ? visualConfig.canvasPrimaryLabelVerticalAngle
+        : -90;
+    const vSqueeze =
+      !visualConfig.canvasPrimaryLabelVerticalNoSqueeze && squeezeText;
+    const vWeight = visualConfig.canvasPrimaryLabelVerticalFontWeight ?? 500;
+    const labelFill = visualConfig.textureGlowAccent
+      ? 'rgba(220, 235, 234, 0.92)'
+      : '#e0e0e0';
+    const labelAtTop = visualConfig.canvasPrimaryLabelVerticalAnchor === 'top';
+    const labelY = labelAtTop
+      ? Math.max(vTitleFs * 1.15 + 6, height * 0.065)
+      : height * 0.52;
     return (
       <>
         {visualConfig.icon != null && String(visualConfig.icon).trim() !== '' ? (
@@ -50,16 +111,21 @@ export default function StandardEquipmentLabels({
             {visualConfig.icon}
           </text>
         ) : null}
-        <g transform={`translate(${centerX}, ${height * 0.55}) rotate(-90)`} pointerEvents="none">
+        <g
+          transform={`translate(${centerX}, ${labelY}) rotate(${vAngle})`}
+          pointerEvents="none"
+        >
           <text
             x={0}
             y={0}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill="#e0e0e0"
+            fill={labelFill}
             fontSize={vTitleFs}
-            fontWeight="600"
-            {...fittedLineAttrs(height * 0.85, squeezeText)}
+            fontWeight={vWeight}
+            fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+            letterSpacing="0.04em"
+            {...fittedLineAttrs(height * 0.82, vSqueeze)}
           >
             {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
             {canvasPrimaryText}

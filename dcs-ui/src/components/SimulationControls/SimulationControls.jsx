@@ -456,10 +456,10 @@ const SimulationControls = ({
       {/* Body area where buttons appear */}
       <div className="controls-body">
         {/* ================================================================
-            SCENARIO PLAYING NOW + QUICK SCENARIOS (top of panel)
+            CURRENT SCENARIO + QUICK SCENARIOS (top of panel)
             ================================================================ */}
         <div className="scenario-playing-now-section">
-          <h4 className="scenarios-title">Scenario playing now:</h4>
+          <h4 className="scenarios-title">Current scenario:</h4>
           {activeQuickScenarioPlaying && simulationRunning ? (
             <div className="scenario-playing-now-display">
               <div

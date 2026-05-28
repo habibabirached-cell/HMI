@@ -89,7 +89,7 @@ function CanvasBlock({
         });
       }}
       onContextMenu={(e) => onContextMenu(e, component)}
-      className={`canvas-component ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`canvas-component${isTieBreakerNetwork(component) ? ' canvas-tie-breaker-network' : ''} ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{ cursor: mode === 'design' ? 'move' : 'pointer' }}
     >
       <g transform={`rotate(${rotation} ${centerX} ${centerY})`}>
@@ -187,8 +187,8 @@ function CanvasBlock({
                       cx={cx}
                       cy={cy}
                       r={r}
-                      fill="#2ee6d3"
-                      fillOpacity={0.55}
+                      fill={visualConfig.color || '#2e7d7d'}
+                      fillOpacity={0.5}
                       stroke={strokeColor}
                       strokeWidth={strokeWidthVal * 0.55}
                       filter={`url(#${glowId})`}

@@ -9,12 +9,103 @@
   -ms-user-select: none;
 }
 
+.canvas-marquee-rect {
+  fill: rgba(0, 212, 168, 0.12);
+  stroke: rgba(0, 212, 168, 0.85);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
 .canvas-svg {
   width: 100%;
   height: 100%;
   cursor: default;
   /* Let two-finger pan (wheel) / two-finger touch own the gesture, not the browser. */
   touch-action: none;
+  position: relative;
+  z-index: 1;
+}
+
+.gas-turbine-3d-overlay-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.gas-turbine-3d-overlay-slot {
+  position: fixed;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 4px;
+  box-sizing: border-box;
+  border-top: 1px solid rgba(88, 160, 255, 0.5);
+  border-bottom: 1px solid rgba(88, 160, 255, 0.5);
+  box-shadow:
+    inset 0 1px 8px rgba(88, 160, 255, 0.12),
+    inset 0 -1px 8px rgba(88, 160, 255, 0.12);
+}
+
+.gas-turbine-3d-viewer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gas-turbine-3d-viewer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Hollow letterforms — rotating turbine visible through counters and gaps */
+.gas-turbine-3d-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  text-align: center;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.1;
+  pointer-events: none;
+  color: rgba(13, 17, 23, 0.25);
+  -webkit-text-stroke: 1.1px rgba(224, 232, 240, 0.92);
+  paint-order: stroke fill;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+.gas-turbine-3d-mw {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.1;
+  pointer-events: none;
+  color: rgba(153, 153, 153, 0.92);
+  text-shadow: 0 1px 4px rgba(13, 17, 23, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+.gas-turbine-3d-viewer__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(248, 81, 73, 0.85);
+  font-size: 10px;
+  text-align: center;
+  padding: 4px;
 }
 
 .canvas-component {
@@ -24,6 +115,26 @@
 
 .canvas-component:hover {
   filter: brightness(1.2);
+}
+
+/* Collapsed tie aggregate — soft teal bloom (matches STATCOM / GFME palette) */
+.canvas-tie-breaker-network:not(.dragging) {
+  filter: drop-shadow(0 0 5px rgba(46, 125, 125, 0.28));
+}
+
+.canvas-tie-breaker-network:hover {
+  filter:
+    brightness(1.08)
+    drop-shadow(0 0 7px rgba(62, 180, 175, 0.42))
+    drop-shadow(0 0 14px rgba(46, 125, 125, 0.22));
+}
+
+.canvas-tie-breaker-network.selected:not(.multi-selected) {
+  filter:
+    brightness(1.06)
+    drop-shadow(0 0 6px rgba(0, 210, 200, 0.5))
+    drop-shadow(0 0 13px rgba(0, 94, 96, 0.38))
+    drop-shadow(0 0 20px rgba(46, 125, 125, 0.28));
 }
 
 /* Single selection: crisp teal + soft bloom; slow gentle pulse (not neon). ~20% brighter tier. */
