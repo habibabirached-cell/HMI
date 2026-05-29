@@ -67,7 +67,8 @@ const selectionListenersByChart = new Map();
  * - layoutMode: 'bottom' (default) | 'sideRight' (vertical strip on the right) | 'top'
  * - headerBottomPx: top offset below app header (fixed positioning)
  * - sidePanelWidth / onSidePanelWidthChange: width when layoutMode is sideRight
- * - dualChartDrawers: workspace conf1/conf2 → two labeled strips (chart1 / chart2)
+ * - dualChartDrawers: workspace conf1/conf2/conf4 → two labeled strips (chart1 / chart2)
+ * - dualChartDrawersStacked: conf4 → chart2 under chart1 (default: side-by-side columns)
  * - onMoveChartDrawer(chartId, 'chart1' | 'chart2'): move chart between drawers
  */
 const ChartPanel = ({ 
@@ -125,6 +126,7 @@ const ChartPanel = ({
   sidePanelWidth = 420,
   onSidePanelWidthChange,
   dualChartDrawers = false,
+  dualChartDrawersStacked = false,
   onMoveChartDrawer,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
@@ -2832,10 +2834,16 @@ const ChartPanel = ({
       </div>
 
       {/* Each chart sets its own --chart-* vars (own width or top-bar default). */}
-      {/* Dual mode: chart1 + chart2 are side‑by‑side columns so both use full tray height.
+      {/* Dual mode: chart1 + chart2 side-by-side (conf 1–2) or stacked (conf 4).
           Single strip: wrapper uses display:contents so layout is unchanged vs one merged row */}
       <div
-        className={dualChartDrawers ? 'chart-panel-drawers-row' : undefined}
+        className={
+          dualChartDrawers
+            ? `chart-panel-drawers-row${
+                dualChartDrawersStacked ? ' chart-panel-drawers-row--stacked' : ''
+              }`
+            : undefined
+        }
         style={!dualChartDrawers ? { display: 'contents' } : undefined}
       >
       {drawerRowsConfig.map(({ drawerKey, drawerLabel, units: drawerUnits }) => (

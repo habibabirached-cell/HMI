@@ -95,7 +95,7 @@ const Toolbar = ({
   return (
     <div className="toolbar">
       <div className="toolbar-section toolbar-workspace-layout" role="group" aria-label="Chart and panel layout">
-        {(['conf1', 'conf2', 'conf3']).map((id) => (
+        {(['conf1', 'conf2', 'conf3', 'conf4']).map((id) => (
           <button
             key={id}
             type="button"
@@ -106,10 +106,18 @@ const Toolbar = ({
                 ? 'Conf 1: charts bottom, Controls full-height on the right'
                 : id === 'conf2'
                   ? 'Conf 2: charts on the right, Controls bottom-left'
-                  : 'Conf 3: charts top, Controls bottom-left'
+                  : id === 'conf3'
+                    ? 'Conf 3: charts top, Controls bottom-left'
+                    : 'Conf 4: like conf 2, chart2 under chart1'
             }
           >
-            {id === 'conf1' ? 'conf 1' : id === 'conf2' ? 'conf 2' : 'conf 3'}
+            {id === 'conf1'
+              ? 'conf 1'
+              : id === 'conf2'
+                ? 'conf 2'
+                : id === 'conf3'
+                  ? 'conf 3'
+                  : 'conf 4'}
           </button>
         ))}
       </div>

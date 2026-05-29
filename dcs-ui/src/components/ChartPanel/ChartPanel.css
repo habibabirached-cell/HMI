@@ -822,6 +822,21 @@
   padding-bottom: 2px;
 }
 
+/* conf4: chart1 over chart2 (same side dock as conf2) */
+.chart-panel-drawers-row--stacked {
+  flex-direction: column;
+}
+
+.chart-panel-drawers-row--stacked > .chart-panel-drawer-slot {
+  flex: 1 1 50%;
+  border-right: none;
+  border-bottom: 1px solid rgba(0, 94, 96, 0.28);
+}
+
+.chart-panel-drawers-row--stacked > .chart-panel-drawer-slot:last-of-type {
+  border-bottom: none;
+}
+
 .chart-panel-drawer-label {
   flex-shrink: 0;
   font-size: calc(10px + var(--ui-font-px-shift, 0px));
