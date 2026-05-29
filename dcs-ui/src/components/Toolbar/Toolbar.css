@@ -181,6 +181,10 @@
   min-width: 100px;
 }
 
+.toolbar-font-shift-label--collapsed {
+  min-width: 108px;
+}
+
 .btn-zoom {
   width: 32px;
   height: 32px;

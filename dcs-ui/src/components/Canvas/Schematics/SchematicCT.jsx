@@ -5,7 +5,7 @@ import {
   getCanvasLabelFlags,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 function buildZigzagPath(x0, wireY, amp, x1, steps = 6) {
   const span = x1 - x0;
@@ -35,7 +35,7 @@ function SchematicCT({
   secondaryLabel,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const maxW = width * 0.92;
@@ -163,7 +163,6 @@ function SchematicCT({
           fontSize={fsP}
           fontWeight="600"
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
           <tspan x={cx} dy={0}>
@@ -175,7 +174,6 @@ function SchematicCT({
             fill="#999"
             fontSize={fsS}
             fontWeight="400"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {secondaryLabel}
           </tspan>
@@ -191,7 +189,6 @@ function SchematicCT({
             fontSize={fsP}
             fontWeight="600"
             pointerEvents="none"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {hideSupplementary && secondaryLabel ? (
               <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
@@ -207,7 +204,6 @@ function SchematicCT({
               fill="#999"
               fontSize={fsS}
               pointerEvents="none"
-              {...fittedLineAttrs(maxW, squeezeText)}
             >
               {secondaryLabel}
             </text>

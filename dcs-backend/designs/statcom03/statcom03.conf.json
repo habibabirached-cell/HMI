@@ -3,6 +3,904 @@
   "description": "",
   "canvasComponents": [
     {
+      "id": "comp-upper-left-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "Upper Gen Bank L",
+      "fullName": "Upper Gen Bank L",
+      "position": {
+        "x": 27,
+        "y": -12
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 1800
+          },
+          "previewMemberId": "comp-upper-left-gen-3d-preview",
+          "collapseCompanionMemberId": "comp-upper-left-gen-aux-preview",
+          "collapseColumnLeft": -337.5,
+          "memberIds": [
+            "comp-turbine-1",
+            "comp-gen-cb-1",
+            "comp-gsu-gen-1",
+            "comp-ct-gen-800-1",
+            "comp-turbine-2",
+            "comp-gen-cb-2",
+            "comp-gsu-gen-2",
+            "comp-ct-gen-800-2",
+            "comp-turbine-3",
+            "comp-gen-cb-3",
+            "comp-gsu-gen-3",
+            "comp-ct-gen-800-3",
+            "comp-turbine-4",
+            "comp-gen-cb-4",
+            "comp-gsu-gen-4",
+            "comp-ct-gen-800-4",
+            "comp-it-lt-ct",
+            "comp-it-lt-xfmr",
+            "comp-it-lt-knot",
+            "comp-it-lt-aux",
+            "comp-it-lt-aux-cb",
+            "comp-it-lt-dc-cb",
+            "comp-it-lt-pcs",
+            "comp-it-lt-ups",
+            "comp-it-lt-rack",
+            "comp-it-lb-ct",
+            "comp-it-lb-xfmr",
+            "comp-it-lb-knot",
+            "comp-it-lb-aux",
+            "comp-it-lb-aux-cb",
+            "comp-it-lb-dc-cb",
+            "comp-it-lb-pcs",
+            "comp-it-lb-ups",
+            "comp-it-lb-rack"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "busMemberId": "comp-bus-left",
+            "leftAnchorIds": [],
+            "rightAnchorIds": []
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-upper-right-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "Upper Gen Bank R",
+      "fullName": "Upper Gen Bank R",
+      "position": {
+        "x": 2789,
+        "y": -12
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 1800
+          },
+          "previewMemberId": "comp-upper-right-gen-3d-preview",
+          "collapseCompanionMemberId": "comp-upper-right-gen-aux-preview",
+          "collapseColumnLeft": 2487.5,
+          "memberIds": [
+            "comp-turbine-5",
+            "comp-gen-cb-5",
+            "comp-gsu-gen-5",
+            "comp-ct-gen-800-5",
+            "comp-turbine-6",
+            "comp-gen-cb-6",
+            "comp-gsu-gen-6",
+            "comp-ct-gen-800-6",
+            "comp-turbine-7",
+            "comp-gen-cb-7",
+            "comp-gsu-gen-7",
+            "comp-ct-gen-800-7",
+            "comp-turbine-8",
+            "comp-gen-cb-8",
+            "comp-gsu-gen-8",
+            "comp-ct-gen-800-8",
+            "comp-it-rt-ct",
+            "comp-it-rt-xfmr",
+            "comp-it-rt-knot",
+            "comp-it-rt-aux",
+            "comp-it-rt-aux-cb",
+            "comp-it-rt-dc-cb",
+            "comp-it-rt-pcs",
+            "comp-it-rt-ups",
+            "comp-it-rt-rack",
+            "comp-it-rb-ct",
+            "comp-it-rb-xfmr",
+            "comp-it-rb-knot",
+            "comp-it-rb-aux",
+            "comp-it-rb-aux-cb",
+            "comp-it-rb-dc-cb",
+            "comp-it-rb-pcs",
+            "comp-it-rb-ups",
+            "comp-it-rb-rack"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "busMemberId": "comp-bus-right",
+            "leftAnchorIds": [],
+            "rightAnchorIds": []
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-lower-left-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "Lower Gen Bank L",
+      "fullName": "Lower Gen Bank L",
+      "position": {
+        "x": 27,
+        "y": 1876
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 1800,
+            "maxY": 4400
+          },
+          "previewMemberId": "comp-lower-left-gen-3d-preview",
+          "collapseColumnLeft": -337.5,
+          "memberIds": [
+            "paste-1779985373163-144-xorkf",
+            "paste-1779985373163-146-f5wpn",
+            "paste-1779985373163-148-gnsiz",
+            "paste-1779985373163-150-dyx80",
+            "paste-1779985373163-152-162m6",
+            "paste-1779985373163-154-2vgc9",
+            "paste-1779985373163-156-42w00",
+            "paste-1779985373163-158-f6q3z",
+            "paste-1779985373163-160-69055",
+            "paste-1779985373163-162-pz064",
+            "paste-1779985373163-164-mqscu",
+            "paste-1779985373163-166-ncflg",
+            "paste-1779985373163-168-cdooe",
+            "paste-1779985373163-170-6ivor",
+            "paste-1779985373163-172-ukutj",
+            "paste-1779985373163-174-1qe8l",
+            "paste-1779985373163-176-tt6be",
+            "paste-1779985373163-177-3er8k",
+            "paste-1779985373163-178-gq2qm",
+            "paste-1779985373163-179-ijqw0",
+            "paste-1779985373163-184-yz6xc",
+            "paste-1779985373163-185-nbu8e",
+            "paste-1779985373163-186-1zfcv",
+            "paste-1779985373163-187-mek5p",
+            "paste-1779985373163-192-djhus",
+            "paste-1779985373163-193-g87cu",
+            "paste-1779985373163-194-ycpac",
+            "paste-1779985373163-195-bp6cn",
+            "paste-1779985373163-196-62vip",
+            "paste-1779985373163-197-rvp7o",
+            "paste-1779985373163-198-iu2z7",
+            "paste-1779985373163-199-ld43g",
+            "paste-1779985373163-200-fc0sy",
+            "paste-1779985373163-201-1i634",
+            "paste-1779985373163-202-3j44b",
+            "paste-1779985373163-203-wr031",
+            "paste-1779985373163-204-zmtnr",
+            "paste-1779985373163-205-1v2hm",
+            "paste-1779985373163-206-dqy5t",
+            "paste-1779985373163-207-qhxsk",
+            "paste-1779985373163-208-7n7f4",
+            "paste-1779985373163-209-cati4"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [],
+            "busMemberId": "paste-1779985373163-0-q5ccd"
+          },
+          "collapseCompanionMemberId": "comp-lower-left-gen-aux-preview",
+          "collapseExtraMemberIds": [
+            "comp-lower-left-gen-bess-preview",
+            "comp-lower-left-gen-gfme-preview"
+          ]
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-lower-right-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "Lower Gen Bank R",
+      "fullName": "Lower Gen Bank R",
+      "position": {
+        "x": 2789,
+        "y": 1876
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 1800,
+            "maxY": 4400
+          },
+          "previewMemberId": "comp-lower-right-gen-3d-preview",
+          "collapseColumnLeft": 2487.5,
+          "memberIds": [
+            "paste-1779985373163-145-su0ea",
+            "paste-1779985373163-147-5cusz",
+            "paste-1779985373163-149-bcfxt",
+            "paste-1779985373163-151-3jvb0",
+            "paste-1779985373163-153-ewigc",
+            "paste-1779985373163-155-pynp4",
+            "paste-1779985373163-157-xa4em",
+            "paste-1779985373163-159-44708",
+            "paste-1779985373163-161-wje3n",
+            "paste-1779985373163-163-oqoxk",
+            "paste-1779985373163-165-f4owv",
+            "paste-1779985373163-167-vcwn2",
+            "paste-1779985373163-169-w60x7",
+            "paste-1779985373163-171-0kxwc",
+            "paste-1779985373163-173-wmgqy",
+            "paste-1779985373163-175-i0lpl",
+            "paste-1779985373163-180-oio1y",
+            "paste-1779985373163-181-tk6ka",
+            "paste-1779985373163-182-qsiol",
+            "paste-1779985373163-183-j63e7",
+            "paste-1779985373163-188-8o8wf",
+            "paste-1779985373163-189-oq7z8",
+            "paste-1779985373163-190-wzd8w",
+            "paste-1779985373163-191-8nkae",
+            "paste-1779985373163-210-dbohp",
+            "paste-1779985373163-211-sjypn",
+            "paste-1779985373163-212-wa7zx",
+            "paste-1779985373163-213-bi0h1",
+            "paste-1779985373163-214-xvkm6",
+            "paste-1779985373163-215-x9ufg",
+            "paste-1779985373163-216-5l13t",
+            "paste-1779985373163-217-tw0zl",
+            "paste-1779985373163-218-egwj2",
+            "paste-1779985373163-219-e82rw",
+            "paste-1779985373163-220-mcnb0",
+            "paste-1779985373163-221-slybl",
+            "paste-1779985373163-222-31s1a",
+            "paste-1779985373163-223-o4uxy",
+            "paste-1779985373163-224-7909a",
+            "paste-1779985373163-225-o961y",
+            "paste-1779985373163-226-5pwwb",
+            "paste-1779985373163-227-49qqg"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [],
+            "busMemberId": "paste-1779985373163-1-43w91"
+          },
+          "collapseCompanionMemberId": "comp-lower-right-gen-aux-preview",
+          "collapseExtraMemberIds": [
+            "comp-lower-right-gen-bess-preview",
+            "comp-lower-right-gen-gfme-preview"
+          ]
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-upper-left-gen-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (left aisle collapsed)",
+      "position": {
+        "x": -325,
+        "y": 162.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-upper-right-gen-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (right aisle collapsed)",
+      "position": {
+        "x": 2525,
+        "y": 162.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-upper-left-gen-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads ",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": -375,
+        "y": 812.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "left",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Paux",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Qaux",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Vaux",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "f_Load",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-upper-right-gen-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads ",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": 2525,
+        "y": 812.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "right",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Paux.3",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Qaux.3",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Vaux.3",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "f_Load.3",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-left-gen-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (lower left aisle collapsed)",
+      "position": {
+        "x": -325,
+        "y": 1862.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-lower-right-gen-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (lower right aisle collapsed)",
+      "position": {
+        "x": 2525,
+        "y": 1862.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-lower-left-gen-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads ",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": -425,
+        "y": 3112.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "left",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Paux",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Qaux",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "Vaux",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_1",
+            "column": "f_Load",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-right-gen-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads ",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": 2475,
+        "y": 3112.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "right",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Paux.3",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Qaux.3",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "Vaux.3",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_Load_4",
+            "column": "f_Load.3",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-left-gen-bess-preview",
+      "type": "bess-50mw",
+      "name": "BESS #1",
+      "fullName": "Battery Energy Storage System 50MW",
+      "position": {
+        "x": -525,
+        "y": 2262.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "voltage": 34.5,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "left",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_BESS_1",
+            "column": "P_BESS1",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_1",
+            "column": "Q_BESS1",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_1",
+            "column": "V_BESS1",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_1",
+            "column": "freq_BESS_1",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-right-gen-bess-preview",
+      "type": "bess-50mw",
+      "name": "BESS #2",
+      "fullName": "Battery Energy Storage System 50MW",
+      "position": {
+        "x": 2575,
+        "y": 2262.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "voltage": 34.5,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "right",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_BESS_2",
+            "column": "P_BESS2",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_2",
+            "column": "Q_BESS2",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_2",
+            "column": "Vrms_BESS_2",
+            "unit": "V",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_BESS_2",
+            "column": "freq_BESS_2",
+            "unit": "Hz",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-left-gen-gfme-preview",
+      "type": "gfme-statcom",
+      "name": "GEV FACTSFLEX GFMe  #1",
+      "fullName": "GFME Static Synchronous Compensator #1",
+      "position": {
+        "x": -525,
+        "y": 2712.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 50,
+        "voltage": 34.5,
+        "unit": "MVAR"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "left",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_STATCOM_1",
+            "column": "P_STATCOM_1",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_1",
+            "column": "Q_STATCOM_1",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_1",
+            "column": "freq_STATCOM_1",
+            "unit": "Hz",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_1",
+            "column": "Vrms_STATCOM_1",
+            "unit": "V",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "comp-lower-right-gen-gfme-preview",
+      "type": "gfme-statcom",
+      "name": "GEV FACTSFLEX GFMe  #2",
+      "fullName": "GFME Static Synchronous Compensator #2",
+      "position": {
+        "x": 2575,
+        "y": 2712.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 50,
+        "voltage": 34.5,
+        "unit": "MVAR"
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": {
+        "side": "right",
+        "swatchColor": "#cddc39",
+        "slots": [
+          {
+            "ensembleSimId": "_STATCOM_2",
+            "column": "P_STATCOM_2",
+            "unit": "MW",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_2",
+            "column": "Q_STATCOM_2",
+            "unit": "MVAR",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_2",
+            "column": "freq_STATCOM_2",
+            "unit": "Hz",
+            "decimals": 2
+          },
+          {
+            "ensembleSimId": "_STATCOM_2",
+            "column": "Vrms_STATCOM_2",
+            "unit": "V",
+            "decimals": 2
+          }
+        ]
+      }
+    },
+    {
       "id": "comp-bus-left",
       "type": "bus-hv-vertical",
       "name": "34.5kV Bus L",
@@ -3560,7 +4458,7 @@
       "id": "comp-turbine-1",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #1",
-      "fullName": "LM2500 Andritz A03 33.3 MW",
+      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #1",
       "position": {
         "x": -175,
         "y": 350
@@ -3810,7 +4708,7 @@
       "id": "comp-turbine-2",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #2",
-      "fullName": "LM2500 Andritz A03 33.3 MW",
+      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #2",
       "position": {
         "x": -175,
         "y": 500
@@ -6043,16 +6941,16 @@
             "gapPx": 50,
             "fillAisleWidth": true,
             "leftAnchorIds": [
-              "comp-bus-section-cb-l-1",
-              "comp-bus-section-cb-l-2",
-              "comp-bus-section-cb-l-3",
-              "comp-bus-section-cb-l-4"
+              "paste-1779985373163-2-kb6dy",
+              "paste-1779985373163-4-qzoqq",
+              "paste-1779985373163-6-7sn4x",
+              "paste-1779985373163-8-w9sg1"
             ],
             "rightAnchorIds": [
-              "comp-bus-section-cb-r-1",
-              "comp-bus-section-cb-r-2",
-              "comp-bus-section-cb-r-3",
-              "comp-bus-section-cb-r-4"
+              "paste-1779985373163-3-a6of1",
+              "paste-1779985373163-5-h0i94",
+              "paste-1779985373163-7-pqfil",
+              "paste-1779985373163-9-7hdwy"
             ]
           }
         }
@@ -13536,7 +14434,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13559,7 +14457,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13581,7 +14479,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13604,7 +14502,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13634,7 +14532,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13664,7 +14562,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13686,7 +14584,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13709,7 +14607,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13732,7 +14630,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13755,7 +14653,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13777,7 +14675,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13800,7 +14698,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13830,7 +14728,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13860,7 +14758,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13882,7 +14780,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13905,7 +14803,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13928,7 +14826,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13950,7 +14848,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13973,7 +14871,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -13995,7 +14893,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14039,7 +14937,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14061,7 +14959,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14084,7 +14982,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14107,7 +15005,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14129,7 +15027,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14152,7 +15050,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14174,7 +15072,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14218,7 +15116,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14241,7 +15139,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -14264,7 +15162,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16180,7 +17078,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16203,7 +17101,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16225,7 +17123,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16248,7 +17146,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16278,7 +17176,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16308,7 +17206,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16330,7 +17228,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16353,7 +17251,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16376,7 +17274,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16399,7 +17297,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16421,7 +17319,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16444,7 +17342,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16474,7 +17372,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16504,7 +17402,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16526,7 +17424,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16549,7 +17447,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16572,7 +17470,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16594,7 +17492,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16617,7 +17515,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16639,7 +17537,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16683,7 +17581,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16705,7 +17603,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16728,7 +17626,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16751,7 +17649,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16773,7 +17671,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16796,7 +17694,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16818,7 +17716,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16862,7 +17760,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16885,7 +17783,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#ef5350",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -16908,7 +17806,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#c62828",
+        "color": "#1565c0",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -17072,27 +17970,316 @@
         },
         "flowArrows": "reverse"
       }
+    },
+    {
+      "id": "conn-1780007122211",
+      "from": "comp-upper-left-gen-3d-preview",
+      "to": "comp-bus-left",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-1780007128062",
+      "from": "comp-upper-right-gen-3d-preview",
+      "to": "comp-bus-right",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-1780009038007",
+      "from": "comp-upper-left-gen-aux-preview",
+      "to": "comp-bus-left",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-1780009041117",
+      "from": "comp-upper-right-gen-aux-preview",
+      "to": "comp-bus-right",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-lower-left-gen-3d-bus",
+      "from": "comp-lower-left-gen-3d-preview",
+      "to": "paste-1779985373163-0-q5ccd",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-lower-right-gen-3d-bus",
+      "from": "comp-lower-right-gen-3d-preview",
+      "to": "paste-1779985373163-1-43w91",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-lower-left-gen-aux-bus",
+      "from": "comp-lower-left-gen-aux-preview",
+      "to": "paste-1779985373163-0-q5ccd",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-lower-right-gen-aux-bus",
+      "from": "comp-lower-right-gen-aux-preview",
+      "to": "paste-1779985373163-1-43w91",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-lower-left-gen-bess-bus",
+      "from": "comp-lower-left-gen-bess-preview",
+      "to": "paste-1779985373163-0-q5ccd",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-lower-left-gen-gfme-bus",
+      "from": "comp-lower-left-gen-gfme-preview",
+      "to": "paste-1779985373163-0-q5ccd",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-lower-right-gen-bess-bus",
+      "from": "comp-lower-right-gen-bess-preview",
+      "to": "paste-1779985373163-1-43w91",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-lower-right-gen-gfme-bus",
+      "from": "comp-lower-right-gen-gfme-preview",
+      "to": "paste-1779985373163-1-43w91",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
     }
   ],
   "systemState": {
     "simulationRunning": false,
     "zoom": 0.5,
     "pan": {
-      "x": 481.48524299168434,
-      "y": 130.43696064726646
+      "x": 77.53408772969715,
+      "y": 51.60999537320549
     },
     "mode": "design",
     "uiFontPxShift": 3,
-    "canvasFontPxShift": 21
+    "canvasFontPxShift": 5,
+    "collapsedComponentFontPxShift": 24
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 8,
   "perChartSampleStep": {
-    "sim-chart-1779988286602-0": 8,
-    "sim-chart-1779988286602-1": 8,
-    "sim-chart-1779988286602-2": 8,
-    "sim-chart-1779988286602-3": 8
+    "sim-chart-1780014201863-0": 8,
+    "sim-chart-1780014201863-1": 8,
+    "sim-chart-1780014201863-2": 8,
+    "sim-chart-1780014201863-3": 8
   },
   "designUiSession": {
     "ensembleId": "all"

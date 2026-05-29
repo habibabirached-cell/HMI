@@ -4,6 +4,10 @@ import {
   isTieBreakerNetwork,
   tieEffectiveDimensions,
 } from './tieBreakerNetwork';
+import {
+  isGasTurbineBank,
+  gasTurbineBankEffectiveDimensions,
+} from './gasTurbineBank';
 
 function getCanvasBlockTypeScale(canvasBlockTypeScale, type) {
   const n = Number(canvasBlockTypeScale?.[type]);
@@ -22,7 +26,9 @@ export function getComponentCanvasBounds(
     visualConfig,
     canvasBlockTypeScale,
   );
-  const { width, height } = tieEffectiveDimensions(component, baseW, baseH);
+  const { width, height } = isGasTurbineBank(component)
+    ? gasTurbineBankEffectiveDimensions(component, baseW, baseH)
+    : tieEffectiveDimensions(component, baseW, baseH);
   const pos = positionOverride ?? component.position;
   return {
     x: pos.x,
@@ -76,12 +82,29 @@ export function expandSelectionWithTieGroups(allComponents, componentIds) {
     }
   };
 
+  const absorbGasBank = (bankComp) => {
+    if (!bankComp || !isGasTurbineBank(bankComp)) return;
+    set.add(bankComp.id);
+    const mids = bankComp.properties?.gasTurbineGroup?.memberIds;
+    if (Array.isArray(mids)) {
+      for (const mid of mids) {
+        if (mid) set.add(String(mid));
+      }
+    }
+  };
+
   for (const id of [...set]) {
     absorbTie(byId.get(id));
+    absorbGasBank(byId.get(id));
     for (const c of allComponents) {
-      if (!isTieBreakerNetwork(c)) continue;
-      const mids = c.properties?.tieGroup?.memberIds || [];
-      if (mids.includes(id)) absorbTie(c);
+      if (isTieBreakerNetwork(c)) {
+        const mids = c.properties?.tieGroup?.memberIds || [];
+        if (mids.includes(id)) absorbTie(c);
+      }
+      if (isGasTurbineBank(c)) {
+        const mids = c.properties?.gasTurbineGroup?.memberIds || [];
+        if (mids.includes(id)) absorbGasBank(c);
+      }
     }
   }
 
@@ -248,6 +271,41 @@ export function materializeCanvasPaste(payload, pasteOffset) {
           memberIds: Array.isArray(tg.memberIds)
             ? tg.memberIds.map((mid) => idMap.get(mid) ?? mid)
             : tg.memberIds,
+          ...(stub
+            ? {
+                stubLinks: {
+                  ...stub,
+                  leftAnchorIds: (stub.leftAnchorIds || []).map(
+                    (aid) => idMap.get(aid) ?? aid,
+                  ),
+                  rightAnchorIds: (stub.rightAnchorIds || []).map(
+                    (aid) => idMap.get(aid) ?? aid,
+                  ),
+                },
+              }
+            : {}),
+        },
+      };
+    }
+    if (isGasTurbineBank(next) && next.properties?.gasTurbineGroup) {
+      const g = next.properties.gasTurbineGroup;
+      const stub = g.stubLinks;
+      next.properties = {
+        ...next.properties,
+        gasTurbineGroup: {
+          ...g,
+          previewMemberId: g.previewMemberId
+            ? idMap.get(g.previewMemberId) ?? g.previewMemberId
+            : g.previewMemberId,
+          collapseCompanionMemberId: g.collapseCompanionMemberId
+            ? idMap.get(g.collapseCompanionMemberId) ?? g.collapseCompanionMemberId
+            : g.collapseCompanionMemberId,
+          collapseExtraMemberIds: Array.isArray(g.collapseExtraMemberIds)
+            ? g.collapseExtraMemberIds.map((mid) => idMap.get(mid) ?? mid)
+            : g.collapseExtraMemberIds,
+          memberIds: Array.isArray(g.memberIds)
+            ? g.memberIds.map((mid) => idMap.get(mid) ?? mid)
+            : g.memberIds,
           ...(stub
             ? {
                 stubLinks: {

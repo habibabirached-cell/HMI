@@ -1,6 +1,7 @@
 import React from 'react';
 import FramedTextureCard from './FramedTextureCard';
 import StandardEquipmentLabels from './StandardEquipmentLabels';
+import SchematicAuxLoadsAggregate from '../Schematics/SchematicAuxLoadsAggregate';
 import {
   primaryLabelText,
   secondaryLabelText,
@@ -20,6 +21,8 @@ export default function TexturedEquipmentShell({
   strokeColor,
   strokeWidthVal,
   childrenNoTexture,
+  labelFontPxDelta = null,
+  collapseAggregateArt = false,
 }) {
   const textureUrl = resolveTextureUrl(visualConfig);
   const textureOpacity = getTextureOpacity(visualConfig);
@@ -29,18 +32,29 @@ export default function TexturedEquipmentShell({
 
   if (textureUrl) {
     const labelAlongVerticalSlot = Boolean(visualConfig.canvasPrimaryLabelVertical);
+    const glowFilterId = `tex-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
     return (
       <>
-        <FramedTextureCard
-          width={width}
-          height={height}
-          textureUrl={textureUrl}
-          textureOpacity={textureOpacity}
-          strokeColor={strokeColor}
-          strokeWidthVal={strokeWidthVal}
-          glowAccent={Boolean(visualConfig.textureGlowAccent)}
-          glowFilterId={`tex-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
-        />
+        {collapseAggregateArt ? (
+          <SchematicAuxLoadsAggregate
+            width={width}
+            height={height}
+            strokeColor={strokeColor}
+            strokeWidthVal={strokeWidthVal}
+            glowFilterId={glowFilterId}
+          />
+        ) : (
+          <FramedTextureCard
+            width={width}
+            height={height}
+            textureUrl={textureUrl}
+            textureOpacity={textureOpacity}
+            strokeColor={strokeColor}
+            strokeWidthVal={strokeWidthVal}
+            glowAccent={Boolean(visualConfig.textureGlowAccent)}
+            glowFilterId={glowFilterId}
+          />
+        )}
         <StandardEquipmentLabels
           width={width}
           height={height}
@@ -49,6 +63,7 @@ export default function TexturedEquipmentShell({
           canvasPrimaryText={canvasPrimaryText}
           canvasSecondaryText={canvasSecondaryText}
           framedTextureLayout={!labelAlongVerticalSlot}
+          labelFontPxDelta={labelFontPxDelta}
         />
       </>
     );
@@ -65,6 +80,7 @@ export default function TexturedEquipmentShell({
         canvasPrimaryText={canvasPrimaryText}
         canvasSecondaryText={canvasSecondaryText}
         framedTextureLayout={false}
+        labelFontPxDelta={labelFontPxDelta}
       />
     </>
   );

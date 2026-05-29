@@ -6,7 +6,9 @@ import {
   primaryLabelText,
   secondaryLabelText,
 } from '../shapes/canvasBlockUtils';
-import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
+import {
+  useCollapsedComponentFontPxDelta,
+} from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import {
   GAS_TURBINE_3D_TYPE,
@@ -19,6 +21,8 @@ import {
 
 /**
  * Full-block WebGL + hollow title/MW overlays (above SVG accent rails).
+ * Slots use canvas-local coordinates (pan + zoom) — not viewport fixed — so layout
+ * changes (e.g. sim controls Hide/Reveal) do not stretch or drift the 3D viewers.
  */
 export default function GasTurbine3DOverlays({
   components,
@@ -27,7 +31,7 @@ export default function GasTurbine3DOverlays({
   canvasRef,
   blockTypeScale = {},
 }) {
-  const fontPxDelta = useCanvasFontPxDelta();
+  const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsP = adjSvgFontPx(GT3D_TITLE_BASE_FONT, fontPxDelta);
   const fsMw = adjSvgFontPx(GT3D_MW_BASE_FONT, fontPxDelta);
   const [slots, setSlots] = useState([]);
@@ -42,9 +46,12 @@ export default function GasTurbine3DOverlays({
     const modelUrl = getGasTurbine3DModelUrl();
 
     const update = () => {
-      const canvasRect = canvasEl.getBoundingClientRect();
       const next = components
-        .filter((c) => c.type === GAS_TURBINE_3D_TYPE)
+        .filter(
+          (c) =>
+            c.type === GAS_TURBINE_3D_TYPE &&
+            c.properties?.collapsePlaceholderOnly !== true,
+        )
         .map((component) => {
           const visualConfig = getComponentVisualConfig(component.type);
           const { width, height } = getScaledCanvasBlockDimensions(
@@ -59,8 +66,8 @@ export default function GasTurbine3DOverlays({
 
           return {
             id: component.id,
-            left: canvasRect.left + pan.x + component.position.x * zoom,
-            top: canvasRect.top + pan.y + component.position.y * zoom,
+            left: pan.x + component.position.x * zoom,
+            top: pan.y + component.position.y * zoom,
             width: slotW,
             height: slotH,
             pixelWidth: Math.max(8, Math.round(slotW)),
@@ -78,6 +85,14 @@ export default function GasTurbine3DOverlays({
     };
 
     update();
+
+    const container = canvasEl.parentElement;
+    if (typeof ResizeObserver !== 'undefined' && container) {
+      const ro = new ResizeObserver(update);
+      ro.observe(container);
+      return () => ro.disconnect();
+    }
+
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, [components, pan, zoom, canvasRef, blockTypeScale, fsP, fsMw]);

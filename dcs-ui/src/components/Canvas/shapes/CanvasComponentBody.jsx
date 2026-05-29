@@ -36,15 +36,14 @@ export default function CanvasComponentBody({
   strokeColor,
   strokeWidthVal,
   presentationOffline = false,
+  labelFontPxDelta = null,
+  collapseAggregateArt = false,
 }) {
-  const p = passthrough(
-    component,
-    visualConfig,
-    width,
-    height,
-    strokeColor,
-    strokeWidthVal,
-  );
+  const p = {
+    ...passthrough(component, visualConfig, width, height, strokeColor, strokeWidthVal),
+    labelFontPxDelta,
+    collapseAggregateArt,
+  };
 
   const shape = visualConfig.shape;
   if (shape == null || shape === '') {
@@ -178,6 +177,7 @@ export default function CanvasComponentBody({
           height={height}
           strokeColor={strokeColor}
           strokeWidthVal={strokeWidthVal}
+          placeholderOnly={component.properties?.collapsePlaceholderOnly === true}
           glowFilterId={`gt3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
       );

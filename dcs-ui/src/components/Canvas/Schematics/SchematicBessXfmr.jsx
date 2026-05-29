@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
 const LABEL_ART_GAP = 5;
@@ -26,7 +26,7 @@ function SchematicBessXfmr({
   textureOpacity = 1,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsR = adjSvgFontPx(10, fontPxDelta);
   const fsM = adjSvgFontPx(10, fontPxDelta);
@@ -97,7 +97,6 @@ function SchematicBessXfmr({
         fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
-        {...fittedLineAttrs(maxW, squeezeText)}
       >
         <SvgHoverTitle>{fullTitle}</SvgHoverTitle>
         <tspan x={cx} dy={0}>
@@ -110,7 +109,6 @@ function SchematicBessXfmr({
             fill="#bdbdbd"
             fontSize={fsR}
             fontWeight="500"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {voltageRatioLabel}
           </tspan>
@@ -143,7 +141,6 @@ function SchematicBessXfmr({
           fill="#999"
           fontSize={fsM}
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           {mvaLabel}
         </text>

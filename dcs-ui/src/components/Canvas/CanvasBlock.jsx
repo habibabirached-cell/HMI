@@ -7,9 +7,15 @@ import {
   isTieStripMode,
   isTieBreakerNetwork,
 } from '../../utils/tieBreakerNetwork';
-import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
+import {
+  gasTurbineBankEffectiveDimensions,
+  isGasTurbineBankStripMode,
+  isGasTurbineBank,
+} from '../../utils/gasTurbineBank';
+import { useCanvasFontPxDelta, useCollapsedComponentFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
+import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface } from '../../utils/collapseAggregate';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
@@ -45,16 +51,28 @@ function CanvasBlock({
   designSelectSingle,
   blockTypeScale = {},
   onNudgeCanvasBlockTypeScale,
+  expandGasTurbineBankId = null,
+  onExpandGasTurbineBank,
+  allComponents = [],
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const stripMode = isTieStripMode(component);
+  const collapsedFontPxDelta = useCollapsedComponentFontPxDelta();
+  const labelFontPxDelta = isCollapseAggregateSurfaceComponent(component, allComponents)
+    ? collapsedFontPxDelta
+    : fontPxDelta;
+  const collapseAggregateArt = isAuxLoadsCollapseAggregateSurface(component, allComponents);
+  const tieStrip = isTieStripMode(component);
+  const gasBankStrip = isGasTurbineBankStripMode(component);
+  const stripMode = tieStrip || gasBankStrip;
   const visualConfig = getComponentVisualConfig(component.type);
   const { width: baseWidth, height: baseHeight } = getScaledCanvasBlockDimensions(
     component,
     visualConfig,
     blockTypeScale,
   );
-  const { width, height } = tieEffectiveDimensions(component, baseWidth, baseHeight);
+  const { width, height } = isGasTurbineBank(component)
+    ? gasTurbineBankEffectiveDimensions(component, baseWidth, baseHeight)
+    : tieEffectiveDimensions(component, baseWidth, baseHeight);
   const rotation = component.visualOverrides?.rotation || 0;
 
   const centerX = width / 2;
@@ -77,19 +95,37 @@ function CanvasBlock({
       onMouseUp={(e) => onMouseUp(e, component)}
       onDoubleClick={(e) => {
         const tg = component.properties?.tieGroup;
-        if (!isTieBreakerNetwork(component) || !tg?.memberIds?.length) return;
-        if (tg.collapsed === false || stripMode) return;
-        e.stopPropagation();
-        if (!onUpdateComponent) return;
-        onUpdateComponent(component.id, {
-          properties: {
-            ...component.properties,
-            tieGroup: { ...tg, collapsed: false },
-          },
-        });
+        if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
+          if (tg.collapsed === false || stripMode) return;
+          e.stopPropagation();
+          if (!onUpdateComponent) return;
+          onUpdateComponent(component.id, {
+            properties: {
+              ...component.properties,
+              tieGroup: { ...tg, collapsed: false },
+            },
+          });
+          return;
+        }
+        const gg = component.properties?.gasTurbineGroup;
+        if (isGasTurbineBank(component) && gg?.memberIds?.length) {
+          if (gg.collapsed === false || stripMode) return;
+          e.stopPropagation();
+          if (!onUpdateComponent) return;
+          onUpdateComponent(component.id, {
+            properties: {
+              ...component.properties,
+              gasTurbineGroup: { ...gg, collapsed: false },
+            },
+          });
+        }
+        if (expandGasTurbineBankId && onExpandGasTurbineBank) {
+          e.stopPropagation();
+          onExpandGasTurbineBank(expandGasTurbineBankId);
+        }
       }}
       onContextMenu={(e) => onContextMenu(e, component)}
-      className={`canvas-component${isTieBreakerNetwork(component) ? ' canvas-tie-breaker-network' : ''} ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`canvas-component${isTieBreakerNetwork(component) ? ' canvas-tie-breaker-network' : ''}${isGasTurbineBank(component) ? ' canvas-gas-turbine-bank' : ''} ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{ cursor: mode === 'design' ? 'move' : 'pointer' }}
     >
       <g transform={`rotate(${rotation} ${centerX} ${centerY})`}>
@@ -125,6 +161,8 @@ function CanvasBlock({
             strokeColor={strokeColor}
             strokeWidthVal={strokeWidthVal}
             presentationOffline={presenceForcedOffline}
+            labelFontPxDelta={labelFontPxDelta}
+            collapseAggregateArt={collapseAggregateArt}
           />
         )}
 
@@ -166,19 +204,34 @@ function CanvasBlock({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!onUpdateComponent || !isTieBreakerNetwork(component)) return;
+                      if (!onUpdateComponent) return;
                       const tg = component.properties?.tieGroup;
-                      if (!tg?.memberIds?.length) return;
-                      onUpdateComponent(component.id, {
-                        properties: {
-                          ...component.properties,
-                          tieGroup: { ...tg, collapsed: true },
-                        },
-                      });
+                      if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
+                        onUpdateComponent(component.id, {
+                          properties: {
+                            ...component.properties,
+                            tieGroup: { ...tg, collapsed: true },
+                          },
+                        });
+                        return;
+                      }
+                      const gg = component.properties?.gasTurbineGroup;
+                      if (isGasTurbineBank(component) && gg?.memberIds?.length) {
+                        onUpdateComponent(component.id, {
+                          properties: {
+                            ...component.properties,
+                            gasTurbineGroup: { ...gg, collapsed: true },
+                          },
+                        });
+                      }
                     }}
                   >
                     {mode === 'design' ? (
-                      <title>Collapse into tie summary block — click dots at top</title>
+                      <title>
+                        {isGasTurbineBank(component)
+                          ? 'Collapse generation aisle into 3D preview — click dots'
+                          : 'Collapse into tie summary block — click dots at top'}
+                      </title>
                     ) : null}
                   </rect>
                   {[mid - spread, mid, mid + spread].map((cx, idx) => (

@@ -5,7 +5,7 @@ import {
   getCanvasLabelFlags,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 /**
  * Earth / chassis circuit breaker symbol (vertical stem + three graded horizontal bars).
@@ -22,7 +22,7 @@ function SchematicEarthBreaker({
   showFrame = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const maxW = width * 0.92;
@@ -162,7 +162,6 @@ function SchematicEarthBreaker({
           fontSize={fsP}
           fontWeight="600"
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
           <tspan x={cx} dy={0}>
@@ -174,7 +173,6 @@ function SchematicEarthBreaker({
             fill="#999"
             fontSize={fsS}
             fontWeight="400"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {secondaryLabel}
           </tspan>
@@ -190,7 +188,6 @@ function SchematicEarthBreaker({
             fontSize={fsP}
             fontWeight="600"
             pointerEvents="none"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {hideSupplementary && secondaryLabel ? (
               <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
@@ -206,7 +203,6 @@ function SchematicEarthBreaker({
               fill="#999"
               fontSize={fsS}
               pointerEvents="none"
-              {...fittedLineAttrs(maxW, squeezeText)}
             >
               {secondaryLabel}
             </text>

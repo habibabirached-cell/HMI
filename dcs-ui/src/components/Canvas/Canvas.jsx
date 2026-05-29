@@ -24,10 +24,17 @@ import {
   isTieNetworkCollapsed,
   hasTieStubLinks,
 } from '../../utils/tieBreakerNetwork';
+import {
+  getGasTurbineBankHiddenMemberIdSet,
+  gasTurbineBankEffectiveDimensions,
+  buildGasTurbineBankCollapseHorizontalShiftMap,
+  getGasTurbineBankCollapsedStubSegments,
+  isGasTurbineBank,
+  isGasTurbineBankCollapsed,
+  getCollapsedGasTurbineBankIdForMember,
+} from '../../utils/gasTurbineBank';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
-import { getCanvasLabelFlags } from '../../utils/canvasLabelPolicy';
-import { fittedLineAttrs } from './shapes/canvasSvgLabelHelpers';
 import { getCanvasBlockTypeScale } from './shapes/canvasBlockUtils';
 import './Canvas.css';
 
@@ -180,6 +187,9 @@ function getLayoutDimensionsForSnap(comp, canvasBlockTypeScale = {}) {
   const s = getCanvasBlockTypeScale(canvasBlockTypeScale, comp.type);
   const bw = (comp.visualOverrides?.width ?? base.width) * s;
   const bh = (comp.visualOverrides?.height ?? base.height) * s;
+  if (isGasTurbineBank(comp)) {
+    return gasTurbineBankEffectiveDimensions(comp, bw, bh);
+  }
   return tieEffectiveDimensions(comp, bw, bh);
 }
 
@@ -291,9 +301,20 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const hiddenGasTurbineBankMemberIds = useMemo(
+    () => getGasTurbineBankHiddenMemberIdSet(components),
+    [components],
+  );
+
+  const hiddenAggregateMemberIds = useMemo(() => {
+    const hidden = new Set(hiddenTieMemberIds);
+    for (const id of hiddenGasTurbineBankMemberIds) hidden.add(id);
+    return hidden;
+  }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds]);
+
   const visibleComponents = useMemo(
-    () => components.filter((c) => !hiddenTieMemberIds.has(c.id)),
-    [components, hiddenTieMemberIds],
+    () => components.filter((c) => !hiddenAggregateMemberIds.has(c.id)),
+    [components, hiddenAggregateMemberIds],
   );
 
   const tieCollapseShiftById = useMemo(
@@ -301,16 +322,29 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const gasTurbineBankShiftById = useMemo(
+    () => buildGasTurbineBankCollapseHorizontalShiftMap(components, getComponentVisualConfig),
+    [components],
+  );
+
+  const collapseShiftById = useMemo(() => {
+    const merged = new Map(tieCollapseShiftById);
+    for (const [id, dx] of gasTurbineBankShiftById) {
+      merged.set(id, (merged.get(id) ?? 0) + dx);
+    }
+    return merged;
+  }, [tieCollapseShiftById, gasTurbineBankShiftById]);
+
   const renderComponents = useMemo(() => {
     return visibleComponents.map((c) => {
-      const dx = tieCollapseShiftById.get(c.id);
+      const dx = collapseShiftById.get(c.id);
       if (dx == null || dx === 0) return c;
       return {
         ...c,
         position: { ...c.position, x: c.position.x + dx },
       };
     });
-  }, [visibleComponents, tieCollapseShiftById]);
+  }, [visibleComponents, collapseShiftById]);
 
   const tieCollapsedStubSegments = useMemo(() => {
     const accum = [];
@@ -323,8 +357,30 @@ const Canvas = forwardRef(({
         ...getTieCollapsedStubSegments(renderComponents, c, rt, getComponentVisualConfig),
       );
     }
+    for (const c of components) {
+      if (!isGasTurbineBank(c) || !isGasTurbineBankCollapsed(c)) continue;
+      const rt = renderComponents.find((x) => x.id === c.id);
+      const bankRender =
+        rt ||
+        ({
+          ...c,
+          position: {
+            ...c.position,
+            x: c.position.x + (collapseShiftById.get(c.id) ?? 0),
+          },
+        });
+      accum.push(
+        ...getGasTurbineBankCollapsedStubSegments(
+          renderComponents,
+          c,
+          bankRender,
+          components,
+          getComponentVisualConfig,
+        ),
+      );
+    }
     return accum;
-  }, [components, renderComponents]);
+  }, [components, renderComponents, collapseShiftById]);
 
   const connectionRenderList = useMemo(() => {
     return connections.map((conn) => {
@@ -589,10 +645,14 @@ const Canvas = forwardRef(({
     }
     onClearConnectionMultiSelection();
     if (
-      component.type === 'tie-breaker-network' &&
-      Array.isArray(component.properties?.tieGroup?.memberIds) &&
-      component.properties.tieGroup.memberIds.length > 0 &&
-      component.properties.tieGroup.collapsed !== false
+      (component.type === 'tie-breaker-network' &&
+        Array.isArray(component.properties?.tieGroup?.memberIds) &&
+        component.properties.tieGroup.memberIds.length > 0 &&
+        component.properties.tieGroup.collapsed !== false) ||
+      (component.type === 'gas-turbine-bank' &&
+        Array.isArray(component.properties?.gasTurbineGroup?.memberIds) &&
+        component.properties.gasTurbineGroup.memberIds.length > 0 &&
+        component.properties.gasTurbineGroup.collapsed === true)
     ) {
       tieTapCandidateRef.current = {
         componentId: component.id,
@@ -952,6 +1012,20 @@ const Canvas = forwardRef(({
             },
           },
         });
+      } else if (
+        comp?.type === 'gas-turbine-bank' &&
+        comp.properties?.gasTurbineGroup?.memberIds?.length &&
+        comp.properties.gasTurbineGroup.collapsed === true
+      ) {
+        onUpdateComponent(comp.id, {
+          properties: {
+            ...comp.properties,
+            gasTurbineGroup: {
+              ...comp.properties.gasTurbineGroup,
+              collapsed: false,
+            },
+          },
+        });
       }
     }
     tieTapCandidateRef.current = {
@@ -1227,6 +1301,21 @@ const Canvas = forwardRef(({
   const stableOnUpdateComponent = useCallback((componentId, updates) => {
     onUpdateComponentLatestRef.current?.(componentId, updates);
   }, []);
+
+  const stableExpandGasTurbineBank = useCallback(
+    (bankId) => {
+      const bank = components.find((c) => c.id === bankId);
+      const g = bank?.properties?.gasTurbineGroup;
+      if (!bank || !g?.memberIds?.length) return;
+      stableOnUpdateComponent(bankId, {
+        properties: {
+          ...bank.properties,
+          gasTurbineGroup: { ...g, collapsed: false },
+        },
+      });
+    },
+    [components, stableOnUpdateComponent],
+  );
 
   const stableDesignSelectSingle = useCallback((c) => {
     onClearConnectionMultiSelection();
@@ -1603,13 +1692,6 @@ const Canvas = forwardRef(({
               : endStop.color;
             const segmentStrokeOpacity = useGradientStroke ? undefined : endStop.opacity;
 
-            const { squeezeText } = getCanvasLabelFlags(fontPxDelta);
-            const wireLen = segments.reduce(
-              (s, [ax, ay, bx, by]) => s + Math.hypot(bx - ax, by - ay),
-              0,
-            );
-            const voltLabelMaxW = Math.max(48, wireLen * 0.92);
-
             return (
               <g
                 key={conn.id}
@@ -1660,7 +1742,6 @@ const Canvas = forwardRef(({
                   fontSize={adjSvgFontPx(11, fontPxDelta)}
                   textAnchor="middle"
                   pointerEvents="none"
-                  {...fittedLineAttrs(voltLabelMaxW, squeezeText)}
                 >
                   {conn.voltage > 0 ? `${conn.voltage} kV` : ''}
                 </text>
@@ -1800,13 +1881,19 @@ const Canvas = forwardRef(({
               designSelectSingle={stableDesignSelectSingle}
               blockTypeScale={canvasBlockTypeScale}
               onNudgeCanvasBlockTypeScale={onNudgeCanvasBlockTypeScale}
+              expandGasTurbineBankId={getCollapsedGasTurbineBankIdForMember(
+                components,
+                component.id,
+              )}
+              onExpandGasTurbineBank={stableExpandGasTurbineBank}
+              allComponents={components}
             />
           ))}
         </g>
       </svg>
 
       <GasTurbine3DOverlays
-        components={components}
+        components={renderComponents}
         pan={pan}
         zoom={zoom}
         canvasRef={canvasRef}

@@ -549,7 +549,16 @@ export const COMPONENT_VISUAL_CONFIG = {
     /** Tall narrow aggregate — horizontal title at top (left → right). */
     canvasPrimaryLabelVertical: true,
     canvasPrimaryLabelHorizontalAtTop: true,
-    canvasPrimaryLabelVerticalNoSqueeze: true,
+    canvasPrimaryLabelVerticalFontWeight: 500,
+  },
+  'gas-turbine-bank': {
+    width: 34,
+    height: 24,
+    icon: '',
+    color: '#4488ff',
+    shape: 'shape-rounded-rect',
+    canvasPrimaryLabelVertical: true,
+    canvasPrimaryLabelHorizontalAtTop: true,
     canvasPrimaryLabelVerticalFontWeight: 500,
   },
   'recloser': {
@@ -936,6 +945,7 @@ export const BREAKER_TYPES = new Set([
   'manual-line-switch',
   'bus-tie-breaker',
   'tie-breaker-network',
+  'gas-turbine-bank',
 ]);
 
 /**

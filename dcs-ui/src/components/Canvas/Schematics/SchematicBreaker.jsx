@@ -5,7 +5,7 @@ import {
   getCanvasLabelFlags,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 /**
  * One-line diagram style breaker: horizontal bar + diagonal blade.
@@ -20,7 +20,7 @@ function SchematicBreaker({
   secondaryLabel,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const cx = width / 2;
@@ -48,7 +48,7 @@ function SchematicBreaker({
     symbolTopY - (fsP * 0.52 + 5.5 + Math.min(3, Math.max(0, fontPxDelta) * 0.5));
 
   const padTop = 4;
-  /** Match `SchematicCT` cap metric + small allowance for descenders / squeeze. */
+  /** Match `SchematicCT` cap metric + small allowance for descenders. */
   const primaryLineExtent = fsP * 1.3;
   const stackedBlockExtent = fsP * 1.14 + lineGap + fsS * 1.12;
 
@@ -134,7 +134,6 @@ function SchematicBreaker({
           fontSize={fsP}
           fontWeight="600"
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
           <tspan x={cx} dy={0}>
@@ -146,7 +145,6 @@ function SchematicBreaker({
             fill="#999"
             fontSize={fsS}
             fontWeight="400"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {secondaryLabel}
           </tspan>
@@ -162,7 +160,6 @@ function SchematicBreaker({
             fontSize={fsP}
             fontWeight="600"
             pointerEvents="none"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {hideSupplementary && secondaryLabel ? (
               <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
@@ -178,7 +175,6 @@ function SchematicBreaker({
               fill="#999"
               fontSize={fsS}
               pointerEvents="none"
-              {...fittedLineAttrs(maxW, squeezeText)}
             >
               {secondaryLabel}
             </text>

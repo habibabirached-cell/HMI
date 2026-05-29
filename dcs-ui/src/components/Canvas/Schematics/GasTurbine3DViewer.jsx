@@ -62,6 +62,11 @@ function shaftAxisFromSize(THREE, size) {
   return axes[idx];
 }
 
+const ACCENT_BLUE = 0x4488ff;
+const ACCENT_RED = 0xff3344;
+/** One blue-to-red-to-blue cycle per shaft revolution. */
+const COLOR_CYCLE_TURNS = 1;
+
 /**
  * WebGL preview of gasT3.glb — rendered in an HTML overlay (GasTurbine3DOverlays).
  */
@@ -71,7 +76,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host || width < 8 || height < 8 || !modelUrl) return undefined;
+    if (!host || (width < 8) || (height < 8) || !modelUrl) return undefined;
 
     setLoadError(null);
 
@@ -96,26 +101,35 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.1;
         renderer.domElement.style.display = 'block';
-        renderer.domElement.style.width = '100%';
-        renderer.domElement.style.height = '100%';
         renderer.domElement.style.position = 'absolute';
-        renderer.domElement.style.inset = '0';
+        renderer.domElement.style.left = '0';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.width = `${width}px`;
+        renderer.domElement.style.height = `${height}px`;
         host.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.45));
         const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
         keyLight.position.set(4, 6, 5);
         scene.add(keyLight);
-        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.55);
+        const fillLight = new THREE.DirectionalLight(ACCENT_BLUE, 55);
         fillLight.position.set(-5, 2, -3);
         scene.add(fillLight);
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        const accentSpecular = new THREE.PointLight(ACCENT_BLUE, 35, 80);
+        accentSpecular.position.set(-4, 0.5, 3);
+        scene.add(accentSpecular);
+        const rimLight = new THREE.DirectionalLight(ACCENT_BLUE, 18);
         rimLight.position.set(0, -2, -6);
         scene.add(rimLight);
+
+        const blueColor = new THREE.Color(ACCENT_BLUE);
+        const redColor = new THREE.Color(ACCENT_RED);
+        const accentColor = new THREE.Color(ACCENT_BLUE);
 
         let turntable = null;
         let modelRoot = null;
         let shaftAxis = null;
+        let shaftSpinAngle = 0;
 
         const loader = new GLTFLoader();
         loader.load(
@@ -141,11 +155,22 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
           },
         );
 
+        const TURNTABLE_YAW = 0.0035;
+        const SHAFT_SPIN = 0.032;
+
         const animate = () => {
           frameId = requestAnimationFrame(animate);
           if (turntable && modelRoot && shaftAxis) {
-            turntable.rotation.y += 0.0035;
-            modelRoot.rotateOnAxis(shaftAxis, 0.032);
+            turntable.rotation.y += TURNTABLE_YAW;
+            modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
+            shaftSpinAngle += SHAFT_SPIN;
+
+            // Smooth blue/red accent each shaft revolution (cosine ease).
+            const mix = 0.5 - 0.5 * Math.cos(shaftSpinAngle / COLOR_CYCLE_TURNS);
+            accentColor.copy(blueColor).lerp(redColor, mix);
+            fillLight.color.copy(accentColor);
+            accentSpecular.color.copy(accentColor);
+            rimLight.color.copy(accentColor);
           }
           renderer.render(scene, camera);
         };
@@ -192,9 +217,9 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
         position: 'relative',
       }}
     >
-      {loadError ? (
+      {loadError && (
         <div className="gas-turbine-3d-viewer__error">{loadError}</div>
-      ) : null}
+      )}
     </div>
   );
 }

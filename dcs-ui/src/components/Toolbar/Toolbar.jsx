@@ -32,12 +32,17 @@ const Toolbar = ({
     decreaseUiFont,
     increaseCanvasFont,
     decreaseCanvasFont,
+    increaseCollapsedComponentFont,
+    decreaseCollapsedComponentFont,
     canDecreaseUi: canDecreaseUiFont,
     canIncreaseUi: canIncreaseUiFont,
     canDecreaseCanvas: canDecreaseCanvasFont,
     canIncreaseCanvas: canIncreaseCanvasFont,
+    canDecreaseCollapsedComponent: canDecreaseCollapsedComponentFont,
+    canIncreaseCollapsedComponent: canIncreaseCollapsedComponentFont,
     uiDelta: uiFontPxShift,
     canvasDelta: canvasFontPxShift,
+    collapsedComponentDelta: collapsedComponentFontPxShift,
   } = useFontScaleToolbar();
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const saveDropdownRef = useRef(null);
@@ -274,6 +279,33 @@ const Toolbar = ({
           disabled={!canIncreaseCanvasFont}
           title="Larger schematic labels on the diagram (saved with design)"
           aria-label="Increase diagram font size"
+        >
+          +
+        </button>
+        <span
+          className="toolbar-font-shift-label toolbar-font-shift-label--collapsed"
+          title="Collapsed aggregate titles — 3D gas turbine, Aux Loads, Tie Breaker Network (saved with design)"
+        >
+          Collapsed: {collapsedComponentFontPxShift >= 0 ? '+' : ''}
+          {collapsedComponentFontPxShift}
+        </span>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={decreaseCollapsedComponentFont}
+          disabled={!canDecreaseCollapsedComponentFont}
+          title="Smaller titles on collapsed aggregate cards (saved with design)"
+          aria-label="Decrease collapsed component font size"
+        >
+          −
+        </button>
+        <button
+          className="btn-zoom"
+          type="button"
+          onClick={increaseCollapsedComponentFont}
+          disabled={!canIncreaseCollapsedComponentFont}
+          title="Larger titles on collapsed aggregate cards (saved with design)"
+          aria-label="Increase collapsed component font size"
         >
           +
         </button>

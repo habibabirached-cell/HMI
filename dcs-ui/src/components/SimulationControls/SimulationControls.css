@@ -28,6 +28,118 @@
   overflow: hidden;
 }
 
+.simulation-controls--grid-peek {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: none;
+  border-left: none;
+  border-top: none;
+  overflow: hidden;
+}
+
+.simulation-controls--grid-peek .controls-body {
+  flex: 0 0 auto;
+  overflow: hidden;
+  padding: 10px 12px;
+}
+
+.simulation-controls--grid-peek .controls-header {
+  padding: 10px 12px;
+  gap: 8px;
+  border-bottom: none;
+}
+
+.simulation-controls--grid-peek .controls-header h3 {
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.simulation-controls--grid-peek .controls-grid-peek-toggle {
+  padding: 12px 8px;
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
+  line-height: 1.2;
+  white-space: normal;
+  text-align: center;
+}
+
+.simulation-controls--grid-peek .scenario-playing-now-section {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #444;
+}
+
+.simulation-controls--grid-peek .scenario-playing-now-empty {
+  display: none;
+}
+
+.simulation-controls--grid-peek .quick-scenarios-section--top {
+  margin-bottom: 12px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.simulation-controls--grid-peek .simulation-speed-section--after-quick-scenarios {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: none;
+}
+
+.simulation-controls--grid-peek .scenarios-title {
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.simulation-controls--grid-peek .simulation-time-display {
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.simulation-controls--grid-peek .time-value {
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
+}
+
+.simulation-controls--grid-peek .speed-buttons {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.simulation-controls--grid-peek .speed-btn {
+  padding: 18px 6px;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  line-height: 1.2;
+  white-space: normal;
+  text-align: center;
+  min-height: 3.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simulation-controls--grid-peek .quick-scenario-row {
+  margin-bottom: 6px;
+}
+
+.simulation-controls--grid-peek .quick-scenario-row .control-btn {
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
+  padding: 18px 8px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+  text-align: center;
+  min-height: 3.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ----------------------------------------------------------------------------
    HEADER SECTION
    ----------------------------------------------------------------------------
@@ -1314,4 +1426,38 @@
 .btn-add-sim-cancel:hover {
   color: #fff;
   border-color: #888;
+}
+
+/* Grid peek overrides — must follow base section border rules (higher cascade order). */
+.simulation-controls.simulation-controls--grid-peek .controls-header {
+  border-bottom: none;
+  justify-content: stretch;
+}
+
+.simulation-controls.simulation-controls--grid-peek .controls-header h3 {
+  display: none;
+}
+
+.simulation-controls.simulation-controls--grid-peek .controls-grid-peek-toggle {
+  width: 100%;
+}
+
+.simulation-controls.simulation-controls--grid-peek .scenario-playing-now-section {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #444;
+}
+
+.simulation-controls.simulation-controls--grid-peek .quick-scenarios-section--top {
+  border-bottom: none;
+  border-top: none;
+}
+
+.simulation-controls.simulation-controls--grid-peek .simulation-speed-section--after-quick-scenarios {
+  border-bottom: none;
+  border-top: none;
+}
+
+.simulation-controls.simulation-controls--grid-peek .scenario-playing-now-empty {
+  display: none;
 }

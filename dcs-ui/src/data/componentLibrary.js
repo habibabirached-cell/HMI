@@ -21,7 +21,7 @@ export const COMPONENT_LIBRARY = [
   {
     category: COMPONENT_CATEGORIES.GENERATION,
     components: [
-      { id: 'gas-turbine-3d', name: 'Gas Turbine', fullName: 'Gas Turbine', type: 'aeroderivative', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
+      { id: 'gas-turbine-3d', name: 'Gas Turbine', fullName: 'Gas Turbine', type: 'gas-turbine-3d', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500', name: 'LM2500', fullName: 'Gas Turbine LM2500', type: 'aeroderivative', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-andritz', name: 'LM2500 Andritz', fullName: 'LM2500 Andritz A03 33.3MW', type: 'aeroderivative', properties: { rating: 33.3, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-plus', name: 'LM2500+', fullName: 'Gas Turbine LM2500+ / Xpress', type: 'aeroderivative', properties: { rating: 30, voltage: 13.8, unit: 'MW' } },
@@ -113,6 +113,7 @@ export const COMPONENT_LIBRARY = [
       { id: 'manual-line-switch', name: 'Man. line sw', fullName: 'Manual line disconnect (one-line)', type: 'manual-line-switch', properties: { rating: 3500, voltage: 34.5, unit: 'A' } },
       { id: 'bus-tie-breaker', name: 'Bus Tie Bkr', fullName: 'Bus Tie Breaker', type: 'bus-tie', properties: { rating: 2000, voltage: 4.16, unit: 'A' } },
       { id: 'tie-breaker-network', name: 'Tie Breaker Network', fullName: 'Tie Breaker Circuit Network', type: 'tie-breaker-network', properties: { rating: 0, voltage: 34.5, unit: '' } },
+      { id: 'gas-turbine-bank', name: 'Generation Bank', fullName: 'Generation aisle collapse / expand', type: 'gas-turbine-bank', properties: { rating: 0, voltage: 13.8, unit: '' } },
       { id: 'recloser', name: 'Recloser', fullName: 'Automatic Recloser', type: 'recloser', properties: { rating: 800, voltage: 13.8, unit: 'A' } },
       { id: 'protection-relay', name: 'Relay', fullName: 'Protection Relay', type: 'relay', properties: { rating: 0, voltage: 0, unit: '' } },
       { id: 'fuse', name: 'Fuse', fullName: 'Fuse', type: 'fuse', properties: { rating: 100, voltage: 0.48, unit: 'A' } },

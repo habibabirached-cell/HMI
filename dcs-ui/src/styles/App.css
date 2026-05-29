@@ -359,8 +359,8 @@ body {
 }
 
 .app-right-rail--dock-right:not(.app-right-rail--collapsed) {
-  width: 50vw;
-  max-width: 50vw;
+  width: 40vw;
+  max-width: 40vw;
 }
 
 /* conf2/conf3 — fixed vertical strip on the left, bottom half of the viewport. */
@@ -381,13 +381,19 @@ body {
    * Fill space between the component library and the chart strip (conf2), leaving only
    * --controls-chart-gap (10px) — not a fixed narrow width and not a large empty band.
    */
-  width: calc(
-    100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
-      var(--controls-chart-gap, 10px)
+  width: min(
+    calc(
+      100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
+        var(--controls-chart-gap, 10px)
+    ),
+    40vw
   );
-  max-width: calc(
-    100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
-      var(--controls-chart-gap, 10px)
+  max-width: min(
+    calc(
+      100vw - var(--controls-left-inset, 0px) - var(--chart-side-dock-width, 420px) -
+        var(--controls-chart-gap, 10px)
+    ),
+    40vw
   );
   min-width: 300px;
   box-sizing: border-box;
@@ -470,7 +476,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Expanded: stretch both columns evenly to the screen midpoint. */
+/* Expanded: stretch both columns evenly within the controls rail. */
 .app-right-rail:not(.app-right-rail--collapsed) .app-right-rail__panels > .panel-focus-wrapper {
   flex: 1 1 0;
   min-width: 0;
@@ -487,8 +493,37 @@ body {
   border-right: none;
 }
 
-/* Grid peek: 50% gray / 50% see-through so the canvas grid still reads behind controls. */
-.app-right-rail--grid-peek {
+/* Grid peek dock (conf2/conf3): only the compact sim strip — not the full controls rail. */
+.sim-controls-grid-peek-dock {
+  --sim-grid-peek-max-width: min(174px, 31vw);
+  --sim-grid-peek-min-width: 94px;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 5200;
+  width: var(--sim-grid-peek-max-width);
+  max-width: var(--sim-grid-peek-max-width);
+  min-width: var(--sim-grid-peek-min-width);
+  overflow: hidden;
+  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.55);
+  border-top: 2px solid var(--vernova-border);
+  background: #1a1a1a;
+}
+
+.sim-controls-grid-peek-dock .simulation-controls {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  border: none;
+}
+
+/* Legacy grid-peek-on-rail rules (conf1 dock-right only). */
+.app-right-rail--dock-left-bottom.app-right-rail--grid-peek {
+  display: none;
+}
+
+.app-right-rail--dock-right.app-right-rail--grid-peek {
   background: rgba(20, 20, 20, 0.5);
   border-color: rgba(42, 58, 58, 0.35);
   box-shadow: none;

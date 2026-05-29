@@ -9,9 +9,22 @@ function SchematicGasTurbine3D({
   height,
   strokeColor,
   strokeWidthVal,
+  placeholderOnly = false,
   glowFilterId = 'gas-turbine-3d-glow',
 }) {
-  const accentStroke = 'rgba(88, 160, 255, 0.55)';
+  if (placeholderOnly) {
+    return (
+      <rect
+        width={width}
+        height={height}
+        fill="#141414"
+        stroke="#555"
+        strokeWidth={2}
+        strokeDasharray="12 8"
+        rx="6"
+      />
+    );
+  }
 
   return (
     <>
@@ -32,28 +45,6 @@ function SchematicGasTurbine3D({
         </filter>
       </defs>
       <rect width={width} height={height} fill="#0d1117" rx="4" />
-      <line
-        x1={0}
-        y1={0.5}
-        x2={width}
-        y2={0.5}
-        stroke={accentStroke}
-        strokeWidth={1.2}
-        opacity="0.45"
-        filter={`url(#${glowFilterId})`}
-        pointerEvents="none"
-      />
-      <line
-        x1={0}
-        y1={height - 0.5}
-        x2={width}
-        y2={height - 0.5}
-        stroke={accentStroke}
-        strokeWidth={1.2}
-        opacity="0.45"
-        filter={`url(#${glowFilterId})`}
-        pointerEvents="none"
-      />
       <rect
         width={width}
         height={height}

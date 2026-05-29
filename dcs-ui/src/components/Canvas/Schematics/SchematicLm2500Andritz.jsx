@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 const PAD_TOP = 4;
 const PAD_BOT = 4;
@@ -23,7 +23,7 @@ function SchematicLm2500Andritz({
   strokeWidthVal,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsMw = adjSvgFontPx(10, fontPxDelta);
   const maxW = width * 0.92;
@@ -63,7 +63,6 @@ function SchematicLm2500Andritz({
         fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
-        {...fittedLineAttrs(maxW, squeezeText)}
       >
         {hideSupplementary && mwLabel ? (
           <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
@@ -79,7 +78,6 @@ function SchematicLm2500Andritz({
           fill="#999"
           fontSize={fsMw}
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           {mwLabel}
         </text>

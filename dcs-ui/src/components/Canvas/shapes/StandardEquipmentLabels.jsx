@@ -2,11 +2,11 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from './canvasSvgLabelHelpers';
+import { SvgHoverTitle } from './canvasSvgLabelHelpers';
 
 /**
  * Icon + primary + secondary lines for generic / framed-texture blocks.
- * Uses tspan stacking (#3), optional textLength squeeze (#4), hides supplementary rows (#5).
+ * Uses tspan stacking (#3), hides supplementary rows (#5).
  */
 export default function StandardEquipmentLabels({
   width,
@@ -16,14 +16,16 @@ export default function StandardEquipmentLabels({
   canvasPrimaryText,
   canvasSecondaryText,
   framedTextureLayout,
+  /** When set, overrides diagram font delta (e.g. collapsed aggregate titles). */
+  labelFontPxDelta = null,
 }) {
-  const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const canvasFontPxDelta = useCanvasFontPxDelta();
+  const fontPxDelta = labelFontPxDelta ?? canvasFontPxDelta;
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const fsIcon = adjSvgFontPx(24, fontPxDelta);
   const lineGap = fsP * 1.14;
-  const maxW = width * 0.92;
   const supTooltip =
     hideSupplementary && canvasSecondaryText
       ? `${canvasPrimaryText ?? ''}${canvasSecondaryText ? ` · ${canvasSecondaryText}` : ''}`.trim()
@@ -37,9 +39,6 @@ export default function StandardEquipmentLabels({
       ? 'rgba(220, 235, 234, 0.92)'
       : '#e0e0e0';
     const labelY = Math.max(hTitleFs + 5, height * 0.045);
-    const hMaxW = width * 0.9;
-    const hSqueeze =
-      !visualConfig.canvasPrimaryLabelVerticalNoSqueeze && squeezeText;
     return (
       <>
         <text
@@ -53,7 +52,6 @@ export default function StandardEquipmentLabels({
           fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
           letterSpacing="0.03em"
           pointerEvents="none"
-          {...fittedLineAttrs(hMaxW, hSqueeze)}
         >
           {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
           {canvasPrimaryText}
@@ -67,7 +65,6 @@ export default function StandardEquipmentLabels({
             fill="#999"
             fontSize={adjSvgFontPx(10, fontPxDelta)}
             pointerEvents="none"
-            {...fittedLineAttrs(hMaxW, hSqueeze)}
           >
             {canvasSecondaryText}
           </text>
@@ -84,8 +81,6 @@ export default function StandardEquipmentLabels({
       Number.isFinite(visualConfig.canvasPrimaryLabelVerticalAngle)
         ? visualConfig.canvasPrimaryLabelVerticalAngle
         : -90;
-    const vSqueeze =
-      !visualConfig.canvasPrimaryLabelVerticalNoSqueeze && squeezeText;
     const vWeight = visualConfig.canvasPrimaryLabelVerticalFontWeight ?? 500;
     const labelFill = visualConfig.textureGlowAccent
       ? 'rgba(220, 235, 234, 0.92)'
@@ -125,7 +120,6 @@ export default function StandardEquipmentLabels({
             fontWeight={vWeight}
             fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
             letterSpacing="0.04em"
-            {...fittedLineAttrs(height * 0.82, vSqueeze)}
           >
             {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
             {canvasPrimaryText}
@@ -140,7 +134,6 @@ export default function StandardEquipmentLabels({
             fill="#999"
             fontSize={adjSvgFontPx(10, fontPxDelta)}
             pointerEvents="none"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {canvasSecondaryText}
           </text>
@@ -162,7 +155,6 @@ export default function StandardEquipmentLabels({
           fontSize={fsP}
           fontWeight="600"
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
           {canvasPrimaryText}
@@ -176,7 +168,6 @@ export default function StandardEquipmentLabels({
             fill="#999"
             fontSize={fsS}
             pointerEvents="none"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {canvasSecondaryText}
           </text>
@@ -197,7 +188,6 @@ export default function StandardEquipmentLabels({
           fontWeight="400"
           pointerEvents="none"
           opacity="0.9"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           {visualConfig.icon}
         </text>
@@ -211,7 +201,6 @@ export default function StandardEquipmentLabels({
         fontSize={fsP}
         fontWeight="600"
         pointerEvents="none"
-        {...fittedLineAttrs(maxW, squeezeText)}
       >
         {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
         <tspan x={centerX} dy={0}>

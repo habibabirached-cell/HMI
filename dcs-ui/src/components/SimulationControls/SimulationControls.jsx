@@ -432,10 +432,10 @@ const SimulationControls = ({
   // ========================================================================
   // This is the actual HTML structure that gets displayed on screen
   return (
-    <div className="simulation-controls">
+    <div className={`simulation-controls${rightRailGridPeek ? ' simulation-controls--grid-peek' : ''}`}>
       {/* Header bar with title */}
       <div className="controls-header">
-        <h3>Simulation Controls</h3>
+        {!rightRailGridPeek && <h3>Simulation Controls</h3>}
         {onToggleRightRailGridPeek && (
           <button
             type="button"
@@ -474,7 +474,7 @@ const SimulationControls = ({
                 </span>
               </div>
             </div>
-          ) : (
+          ) : rightRailGridPeek ? null : (
             <p className="scenario-playing-now-empty">—</p>
           )}
         </div>
@@ -502,7 +502,7 @@ const SimulationControls = ({
                   >
                     {def.icon} {def.label}
                   </button>
-                  {onHideDefaultQuickScenario && (
+                  {onHideDefaultQuickScenario && !rightRailGridPeek && (
                     <button
                       type="button"
                       className="quick-scenario-trash"
@@ -539,7 +539,7 @@ const SimulationControls = ({
                   >
                     {shortcut.icon} {shortcut.label}
                   </button>
-                  {onSaveQuickScenarioPreset && (
+                  {onSaveQuickScenarioPreset && !rightRailGridPeek && (
                     <button
                       type="button"
                       className="quick-scenario-save"
@@ -550,7 +550,7 @@ const SimulationControls = ({
                       💾
                     </button>
                   )}
-                  {onDeleteQuickScenarioButton && (
+                  {onDeleteQuickScenarioButton && !rightRailGridPeek && (
                     <button
                       type="button"
                       className="quick-scenario-trash"
@@ -566,8 +566,8 @@ const SimulationControls = ({
           </div>
         </div>
 
-        {/* Simulation time + speed — pinned below quick scenarios; stays visible in grid peek */}
-        {simulationRunning && (
+        {/* Simulation time + speed — pinned below quick scenarios; always visible in grid peek */}
+        {(simulationRunning || rightRailGridPeek) && (
           <div className="simulation-speed-section simulation-speed-section--after-quick-scenarios">
             <h4 className="scenarios-title">Simulation Speed</h4>
 
@@ -637,6 +637,8 @@ const SimulationControls = ({
           </div>
         )}
 
+        {!rightRailGridPeek && (
+        <>
         {/* ================================================================
             ADD SIMULATION SCENARIO
             ================================================================ */}
@@ -1111,8 +1113,9 @@ const SimulationControls = ({
           </div>
         )}
 
-        {/* Call our function to fill this area with the right content */}
         {renderComponentControls()}
+        </>
+        )}
 
       </div>
     </div>

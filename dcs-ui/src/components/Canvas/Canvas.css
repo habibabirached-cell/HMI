@@ -35,7 +35,7 @@
 }
 
 .gas-turbine-3d-overlay-slot {
-  position: fixed;
+  position: absolute;
   pointer-events: none;
   overflow: hidden;
   border-radius: 4px;
@@ -55,8 +55,6 @@
 
 .gas-turbine-3d-viewer canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
 }
 
 /* Hollow letterforms — rotating turbine visible through counters and gaps */
@@ -135,6 +133,21 @@
     drop-shadow(0 0 6px rgba(0, 210, 200, 0.5))
     drop-shadow(0 0 13px rgba(0, 94, 96, 0.38))
     drop-shadow(0 0 20px rgba(46, 125, 125, 0.28));
+}
+
+.canvas-gas-turbine-bank:not(.dragging) {
+  filter: drop-shadow(0 0 5px rgba(68, 136, 255, 0.28));
+}
+
+.canvas-gas-turbine-bank:hover {
+  filter:
+    brightness(1.08)
+    drop-shadow(0 0 7px rgba(102, 187, 255, 0.42))
+    drop-shadow(0 0 14px rgba(68, 136, 255, 0.22));
+}
+
+.canvas-gas-turbine-bank .tiebreaker-network-strip circle {
+  fill: rgba(102, 187, 255, 0.95);
 }
 
 /* Single selection: crisp teal + soft bloom; slow gentle pulse (not neon). ~20% brighter tier. */

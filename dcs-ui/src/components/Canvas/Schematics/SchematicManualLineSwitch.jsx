@@ -5,7 +5,7 @@ import {
   getCanvasLabelFlags,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
-import { fittedLineAttrs, SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
+import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 
 /**
  * IEC-style open manual disconnect on a one-line: gap in the bar + diagonal blade.
@@ -20,7 +20,7 @@ function SchematicManualLineSwitch({
   secondaryLabel,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { squeezeText, hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
   const fsP = adjSvgFontPx(9, fontPxDelta);
   const fsS = adjSvgFontPx(8, fontPxDelta);
   const maxW = width * 0.92;
@@ -125,7 +125,6 @@ function SchematicManualLineSwitch({
           fontSize={fsP}
           fontWeight="600"
           pointerEvents="none"
-          {...fittedLineAttrs(maxW, squeezeText)}
         >
           <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
           <tspan x={width / 2} dy={0}>
@@ -137,7 +136,6 @@ function SchematicManualLineSwitch({
             fill="#9e9e9e"
             fontSize={fsS}
             fontWeight="400"
-            {...fittedLineAttrs(maxW, squeezeText)}
           >
             {secondaryLabel}
           </tspan>
@@ -154,7 +152,6 @@ function SchematicManualLineSwitch({
               fontSize={fsP}
               fontWeight="600"
               pointerEvents="none"
-              {...fittedLineAttrs(maxW, squeezeText)}
             >
               {hideSupplementary && secondaryLabel ? (
                 <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
@@ -171,7 +168,6 @@ function SchematicManualLineSwitch({
               fill="#9e9e9e"
               fontSize={fsS}
               pointerEvents="none"
-              {...fittedLineAttrs(maxW, squeezeText)}
             >
               {secondaryLabel}
             </text>

@@ -65,6 +65,7 @@ import {
   materializeCanvasPaste,
   scrubTieGroupReferencesAfterDelete,
 } from './utils/canvasDesignClipboard';
+import { scrubGasTurbineGroupReferencesAfterDelete } from './utils/gasTurbineBank';
 import {
   getCachedSimulationPayload,
   setCachedSimulationPayload,
@@ -421,6 +422,9 @@ function App() {
   const [uiFontPxShift, setUiFontPxShift] = useState(() => readStoredUiCanvasFontPxShifts().ui);
   const [canvasFontPxShift, setCanvasFontPxShift] = useState(
     () => readStoredUiCanvasFontPxShifts().canvas,
+  );
+  const [collapsedComponentFontPxShift, setCollapsedComponentFontPxShift] = useState(
+    () => readStoredUiCanvasFontPxShifts().collapsedComponent,
   );
 
   // Simulation state
@@ -899,7 +903,10 @@ function App() {
 
     setCanvasComponents((prev) => {
       const remaining = prev.filter((comp) => !idsToDelete.has(comp.id));
-      return scrubTieGroupReferencesAfterDelete(remaining, idsToDelete);
+      return scrubGasTurbineGroupReferencesAfterDelete(
+        scrubTieGroupReferencesAfterDelete(remaining, idsToDelete),
+        idsToDelete,
+      );
     });
     setConnections((prev) =>
       prev.filter(
@@ -2758,6 +2765,7 @@ function App() {
                 mode,
                 uiFontPxShift,
                 canvasFontPxShift,
+                collapsedComponentFontPxShift,
               },
             },
           }),
@@ -2788,6 +2796,7 @@ function App() {
       mode,
       uiFontPxShift,
       canvasFontPxShift,
+      collapsedComponentFontPxShift,
     ],
   );
 
@@ -5143,9 +5152,12 @@ function App() {
 
       const u = data.systemState.uiFontPxShift;
       const c = data.systemState.canvasFontPxShift;
+      const col = data.systemState.collapsedComponentFontPxShift;
       if (typeof u === 'number' && Number.isFinite(u)) setUiFontPxShift(clampFontPxShift(Math.round(u)));
       if (typeof c === 'number' && Number.isFinite(c))
         setCanvasFontPxShift(clampFontPxShift(Math.round(c)));
+      if (typeof col === 'number' && Number.isFinite(col))
+        setCollapsedComponentFontPxShift(clampFontPxShift(Math.round(col)));
     }
     
     // Chart tray is filled when user picks a scenario, or restored below via `pendingDesignUiRestoreRef`
@@ -5222,6 +5234,7 @@ function App() {
         mode,
         uiFontPxShift,
         canvasFontPxShift,
+        collapsedComponentFontPxShift,
       },
     };
   };
@@ -5522,10 +5535,64 @@ function App() {
     window.prompt('Copy this preset link (select, then Ctrl+C / ⌘C):', fullUrl);
   }, [designApiPath, simulationMetadata?.id]);
 
+  const renderSimulationControls = (gridPeek) => (
+    <SimulationControls
+      mode={mode}
+      viewMode={viewMode}
+      simulationRunning={simulationRunning}
+      activeSimulationId={
+        simulationMetadata?.isEnsemble ? null : (simulationMetadata?.id ?? null)
+      }
+      activeEnsembleId={simulationMetadata?.isEnsemble ? simulationMetadata.ensembleId : null}
+      designEnsembles={designEnsembles}
+      onSelectEnsemble={handleSelectEnsemble}
+      onDeleteEnsemble={handleDeleteEnsemble}
+      designApiPath={designApiPath}
+      onRefreshDesignEnsembles={refreshDesignEnsembles}
+      selectedComponent={selectedComponent}
+      onTripComponent={handleTripComponent}
+      onRestartComponent={handleRestartComponent}
+      onOpenBreaker={handleOpenBreaker}
+      onCloseBreaker={handleCloseBreaker}
+      onTripBreaker={handleTripBreaker}
+      onTripRandomTurbine={handleTripRandomTurbine}
+      onTripAllTurbines={handleTripAllTurbines}
+      onGridLoss={handleGridLoss}
+      onOpenAllBreakers={handleOpenAllBreakers}
+      simulationTime={simulationTime}
+      simulationSpeed={simulationSpeed}
+      onSetSimulationSpeed={handleSetSimulationSpeed}
+      availableSimulations={availableSimulations}
+      simConfig={simConfig}
+      onRunSimulation={handleRunSimulation}
+      useDesignDir={!!csvStatus?.use_design_dir}
+      currentConfigName={currentConfigName}
+      onUploadSimData={handleUploadSimData}
+      onDeleteSimulation={handleDeleteSimulation}
+      onDeleteAllSimulations={handleDeleteAllSimulations}
+      onClearSimulationCache={handleClearSimulationCache}
+      onViewSimData={handleViewSimData}
+      onAddSimulation={handleAddSimulation}
+      onAddSimulationsFromXlsx={handleAddSimulationsFromXlsx}
+      onAddSimulationsFromPkl={handleAddSimulationsFromPkl}
+      onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
+      simulationLoadProgress={simulationLoadProgress}
+      quickScenarioButtons={quickScenarioButtons}
+      hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
+      activeQuickScenarioPlaying={activeQuickScenarioPlaying}
+      onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
+      onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
+      onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
+      onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
+      rightRailGridPeek={gridPeek}
+      onToggleRightRailGridPeek={toggleRightRailGridPeek}
+    />
+  );
+
   const controlsRail = (
     <div
       className={`app-right-rail ${rightRailCollapsed ? 'app-right-rail--collapsed' : ''} ${
-        rightRailGridPeek ? 'app-right-rail--grid-peek' : ''
+        rightRailGridPeek && controlsDockRight ? 'app-right-rail--grid-peek' : ''
       } ${
         controlsDockRight
           ? 'app-right-rail--dock-right'
@@ -5605,59 +5672,19 @@ function App() {
           style={{ position: 'relative', zIndex: focusedPanel === 'simulation' ? 1100 : 10 }}
           onMouseDown={(e) => handlePanelFocus('simulation', e)}
         >
-          <SimulationControls
-            mode={mode}
-            viewMode={viewMode}
-            simulationRunning={simulationRunning}
-            activeSimulationId={
-              simulationMetadata?.isEnsemble ? null : (simulationMetadata?.id ?? null)
-            }
-            activeEnsembleId={simulationMetadata?.isEnsemble ? simulationMetadata.ensembleId : null}
-            designEnsembles={designEnsembles}
-            onSelectEnsemble={handleSelectEnsemble}
-            onDeleteEnsemble={handleDeleteEnsemble}
-            designApiPath={designApiPath}
-            onRefreshDesignEnsembles={refreshDesignEnsembles}
-            selectedComponent={selectedComponent}
-            onTripComponent={handleTripComponent}
-            onRestartComponent={handleRestartComponent}
-            onOpenBreaker={handleOpenBreaker}
-            onCloseBreaker={handleCloseBreaker}
-            onTripBreaker={handleTripBreaker}
-            onTripRandomTurbine={handleTripRandomTurbine}
-            onTripAllTurbines={handleTripAllTurbines}
-            onGridLoss={handleGridLoss}
-            onOpenAllBreakers={handleOpenAllBreakers}
-            simulationTime={simulationTime}
-            simulationSpeed={simulationSpeed}
-            onSetSimulationSpeed={handleSetSimulationSpeed}
-            availableSimulations={availableSimulations}
-            simConfig={simConfig}
-            onRunSimulation={handleRunSimulation}
-            useDesignDir={!!csvStatus?.use_design_dir}
-            currentConfigName={currentConfigName}
-            onUploadSimData={handleUploadSimData}
-            onDeleteSimulation={handleDeleteSimulation}
-            onDeleteAllSimulations={handleDeleteAllSimulations}
-            onClearSimulationCache={handleClearSimulationCache}
-            onViewSimData={handleViewSimData}
-            onAddSimulation={handleAddSimulation}
-            onAddSimulationsFromXlsx={handleAddSimulationsFromXlsx}
-            onAddSimulationsFromPkl={handleAddSimulationsFromPkl}
-            onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
-            simulationLoadProgress={simulationLoadProgress}
-            quickScenarioButtons={quickScenarioButtons}
-            hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
-            activeQuickScenarioPlaying={activeQuickScenarioPlaying}
-            onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
-            onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
-            onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
-            onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
-            rightRailGridPeek={rightRailGridPeek}
-            onToggleRightRailGridPeek={toggleRightRailGridPeek}
-          />
+          {renderSimulationControls(controlsDockRight && rightRailGridPeek)}
         </div>
       </div>
+    </div>
+  );
+
+  const gridPeekDock = controlsDockLeftBottom && rightRailGridPeek && (
+    <div
+      className="sim-controls-grid-peek-dock"
+      style={{ position: 'relative', zIndex: focusedPanel === 'simulation' ? 1100 : 5200 }}
+      onMouseDown={(e) => handlePanelFocus('simulation', e)}
+    >
+      {renderSimulationControls(true)}
     </div>
   );
 
@@ -5665,8 +5692,10 @@ function App() {
     <FontScaleProvider
       uiFontPxShift={uiFontPxShift}
       canvasFontPxShift={canvasFontPxShift}
+      collapsedComponentFontPxShift={collapsedComponentFontPxShift}
       setUiFontPxShift={setUiFontPxShift}
       setCanvasFontPxShift={setCanvasFontPxShift}
+      setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
     >
     <div className="app-container">
       <header ref={appHeaderRef} className="app-header">
@@ -5762,7 +5791,8 @@ function App() {
           />
         )}
 
-        {controlsDockLeftBottom && controlsRail}
+        {gridPeekDock}
+        {controlsDockLeftBottom && !rightRailGridPeek && controlsRail}
 
         <div
           className={`panel-focus-wrapper design-view-wrapper ${designImageUrl ? `mode-${designViewMode}` : ''}`}

@@ -28,6 +28,9 @@ export function secondaryLabelText(component, visualConfig) {
 }
 
 export function primaryLabelText(component, visualConfig) {
+  if (component.properties?.primaryLabel != null) {
+    return String(component.properties.primaryLabel);
+  }
   let text =
     visualConfig.canvasPrimaryLabel != null
       ? visualConfig.canvasPrimaryLabel
