@@ -15,7 +15,7 @@ import {
 import { useCanvasFontPxDelta, useCollapsedComponentFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
-import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface } from '../../utils/collapseAggregate';
+import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface, isGFMeCollapseAggregateSurface } from '../../utils/collapseAggregate';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
@@ -61,13 +61,17 @@ function CanvasBlock({
     ? collapsedFontPxDelta
     : fontPxDelta;
   const collapseAggregateArt = isAuxLoadsCollapseAggregateSurface(component, allComponents);
+  const gfmeCollapse3d = isGFMeCollapseAggregateSurface(component, allComponents);
   const tieStrip = isTieStripMode(component);
   const gasBankStrip = isGasTurbineBankStripMode(component);
   const stripMode = tieStrip || gasBankStrip;
   const visualConfig = getComponentVisualConfig(component.type);
+  const bodyVisualConfig = gfmeCollapse3d
+    ? { ...visualConfig, shape: 'schematic-gfme-3d', backgroundTexture: undefined }
+    : visualConfig;
   const { width: baseWidth, height: baseHeight } = getScaledCanvasBlockDimensions(
     component,
-    visualConfig,
+    bodyVisualConfig,
     blockTypeScale,
   );
   const { width, height } = isGasTurbineBank(component)
@@ -155,7 +159,7 @@ function CanvasBlock({
         {!stripMode && (
           <CanvasComponentBody
             component={component}
-            visualConfig={visualConfig}
+            visualConfig={bodyVisualConfig}
             width={width}
             height={height}
             strokeColor={strokeColor}

@@ -6,6 +6,7 @@ import SchematicGSU from '../Schematics/SchematicGSU';
 import SchematicBessXfmr from '../Schematics/SchematicBessXfmr';
 import SchematicLm2500Andritz from '../Schematics/SchematicLm2500Andritz';
 import SchematicGasTurbine3D from '../Schematics/SchematicGasTurbine3D';
+import SchematicGFMe3D from '../Schematics/SchematicGFMe3D';
 import SchematicManualLineSwitch from '../Schematics/SchematicManualLineSwitch';
 import ShapeRoundedRect from './shape-rounded-rect';
 import ShapeRect from './shape-rect';
@@ -179,6 +180,17 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           placeholderOnly={component.properties?.collapsePlaceholderOnly === true}
           glowFilterId={`gt3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
+        />
+      );
+
+    case 'schematic-gfme-3d':
+      return (
+        <SchematicGFMe3D
+          width={width}
+          height={height}
+          strokeColor={strokeColor}
+          strokeWidthVal={strokeWidthVal}
+          glowFilterId={`gfme3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
       );
 

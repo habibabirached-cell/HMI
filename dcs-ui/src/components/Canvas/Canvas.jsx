@@ -6,6 +6,7 @@ import MultiComponentChartDialog from '../MultiComponentChartDialog/MultiCompone
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
+import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { resolveConnectionRenderParams } from '../../utils/connectionLineStyle';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
@@ -33,6 +34,10 @@ import {
   isGasTurbineBankCollapsed,
   getCollapsedGasTurbineBankIdForMember,
 } from '../../utils/gasTurbineBank';
+import {
+  DEFAULT_DESIGN_SECTION_VISIBILITY,
+  getDesignSectionHiddenMemberIdSet,
+} from '../../utils/designSectionVisibility';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { getCanvasBlockTypeScale } from './shapes/canvasBlockUtils';
@@ -259,6 +264,7 @@ const Canvas = forwardRef(({
   systemState,
   presenceForcedOfflineIds = NO_PRESENCE_FORCED_IDS,
   presenceForcedOfflineConnectionIds = NO_PRESENCE_FORCED_IDS,
+  designSectionVisibility = DEFAULT_DESIGN_SECTION_VISIBILITY,
   variableDrivenPresence = [],
   onOpenVariablePresenceDialog,
   onOpenVariablePresenceDialogConnections,
@@ -306,11 +312,17 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const designSectionHiddenMemberIds = useMemo(
+    () => getDesignSectionHiddenMemberIdSet(components, designSectionVisibility),
+    [components, designSectionVisibility],
+  );
+
   const hiddenAggregateMemberIds = useMemo(() => {
     const hidden = new Set(hiddenTieMemberIds);
     for (const id of hiddenGasTurbineBankMemberIds) hidden.add(id);
+    for (const id of designSectionHiddenMemberIds) hidden.add(id);
     return hidden;
-  }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds]);
+  }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds, designSectionHiddenMemberIds]);
 
   const visibleComponents = useMemo(
     () => components.filter((c) => !hiddenAggregateMemberIds.has(c.id)),
@@ -1894,6 +1906,15 @@ const Canvas = forwardRef(({
 
       <GasTurbine3DOverlays
         components={renderComponents}
+        pan={pan}
+        zoom={zoom}
+        canvasRef={canvasRef}
+        blockTypeScale={canvasBlockTypeScale}
+      />
+
+      <GFMe3DOverlays
+        renderComponents={renderComponents}
+        allComponents={components}
         pan={pan}
         zoom={zoom}
         canvasRef={canvasRef}

@@ -17,6 +17,11 @@ import {
   normalizeHiddenDefaultQuickScenarios,
 } from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
+import {
+  DEFAULT_DESIGN_SECTION_VISIBILITY,
+  normalizeDesignSectionVisibility,
+  resolveQuickScenarioDesignVisibility,
+} from './utils/designSectionVisibility';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -284,11 +289,11 @@ function App() {
       window.removeEventListener('resize', sync);
     };
   }, [viewMode]);
-  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = charts top + Controls bottom-left. */
+  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = charts top + Controls bottom-left; conf4 = like conf2 but chart2 under chart1. */
   const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState(() => {
     try {
       const v = window.localStorage?.getItem('dcsWorkspaceLayoutPreset');
-      if (v === 'conf2' || v === 'conf3') return v;
+      if (v === 'conf2' || v === 'conf3' || v === 'conf4') return v;
     } catch {
       /* ignore */
     }
@@ -324,20 +329,26 @@ function App() {
     }
   }, [chartSideDockWidth]);
   const chartPanelLayoutMode = useMemo(() => {
-    if (workspaceLayoutPreset === 'conf2') return 'sideRight';
+    if (workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf4') return 'sideRight';
     if (workspaceLayoutPreset === 'conf3') return 'top';
     return 'bottom';
   }, [workspaceLayoutPreset]);
-  /** conf1 & conf2: split chart tray into chart1 / chart2 drawers */
+  /** conf1, conf2 & conf4: split chart tray into chart1 / chart2 drawers */
   const dualWorkspaceDrawers =
-    workspaceLayoutPreset === 'conf1' || workspaceLayoutPreset === 'conf2';
-  /** conf1: Controls full-height on the right; conf2/conf3: bottom-half vertical strip on the left. */
+    workspaceLayoutPreset === 'conf1' ||
+    workspaceLayoutPreset === 'conf2' ||
+    workspaceLayoutPreset === 'conf4';
+  /** conf4: same side dock as conf2, but chart2 stacks under chart1 instead of beside it. */
+  const dualChartDrawersStacked = workspaceLayoutPreset === 'conf4';
+  /** conf1: Controls full-height on the right; conf2/conf3/conf4: bottom-half vertical strip on the left. */
   const controlsDockRight = workspaceLayoutPreset === 'conf1';
   const controlsDockLeftBottom =
-    workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf3';
+    workspaceLayoutPreset === 'conf2' ||
+    workspaceLayoutPreset === 'conf3' ||
+    workspaceLayoutPreset === 'conf4';
   const controlsLeftInsetPx = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
   const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
-    if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3') {
+    if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3' || preset === 'conf4') {
       setWorkspaceLayoutPreset(preset);
     }
   }, []);
@@ -625,6 +636,10 @@ function App() {
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
   /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
   const [activeQuickScenarioPlaying, setActiveQuickScenarioPlaying] = useState(null);
+  /** Upper / lower stacked canvas sections — collapse state stays in components; this only hides rendering. */
+  const [designSectionVisibility, setDesignSectionVisibility] = useState(
+    () => ({ ...DEFAULT_DESIGN_SECTION_VISIBILITY }),
+  );
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -2757,6 +2772,7 @@ function App() {
                   simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
                     ? simulationMetadata.ensembleId
                     : null,
+                designSectionVisibility,
               },
               systemState: {
                 simulationRunning,
@@ -2797,6 +2813,7 @@ function App() {
       uiFontPxShift,
       canvasFontPxShift,
       collapsedComponentFontPxShift,
+      designSectionVisibility,
     ],
   );
 
@@ -2861,6 +2878,10 @@ function App() {
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
     handleStopSimulation();
+    const sectionVisibility = resolveQuickScenarioDesignVisibility(shortcut.presetName);
+    if (sectionVisibility) {
+      setDesignSectionVisibility(sectionVisibility);
+    }
     try {
       if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
         const ensemble = designEnsembles.find((e) => e.id === shortcut.ensembleId);
@@ -5113,6 +5134,11 @@ function App() {
     } else {
       pendingDesignUiRestoreRef.current = null;
     }
+    if (dus?.designSectionVisibility) {
+      setDesignSectionVisibility(normalizeDesignSectionVisibility(dus.designSectionVisibility));
+    } else {
+      setDesignSectionVisibility({ ...DEFAULT_DESIGN_SECTION_VISIBILITY });
+    }
 
     setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
     setHiddenDefaultQuickScenarios(
@@ -5224,6 +5250,7 @@ function App() {
           simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
             ? simulationMetadata.ensembleId
             : null,
+        designSectionVisibility,
       },
       quickScenarioButtons,
       hiddenDefaultQuickScenarios,
@@ -5605,7 +5632,9 @@ function App() {
               left: `${controlsLeftInsetPx}px`,
               ['--controls-left-inset']: `${controlsLeftInsetPx}px`,
               ['--chart-side-dock-width']:
-                workspaceLayoutPreset === 'conf2' ? `${chartSideDockWidth}px` : '0px',
+                workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf4'
+                  ? `${chartSideDockWidth}px`
+                  : '0px',
               ['--controls-chart-gap']: `${CONTROLS_CHART_GAP_PX}px`,
             }
           : undefined
@@ -5853,6 +5882,7 @@ function App() {
               systemState={systemState}
               presenceForcedOfflineIds={presenceForcedOfflineIds}
               presenceForcedOfflineConnectionIds={presenceForcedOfflineConnectionIds}
+              designSectionVisibility={designSectionVisibility}
               variableDrivenPresence={variableDrivenPresence}
               onOpenVariablePresenceDialog={handleOpenVariablePresenceDialog}
               onOpenVariablePresenceDialogConnections={handleOpenVariablePresenceDialogConnections}
@@ -5994,6 +6024,7 @@ function App() {
           sidePanelWidth={chartSideDockWidth}
           onSidePanelWidthChange={handleChartSideDockWidthChange}
           dualChartDrawers={dualWorkspaceDrawers}
+          dualChartDrawersStacked={dualChartDrawersStacked}
           onMoveChartDrawer={handleMoveChartDrawer}
         />
       )}

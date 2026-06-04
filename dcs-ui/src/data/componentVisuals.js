@@ -244,7 +244,9 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#2e7d7d',
     shape: 'shape-rounded-rect',
     backgroundTexture: '/component-textures/statcom-line-art.svg',
-    backgroundTextureOpacity: 0.92
+    backgroundTextureOpacity: 0.92,
+    /** Collapse tiles (750×375) swap to schematic-gfme-3d + GFMe3DOverlays at render time. */
+    model3dUrl: '/models/gfme/g2x2.gltf',
   },
   'battery-rack': {
     width: 80,

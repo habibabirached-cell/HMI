@@ -6,6 +6,7 @@
  * - `gas-turbine-3d` bank preview (gasTurbineGroup.previewMemberId)
  * - `auxiliary-loads-bess` bank companion (gasTurbineGroup.collapseCompanionMemberId)
  * - extra collapse tiles (gasTurbineGroup.collapseExtraMemberIds — BESS, GFMe, …)
+ * - `gfme-statcom` collapse tiles use g2x2 GLTF preview (isGFMeCollapseAggregateSurface)
  */
 
 import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';
@@ -44,6 +45,14 @@ export function isCollapseAggregateSurfaceComponent(component, components) {
 export function isAuxLoadsCollapseAggregateSurface(component, components) {
   return (
     component?.type === 'auxiliary-loads-bess' &&
+    isCollapseAggregateSurfaceComponent(component, components)
+  );
+}
+
+/** Large GFMe STATCOM collapse tile — g2x2 GLTF preview instead of SVG line-art texture. */
+export function isGFMeCollapseAggregateSurface(component, components) {
+  return (
+    component?.type === 'gfme-statcom' &&
     isCollapseAggregateSurfaceComponent(component, components)
   );
 }
