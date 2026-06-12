@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { loadThreeGltfRuntime } from '../../../utils/threeGltfRuntime';
 
 const DEG = Math.PI / 180;
 
@@ -35,36 +36,6 @@ function oscillate(tSec, frequencyHz, minVal, maxVal) {
   const mid = (minVal + maxVal) / 2;
   const amp = (maxVal - minVal) / 2;
   return mid + amp * Math.sin(2 * Math.PI * frequencyHz * tSec);
-}
-
-/** Loaded from public/vendor/three (same origin — works behind corporate firewalls). */
-let threeRuntimePromise = null;
-
-function vendorThreeUrls() {
-  const base = `${process.env.PUBLIC_URL || ''}/vendor/three`;
-  return {
-    threeModule: `${base}/build/three.module.js`,
-    gltfLoaderModule: `${base}/examples/jsm/loaders/GLTFLoader.js`,
-  };
-}
-
-function loadThreeRuntime() {
-  if (!threeRuntimePromise) {
-    const { threeModule, gltfLoaderModule } = vendorThreeUrls();
-    threeRuntimePromise = Promise.all([
-      import(/* webpackIgnore: true */ threeModule),
-      import(/* webpackIgnore: true */ gltfLoaderModule),
-    ])
-      .then(([threeMod, loaderMod]) => ({
-        THREE: threeMod,
-        GLTFLoader: loaderMod.GLTFLoader,
-      }))
-      .catch((err) => {
-        threeRuntimePromise = null;
-        throw err;
-      });
-  }
-  return threeRuntimePromise;
 }
 
 function frameObject(THREE, object, camera) {
@@ -190,8 +161,8 @@ export default function GFMe3DViewer({ width, height, modelUrl }) {
     let renderer = null;
     let scene = null;
 
-    loadThreeRuntime()
-      .then(({ THREE, GLTFLoader }) => {
+    loadThreeGltfRuntime()
+      .then(({ THREE, createGltfLoader }) => {
         if (disposed) return;
 
         scene = new THREE.Scene();
@@ -233,7 +204,7 @@ export default function GFMe3DViewer({ width, height, modelUrl }) {
         const towardViewer = new THREE.Vector3();
         const t0 = performance.now();
 
-        const loader = new GLTFLoader();
+        const loader = createGltfLoader();
         loader.load(
           modelUrl,
           (gltf) => {

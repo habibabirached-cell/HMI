@@ -59,6 +59,7 @@ export const COMPONENT_LIBRARY = [
       { id: 'bess', name: 'BESS', fullName: 'Battery Energy Storage System', type: 'battery', properties: { rating: 10, voltage: 0.48, unit: 'MWh' } },
       { id: 'bess-30mw', name: 'BESS 30MW', fullName: 'Battery Energy Storage System 30MW', type: 'battery', properties: { rating: 30, voltage: 34.5, unit: 'MW' } },
       { id: 'bess-50mw', name: 'BESS 50MW', fullName: 'Battery Energy Storage System 50MW', type: 'battery', properties: { rating: 50, voltage: 34.5, unit: 'MWh' } },
+      { id: 'bess-compact-old', name: 'BESS Compact (SVG)', fullName: 'BESS collapse tile — legacy SVG line-art', type: 'bess-compact-old', properties: { rating: 50, voltage: 34.5, unit: 'MW' } },
       { id: 'battery-rack', name: 'Battery Rack', fullName: 'Battery Rack', type: 'battery', properties: { rating: 1, voltage: 0.48, unit: 'MWh' } },
       { id: 'battery-container', name: 'Battery Container', fullName: 'Battery Container', type: 'battery', properties: { rating: 5, voltage: 0.48, unit: 'MWh' } },
       { id: 'flywheel', name: 'Flywheel', fullName: 'Flywheel Energy Storage', type: 'flywheel', properties: { rating: 0.5, voltage: 0.48, unit: 'MWh' } },

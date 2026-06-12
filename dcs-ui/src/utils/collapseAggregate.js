@@ -7,6 +7,7 @@
  * - `auxiliary-loads-bess` bank companion (gasTurbineGroup.collapseCompanionMemberId)
  * - extra collapse tiles (gasTurbineGroup.collapseExtraMemberIds — BESS, GFMe, …)
  * - `gfme-statcom` collapse tiles use g2x2 GLTF preview (isGFMeCollapseAggregateSurface)
+ * - `bess-50mw` / `bess-30mw` / `bess` collapse tiles use Bess.c.glb (isBessCollapseAggregateSurface)
  */
 
 import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';
@@ -15,6 +16,7 @@ import {
   isGasTurbineBankCollapsed,
   getGasTurbineBankCollapseSurfaceMemberIds,
 } from './gasTurbineBank';
+import { BESS_COLLAPSE_3D_TYPES } from './bess3dLayout';
 
 /** Aggregate block types that own a collapse/expand group (strip when expanded). */
 export const COLLAPSE_AGGREGATE_OWNER_TYPES = ['tie-breaker-network', 'gas-turbine-bank'];
@@ -53,6 +55,14 @@ export function isAuxLoadsCollapseAggregateSurface(component, components) {
 export function isGFMeCollapseAggregateSurface(component, components) {
   return (
     component?.type === 'gfme-statcom' &&
+    isCollapseAggregateSurfaceComponent(component, components)
+  );
+}
+
+/** Large BESS collapse tile — Bess.c.glb preview instead of SVG line-art texture. */
+export function isBessCollapseAggregateSurface(component, components) {
+  return (
+    BESS_COLLAPSE_3D_TYPES.has(component?.type) &&
     isCollapseAggregateSurfaceComponent(component, components)
   );
 }

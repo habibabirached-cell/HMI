@@ -115,7 +115,7 @@ export function guessAuxiliaryLoadEnsembleSimId(component, memberSimulations = [
 
 const BESS_TAG_NUM_RE = /BESS\s*#\s*(\d+)/i;
 
-const BESS_READOUT_TYPES = new Set(['battery', 'bess', 'bess-30mw', 'bess-50mw']);
+const BESS_READOUT_TYPES = new Set(['battery', 'bess', 'bess-30mw', 'bess-50mw', 'bess-compact-old']);
 
 /**
  * If the block is named "BESS #N", guess ensemble member `BESS_N` when present (e.g. BESS #1 → BESS_1).

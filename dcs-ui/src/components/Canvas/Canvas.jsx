@@ -7,6 +7,7 @@ import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
+import Bess3DOverlays from './Schematics/Bess3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { resolveConnectionRenderParams } from '../../utils/connectionLineStyle';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
@@ -1913,6 +1914,15 @@ const Canvas = forwardRef(({
       />
 
       <GFMe3DOverlays
+        renderComponents={renderComponents}
+        allComponents={components}
+        pan={pan}
+        zoom={zoom}
+        canvasRef={canvasRef}
+        blockTypeScale={canvasBlockTypeScale}
+      />
+
+      <Bess3DOverlays
         renderComponents={renderComponents}
         allComponents={components}
         pan={pan}

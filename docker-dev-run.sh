@@ -12,7 +12,7 @@ docker compose --env-file "$DIR/.env" -f "$DIR/docker-compose-dev.yml" up -d
 
 host=$(hostname -f)
 echo
-echo UI: http://$host:3000/
+echo UI: http://$host:3003/
 echo
 echo For localhost access replace $host with "localhost" or 127.0.0.1
 echo

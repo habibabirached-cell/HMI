@@ -23,6 +23,7 @@
  * shape: 'schematic-bess-xfmr' — BESS xfmr: lightning pair + same stack + hugging outline.
  * shape: 'schematic-lm2500-andritz' — LM2500 Andritz: card + line-art texture + title / MW (SchematicLm2500Andritz.jsx).
  * shape: 'schematic-gas-turbine-3d' — Gas Turbine 3D: live GLB preview + title / MW (SchematicGasTurbine3D.jsx).
+ * shape: 'schematic-bess-3d' — BESS collapse tile: Bess.c.glb preview + title (SchematicBess3D.jsx).
  *
  * Primitive shapes use the `shape-` prefix — modules `Canvas/shapes/shape-*.jsx` match these strings exactly:
  *   'shape-rounded-rect', 'shape-rect', 'shape-circle', 'shape-hexagon', 'shape-bus-bar', 'shape-dashed-rect'
@@ -235,7 +236,19 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#4caf50',
     shape: 'shape-rounded-rect',
     backgroundTexture: '/component-textures/bess-line-art.png',
-    backgroundTextureOpacity: 0.88
+    backgroundTextureOpacity: 0.88,
+    /** Collapse tiles (750×375) swap to schematic-bess-3d + Bess3DOverlays at render time. */
+    model3dUrl: '/models/Bess.c.glb',
+  },
+  /** Legacy compact BESS tile — SVG line-art (pre–Bess.c.glb 3D preview). */
+  'bess-compact-old': {
+    width: 750,
+    height: 375,
+    icon: '🔋',
+    color: '#4caf50',
+    shape: 'shape-rounded-rect',
+    backgroundTexture: '/component-textures/bess-line-art.png',
+    backgroundTextureOpacity: 0.88,
   },
   'gfme-statcom': {
     width: 150,

@@ -12,6 +12,7 @@ const PRODUCER_TYPES = new Set([
   'bess',
   'bess-30mw',
   'bess-50mw',
+  'bess-compact-old',
   'bess-xfmr'
 ]);
 

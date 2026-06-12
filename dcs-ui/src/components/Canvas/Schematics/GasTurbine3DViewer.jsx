@@ -1,34 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-
-/** Loaded from public/vendor/three (same origin — works behind corporate firewalls). */
-let threeRuntimePromise = null;
-
-function vendorThreeUrls() {
-  const base = `${process.env.PUBLIC_URL || ''}/vendor/three`;
-  return {
-    threeModule: `${base}/build/three.module.js`,
-    gltfLoaderModule: `${base}/examples/jsm/loaders/GLTFLoader.js`,
-  };
-}
-
-function loadThreeRuntime() {
-  if (!threeRuntimePromise) {
-    const { threeModule, gltfLoaderModule } = vendorThreeUrls();
-    threeRuntimePromise = Promise.all([
-      import(/* webpackIgnore: true */ threeModule),
-      import(/* webpackIgnore: true */ gltfLoaderModule),
-    ])
-      .then(([threeMod, loaderMod]) => ({
-        THREE: threeMod,
-        GLTFLoader: loaderMod.GLTFLoader,
-      }))
-      .catch((err) => {
-        threeRuntimePromise = null;
-        throw err;
-      });
-  }
-  return threeRuntimePromise;
-}
+import { loadThreeGltfRuntime } from '../../../utils/threeGltfRuntime';
 
 function frameObject(THREE, object, camera) {
   const box = new THREE.Box3().setFromObject(object);
@@ -41,7 +12,7 @@ function frameObject(THREE, object, camera) {
 
   const maxDim = Math.max(size.x, size.y, size.z, 0.001);
   const fitDist = maxDim / (2 * Math.tan((camera.fov * Math.PI) / 360));
-  const dist = fitDist * 0.42;
+  const dist = fitDist * 0.54;
 
   camera.position.set(dist * 0.72, dist * 0.38, dist * 0.88);
   camera.lookAt(0, 0, 0);
@@ -85,8 +56,8 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
     let renderer = null;
     let scene = null;
 
-    loadThreeRuntime()
-      .then(({ THREE, GLTFLoader }) => {
+    loadThreeGltfRuntime()
+      .then(({ THREE, createGltfLoader }) => {
         if (disposed) return;
 
         scene = new THREE.Scene();
@@ -131,7 +102,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
         let shaftAxis = null;
         let shaftSpinAngle = 0;
 
-        const loader = new GLTFLoader();
+        const loader = createGltfLoader();
         loader.load(
           modelUrl,
           (gltf) => {
@@ -155,8 +126,8 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
           },
         );
 
-        const TURNTABLE_YAW = 0.0035;
-        const SHAFT_SPIN = 0.032;
+        const TURNTABLE_YAW = 0.0014;
+        const SHAFT_SPIN = 0.014;
 
         const animate = () => {
           frameId = requestAnimationFrame(animate);

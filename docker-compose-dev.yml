@@ -43,10 +43,11 @@ services:
       - http_proxy=${HTTP_PROXY}
       - no_proxy=${NO_PROXY}
       - SERVER_HOSTNAME=host.docker.internal
-      # Empty => browser calls /api/... on :3000; CRA dev server proxies to backend (see dcs-ui/package.json "proxy").
+      # Empty => browser calls /api/... on :3003; CRA dev server proxies to backend (see dcs-ui/package.json "proxy").
       - REACT_APP_API_BASE_URL=
+      - PORT=3003
     ports:
-      - "3000:3000"
+      - "3003:3003"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
