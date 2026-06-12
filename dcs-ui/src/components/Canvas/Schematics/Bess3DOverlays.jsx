@@ -65,8 +65,12 @@ export default function Bess3DOverlays({
             pixelHeight: Math.max(8, Math.round(slotH)),
             rotation,
             modelUrl: getBess3DModelUrl(visualConfig),
-            title: primaryLabelText(component, visualConfig),
-            subtitle: secondaryLabelText(component, visualConfig),
+            title: component.properties?.ideumDecorOnly
+              ? ''
+              : primaryLabelText(component, visualConfig),
+            subtitle: component.properties?.ideumDecorOnly
+              ? ''
+              : secondaryLabelText(component, visualConfig),
             titleFontPx: fsTitle * zoom,
             subtitleFontPx: fsSub * zoom,
             titleMarginPx: BESS3D_TITLE_MARGIN * zoom,

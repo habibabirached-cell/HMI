@@ -115,6 +115,20 @@
   filter: brightness(1.2);
 }
 
+.canvas-component.canvas-ideum-decor {
+  opacity: 0;
+}
+
+.canvas-component.canvas-ideum-touch:not(.dragging) {
+  filter: drop-shadow(0 0 10px rgba(21, 101, 192, 0.35));
+}
+
+.canvas-component.canvas-ideum-touch:hover {
+  filter:
+    brightness(1.1)
+    drop-shadow(0 0 14px rgba(21, 101, 192, 0.55));
+}
+
 /* Collapsed tie aggregate — soft teal bloom (matches STATCOM / GFME palette) */
 .canvas-tie-breaker-network:not(.dragging) {
   filter: drop-shadow(0 0 5px rgba(46, 125, 125, 0.28));

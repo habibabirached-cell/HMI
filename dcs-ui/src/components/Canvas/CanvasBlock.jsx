@@ -54,6 +54,8 @@ function CanvasBlock({
   expandGasTurbineBankId = null,
   onExpandGasTurbineBank,
   allComponents = [],
+  ideumKioskMode = false,
+  isIdeumTouchTarget = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
   const collapsedFontPxDelta = useCollapsedComponentFontPxDelta();
@@ -85,6 +87,7 @@ function CanvasBlock({
   const centerX = width / 2;
   const centerY = height / 2;
   const presentationOffline = presenceForcedOffline;
+  const ideumDecorOnly = ideumKioskMode && component?.properties?.ideumDecorOnly === true;
   const { strokeColor, strokeWidthVal } = strokeForStatus(component, isSelected, presentationOffline);
 
   const showBlockTypeScaleUi =
@@ -101,6 +104,7 @@ function CanvasBlock({
       onMouseDown={(e) => onMouseDown(e, component)}
       onMouseUp={(e) => onMouseUp(e, component)}
       onDoubleClick={(e) => {
+        if (ideumKioskMode) return;
         const tg = component.properties?.tieGroup;
         if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
           if (tg.collapsed === false || stripMode) return;
@@ -132,8 +136,17 @@ function CanvasBlock({
         }
       }}
       onContextMenu={(e) => onContextMenu(e, component)}
-      className={`canvas-component${isTieBreakerNetwork(component) ? ' canvas-tie-breaker-network' : ''}${isGasTurbineBank(component) ? ' canvas-gas-turbine-bank' : ''} ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
-      style={{ cursor: mode === 'design' ? 'move' : 'pointer' }}
+      className={`canvas-component${isTieBreakerNetwork(component) ? ' canvas-tie-breaker-network' : ''}${isGasTurbineBank(component) ? ' canvas-gas-turbine-bank' : ''}${isIdeumTouchTarget ? ' canvas-ideum-touch' : ''}${ideumDecorOnly ? ' canvas-ideum-decor' : ''} ${isSelected ? 'selected' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      style={{
+        cursor: ideumDecorOnly
+          ? 'default'
+          : isIdeumTouchTarget || mode === 'simulation'
+            ? 'pointer'
+            : mode === 'design'
+              ? 'move'
+              : 'pointer',
+        pointerEvents: ideumDecorOnly ? 'none' : undefined,
+      }}
     >
       <g transform={`rotate(${rotation} ${centerX} ${centerY})`}>
         {(isSelected || isMultiSelected) && (

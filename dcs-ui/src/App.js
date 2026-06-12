@@ -12,6 +12,7 @@ import ConnectionReadoutDialog from './components/ConnectionReadoutDialog/Connec
 import ViewDataModal from './components/ViewDataModal/ViewDataModal';
 import SaveSimulationConfigDialog from './components/SaveSimulationConfigDialog/SaveSimulationConfigDialog';
 import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenarioAsDialog';
+import IdeumTouchButtons from './components/IdeumKiosk/IdeumTouchButtons';
 import {
   normalizeQuickScenarioButtons,
   normalizeHiddenDefaultQuickScenarios,
@@ -22,6 +23,11 @@ import {
   normalizeDesignSectionVisibility,
   resolveQuickScenarioDesignVisibility,
 } from './utils/designSectionVisibility';
+import {
+  connectClusterWebSocket,
+  fetchMachineRole,
+  sendRemoteCommandToMaingear,
+} from './utils/clusterPeer';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -632,6 +638,13 @@ function App() {
   const [saveScenarioAsDialogOpen, setSaveScenarioAsDialogOpen] = useState(false);
   /** User shortcuts in Quick Scenarios → named chart presets (persisted in design .conf.json). */
   const [quickScenarioButtons, setQuickScenarioButtons] = useState([]);
+  /** Full-screen Ideum kiosk (ideum05): hide menus, 3D canvas buttons only. */
+  const [ideumKioskMode, setIdeumKioskMode] = useState(false);
+  /** Ideum touch-table remote control buttons (legacy sidebar; unused in kiosk mode). */
+  const [ideumControlButtons, setIdeumControlButtons] = useState([]);
+  /** Maps Ideum remote commands → quick-scenario presets on Maingear (statcom05 and save-as copies). */
+  const [remoteControlProfile, setRemoteControlProfile] = useState(null);
+  const [machineRole, setMachineRole] = useState(null);
   /** Default quick-scenario ids hidden for this design until reload without saved design. */
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
   /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
@@ -2875,6 +2888,41 @@ function App() {
     }
   };
 
+  const handleIdeumControlButtonClick = async (button) => {
+    if (!button?.command) return;
+    let role = machineRole;
+    if (!role) {
+      try {
+        role = await fetchMachineRole();
+        setMachineRole(role);
+      } catch (e) {
+        alert(e.message || 'Could not determine machine role.');
+        return;
+      }
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. These buttons send commands from the Ideum touch table to the Maingear display.',
+      );
+      return;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return;
+    }
+    try {
+      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, button.command);
+      if (!result.deliveredToClients) {
+        alert(
+          'Command sent to Maingear, but no Maingear browser is connected. Open statcom05 on the Maingear first.',
+        );
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send command to Maingear.');
+    }
+  };
+
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
     handleStopSimulation();
@@ -2915,6 +2963,26 @@ function App() {
       console.warn(e);
       alert(e.message || 'Failed to load scenario shortcut');
     }
+  };
+
+  const handleRemoteClusterCommand = async (command) => {
+    if (!remoteControlProfile?.enabled || !command) return;
+    const spec = remoteControlProfile.commands?.[command];
+    if (!spec?.presetName || !designApiPath) {
+      console.warn('Remote command ignored — no remoteControlProfile mapping:', command);
+      return;
+    }
+    const shortcut = {
+      id: `remote-${command}`,
+      label: spec.label || command,
+      icon: spec.icon || '📡',
+      color: spec.color || '#1565c0',
+      presetName: spec.presetName,
+      targetType: spec.targetType || 'ensemble',
+      ensembleId: spec.ensembleId,
+      simulationId: spec.simulationId,
+    };
+    await handleQuickScenarioShortcutClick(shortcut);
   };
 
   const handleSaveQuickScenarioPreset = async (shortcut) => {
@@ -5141,6 +5209,15 @@ function App() {
     }
 
     setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
+    setIdeumKioskMode(Boolean(data.ideumKioskMode));
+    setIdeumControlButtons(
+      Array.isArray(data.ideumControlButtons) ? data.ideumControlButtons : [],
+    );
+    setRemoteControlProfile(
+      data.remoteControlProfile && typeof data.remoteControlProfile === 'object'
+        ? data.remoteControlProfile
+        : null,
+    );
     setHiddenDefaultQuickScenarios(
       normalizeHiddenDefaultQuickScenarios(data.hiddenDefaultQuickScenarios),
     );
@@ -5254,6 +5331,9 @@ function App() {
       },
       quickScenarioButtons,
       hiddenDefaultQuickScenarios,
+      ideumKioskMode,
+      ideumControlButtons,
+      remoteControlProfile,
       systemState: {
         simulationRunning,
         zoom,
@@ -5274,6 +5354,26 @@ function App() {
   useEffect(() => {
     activeNamedSimulationConfigRef.current = activeNamedSimulationConfig;
   });
+
+  useEffect(() => {
+    fetchMachineRole()
+      .then(setMachineRole)
+      .catch((e) => console.warn('Cluster machine role:', e));
+  }, []);
+
+  const handleRemoteClusterCommandRef = useRef(handleRemoteClusterCommand);
+  useEffect(() => {
+    handleRemoteClusterCommandRef.current = handleRemoteClusterCommand;
+  });
+
+  useEffect(() => {
+    if (!machineRole?.isMaingear || !remoteControlProfile?.enabled) return undefined;
+    return connectClusterWebSocket((msg) => {
+      if (msg?.type === 'remote_command' && msg.command) {
+        handleRemoteClusterCommandRef.current(msg.command);
+      }
+    });
+  }, [machineRole?.isMaingear, remoteControlProfile?.enabled]);
 
   useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
@@ -5605,9 +5705,12 @@ function App() {
       onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
       simulationLoadProgress={simulationLoadProgress}
       quickScenarioButtons={quickScenarioButtons}
+      ideumControlButtons={ideumControlButtons}
+      machineRole={machineRole}
       hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
       activeQuickScenarioPlaying={activeQuickScenarioPlaying}
       onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
+      onIdeumControlButtonClick={handleIdeumControlButtonClick}
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
       onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
@@ -5726,7 +5829,7 @@ function App() {
       setCanvasFontPxShift={setCanvasFontPxShift}
       setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
     >
-    <div className="app-container">
+    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}`}>
       <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 
@@ -5813,15 +5916,15 @@ function App() {
       </header>
 
       <div className="app-main">
-        {viewMode === 'designer' && (
+        {viewMode === 'designer' && !ideumKioskMode && (
           <ComponentLibrary
             onAddComponent={handleAddComponent}
             disabled={mode === 'simulation'}
           />
         )}
 
-        {gridPeekDock}
-        {controlsDockLeftBottom && !rightRailGridPeek && controlsRail}
+        {!ideumKioskMode && gridPeekDock}
+        {!ideumKioskMode && controlsDockLeftBottom && !rightRailGridPeek && controlsRail}
 
         <div
           className={`panel-focus-wrapper design-view-wrapper ${designImageUrl ? `mode-${designViewMode}` : ''}`}
@@ -5888,11 +5991,25 @@ function App() {
               onOpenVariablePresenceDialogConnections={handleOpenVariablePresenceDialogConnections}
               canvasBlockTypeScale={canvasBlockTypeScale}
               onNudgeCanvasBlockTypeScale={handleNudgeCanvasBlockTypeScale}
+              ideumKioskMode={ideumKioskMode}
+              ideumControlButtons={ideumControlButtons}
+              onIdeumControlButtonClick={handleIdeumControlButtonClick}
+            />
+          )}
+          {ideumKioskMode && (designViewMode === 'canvas' || designViewMode === 'split') && (
+            <IdeumTouchButtons
+              buttons={ideumControlButtons}
+              components={canvasComponents}
+              pan={pan}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              onButtonClick={handleIdeumControlButtonClick}
             />
           )}
         </div>
 
-        {controlsDockRight && controlsRail}
+        {!ideumKioskMode && controlsDockRight && controlsRail}
       </div>
 
       {/* Save/Load Dialog */}

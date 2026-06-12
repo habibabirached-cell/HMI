@@ -271,6 +271,9 @@ const Canvas = forwardRef(({
   onOpenVariablePresenceDialogConnections,
   canvasBlockTypeScale = {},
   onNudgeCanvasBlockTypeScale,
+  ideumKioskMode = false,
+  ideumControlButtons = [],
+  onIdeumControlButtonClick,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
   const canvasRef = useRef(null);
@@ -358,6 +361,18 @@ const Canvas = forwardRef(({
       };
     });
   }, [visibleComponents, collapseShiftById]);
+
+  const ideumTouchComponentIds = useMemo(() => {
+    if (!ideumKioskMode || !ideumControlButtons?.length) return null;
+    const ids = new Set();
+    for (const button of ideumControlButtons) {
+      if (!Array.isArray(button.componentIds)) continue;
+      for (const id of button.componentIds) {
+        if (id) ids.add(String(id));
+      }
+    }
+    return ids.size ? ids : null;
+  }, [ideumKioskMode, ideumControlButtons]);
 
   const tieCollapsedStubSegments = useMemo(() => {
     const accum = [];
@@ -603,6 +618,12 @@ const Canvas = forwardRef(({
 
     const authoredComponent =
       components.find((c) => c.id === component.id) ?? component;
+
+    if (ideumKioskMode) {
+      if (authoredComponent?.properties?.ideumDecorOnly) {
+        return;
+      }
+    }
 
     // IN SIMULATION MODE: Only allow selection, nothing else
     if (mode === 'simulation') {
@@ -1006,6 +1027,7 @@ const Canvas = forwardRef(({
     if (
       dragId &&
       mode === 'design' &&
+      !ideumKioskMode &&
       onUpdateComponent &&
       tieTapCandidateRef.current.componentId === dragId &&
       !tieTapCandidateRef.current.movedBeyondTapThreshold
@@ -1900,6 +1922,8 @@ const Canvas = forwardRef(({
               )}
               onExpandGasTurbineBank={stableExpandGasTurbineBank}
               allComponents={components}
+              ideumKioskMode={ideumKioskMode}
+              isIdeumTouchTarget={ideumTouchComponentIds?.has(component.id) ?? false}
             />
           ))}
         </g>

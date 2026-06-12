@@ -18313,5 +18313,22 @@
     "trip-all-turbines",
     "grid-loss",
     "open-all-breakers"
-  ]
+  ],
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "add8Turbines": {
+        "label": "No Bess No Statcom",
+        "presetName": "noBessNoStatcom",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      },
+      "addStatcomAndGFMe": {
+        "label": "With Bess and StatCom",
+        "presetName": "withBessandStatCom",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      }
+    }
+  }
 }

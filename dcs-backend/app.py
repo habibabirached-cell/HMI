@@ -26,7 +26,7 @@ HOW TO RUN:
 # ============================================================================
 # IMPORTS - Python libraries we need
 # ============================================================================
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
@@ -38,6 +38,12 @@ import re
 import shutil
 from typing import Optional
 from urllib.parse import unquote
+
+from cluster_peer import (
+    VALID_REMOTE_COMMANDS,
+    cluster_manager,
+    resolve_machine_role,
+)
 
 # Import database components
 from database import init_db, get_db
@@ -275,6 +281,10 @@ def save_config_to_design_dir(
         _dus = data.get("designUiSession")
         _qsb = data.get("quickScenarioButtons")
         _hdq = data.get("hiddenDefaultQuickScenarios")
+        _icb = data.get("ideumControlButtons")
+        _ikm = data.get("ideumKioskMode")
+        _rcp = data.get("remoteControlProfile")
+        _rct = data.get("remoteControlTarget")
         _ensemble_id = None
         if isinstance(_dus, dict):
             _e = _dus.get("ensembleId")
@@ -295,7 +305,12 @@ def save_config_to_design_dir(
             "designUiSession": {"ensembleId": _ensemble_id},
             "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
             "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
+            "ideumControlButtons": _icb if isinstance(_icb, list) else [],
+            "ideumKioskMode": bool(_ikm),
+            "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
+            "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
         }
+        conf_data = {k: v for k, v in conf_data.items() if v is not None and v is not False}
         with open(conf_path, 'w') as f:
             json.dump(conf_data, f, indent=2)
         print(f"✅ Saved to design dir: {conf_path}")
@@ -317,6 +332,10 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _dus = conf.get("designUiSession")
     _qsb = conf.get("quickScenarioButtons")
     _hdq = conf.get("hiddenDefaultQuickScenarios")
+    _icb = conf.get("ideumControlButtons")
+    _ikm = conf.get("ideumKioskMode")
+    _rcp = conf.get("remoteControlProfile")
+    _rct = conf.get("remoteControlTarget")
     _ensemble_id = None
     if isinstance(_dus, dict):
         _e = _dus.get("ensembleId")
@@ -338,6 +357,10 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         "designUiSession": {"ensembleId": _ensemble_id},
         "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
         "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
+        "ideumControlButtons": _icb if isinstance(_icb, list) else [],
+        "ideumKioskMode": bool(_ikm),
+        "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
+        "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
     }
 
 
@@ -553,6 +576,61 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
     }
+
+
+@app.get("/api/cluster/machine-role")
+async def get_cluster_machine_role():
+    """Return this machine's cluster role (maingear / ideum) from cluster.local.json."""
+    return resolve_machine_role()
+
+
+@app.post("/api/cluster/remote-command")
+async def post_cluster_remote_command(body: dict):
+    """
+    Ideum posts a remote command; Maingear broadcasts it to connected UI clients.
+    Body: { "command": "add8Turbines" | "addStatcomAndGFMe" }
+    """
+    role = resolve_machine_role()
+    if not role.get("isMaingear"):
+        raise HTTPException(
+            status_code=403,
+            detail="Remote commands are only accepted on the Maingear backend.",
+        )
+    command = (body.get("command") or "").strip()
+    if command not in VALID_REMOTE_COMMANDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid command. Expected one of: {sorted(VALID_REMOTE_COMMANDS)}",
+        )
+    message = {
+        "type": "remote_command",
+        "command": command,
+        "source": body.get("source") or "ideum",
+    }
+    delivered = await cluster_manager.broadcast(message)
+    return {
+        "ok": True,
+        "command": command,
+        "deliveredToClients": delivered,
+    }
+
+
+@app.websocket("/ws/cluster")
+async def cluster_websocket(websocket: WebSocket):
+    """UI clients subscribe for remote commands (Maingear) or cluster events."""
+    await cluster_manager.connect(websocket)
+    try:
+        role = resolve_machine_role()
+        await websocket.send_text(
+            json.dumps({"type": "cluster_role", **role})
+        )
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await cluster_manager.disconnect(websocket)
+
 
 # ============================================================================
 # ROOT ENDPOINT (Welcome Message)

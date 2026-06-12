@@ -67,8 +67,12 @@ export default function GFMe3DOverlays({
             pixelHeight: Math.max(8, Math.round(slotH)),
             rotation,
             modelUrl,
-            title: primaryLabelText(component, visualConfig),
-            subtitle: secondaryLabelText(component, visualConfig),
+            title: component.properties?.ideumDecorOnly
+              ? ''
+              : primaryLabelText(component, visualConfig),
+            subtitle: component.properties?.ideumDecorOnly
+              ? ''
+              : secondaryLabelText(component, visualConfig),
             titleFontPx: fsTitle * zoom,
             subtitleFontPx: fsSub * zoom,
             titleMarginPx: GFME3D_TITLE_MARGIN * zoom,

@@ -1,0 +1,211 @@
+{
+  "name": "Ideum05",
+  "description": "Ideum touch table — two 3D canvas buttons, side drawers hidden.",
+  "ideumKioskMode": true,
+  "canvasComponents": [
+    {
+      "id": "comp-ideum-left-bank",
+      "type": "gas-turbine-bank",
+      "name": "Ideum Turbines",
+      "fullName": "Ideum Turbines",
+      "position": {
+        "x": 100,
+        "y": 80
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 2000
+          },
+          "collapseColumnLeft": 100,
+          "memberIds": [
+            "ideum-placeholder-member"
+          ],
+          "previewMemberId": "comp-ideum-turbine-3d"
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-right-bank",
+      "type": "gas-turbine-bank",
+      "name": "Ideum BESS + GFMe",
+      "fullName": "Ideum BESS + GFMe",
+      "position": {
+        "x": 900,
+        "y": 80
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 2000
+          },
+          "collapseColumnLeft": 900,
+          "memberIds": [
+            "ideum-placeholder-member"
+          ],
+          "collapseExtraMemberIds": [
+            "comp-ideum-bess",
+            "comp-ideum-gfme"
+          ]
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-turbine-3d",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "Add 8 turbines",
+      "position": {
+        "x": 100,
+        "y": 200
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 700,
+        "height": 400
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-bess",
+      "type": "bess-50mw",
+      "name": "BESS",
+      "fullName": "Battery Energy Storage System 50MW",
+      "position": {
+        "x": 900,
+        "y": 200
+      },
+      "status": "online",
+      "properties": {
+        "rating": 100,
+        "voltage": 34.5,
+        "unit": "MW",
+        "ideumDecorOnly": true
+      },
+      "visualOverrides": {
+        "width": 650,
+        "height": 360
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-gfme",
+      "type": "gfme-statcom",
+      "name": "GFMe STATCOM",
+      "fullName": "GFME Static Synchronous Compensator",
+      "position": {
+        "x": 900,
+        "y": 600
+      },
+      "status": "online",
+      "properties": {
+        "rating": 50,
+        "voltage": 34.5,
+        "unit": "MVAR",
+        "ideumDecorOnly": true
+      },
+      "visualOverrides": {
+        "width": 650,
+        "height": 360
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    }
+  ],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 0.9,
+    "pan": {
+      "x": 40,
+      "y": 60
+    },
+    "mode": "design"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "designUiSession": {},
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": [
+    {
+      "id": "ideum-add8turbines",
+      "label": "Add 8 turbines",
+      "command": "add8Turbines",
+      "color": "#1565c0",
+      "icon": "⚡",
+      "componentIds": [
+        "comp-ideum-turbine-3d"
+      ]
+    },
+    {
+      "id": "ideum-add-bess-gfme",
+      "label": "add both Bess and GFMe",
+      "command": "addStatcomAndGFMe",
+      "color": "#2e7d32",
+      "icon": "🔋",
+      "componentIds": [
+        "comp-ideum-bess",
+        "comp-ideum-gfme"
+      ],
+      "grouped": true
+    }
+  ],
+  "remoteControlTarget": {
+    "designDir": "statcom05",
+    "designName": "Statcom05"
+  }
+}

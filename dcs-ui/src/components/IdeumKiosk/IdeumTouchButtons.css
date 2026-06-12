@@ -1,0 +1,55 @@
+.ideum-touch-buttons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 450;
+}
+
+.ideum-touch-btn {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: auto;
+  cursor: pointer;
+  border: 2px dashed rgba(0, 212, 168, 0.65);
+  border-radius: 8px;
+  background: rgba(13, 13, 13, 0.35);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ideum-touch-btn:hover {
+  background: rgba(0, 94, 96, 0.22);
+  border-color: rgba(0, 212, 168, 0.95);
+  box-shadow:
+    0 0 18px rgba(0, 212, 168, 0.25),
+    inset 0 0 24px rgba(0, 94, 96, 0.15);
+}
+
+.ideum-touch-btn:active {
+  background: rgba(0, 94, 96, 0.35);
+  border-color: #00d4a8;
+}
+
+.ideum-touch-btn--grouped {
+  border-width: 3px;
+  background: rgba(13, 13, 13, 0.42);
+}
+
+.ideum-touch-btn__label {
+  margin-top: 10px;
+  padding: 0 12px;
+  color: #e8f4f4;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  line-height: 1.2;
+}

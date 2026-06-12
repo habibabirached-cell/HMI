@@ -84,9 +84,12 @@ const SimulationControls = ({
   // show the current phase in plain language, and prevent double-clicks on another scenario mid-load.
   simulationLoadProgress = null,
   quickScenarioButtons = [],
+  ideumControlButtons = [],
+  machineRole = null,
   hiddenDefaultQuickScenarios = [],
   activeQuickScenarioPlaying = null,
   onQuickScenarioShortcutClick,
+  onIdeumControlButtonClick,
   onSaveQuickScenarioPreset,
   onDeleteQuickScenarioButton,
   onHideDefaultQuickScenario,
@@ -478,6 +481,33 @@ const SimulationControls = ({
             <p className="scenario-playing-now-empty">—</p>
           )}
         </div>
+
+        {ideumControlButtons.length > 0 && (
+          <div className="quick-scenarios-section ideum-control-section">
+            <h4 className="scenarios-title">Ideum Controls</h4>
+            {machineRole?.role && (
+              <p className="ideum-machine-role-hint">
+                This machine: <strong>{machineRole.role}</strong>
+                {machineRole.ethernetIp ? ` (${machineRole.ethernetIp})` : ''}
+              </p>
+            )}
+            <div className="control-buttons">
+              {ideumControlButtons.map((button) => (
+                <div key={button.id} className="quick-scenario-row">
+                  <button
+                    type="button"
+                    className="control-btn quick-scenario-shortcut ideum-control-btn"
+                    style={{ background: button.color || '#1565c0' }}
+                    onClick={() => onIdeumControlButtonClick?.(button)}
+                    title={button.label}
+                  >
+                    {button.icon} {button.label}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="quick-scenarios-section quick-scenarios-section--top">
           <h4 className="scenarios-title">Quick Scenarios</h4>
