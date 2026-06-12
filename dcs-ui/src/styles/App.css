@@ -779,12 +779,10 @@ body {
   line-height: 1.45;
 }
 
-/* Ideum touch-table layout: keep header, hide all side panels & simulation controls */
+/* Ideum touch-table layout: keep header; side panels hidden via React (not global CSS). */
 .app-container--ideum-mode .component-library,
 .app-container--ideum-mode .app-right-rail,
-.app-container--ideum-mode .sim-controls-grid-peek-dock,
-.app-container--ideum-mode .simulation-controls,
-.app-container--ideum-mode .property-panel {
+.app-container--ideum-mode .sim-controls-grid-peek-dock {
   display: none !important;
 }
 

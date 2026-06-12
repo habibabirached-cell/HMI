@@ -18314,6 +18314,7 @@
     "grid-loss",
     "open-all-breakers"
   ],
+  "ideumKioskMode": false,
   "remoteControlProfile": {
     "enabled": true,
     "commands": {

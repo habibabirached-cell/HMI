@@ -310,7 +310,11 @@ def save_config_to_design_dir(
             "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
             "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
         }
-        conf_data = {k: v for k, v in conf_data.items() if v is not None and v is not False}
+        conf_data = {
+            k: v
+            for k, v in conf_data.items()
+            if v is not None and (k == "ideumKioskMode" or v is not False)
+        }
         with open(conf_path, 'w') as f:
             json.dump(conf_data, f, indent=2)
         print(f"✅ Saved to design dir: {conf_path}")

@@ -27,6 +27,7 @@ import {
   fetchMachineRole,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
+import { getIdeumComponents } from './utils/ideumComponent';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -2893,15 +2894,13 @@ function App() {
       button?.properties?.ideumCommand;
     if (!command) return;
     const payload = { ...button, command };
-    let role = machineRole;
-    if (!role) {
-      try {
-        role = await fetchMachineRole();
-        setMachineRole(role);
-      } catch (e) {
-        alert(e.message || 'Could not determine machine role.');
-        return;
-      }
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return;
     }
     if (role.isMaingear) {
       alert(
@@ -5212,7 +5211,13 @@ function App() {
     }
 
     setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
-    setIdeumKioskMode(Boolean(data.ideumKioskMode));
+    const ideumComponents = getIdeumComponents(data.canvasComponents || []);
+    const ideumModeActive =
+      data.ideumKioskMode === true || ideumComponents.length > 0;
+    setIdeumKioskMode(ideumModeActive);
+    if (!ideumModeActive) {
+      setRightRailCollapsed(false);
+    }
     setIdeumControlButtons(
       Array.isArray(data.ideumControlButtons) ? data.ideumControlButtons : [],
     );
