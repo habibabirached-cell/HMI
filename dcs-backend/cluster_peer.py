@@ -65,6 +65,9 @@ def resolve_machine_role() -> dict[str, Any]:
             role = "maingear"
         elif ip == IDEUM_ETHERNET_IP:
             role = "ideum"
+        elif not cfg:
+            # Local dev without cluster.local.json — assume Maingear workstation.
+            role = "maingear"
         else:
             role = "unknown"
 

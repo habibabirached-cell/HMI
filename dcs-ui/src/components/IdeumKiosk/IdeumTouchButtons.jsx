@@ -62,14 +62,15 @@ export default function IdeumTouchButtons({
         if (!bounds) continue;
 
         const grouped = ids.length > 1 || button.grouped === true;
-        const padTop = grouped ? 52 : 44;
-        const padSide = grouped ? 28 : 18;
-        const padBottom = grouped ? 28 : 18;
+        const padTop = grouped ? 48 : 40;
+        const padSide = grouped ? 24 : 16;
+        const padBottom = grouped ? 24 : 16;
+        const gapBetween = grouped ? 20 : 0;
 
         const x = bounds.minX - padSide;
         const y = bounds.minY - padTop;
         const w = bounds.maxX - bounds.minX + padSide * 2;
-        const h = bounds.maxY - bounds.minY + padTop + padBottom;
+        const h = bounds.maxY - bounds.minY + padTop + padBottom + gapBetween;
 
         next.push({
           id: button.id,
@@ -100,6 +101,12 @@ export default function IdeumTouchButtons({
     return () => window.removeEventListener('resize', update);
   }, [buttons, components, pan, zoom, canvasRef, blockTypeScale]);
 
+  const handleActivate = (e, button) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onButtonClick?.(button);
+  };
+
   if (!targets.length) return null;
 
   return (
@@ -115,7 +122,7 @@ export default function IdeumTouchButtons({
             width: t.width,
             height: t.height,
           }}
-          onClick={() => onButtonClick?.(t.button)}
+          onClick={(e) => handleActivate(e, t.button)}
           aria-label={t.label}
         >
           <span

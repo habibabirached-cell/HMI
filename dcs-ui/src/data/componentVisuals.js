@@ -44,6 +44,20 @@ export const COMPONENT_VISUAL_CONFIG = {
   // ============================================================================
   // GENERATION - Prime Movers (Wide, horizontal cylinders)
   // ============================================================================
+  'ideum-turbine-button': {
+    width: 720,
+    height: 480,
+    icon: '⚙️',
+    color: '#00d4a8',
+    shape: 'schematic-ideum-touch',
+  },
+  'ideum-bess-gfme-button': {
+    width: 1080,
+    height: 420,
+    icon: '🔋',
+    color: '#2e7d32',
+    shape: 'schematic-ideum-touch',
+  },
   'gas-turbine-3d': {
     width: 500,
     height: 250,

@@ -12,7 +12,6 @@ import ConnectionReadoutDialog from './components/ConnectionReadoutDialog/Connec
 import ViewDataModal from './components/ViewDataModal/ViewDataModal';
 import SaveSimulationConfigDialog from './components/SaveSimulationConfigDialog/SaveSimulationConfigDialog';
 import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenarioAsDialog';
-import IdeumTouchButtons from './components/IdeumKiosk/IdeumTouchButtons';
 import {
   normalizeQuickScenarioButtons,
   normalizeHiddenDefaultQuickScenarios,
@@ -2889,7 +2888,11 @@ function App() {
   };
 
   const handleIdeumControlButtonClick = async (button) => {
-    if (!button?.command) return;
+    const command =
+      button?.command ||
+      button?.properties?.ideumCommand;
+    if (!command) return;
+    const payload = { ...button, command };
     let role = machineRole;
     if (!role) {
       try {
@@ -2911,7 +2914,7 @@ function App() {
       return;
     }
     try {
-      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, button.command);
+      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
       if (!result.deliveredToClients) {
         alert(
           'Command sent to Maingear, but no Maingear browser is connected. Open statcom05 on the Maingear first.',
@@ -5994,17 +5997,6 @@ function App() {
               ideumKioskMode={ideumKioskMode}
               ideumControlButtons={ideumControlButtons}
               onIdeumControlButtonClick={handleIdeumControlButtonClick}
-            />
-          )}
-          {ideumKioskMode && (designViewMode === 'canvas' || designViewMode === 'split') && (
-            <IdeumTouchButtons
-              buttons={ideumControlButtons}
-              components={canvasComponents}
-              pan={pan}
-              zoom={zoom}
-              canvasRef={canvasRef}
-              blockTypeScale={canvasBlockTypeScale}
-              onButtonClick={handleIdeumControlButtonClick}
             />
           )}
         </div>

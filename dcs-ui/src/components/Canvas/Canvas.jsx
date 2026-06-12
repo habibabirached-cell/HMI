@@ -6,6 +6,8 @@ import MultiComponentChartDialog from '../MultiComponentChartDialog/MultiCompone
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
+import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
+import { isIdeumComponent } from '../../utils/ideumComponent';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
 import Bess3DOverlays from './Schematics/Bess3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
@@ -329,7 +331,10 @@ const Canvas = forwardRef(({
   }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds, designSectionHiddenMemberIds]);
 
   const visibleComponents = useMemo(
-    () => components.filter((c) => !hiddenAggregateMemberIds.has(c.id)),
+    () =>
+      components.filter(
+        (c) => !hiddenAggregateMemberIds.has(c.id) && !isIdeumComponent(c),
+      ),
     [components, hiddenAggregateMemberIds],
   );
 
@@ -372,6 +377,17 @@ const Canvas = forwardRef(({
       }
     }
     return ids.size ? ids : null;
+  }, [ideumKioskMode, ideumControlButtons]);
+
+  const ideumTouchButtonByComponentId = useMemo(() => {
+    const map = new Map();
+    if (!ideumKioskMode || !ideumControlButtons?.length) return map;
+    for (const button of ideumControlButtons) {
+      for (const id of button.componentIds || []) {
+        if (id) map.set(String(id), button);
+      }
+    }
+    return map;
   }, [ideumKioskMode, ideumControlButtons]);
 
   const tieCollapsedStubSegments = useMemo(() => {
@@ -619,12 +635,6 @@ const Canvas = forwardRef(({
     const authoredComponent =
       components.find((c) => c.id === component.id) ?? component;
 
-    if (ideumKioskMode) {
-      if (authoredComponent?.properties?.ideumDecorOnly) {
-        return;
-      }
-    }
-
     // IN SIMULATION MODE: Only allow selection, nothing else
     if (mode === 'simulation') {
       console.log('🖱️ Clicked in simulation mode:', component.name);
@@ -736,6 +746,10 @@ const Canvas = forwardRef(({
   const handleComponentContextMenu = (e, component) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isIdeumComponent(component)) {
+      return;
+    }
 
     // macOS: Control+click synthesizes a contextmenu for "secondary click".
     // That must not open the chart menu or clear in-progress wiring — mousedown already
@@ -1935,6 +1949,8 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
       <GFMe3DOverlays
@@ -1944,6 +1960,8 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
       <Bess3DOverlays
@@ -1953,9 +1971,23 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
+      {ideumKioskMode && (
+        <IdeumComponentLayer
+          components={components}
+          pan={pan}
+          zoom={zoom}
+          canvasRef={canvasRef}
+          blockTypeScale={canvasBlockTypeScale}
+          onIdeumClick={onIdeumControlButtonClick}
+        />
+      )}
+
       {/* Canvas info overlay */}
+      {!ideumKioskMode && (
       <div className="canvas-info">
         <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
         <div>Components: {components.length}</div>
@@ -1966,6 +1998,7 @@ const Canvas = forwardRef(({
           </div>
         )}
       </div>
+      )}
       
       {/* Multi-selection counter overlay */}
       {selectedComponents.length > 0 && (

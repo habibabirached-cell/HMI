@@ -27,6 +27,8 @@ export default function Bess3DOverlays({
   zoom,
   canvasRef,
   blockTypeScale = {},
+  ideumTouchButtonByComponentId,
+  onIdeumControlButtonClick,
 }) {
   const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsTitle = adjSvgFontPx(BESS3D_TITLE_BASE_FONT, fontPxDelta);
@@ -96,10 +98,13 @@ export default function Bess3DOverlays({
 
   return (
     <div className="bess-3d-overlay-root gas-turbine-3d-overlay-root" aria-hidden>
-      {slots.map((slot) => (
+      {slots.map((slot) => {
+        const ideumButton = ideumTouchButtonByComponentId?.get?.(slot.id);
+        const ideumTouch = !!ideumButton;
+        return (
         <div
           key={slot.id}
-          className="bess-3d-overlay-slot gas-turbine-3d-overlay-slot"
+          className={`bess-3d-overlay-slot gas-turbine-3d-overlay-slot${ideumTouch ? ' ideum-3d-touch-slot' : ''}`}
           style={{
             left: slot.left,
             top: slot.top,
@@ -108,6 +113,17 @@ export default function Bess3DOverlays({
             transform: slot.rotation ? `rotate(${slot.rotation}deg)` : undefined,
             transformOrigin: 'center center',
           }}
+          onClick={
+            ideumTouch
+              ? (e) => {
+                  e.stopPropagation();
+                  onIdeumControlButtonClick?.(ideumButton);
+                }
+              : undefined
+          }
+          role={ideumTouch ? 'button' : undefined}
+          tabIndex={ideumTouch ? 0 : undefined}
+          aria-label={ideumTouch ? ideumButton.label : undefined}
         >
           <Bess3DViewer
             width={slot.pixelWidth}
@@ -135,7 +151,8 @@ export default function Bess3DOverlays({
             </div>
           ) : null}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
