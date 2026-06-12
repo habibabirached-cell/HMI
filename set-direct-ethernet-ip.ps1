@@ -95,18 +95,31 @@ Get-NetRoute -InterfaceAlias $alias -AddressFamily IPv4 -ErrorAction SilentlyCon
 
 New-NetIPAddress -InterfaceAlias $alias -IPAddress $IpAddress -PrefixLength $prefix -AddressFamily IPv4 -ErrorAction Stop | Out-Null
 
-$peer = if ($IpAddress -eq '192.168.50.1') { '192.168.50.2' } else { '192.168.50.1' }
+$backendDir = Join-Path $PSScriptRoot 'dcs-backend'
+if (-not (Test-Path -LiteralPath $backendDir)) {
+    New-Item -ItemType Directory -Path $backendDir -Force | Out-Null
+}
+
+$exampleName = if ($IpAddress -eq '192.168.50.1') {
+    'cluster.local.json.example'
+} else {
+    'cluster.local.json.ideum.example'
+}
+$examplePath = Join-Path $backendDir $exampleName
+$clusterPath = Join-Path $backendDir 'cluster.local.json'
+
+if (-not (Test-Path -LiteralPath $examplePath)) {
+    throw "Missing example file: $examplePath"
+}
+
+if (Test-Path -LiteralPath $clusterPath) {
+    Remove-Item -LiteralPath $clusterPath -Force
+    Write-Host "Removed old cluster config: $clusterPath"
+}
+
+Copy-Item -LiteralPath $examplePath -Destination $clusterPath -Force
 $role = if ($IpAddress -eq '192.168.50.1') { 'maingear' } else { 'ideum' }
-$peerBackend = 'http://192.168.50.1:5000'
-$clusterJson = @{
-    role             = $role
-    ethernetIp       = $IpAddress
-    peerEthernetIp   = $peer
-    peerBackendUrl   = $peerBackend
-} | ConvertTo-Json
-$clusterPath = Join-Path $PSScriptRoot 'dcs-backend\cluster.local.json'
-$clusterJson | Set-Content -LiteralPath $clusterPath -Encoding UTF8
-Write-Host "Wrote cluster config: $clusterPath (role=$role)"
+Write-Host "Wrote cluster config: $clusterPath (copied from $exampleName, role=$role)"
 Write-Host "Done. After both machines are configured, test: ping $peer"
 if ($IpAddress -eq '192.168.50.1') {
     Write-Host "Next: on Ideum, run set-ideum-ethernet-ip.bat as Administrator."

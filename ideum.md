@@ -36,7 +36,7 @@ Ideum (Ideum05)  --HTTP POST-->  Maingear backend (:5000)
 set-maingear-ethernet-ip.bat
 ```
 
-Sets IP `192.168.50.1` and writes `dcs-backend/cluster.local.json` with `"role": "maingear"`.
+Sets IP `192.168.50.1`, removes any old `cluster.local.json`, and copies `cluster.local.json.example` → `cluster.local.json`.
 
 ### Ideum
 
@@ -44,13 +44,13 @@ Sets IP `192.168.50.1` and writes `dcs-backend/cluster.local.json` with `"role":
 set-ideum-ethernet-ip.bat
 ```
 
-Sets IP `192.168.50.2` and writes `cluster.local.json` with `"role": "ideum"`.
+Sets IP `192.168.50.2`, removes any old `cluster.local.json`, and copies `cluster.local.json.ideum.example` → `cluster.local.json`.
 
-**Setting only the IP in Windows is not enough** — you must run the bat (or copy `cluster.local.json.ideum.example` to `cluster.local.json`). Without that file the app does not know this PC is the Ideum.
+**Setting only the IP in Windows is not enough** — you must run the bat (or copy the ideum example manually). Without that file the app does not know this PC is the Ideum.
 
-`cluster.local.json` is gitignored. Example: `dcs-backend/cluster.local.json.example`.
+`cluster.local.json` is gitignored. Examples: `cluster.local.json.example` (Maingear), `cluster.local.json.ideum.example` (Ideum).
 
-**Dev on Maingear without `cluster.local.json`:** backend defaults role to `maingear` so the “you are on the Maingear” alert works when testing Ideum05 locally.
+**Maingear “not listening” fix:** the statcom05 browser must connect to `ws://localhost:5000/ws/cluster`. Refresh the Maingear page after loading statcom05 and wait a few seconds before tapping on Ideum.
 
 ---
 

@@ -2916,7 +2916,7 @@ function App() {
       const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
       if (!result.deliveredToClients) {
         alert(
-          'Command sent to Maingear, but no Maingear browser is connected. Open statcom05 on the Maingear first.',
+          'Command reached the Maingear PC, but no browser is listening. On Maingear: open statcom05 at http://localhost:3003, wait a few seconds, then try again (the page must stay open).',
         );
       }
     } catch (e) {
@@ -5375,13 +5375,13 @@ function App() {
   });
 
   useEffect(() => {
-    if (!machineRole?.isMaingear || !remoteControlProfile?.enabled) return undefined;
+    if (!machineRole?.isMaingear) return undefined;
     return connectClusterWebSocket((msg) => {
       if (msg?.type === 'remote_command' && msg.command) {
         handleRemoteClusterCommandRef.current(msg.command);
       }
     });
-  }, [machineRole?.isMaingear, remoteControlProfile?.enabled]);
+  }, [machineRole?.isMaingear]);
 
   useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
