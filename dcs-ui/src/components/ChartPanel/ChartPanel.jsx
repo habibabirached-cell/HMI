@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Plot from 'react-plotly.js';
+import Plotly from 'plotly.js-dist-min';
 import { API_BASE_URL } from '../../apiConfig';
 import {
   CHART_PANEL_MIN_HEIGHT,
@@ -51,6 +52,58 @@ import { flyChartToDrawer } from '../../utils/chartDrawerFlyTransition';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
+
+const DEFAULT_LEGEND_POSITION = { x: 0.99, y: 0.99, xanchor: 'right', yanchor: 'top' };
+const LEGEND_NUDGE_STEP = 0.02;
+const LEGEND_NUDGE_STEP_SHIFT = 0.08;
+
+function resolveLegendPosition(chart, legendLayoutRef) {
+  const fromRef = legendLayoutRef?.current?.[chart?.id];
+  if (fromRef && Number.isFinite(Number(fromRef.x)) && Number.isFinite(Number(fromRef.y))) {
+    return {
+      x: Number(fromRef.x),
+      y: Number(fromRef.y),
+      xanchor: fromRef.xanchor ?? 'right',
+      yanchor: fromRef.yanchor ?? 'top',
+    };
+  }
+  const saved = chart?.legendPosition;
+  if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) {
+    return {
+      x: Number(saved.x),
+      y: Number(saved.y),
+      xanchor: saved.xanchor ?? 'right',
+      yanchor: saved.yanchor ?? 'top',
+    };
+  }
+  return { ...DEFAULT_LEGEND_POSITION };
+}
+
+function applyLegendPositionToPlot(gd, pos) {
+  if (!gd || !pos) return;
+  try {
+    Plotly.relayout(gd, {
+      'legend.x': pos.x,
+      'legend.y': pos.y,
+      'legend.xanchor': pos.xanchor,
+      'legend.yanchor': pos.yanchor,
+    });
+  } catch {
+    /* layout prop from React still applies on next render */
+  }
+}
+
+function syncLegendMoveOutline(gd, armed) {
+  const legend = gd?.querySelector?.('.infolayer .legend');
+  if (!legend) return;
+  legend.classList.toggle('chart-legend--move-armed', !!armed);
+  legend.setAttribute(
+    'title',
+    armed
+      ? 'Arrow keys move this legend · Esc when done · Click series to show/hide'
+      : 'Click a series to show/hide',
+  );
+}
 
 /**
  * Chart Panel Component
@@ -121,6 +174,8 @@ const ChartPanel = ({
   onActivateNamedSimulationConfig,
   /** Copy a shareable URL that opens this design + scenario + this named preset on another machine. */
   onCopyNamedPresetLink,
+  /** Hide this preset row from the CHARTS bar (does not delete from disk). */
+  onHideChartPanelNamedConfig,
   /** Paged scenario data: not all file rows are in memory yet. */
   onRequestMoreRows,
   /** Insets (px) so the fixed panel does not cover the left component library or right control rail. */
@@ -169,8 +224,17 @@ const ChartPanel = ({
   const [editingLabels, setEditingLabels] = useState(null);
   /** Per-chart last known Plotly axis ranges, for pre-populating the axis range editor. */
   const plotlyRangesRef = useRef({});
+  const plotlyGdByChartRef = useRef({});
+  const chartsRef = useRef(charts);
+  /** Immediate legend coords for layout + relayout before parent state flushes. */
+  const legendLayoutRef = useRef({});
+  chartsRef.current = charts;
   const [editingAxisRange, setEditingAxisRange] = useState(null);
+  const [legendMoveChartId, setLegendMoveChartId] = useState(null);
   // { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked }
+
+  const legendMoveChartIdRef = useRef(null);
+  legendMoveChartIdRef.current = legendMoveChartId;
 
   const openAxisRangeEditor = (chart, e) => {
     e.stopPropagation();
@@ -222,6 +286,117 @@ const ChartPanel = ({
   const clearAxisRange = (chartId) => {
     onUpdateChart?.(chartId, { axisRange: null });
     setEditingAxisRange(null);
+  };
+
+  const handlePlotlyRelayout = (chart, relayoutData) => {
+    if (!relayoutData) return;
+    if (relayoutData['xaxis.range[0]'] != null || relayoutData['yaxis.range[0]'] != null) {
+      plotlyRangesRef.current[chart.id] = {
+        xMin: relayoutData['xaxis.range[0]'],
+        xMax: relayoutData['xaxis.range[1]'],
+        yMin: relayoutData['yaxis.range[0]'],
+        yMax: relayoutData['yaxis.range[1]'],
+      };
+    }
+  };
+
+  const commitLegendPosition = useCallback((chartId, pos) => {
+    if (!pos || !Number.isFinite(Number(pos.x)) || !Number.isFinite(Number(pos.y))) return;
+    const normalized = {
+      x: Math.max(-0.05, Math.min(1.05, Number(pos.x))),
+      y: Math.max(-0.05, Math.min(1.05, Number(pos.y))),
+      xanchor: pos.xanchor ?? 'right',
+      yanchor: pos.yanchor ?? 'top',
+    };
+    legendLayoutRef.current[chartId] = normalized;
+    const gd = plotlyGdByChartRef.current[chartId];
+    if (gd) applyLegendPositionToPlot(gd, normalized);
+    onUpdateChart?.(chartId, { legendPosition: normalized });
+  }, [onUpdateChart]);
+
+  const nudgeLegendPosition = useCallback((chartId, dx, dy) => {
+    const chart = chartsRef.current.find((c) => c.id === chartId);
+    if (!chart) return;
+    const current = resolveLegendPosition(chart, legendLayoutRef);
+    commitLegendPosition(chartId, {
+      ...current,
+      x: current.x + dx,
+      y: current.y + dy,
+    });
+  }, [commitLegendPosition]);
+
+  useEffect(() => {
+    if (!legendMoveChartId) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setLegendMoveChartId(null);
+        return;
+      }
+      const step = e.shiftKey ? LEGEND_NUDGE_STEP_SHIFT : LEGEND_NUDGE_STEP;
+      let dx = 0;
+      let dy = 0;
+      if (e.key === 'ArrowLeft') dx = -step;
+      else if (e.key === 'ArrowRight') dx = step;
+      else if (e.key === 'ArrowUp') dy = step;
+      else if (e.key === 'ArrowDown') dy = -step;
+      else return;
+      e.preventDefault();
+      nudgeLegendPosition(legendMoveChartId, dx, dy);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [legendMoveChartId, nudgeLegendPosition]);
+
+  useEffect(() => {
+    charts.forEach((chart) => {
+      if (!chartHasMultiTraceLegend(chart)) return;
+      const gd = plotlyGdByChartRef.current[chart.id];
+      if (gd) syncLegendMoveOutline(gd, chart.id === legendMoveChartId);
+    });
+  }, [legendMoveChartId, charts]);
+
+  const renderLegendMoveButton = (chart) => {
+    if (!onUpdateChart || !chartHasMultiTraceLegend(chart)) return null;
+    const armed = legendMoveChartId === chart.id;
+    return (
+      <button
+        type="button"
+        className={`chart-label-edit-btn chart-legend-move-btn${armed ? ' chart-legend-move-btn--active' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setLegendMoveChartId((prev) => (prev === chart.id ? null : chart.id));
+        }}
+        title={
+          armed
+            ? 'Legend move mode: arrow keys to nudge · Shift+arrow for larger steps · Esc when done'
+            : 'Move legend with arrow keys'
+        }
+      >
+        ⌖
+      </button>
+    );
+  };
+
+  const renderLegendMoveHint = (chart) => {
+    if (legendMoveChartId !== chart.id) return null;
+    return (
+      <div className="chart-legend-move-hint" aria-live="polite">
+        ↑↓←→ move legend · Shift+arrow larger step · Esc when done
+      </div>
+    );
+  };
+
+  const attachPlotlyChartListeners = (chart, gd) => {
+    plotlyGdByChartRef.current[chart.id] = gd;
+    if (chartHasMultiTraceLegend(chart)) {
+      syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
+    }
+    const supportsSelection =
+      chart.chartType === '2d' ||
+      chart.chartType === 'nd' ||
+      chart.chartType === 'stacked-nd' ||
+      (chart.isMultiComponent && chart.chartType === 'multi-line-chart');
+    if (supportsSelection && onSelectionChange) attachSelectionListeners(chart.id, gd);
   };
 
   const renderAxisRangeForm = (chart) => {
@@ -1764,14 +1939,17 @@ const ChartPanel = ({
     const gridRgba = rgba(42, 42, 42);
     const lineRgba = rgba(68, 68, 68);
 
-    /** Legend overlaid inside the plot area (top-right), optional title from chart editor. */
+    /** Legend overlaid inside the plot area; reposition via Move legend + arrow keys (saved per chart). */
     const buildInPlotLegendLayout = () => {
+      const saved = legendLayoutRef.current[chart.id] ?? chart.legendPosition;
       const legend = {
         orientation: 'v',
-        x: 0.99,
-        xanchor: 'right',
-        y: 0.99,
-        yanchor: 'top',
+        xref: 'paper',
+        yref: 'paper',
+        x: saved?.x ?? 0.99,
+        y: saved?.y ?? 0.99,
+        xanchor: saved?.xanchor ?? 'right',
+        yanchor: saved?.yanchor ?? 'top',
         font: { family: 'Arial, sans-serif', size: 11, color: '#e0e0e0' },
         bgcolor: rgba(0, 0, 0, 0.55 * o),
         bordercolor: lineRgba,
@@ -2797,6 +2975,20 @@ const ChartPanel = ({
                       Copy link
                     </button>
                   )}
+                  {onHideChartPanelNamedConfig && (
+                    <button
+                      type="button"
+                      className="chart-panel-named-config-hide"
+                      aria-label={`Hide ${presetName} from charts bar`}
+                      title={`Hide “${presetName}” from this bar (preset stays on disk; quick scenarios and links still work)`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHideChartPanelNamedConfig(presetName);
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
                 );
               })}
@@ -3011,6 +3203,7 @@ const ChartPanel = ({
                     title="Axis ranges: locked axis uses min/max for Home; unlocked axis auto-fits to data"
                   >⊟</button>
                 )}
+                {renderLegendMoveButton(chart)}
               </div>
               {editingLabels?.chartId === chart.id && renderLabelEditorForm()}
               {editingAxisRange?.chartId === chart.id && renderAxisRangeForm(chart)}
@@ -3034,6 +3227,7 @@ const ChartPanel = ({
               </button>
             </div>
             <div className="chart-panel-chart-body">
+              {renderLegendMoveHint(chart)}
               {/* Fullscreen Button */}
               <button
                 className="chart-panel-fullscreen-btn"
@@ -3077,20 +3271,15 @@ const ChartPanel = ({
                     config={plotlyConfig}
                     style={{ width: '100%', height: '100%' }}
                     useResizeHandler={true}
-                    onRelayout={(rd) => {
-                      if (rd['xaxis.range[0]'] != null || rd['yaxis.range[0]'] != null) {
-                        plotlyRangesRef.current[chart.id] = {
-                          xMin: rd['xaxis.range[0]'],
-                          xMax: rd['xaxis.range[1]'],
-                          yMin: rd['yaxis.range[0]'],
-                          yMax: rd['yaxis.range[1]'],
-                        };
+                    onRelayout={(rd) => handlePlotlyRelayout(chart, rd)}
+                    {...(chart.isMultiComponent && chart.chartType === 'multi-bar-chart' ? plotlyTransition : {})}
+                    onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
+                    onUpdate={(fig, gd) => {
+                      plotlyGdByChartRef.current[chart.id] = gd;
+                      if (chartHasMultiTraceLegend(chart)) {
+                        syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
                       }
                     }}
-                    {...(chart.isMultiComponent ? plotlyTransition : {})}
-                    {...(supportsSelection && onSelectionChange ? {
-                      onInitialized: (fig, gd) => attachSelectionListeners(chart.id, gd)
-                    } : {})}
                   />
                   </>
                 );
@@ -3159,6 +3348,7 @@ const ChartPanel = ({
                           title="Axis ranges: locked axis uses min/max for Home; unlocked axis auto-fits to data"
                         >⊟</button>
                       )}
+                      {renderLegendMoveButton(chart)}
                     </div>
                     {editingLabels?.chartId === chart.id && renderLabelEditorForm()}
                     {editingAxisRange?.chartId === chart.id && renderAxisRangeForm(chart)}
@@ -3176,6 +3366,7 @@ const ChartPanel = ({
                     <button className="chart-panel-chart-close" onClick={() => onRemoveChart(chart.id)} title="Remove Chart">×</button>
                   </div>
                   <div className="chart-panel-chart-body">
+                    {renderLegendMoveHint(chart)}
                     <button className="chart-panel-fullscreen-btn" onClick={() => handleFullscreen(chart.id)} title="Fullscreen (F)">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
@@ -3197,18 +3388,15 @@ const ChartPanel = ({
                         <>
                         {renderDangerYThresholdAlert(chart)}
                         <Plot data={plotlyData} layout={layout} config={plotlyConfig} style={{ width: '100%', height: '100%' }} useResizeHandler={true}
-                          onRelayout={(rd) => {
-                            if (rd['xaxis.range[0]'] != null || rd['yaxis.range[0]'] != null) {
-                              plotlyRangesRef.current[chart.id] = {
-                                xMin: rd['xaxis.range[0]'],
-                                xMax: rd['xaxis.range[1]'],
-                                yMin: rd['yaxis.range[0]'],
-                                yMax: rd['yaxis.range[1]'],
-                              };
+                          onRelayout={(rd) => handlePlotlyRelayout(chart, rd)}
+                          {...(chart.isMultiComponent && chart.chartType === 'multi-bar-chart' ? plotlyTransition : {})}
+                          onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
+                          onUpdate={(fig, gd) => {
+                            plotlyGdByChartRef.current[chart.id] = gd;
+                            if (chartHasMultiTraceLegend(chart)) {
+                              syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
                             }
                           }}
-                          {...(chart.isMultiComponent ? plotlyTransition : {})}
-                          {...(supportsSelection && onSelectionChange ? { onInitialized: (fig, gd) => attachSelectionListeners(chart.id, gd) } : {})}
                         />
                         </>
                       );

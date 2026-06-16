@@ -6,6 +6,8 @@ import MultiComponentChartDialog from '../MultiComponentChartDialog/MultiCompone
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
+import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
+import { isIdeumComponent } from '../../utils/ideumComponent';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
 import Bess3DOverlays from './Schematics/Bess3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
@@ -271,6 +273,9 @@ const Canvas = forwardRef(({
   onOpenVariablePresenceDialogConnections,
   canvasBlockTypeScale = {},
   onNudgeCanvasBlockTypeScale,
+  ideumKioskMode = false,
+  ideumControlButtons = [],
+  onIdeumControlButtonClick,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
   const canvasRef = useRef(null);
@@ -326,7 +331,10 @@ const Canvas = forwardRef(({
   }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds, designSectionHiddenMemberIds]);
 
   const visibleComponents = useMemo(
-    () => components.filter((c) => !hiddenAggregateMemberIds.has(c.id)),
+    () =>
+      components.filter(
+        (c) => !hiddenAggregateMemberIds.has(c.id) && !isIdeumComponent(c),
+      ),
     [components, hiddenAggregateMemberIds],
   );
 
@@ -358,6 +366,29 @@ const Canvas = forwardRef(({
       };
     });
   }, [visibleComponents, collapseShiftById]);
+
+  const ideumTouchComponentIds = useMemo(() => {
+    if (!ideumKioskMode || !ideumControlButtons?.length) return null;
+    const ids = new Set();
+    for (const button of ideumControlButtons) {
+      if (!Array.isArray(button.componentIds)) continue;
+      for (const id of button.componentIds) {
+        if (id) ids.add(String(id));
+      }
+    }
+    return ids.size ? ids : null;
+  }, [ideumKioskMode, ideumControlButtons]);
+
+  const ideumTouchButtonByComponentId = useMemo(() => {
+    const map = new Map();
+    if (!ideumKioskMode || !ideumControlButtons?.length) return map;
+    for (const button of ideumControlButtons) {
+      for (const id of button.componentIds || []) {
+        if (id) map.set(String(id), button);
+      }
+    }
+    return map;
+  }, [ideumKioskMode, ideumControlButtons]);
 
   const tieCollapsedStubSegments = useMemo(() => {
     const accum = [];
@@ -716,6 +747,10 @@ const Canvas = forwardRef(({
     e.preventDefault();
     e.stopPropagation();
 
+    if (isIdeumComponent(component)) {
+      return;
+    }
+
     // macOS: Control+click synthesizes a contextmenu for "secondary click".
     // That must not open the chart menu or clear in-progress wiring — mousedown already
     // handled ⌘/Ctrl+click as "start connection".
@@ -1006,6 +1041,7 @@ const Canvas = forwardRef(({
     if (
       dragId &&
       mode === 'design' &&
+      !ideumKioskMode &&
       onUpdateComponent &&
       tieTapCandidateRef.current.componentId === dragId &&
       !tieTapCandidateRef.current.movedBeyondTapThreshold
@@ -1900,6 +1936,8 @@ const Canvas = forwardRef(({
               )}
               onExpandGasTurbineBank={stableExpandGasTurbineBank}
               allComponents={components}
+              ideumKioskMode={ideumKioskMode}
+              isIdeumTouchTarget={ideumTouchComponentIds?.has(component.id) ?? false}
             />
           ))}
         </g>
@@ -1911,6 +1949,8 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
       <GFMe3DOverlays
@@ -1920,6 +1960,8 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
       <Bess3DOverlays
@@ -1929,9 +1971,23 @@ const Canvas = forwardRef(({
         zoom={zoom}
         canvasRef={canvasRef}
         blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
 
+      {ideumKioskMode && (
+        <IdeumComponentLayer
+          components={components}
+          pan={pan}
+          zoom={zoom}
+          canvasRef={canvasRef}
+          blockTypeScale={canvasBlockTypeScale}
+          onIdeumClick={onIdeumControlButtonClick}
+        />
+      )}
+
       {/* Canvas info overlay */}
+      {!ideumKioskMode && (
       <div className="canvas-info">
         <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
         <div>Components: {components.length}</div>
@@ -1942,6 +1998,7 @@ const Canvas = forwardRef(({
           </div>
         )}
       </div>
+      )}
       
       {/* Multi-selection counter overlay */}
       {selectedComponents.length > 0 && (

@@ -15,6 +15,7 @@ import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenario
 import {
   normalizeQuickScenarioButtons,
   normalizeHiddenDefaultQuickScenarios,
+  normalizeHiddenChartPanelNamedConfigs,
   isQuickScenarioPlaceholderPreset,
   isQuickScenarioDesignFirstPreset,
 } from './data/quickScenarioUi';
@@ -35,6 +36,12 @@ import {
   normalizeChartUiDrawer,
   CHART_DRAWER_KEYS,
 } from './utils/chartPanelDrawerBuckets';
+import {
+  connectClusterWebSocket,
+  fetchMachineRole,
+  sendRemoteCommandToMaingear,
+} from './utils/clusterPeer';
+import { getIdeumComponents } from './utils/ideumComponent';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -72,7 +79,7 @@ import {
   computePlaybackStartSeconds,
 } from './utils/playbackClockOrigin';
 import { readSimulationSpeedFromConfig } from './utils/simulationSpeed';
-import { normalizeVariableStylesFromDef } from './utils/chartVariableStyles';
+import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
@@ -162,6 +169,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
         ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
           legendTitle: String(chartDef.legend_title).trim(),
         }),
+        ...(() => {
+          const lp = normalizeLegendPositionFromDef(chartDef);
+          return lp ? { legendPosition: lp } : {};
+        })(),
       };
       const pcw = chartCardWidthFromDef(chartDef);
       const drawer = uiDrawerFieldsFromChartDef(chartDef);
@@ -204,6 +215,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
         legendTitle: String(chartDef.legend_title).trim(),
       }),
+      ...(() => {
+        const lp = normalizeLegendPositionFromDef(chartDef);
+        return lp ? { legendPosition: lp } : {};
+      })(),
       ...(() => {
         const vs = normalizeVariableStylesFromDef(chartDef.variable_styles);
         return vs ? { variableStyles: vs } : {};
@@ -636,6 +651,8 @@ function App() {
   const activeNamedSimulationConfigRef = useRef(null);
   /** Last preset the user chose (for draft styling when disk draft diverges after edits). */
   const [lastNamedPresetForUi, setLastNamedPresetForUi] = useState(null);
+  /** Named presets hidden from the CHARTS bar only (still on disk; quick scenarios / deep links unchanged). */
+  const [hiddenChartPanelNamedConfigs, setHiddenChartPanelNamedConfigs] = useState([]);
   /** Raw API `data` rows from the last successful load (before derived columns); same-scenario preset switches reuse this to avoid clearing the chart panel. */
   const simulationRawRowsRef = useRef(null);
   const simulationRawRowsSimIdRef = useRef(null);
@@ -653,6 +670,13 @@ function App() {
   const [saveScenarioAsReplaceTarget, setSaveScenarioAsReplaceTarget] = useState(null);
   /** User shortcuts in Quick Scenarios → named chart presets (persisted in design .conf.json). */
   const [quickScenarioButtons, setQuickScenarioButtons] = useState([]);
+  /** Full-screen Ideum kiosk (ideum05): hide menus, 3D canvas buttons only. */
+  const [ideumKioskMode, setIdeumKioskMode] = useState(false);
+  /** Ideum touch-table remote control buttons (legacy sidebar; unused in kiosk mode). */
+  const [ideumControlButtons, setIdeumControlButtons] = useState([]);
+  /** Maps Ideum remote commands → quick-scenario presets on Maingear (statcom05 and save-as copies). */
+  const [remoteControlProfile, setRemoteControlProfile] = useState(null);
+  const [machineRole, setMachineRole] = useState(null);
   /** Default quick-scenario ids hidden for this design until reload without saved design. */
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
   /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
@@ -2801,6 +2825,7 @@ function App() {
                     : null,
                 designSectionVisibility,
                 quickScenarioBranchCollapsed,
+                hiddenChartPanelNamedConfigs,
               },
               systemState: {
                 simulationRunning,
@@ -2843,6 +2868,7 @@ function App() {
       collapsedComponentFontPxShift,
       designSectionVisibility,
       quickScenarioBranchCollapsed,
+      hiddenChartPanelNamedConfigs,
     ],
   );
 
@@ -2922,6 +2948,42 @@ function App() {
     setSaveScenarioAsDialogOpen(false);
     setSaveScenarioAsReplaceTarget(null);
   }, []);
+
+  const handleIdeumControlButtonClick = async (button) => {
+    const command =
+      button?.command ||
+      button?.properties?.ideumCommand;
+    if (!command) return;
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return;
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. These buttons send commands from the Ideum touch table to the Maingear display.',
+      );
+      return;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return;
+    }
+    try {
+      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      if (!result.deliveredToClients) {
+        alert(
+          'Command reached the Maingear PC, but no browser is listening. On Maingear: open statcom05 at http://localhost:3003, wait a few seconds, then try again (the page must stay open).',
+        );
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send command to Maingear.');
+    }
+  };
 
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
@@ -3007,6 +3069,26 @@ function App() {
       console.warn(e);
       alert(e.message || 'Failed to load scenario shortcut');
     }
+  };
+
+  const handleRemoteClusterCommand = async (command) => {
+    if (!remoteControlProfile?.enabled || !command) return;
+    const spec = remoteControlProfile.commands?.[command];
+    if (!spec?.presetName || !designApiPath) {
+      console.warn('Remote command ignored — no remoteControlProfile mapping:', command);
+      return;
+    }
+    const shortcut = {
+      id: `remote-${command}`,
+      label: spec.label || command,
+      icon: spec.icon || '📡',
+      color: spec.color || '#1565c0',
+      presetName: spec.presetName,
+      targetType: spec.targetType || 'ensemble',
+      ensembleId: spec.ensembleId,
+      simulationId: spec.simulationId,
+    };
+    await handleQuickScenarioShortcutClick(shortcut);
   };
 
   const handleSaveQuickScenarioPreset = async (shortcut) => {
@@ -3569,6 +3651,8 @@ function App() {
         if (c.legendTitle != null && String(c.legendTitle).trim()) {
           base.legend_title = String(c.legendTitle).trim();
         }
+        const legendPos = compactLegendPositionForSave(c.legendPosition);
+        if (legendPos) base.legend_position = legendPos;
         if (c.variableStyles != null && typeof c.variableStyles === 'object' && Object.keys(c.variableStyles).length) {
           base.variable_styles = c.variableStyles;
         }
@@ -4682,7 +4766,8 @@ function App() {
    * then refreshes the formula group in the Variables panel — nothing is added to ƒ (live).
    * Single-scenario mode: augments in-memory simulationData and persists.
    */
-  const handleAddDerivedVariable = useCallback(async (formula, variableName) => {
+  const handleAddDerivedVariable = useCallback(async (formula, variableName, options = {}) => {
+    const { quick = false } = options;
     if (!currentConfigName) return;
     const meta = simulationMetadataRef.current;
     if (!meta?.id) return;
@@ -4699,7 +4784,9 @@ function App() {
     const isEns = !!meta.isEnsemble;
     setDerivedVariableCommitMessage(
       isEns
-        ? 'Please wait until this derived variable is written to disk (Parquet) and to the database.'
+        ? quick
+          ? 'Adding new derived column only (quick mode — other derived variables are not recomputed)…'
+          : 'Please wait until this derived variable is written to disk (Parquet) and to the database.'
         : 'Please wait until this derived variable is saved to your scenario configuration.',
     );
 
@@ -4711,9 +4798,15 @@ function App() {
 
         await persistChartsToSimJson(openCharts, { derived_variables: newDerived });
 
+        const matParams = new URLSearchParams();
+        if (quick) {
+          matParams.set('incremental', 'true');
+          matParams.set('variable_name', variableName);
+        }
+        const matQuery = matParams.toString();
         const matUrl = `${API_BASE_URL}/api/designs/${encodeURIComponent(
           designApiPath,
-        )}/ensembles/${encodeURIComponent(eid)}/materialize-formula-csv`;
+        )}/ensembles/${encodeURIComponent(eid)}/materialize-formula-csv${matQuery ? `?${matQuery}` : ''}`;
         const matRes = await fetch(matUrl, { method: 'POST' });
         if (!matRes.ok) {
           const errText = await matRes.text();
@@ -5274,8 +5367,26 @@ function App() {
     setQuickScenarioBranchCollapsed(
       normalizeQuickScenarioBranchCollapsed(dus?.quickScenarioBranchCollapsed),
     );
+    setHiddenChartPanelNamedConfigs(
+      normalizeHiddenChartPanelNamedConfigs(dus?.hiddenChartPanelNamedConfigs),
+    );
 
     setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
+    const ideumComponents = getIdeumComponents(data.canvasComponents || []);
+    const ideumModeActive =
+      data.ideumKioskMode === true || ideumComponents.length > 0;
+    setIdeumKioskMode(ideumModeActive);
+    if (!ideumModeActive) {
+      setRightRailCollapsed(false);
+    }
+    setIdeumControlButtons(
+      Array.isArray(data.ideumControlButtons) ? data.ideumControlButtons : [],
+    );
+    setRemoteControlProfile(
+      data.remoteControlProfile && typeof data.remoteControlProfile === 'object'
+        ? data.remoteControlProfile
+        : null,
+    );
     setHiddenDefaultQuickScenarios(
       normalizeHiddenDefaultQuickScenarios(data.hiddenDefaultQuickScenarios),
     );
@@ -5387,9 +5498,13 @@ function App() {
             : null,
         designSectionVisibility,
         quickScenarioBranchCollapsed,
+        hiddenChartPanelNamedConfigs,
       },
       quickScenarioButtons,
       hiddenDefaultQuickScenarios,
+      ideumKioskMode,
+      ideumControlButtons,
+      remoteControlProfile,
       systemState: {
         simulationRunning,
         zoom,
@@ -5402,6 +5517,49 @@ function App() {
     };
   };
 
+  const handleHideChartPanelNamedConfig = useCallback(
+    async (presetName) => {
+      if (!presetName) return;
+      const next = normalizeHiddenChartPanelNamedConfigs([
+        ...hiddenChartPanelNamedConfigs,
+        presetName,
+      ]);
+      setHiddenChartPanelNamedConfigs(next);
+      if (!currentConfigName) return;
+      try {
+        const base = getCurrentConfiguration();
+        const res = await fetch(`${API_BASE_URL}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentConfigName,
+            data: {
+              ...base,
+              designUiSession: {
+                ...base.designUiSession,
+                hiddenChartPanelNamedConfigs: next,
+              },
+            },
+          }),
+        });
+        if (!res.ok) {
+          console.warn('persist hiddenChartPanelNamedConfigs failed', await res.text());
+        }
+      } catch (e) {
+        console.warn('persist hiddenChartPanelNamedConfigs error', e);
+      }
+    },
+    [hiddenChartPanelNamedConfigs, currentConfigName],
+  );
+
+  const visibleChartPanelNamedConfigs = useMemo(
+    () =>
+      namedSimulationConfigs.filter(
+        (name) => !hiddenChartPanelNamedConfigs.includes(name),
+      ),
+    [namedSimulationConfigs, hiddenChartPanelNamedConfigs],
+  );
+
   // Keep latest handlers in refs so one-shot URL bootstrap effects do not capture stale closures or re-run on every render.
   const handleConfigurationLoadedRef = useRef(null);
   const handleRunSimulationRef = useRef(null);
@@ -5410,6 +5568,26 @@ function App() {
   useEffect(() => {
     activeNamedSimulationConfigRef.current = activeNamedSimulationConfig;
   });
+
+  useEffect(() => {
+    fetchMachineRole()
+      .then(setMachineRole)
+      .catch((e) => console.warn('Cluster machine role:', e));
+  }, []);
+
+  const handleRemoteClusterCommandRef = useRef(handleRemoteClusterCommand);
+  useEffect(() => {
+    handleRemoteClusterCommandRef.current = handleRemoteClusterCommand;
+  });
+
+  useEffect(() => {
+    if (!machineRole?.isMaingear) return undefined;
+    return connectClusterWebSocket((msg) => {
+      if (msg?.type === 'remote_command' && msg.command) {
+        handleRemoteClusterCommandRef.current(msg.command);
+      }
+    });
+  }, [machineRole?.isMaingear]);
 
   useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
@@ -5741,12 +5919,15 @@ function App() {
       onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
       simulationLoadProgress={simulationLoadProgress}
       quickScenarioButtons={quickScenarioButtons}
+      ideumControlButtons={ideumControlButtons}
+      machineRole={machineRole}
       hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
       activeQuickScenarioPlaying={activeQuickScenarioPlaying}
       activeNamedSimulationConfig={activeNamedSimulationConfig}
       onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
       quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
       onQuickScenarioCollapseChange={handleQuickScenarioCollapseChange}
+      onIdeumControlButtonClick={handleIdeumControlButtonClick}
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
       onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
@@ -5869,7 +6050,7 @@ function App() {
       setCanvasFontPxShift={setCanvasFontPxShift}
       setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
     >
-    <div className="app-container">
+    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}`}>
       <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 
@@ -5956,15 +6137,15 @@ function App() {
       </header>
 
       <div className="app-main">
-        {viewMode === 'designer' && (
+        {viewMode === 'designer' && !ideumKioskMode && (
           <ComponentLibrary
             onAddComponent={handleAddComponent}
             disabled={mode === 'simulation'}
           />
         )}
 
-        {gridPeekDock}
-        {controlsDockLeftBottom && !rightRailGridPeek && controlsRail}
+        {!ideumKioskMode && gridPeekDock}
+        {!ideumKioskMode && controlsDockLeftBottom && !rightRailGridPeek && controlsRail}
 
         <div
           className={`panel-focus-wrapper design-view-wrapper ${designImageUrl ? `mode-${designViewMode}` : ''}`}
@@ -6031,11 +6212,14 @@ function App() {
               onOpenVariablePresenceDialogConnections={handleOpenVariablePresenceDialogConnections}
               canvasBlockTypeScale={canvasBlockTypeScale}
               onNudgeCanvasBlockTypeScale={handleNudgeCanvasBlockTypeScale}
+              ideumKioskMode={ideumKioskMode}
+              ideumControlButtons={ideumControlButtons}
+              onIdeumControlButtonClick={handleIdeumControlButtonClick}
             />
           )}
         </div>
 
-        {controlsDockRight && controlsRail}
+        {!ideumKioskMode && controlsDockRight && controlsRail}
       </div>
 
       {/* Save/Load Dialog */}
@@ -6146,7 +6330,7 @@ function App() {
           onSelectionChange={setSelectedRowIndices}
           onFocus={(e) => handlePanelFocus('charts', e)}
           isFocused={focusedPanel === 'charts'}
-          namedSimulationConfigs={namedSimulationConfigs}
+          namedSimulationConfigs={visibleChartPanelNamedConfigs}
           activeNamedSimulationConfig={activeNamedSimulationConfig}
           lastNamedPresetForUi={lastNamedPresetForUi}
           onActivateNamedSimulationConfig={
@@ -6155,6 +6339,7 @@ function App() {
           onCopyNamedPresetLink={
             csvStatus?.use_design_dir && designApiPath ? handleCopyNamedPresetLink : undefined
           }
+          onHideChartPanelNamedConfig={handleHideChartPanelNamedConfig}
           onRequestMoreRows={
             useLazySimulationData && !simulationMetadata?.isEnsemble
               ? requestMoreSimulationRows

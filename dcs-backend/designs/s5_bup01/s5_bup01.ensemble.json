@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "ensembles": [
+    {
+      "id": "all_",
+      "display_name": "all_",
+      "member_simulations": [
+        "_LM2500_1",
+        "_LM2500_2",
+        "_LM2500_3",
+        "_LM2500_4",
+        "_LM2500_5",
+        "_LM2500_6",
+        "_LM2500_7",
+        "_LM2500_8",
+        "_Load",
+        "_Load_1",
+        "_Load_2",
+        "_Load_3",
+        "_Load_4",
+        "_Main",
+        "_STATCOM_2",
+        "b_BESS_1",
+        "b_BESS_2",
+        "b_GE_LV5P",
+        "b_LM2500_1",
+        "b_LM2500_2",
+        "b_LM2500_3",
+        "b_LM2500_4",
+        "b_LM2500_5",
+        "b_LM2500_6",
+        "b_LM2500_7",
+        "b_LM2500_8",
+        "b_Load",
+        "b_Load_1",
+        "b_Load_2",
+        "b_Load_3",
+        "b_Load_4",
+        "b_Main",
+        "b_STATCOM_2",
+        "bs_BESS_1",
+        "bs_BESS_2",
+        "bs_GE_LV5P",
+        "bs_LM2500_1",
+        "bs_LM2500_2",
+        "bs_LM2500_3",
+        "bs_LM2500_4",
+        "bs_LM2500_5",
+        "bs_LM2500_6",
+        "bs_LM2500_7",
+        "bs_LM2500_8",
+        "bs_Load",
+        "bs_Load_1",
+        "bs_Load_2",
+        "bs_Load_3",
+        "bs_Load_4",
+        "bs_Main",
+        "bs_STATCOM_1",
+        "bs_STATCOM_2",
+        "s_LM2500_1",
+        "s_LM2500_2",
+        "s_LM2500_3",
+        "s_LM2500_4",
+        "s_LM2500_5",
+        "s_LM2500_6",
+        "s_LM2500_7",
+        "s_LM2500_8",
+        "s_Load",
+        "s_Load_1",
+        "s_Load_2",
+        "s_Load_3",
+        "s_Load_4",
+        "s_Main",
+        "s_STATCOM_1",
+        "s_STATCOM_2"
+      ],
+      "chart_panel": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "t",
+            "y_columns": [
+              "Tm0_gt_1"
+            ],
+            "title": "Mechanical Torque, When BESS and STATCOM are off",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "x_threshold": 8,
+              "danger_y_threshold": 0.6
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "freq_gt_1",
+            "title": "Upper Gen Bank L - freq_gt_1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "s_STATCOM_2 — t",
+            "y_column": "formula — _PowerGasTurbinesAll",
+            "title": "Power all gas turbines",
+            "ensemble_cross_member": true,
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_threshold": 8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [
+          {
+            "name": "_PowerGasTurbinesAll",
+            "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
+          }
+        ],
+        "simulation_speed": 10.0
+      },
+      "toto": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "Tm0_gt_1",
+            "title": "Upper Gen Bank L - Tm0_gt_1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "noBessNoStatcom": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "t",
+            "y_columns": [
+              "Tm0_gt_1"
+            ],
+            "title": "Mechanical Torque, When BESS and STATCOM are off",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "x_threshold": 8,
+              "danger_y_threshold": 0.6
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "freq_gt_1",
+            "title": "Upper Gen Bank L - freq_gt_1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "s_STATCOM_2 — t",
+            "y_column": "formula — _PowerGasTurbinesAll",
+            "title": "Power all gas turbines",
+            "ensemble_cross_member": true,
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_threshold": 8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [
+          {
+            "name": "_PowerGasTurbinesAll",
+            "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
+          }
+        ],
+        "simulation_speed": 10.0
+      },
+      "TurnOffAllPower": {
+        "charts_to_display": [],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 10.0
+      },
+      "withBessandStatCom": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "t",
+            "y_columns": [
+              "Tm0_gt_1"
+            ],
+            "title": "Mechanical Torque, When BESS and STATCOM are off",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "x_threshold": 8,
+              "danger_y_threshold": 0.6
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "freq_gt_1",
+            "title": "Upper Gen Bank L - freq_gt_1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 128,
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "_LM2500_1 — t",
+            "y_columns": [
+              "_LM2500_1 — Tm0_gt_1",
+              "bs_LM2500_2 — Tm0_gt_2"
+            ],
+            "title": "Mechanical Torque, When BESS and STATCOM are both on",
+            "ensemble_cross_member": true,
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "legend_labels": {
+              "_LM2500_1 — Tm0_gt_1": "ground truth",
+              "bs_LM2500_2 — Tm0_gt_2": "BESS + STATCOM"
+            },
+            "variable_styles": {
+              "_LM2500_1 — Tm0_gt_1": {
+                "rigid": true
+              }
+            },
+            "axis_range": {
+              "x_threshold": 8
+            },
+            "ui_drawer": "chart3"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "_PowerGasTurbinesAll",
+            "title": "Power for all gas turbines",
+            "ensemble_sim_id": "formula",
+            "sample_step": 128,
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_threshold": 8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [
+          {
+            "name": "_PowerGasTurbinesAll",
+            "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
+          }
+        ],
+        "simulation_speed": 10.0
+      }
+    }
+  ]
+}

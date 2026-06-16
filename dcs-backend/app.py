@@ -26,7 +26,7 @@ HOW TO RUN:
 # ============================================================================
 # IMPORTS - Python libraries we need
 # ============================================================================
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
@@ -39,10 +39,19 @@ import shutil
 from typing import Optional
 from urllib.parse import unquote
 
+from cluster_peer import (
+    VALID_REMOTE_COMMANDS,
+    cluster_manager,
+    resolve_machine_role,
+)
+
 # Import database components
 from database import init_db, get_db
 from models import Configuration
-from ensemble_formula_materialize import materialize_formula_scenario_for_ensemble
+from ensemble_formula_materialize import (
+    materialize_formula_scenario_for_ensemble,
+    materialize_single_derived_variable_for_ensemble,
+)
 from simulation_data_store import (
     clear_simulation_csv_mirror,
     ensure_bundle_import,
@@ -237,6 +246,28 @@ def copy_design_dir(source_name: str, dest_name: str) -> bool:
         return False
 
 
+def _design_ui_session_for_disk(raw) -> dict:
+    """Persist designUiSession fields that should round-trip through .conf.json."""
+    out: dict = {}
+    if not isinstance(raw, dict):
+        return out
+    ensemble_id = raw.get("ensembleId")
+    if isinstance(ensemble_id, str) and ensemble_id.strip():
+        out["ensembleId"] = ensemble_id.strip()
+    section_visibility = raw.get("designSectionVisibility")
+    if isinstance(section_visibility, dict):
+        out["designSectionVisibility"] = section_visibility
+    branch_collapsed = raw.get("quickScenarioBranchCollapsed")
+    if isinstance(branch_collapsed, dict):
+        out["quickScenarioBranchCollapsed"] = branch_collapsed
+    hidden_named = raw.get("hiddenChartPanelNamedConfigs")
+    if isinstance(hidden_named, list):
+        cleaned = [str(x).strip() for x in hidden_named if str(x).strip()]
+        if cleaned:
+            out["hiddenChartPanelNamedConfigs"] = cleaned
+    return out
+
+
 def save_config_to_design_dir(
     config_name: str,
     description,
@@ -275,11 +306,10 @@ def save_config_to_design_dir(
         _dus = data.get("designUiSession")
         _qsb = data.get("quickScenarioButtons")
         _hdq = data.get("hiddenDefaultQuickScenarios")
-        _ensemble_id = None
-        if isinstance(_dus, dict):
-            _e = _dus.get("ensembleId")
-            if isinstance(_e, str) and _e.strip():
-                _ensemble_id = _e.strip()
+        _icb = data.get("ideumControlButtons")
+        _ikm = data.get("ideumKioskMode")
+        _rcp = data.get("remoteControlProfile")
+        _rct = data.get("remoteControlTarget")
         conf_data = {
             "name": config_name,
             "description": description or "",
@@ -292,9 +322,18 @@ def save_config_to_design_dir(
             if isinstance(_gs, (int, float)) and not isinstance(_gs, bool)
             else 128,
             "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
-            "designUiSession": {"ensembleId": _ensemble_id},
+            "designUiSession": _design_ui_session_for_disk(_dus),
             "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
             "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
+            "ideumControlButtons": _icb if isinstance(_icb, list) else [],
+            "ideumKioskMode": bool(_ikm),
+            "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
+            "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
+        }
+        conf_data = {
+            k: v
+            for k, v in conf_data.items()
+            if v is not None and (k == "ideumKioskMode" or v is not False)
         }
         with open(conf_path, 'w') as f:
             json.dump(conf_data, f, indent=2)
@@ -317,11 +356,10 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _dus = conf.get("designUiSession")
     _qsb = conf.get("quickScenarioButtons")
     _hdq = conf.get("hiddenDefaultQuickScenarios")
-    _ensemble_id = None
-    if isinstance(_dus, dict):
-        _e = _dus.get("ensembleId")
-        if isinstance(_e, str) and _e.strip():
-            _ensemble_id = _e.strip()
+    _icb = conf.get("ideumControlButtons")
+    _ikm = conf.get("ideumKioskMode")
+    _rcp = conf.get("remoteControlProfile")
+    _rct = conf.get("remoteControlTarget")
     return {
         "canvasComponents": conf.get("canvasComponents", []),
         "connections": conf.get("connections", []),
@@ -335,9 +373,13 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         if isinstance(_gs, (int, float)) and not isinstance(_gs, bool)
         else 128,
         "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
-        "designUiSession": {"ensembleId": _ensemble_id},
+        "designUiSession": _design_ui_session_for_disk(_dus),
         "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
         "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
+        "ideumControlButtons": _icb if isinstance(_icb, list) else [],
+        "ideumKioskMode": bool(_ikm),
+        "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
+        "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
     }
 
 
@@ -553,6 +595,61 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
     }
+
+
+@app.get("/api/cluster/machine-role")
+async def get_cluster_machine_role():
+    """Return this machine's cluster role (maingear / ideum) from cluster.local.json."""
+    return resolve_machine_role()
+
+
+@app.post("/api/cluster/remote-command")
+async def post_cluster_remote_command(body: dict):
+    """
+    Ideum posts a remote command; Maingear broadcasts it to connected UI clients.
+    Body: { "command": "add8Turbines" | "addStatcomAndGFMe" | "addBessOnly" | "addGfmeOnly" }
+    """
+    role = resolve_machine_role()
+    if not role.get("isMaingear"):
+        raise HTTPException(
+            status_code=403,
+            detail="Remote commands are only accepted on the Maingear backend.",
+        )
+    command = (body.get("command") or "").strip()
+    if command not in VALID_REMOTE_COMMANDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid command. Expected one of: {sorted(VALID_REMOTE_COMMANDS)}",
+        )
+    message = {
+        "type": "remote_command",
+        "command": command,
+        "source": body.get("source") or "ideum",
+    }
+    delivered = await cluster_manager.broadcast(message)
+    return {
+        "ok": True,
+        "command": command,
+        "deliveredToClients": delivered,
+    }
+
+
+@app.websocket("/ws/cluster")
+async def cluster_websocket(websocket: WebSocket):
+    """UI clients subscribe for remote commands (Maingear) or cluster events."""
+    await cluster_manager.connect(websocket)
+    try:
+        role = resolve_machine_role()
+        await websocket.send_text(
+            json.dumps({"type": "cluster_role", **role})
+        )
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await cluster_manager.disconnect(websocket)
+
 
 # ============================================================================
 # ROOT ENDPOINT (Welcome Message)
@@ -1818,11 +1915,17 @@ async def update_design_ensemble(
 
 @app.post("/api/designs/{design_name:path}/ensembles/{ensemble_id}/materialize-formula-csv")
 async def materialize_ensemble_formula_csv_endpoint(
-    design_name: str, ensemble_id: str, db: Session = Depends(get_db)
+    design_name: str,
+    ensemble_id: str,
+    incremental: bool = False,
+    variable_name: Optional[str] = None,
+    db: Session = Depends(get_db),
 ):
     """
     Precompute ensemble chart_panel.derived_variables into scenario `formula`
     ({formula_sim_id}.data/ Parquet bundle + formula.sim.json) and SQLite mirror.
+
+    incremental=true + variable_name: append/replace one column only (fast path).
     """
     try:
         dir_path, catalog_rel = resolve_design_storage_from_api(design_name)
@@ -1831,9 +1934,25 @@ async def materialize_ensemble_formula_csv_endpoint(
             raise HTTPException(
                 status_code=404, detail="No ensemble file for this design"
             )
-        result = materialize_formula_scenario_for_ensemble(
-            dir_path, catalog_rel, ensemble_id, ens_path, formula_sim_id="formula"
-        )
+        if incremental:
+            vname = (variable_name or "").strip()
+            if not vname:
+                raise HTTPException(
+                    status_code=400,
+                    detail="variable_name is required when incremental=true",
+                )
+            result = materialize_single_derived_variable_for_ensemble(
+                dir_path,
+                catalog_rel,
+                ensemble_id,
+                ens_path,
+                variable_name=vname,
+                formula_sim_id="formula",
+            )
+        else:
+            result = materialize_formula_scenario_for_ensemble(
+                dir_path, catalog_rel, ensemble_id, ens_path, formula_sim_id="formula"
+            )
         if result.get("skipped"):
             return result
         fid = str(result.get("formula_sim_id", "formula"))

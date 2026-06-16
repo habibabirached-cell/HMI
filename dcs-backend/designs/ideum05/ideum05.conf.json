@@ -1,0 +1,133 @@
+{
+  "name": "Ideum05",
+  "description": "Ideum touch table \u2014 Ideum-only components, side drawers hidden.",
+  "ideumKioskMode": true,
+  "canvasComponents": [
+    {
+      "id": "comp-ideum-turbine-btn",
+      "type": "ideum-turbine-button",
+      "name": "Add 8 turbine",
+      "fullName": "Add 8 turbine",
+      "position": {
+        "x": 80,
+        "y": 120
+      },
+      "status": "online",
+      "properties": {
+        "title": "Add 8 turbine",
+        "ideumCommand": "add8Turbines"
+      },
+      "visualOverrides": {
+        "width": 720,
+        "height": 480
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-bess-only-btn",
+      "type": "ideum-bess-button",
+      "name": "Add BESS only",
+      "fullName": "Add BESS only",
+      "position": {
+        "x": 80,
+        "y": 640
+      },
+      "status": "online",
+      "properties": {
+        "title": "Add BESS only",
+        "ideumCommand": "addBessOnly"
+      },
+      "visualOverrides": {
+        "width": 720,
+        "height": 380
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-bess-gfme-btn",
+      "type": "ideum-bess-gfme-button",
+      "name": "Add BESS and GFMe",
+      "fullName": "Add BESS and GFMe",
+      "position": {
+        "x": 900,
+        "y": 120
+      },
+      "status": "online",
+      "properties": {
+        "title": "Add BESS and GFMe",
+        "ideumCommand": "addStatcomAndGFMe"
+      },
+      "visualOverrides": {
+        "width": 1080,
+        "height": 420
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    },
+    {
+      "id": "comp-ideum-gfme-only-btn",
+      "type": "ideum-gfme-button",
+      "name": "ADD GFME only",
+      "fullName": "ADD GFME only",
+      "position": {
+        "x": 900,
+        "y": 580
+      },
+      "status": "online",
+      "properties": {
+        "title": "ADD GFME only",
+        "ideumCommand": "addGfmeOnly"
+      },
+      "visualOverrides": {
+        "width": 1080,
+        "height": 380
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
+    }
+  ],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 0.88,
+    "pan": {
+      "x": 40,
+      "y": 60
+    },
+    "mode": "design"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "designUiSession": {},
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": [],
+  "remoteControlTarget": {
+    "designDir": "statcom05",
+    "designName": "Statcom05"
+  }
+}

@@ -22,17 +22,18 @@
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   z-index: 100000;
-  padding: 24px;
+  padding: 8px;
   animation: formula-calc-overlay-in 0.2s ease-out;
 }
 
 .formula-calculator-modal {
   width: 100%;
-  max-width: min(95vw, 1400px);
-  min-height: 70vh;
+  max-width: min(98vw, 1400px);
+  height: 100%;
+  max-height: none;
   display: flex;
   flex-direction: column;
   background: linear-gradient(165deg, #1e2228 0%, #15181c 100%);
@@ -50,7 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
+  padding: 10px 20px;
   flex-shrink: 0;
   background: linear-gradient(180deg, rgba(0, 94, 96, 0.15) 0%, transparent 100%);
   border-bottom: 1px solid rgba(0, 212, 168, 0.2);
@@ -95,17 +96,34 @@
 }
 
 .formula-calculator-body {
-  padding: 24px 32px 32px;
+  padding: 10px 16px 12px;
   min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.formula-calculator-workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.formula-calculator-top {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .formula-calculator-help {
-  margin: 0 0 12px 0;
-  font-size: calc(12px + var(--ui-font-px-shift, 0px));
-  line-height: 1.45;
+  margin: 0;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  line-height: 1.35;
   color: rgba(180, 200, 195, 0.9);
   flex-shrink: 0;
 }
@@ -124,7 +142,7 @@
 
 /* LCD-style display – chips + inline draft for filters */
 .formula-calculator-display-wrap {
-  margin-bottom: 24px;
+  margin-bottom: 0;
   flex-shrink: 0;
   background: #0a0c0e;
   border: 2px solid rgba(0, 212, 168, 0.2);
@@ -176,17 +194,17 @@
 }
 
 .formula-calculator-composer {
-  min-height: 100px;
-  padding: 10px 12px 14px 12px;
+  min-height: 52px;
+  padding: 6px 10px 8px;
 }
 
 .formula-calculator-chips-wrap {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 8px;
+  gap: 4px 6px;
   width: 100%;
-  min-height: 72px;
+  min-height: 36px;
 }
 
 .formula-calculator-chip {
@@ -342,18 +360,18 @@
   color: #ccc;
 }
 
-/* Button grid – thin, wide buttons */
-.formula-calculator-grid {
+/* Compact keypad — variables panel gets almost all remaining height */
+.formula-calculator-keypad {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
 }
 
 .formula-calculator-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .formula-calculator-row-fn {
@@ -362,7 +380,7 @@
 }
 
 .formula-calculator-btn {
-  padding: 5px 10px;
+  padding: 3px 8px;
   background: linear-gradient(180deg, #2a2e34 0%, #1f2328 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
@@ -431,13 +449,33 @@
 }
 
 .formula-calculator-btn-done {
-  grid-column: span 2;
-  padding: 6px 16px;
+  padding: 6px 10px;
   background: linear-gradient(135deg, #005E60 0%, #004a4c 100%);
   border-color: #00d4a8;
   color: #fff;
-  font-size: calc(15px + var(--ui-font-px-shift, 0px));
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
   font-weight: 700;
+}
+
+.formula-calculator-btn-done-quick {
+  padding: 6px 10px;
+  background: linear-gradient(135deg, rgba(0, 94, 96, 0.35) 0%, rgba(0, 74, 76, 0.25) 100%);
+  border-color: rgba(0, 212, 168, 0.45);
+  color: #b8f0e4;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+}
+
+.formula-calculator-btn-done-quick:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 110, 112, 0.55) 0%, rgba(0, 90, 92, 0.4) 100%);
+  border-color: #00e8b8;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 212, 168, 0.2);
+}
+
+.formula-calculator-btn-done-quick:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .formula-calculator-btn-done:hover:not(:disabled) {
@@ -453,15 +491,61 @@
   cursor: not-allowed;
 }
 
-/* Variables section – more room for variable names */
+/* Variables section – dominant panel (~70%+ of modal) */
 .formula-calculator-vars {
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  flex: 1;
-  min-height: 0;
+  margin-top: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 1 1 auto;
+  min-height: min(62vh, 720px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+.formula-calculator-vars-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.formula-calculator-vars-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.formula-calculator-vars-filter-input {
+  flex: 1 1 180px;
+  max-width: 320px;
+  min-width: 120px;
+  height: 30px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(0, 212, 168, 0.45);
+  background: rgba(0, 0, 0, 0.35);
+  color: #e8f4f2;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'JetBrains Mono', monospace;
+  outline: none;
+}
+
+.formula-calculator-vars-filter-input:focus {
+  border-color: #00d4a8;
+  box-shadow: 0 0 0 1px rgba(0, 212, 168, 0.25);
+}
+
+.formula-calculator-vars-filter-input::placeholder {
+  color: #4a5a56;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
 }
 
 .formula-calculator-vars-label {
@@ -470,18 +554,78 @@
   color: #005E60;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   flex-shrink: 0;
+}
+
+.formula-calculator-auto-plus-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.formula-calculator-auto-plus-label {
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  color: #9ab8b5;
+  letter-spacing: 0.02em;
+}
+
+.formula-calculator-auto-plus-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.formula-calculator-auto-plus-switch {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.formula-calculator-auto-plus-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #888;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.formula-calculator-auto-plus-toggle input:checked + .formula-calculator-auto-plus-switch {
+  background: rgba(0, 94, 96, 0.55);
+  border-color: rgba(0, 212, 168, 0.55);
+}
+
+.formula-calculator-auto-plus-toggle input:checked + .formula-calculator-auto-plus-switch::after {
+  transform: translateX(18px);
+  background: #00d4a8;
+}
+
+.formula-calculator-auto-plus-toggle input:focus-visible + .formula-calculator-auto-plus-switch {
+  box-shadow: 0 0 0 2px rgba(0, 212, 168, 0.35);
 }
 
 .formula-calculator-vars-groups {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 320px;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  flex: 1;
-  min-height: 80px;
+  overscroll-behavior: contain;
 }
 
 .formula-calculator-vars-groups::-webkit-scrollbar {
@@ -522,30 +666,17 @@
 .formula-calculator-vars-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  max-height: 200px;
+  align-content: flex-start;
+  gap: 5px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  flex: 1;
-  min-height: 80px;
-}
-
-.formula-calculator-vars-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.formula-calculator-vars-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.formula-calculator-vars-list::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 168, 0.3);
-  border-radius: 3px;
+  overscroll-behavior: contain;
 }
 
 .formula-calculator-btn-var {
-  padding: 5px 12px;
-  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  padding: 4px 10px;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
   font-weight: 500;
   max-width: 180px;
   overflow: hidden;

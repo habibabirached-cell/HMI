@@ -39,6 +39,47 @@ export function chartHasMultiTraceLegend(chart) {
   return false;
 }
 
+const LEGEND_XANCHORS = new Set(['auto', 'left', 'center', 'right']);
+const LEGEND_YANCHORS = new Set(['auto', 'top', 'middle', 'bottom']);
+
+/** Load saved legend position from charts_to_display / .sim.json. */
+export function normalizeLegendPositionFromDef(def) {
+  const p = def?.legend_position;
+  if (!p || typeof p !== 'object') return undefined;
+  const x = Number(p.x);
+  const y = Number(p.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined;
+  return {
+    x,
+    y,
+    xanchor: LEGEND_XANCHORS.has(p.xanchor) ? p.xanchor : 'right',
+    yanchor: LEGEND_YANCHORS.has(p.yanchor) ? p.yanchor : 'top',
+  };
+}
+
+/** Serialize legend position for charts_to_display. */
+export function compactLegendPositionForSave(pos) {
+  if (!pos || typeof pos !== 'object') return null;
+  const x = Number(pos.x);
+  const y = Number(pos.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const out = { x, y };
+  if (pos.xanchor && LEGEND_XANCHORS.has(pos.xanchor)) out.xanchor = pos.xanchor;
+  if (pos.yanchor && LEGEND_YANCHORS.has(pos.yanchor)) out.yanchor = pos.yanchor;
+  return out;
+}
+
+/** Merge Plotly relayout legend keys into a saved position object. */
+export function legendPositionFromRelayout(relayout, current) {
+  const base = current ?? { x: 0.99, y: 0.99, xanchor: 'right', yanchor: 'top' };
+  const next = { ...base };
+  if (relayout?.['legend.x'] != null) next.x = relayout['legend.x'];
+  if (relayout?.['legend.y'] != null) next.y = relayout['legend.y'];
+  if (relayout?.['legend.xanchor'] != null) next.xanchor = relayout['legend.xanchor'];
+  if (relayout?.['legend.yanchor'] != null) next.yanchor = relayout['legend.yanchor'];
+  return next;
+}
+
 export function defaultVariableStyle(index) {
   return {
     color: defaultColorForIndex(index),

@@ -85,7 +85,12 @@ const FormulaCalculator = ({
   const [varNavIndex, setVarNavIndex] = useState(-1);
   /** true = filter variables (teal draft); false = type freeform cos(, +, …) — toggled with Space. */
   const [varFilterMode, setVarFilterMode] = useState(true);
+  /** When on, each variable click after the first inserts " + " before the new chip. */
+  const [autoPlusBetweenVars, setAutoPlusBetweenVars] = useState(false);
+  /** Persistent filter for the variables panel; survives latching from clicks. */
+  const [varListFilter, setVarListFilter] = useState('');
   const [namingPhase, setNamingPhase] = useState(false);
+  const [pendingQuickMode, setPendingQuickMode] = useState(false);
   const [pendingFormula, setPendingFormula] = useState('');
   const [variableName, setVariableName] = useState('');
 
@@ -132,22 +137,39 @@ const FormulaCalculator = ({
   const latch = useCallback((fullName, displayLabel) => {
     if (fullName == null || String(fullName) === '') return;
     const disp = displayLabel != null && String(displayLabel).trim() !== '' ? String(displayLabel) : undefined;
-    setChain((c) => [...c, { k: 'V', name: String(fullName), ...(disp ? { display: disp } : {}) }]);
+    setChain((c) => {
+      const next = [...c];
+      if (autoPlusBetweenVars && next.length > 0 && next[next.length - 1].k === 'V') {
+        next.push({ k: 'R', t: ' + ' });
+      }
+      next.push({ k: 'V', name: String(fullName), ...(disp ? { display: disp } : {}) });
+      return next;
+    });
     setDraft('');
     setVarNavIndex(-1);
     requestAnimationFrame(() => draftInputRef.current?.focus());
-  }, []);
+  }, [autoPlusBetweenVars]);
 
   const filteredPickItems = useMemo(() => {
     if (!allPickItems.length) return [];
-    if (!varFilterMode) return allPickItems;
-    const q = draft.toLowerCase().trim();
-    if (!q) return allPickItems;
-    return allPickItems.filter(
-      (it) =>
-        it.label.toLowerCase().includes(q) || it.value.toLowerCase().includes(q),
+    const queries = [];
+    const panelQ = varListFilter.toLowerCase().trim();
+    if (panelQ) queries.push(panelQ);
+    if (varFilterMode) {
+      const draftQ = draft.toLowerCase().trim();
+      if (draftQ) queries.push(draftQ);
+    }
+    if (queries.length === 0) return allPickItems;
+    return allPickItems.filter((it) =>
+      queries.every(
+        (q) => it.label.toLowerCase().includes(q) || it.value.toLowerCase().includes(q),
+      ),
     );
-  }, [allPickItems, draft, varFilterMode]);
+  }, [allPickItems, varListFilter, draft, varFilterMode]);
+
+  const hasActiveVarFilter = Boolean(
+    varListFilter.trim() || (varFilterMode && draft.trim()),
+  );
 
   useEffect(() => {
     const n = filteredPickItems.length;
@@ -162,9 +184,10 @@ const FormulaCalculator = ({
   const trimmedFormula = formulaStr.trim();
   const canDone = trimmedFormula.length > 0;
 
-  const handleDone = useCallback(() => {
+  const handleDone = useCallback((quick = false) => {
     if (!canDone) return;
     setPendingFormula(trimmedFormula);
+    setPendingQuickMode(quick);
     setVariableName('');
     setNamingPhase(true);
     requestAnimationFrame(() => nameInputRef.current?.focus());
@@ -174,18 +197,20 @@ const FormulaCalculator = ({
     const trimmedName = variableName.trim();
     if (!trimmedName || !onDone) return;
     try {
-      await Promise.resolve(onDone(pendingFormula, trimmedName));
+      await Promise.resolve(onDone(pendingFormula, trimmedName, { quick: pendingQuickMode }));
       setNamingPhase(false);
+      setPendingQuickMode(false);
       setPendingFormula('');
       setVariableName('');
     } catch (err) {
       console.error(err);
       alert(err?.message || String(err));
     }
-  }, [variableName, pendingFormula, onDone]);
+  }, [variableName, pendingFormula, pendingQuickMode, onDone]);
 
   const handleBackToFormula = useCallback(() => {
     setNamingPhase(false);
+    setPendingQuickMode(false);
     setPendingFormula('');
     setVariableName('');
     requestAnimationFrame(() => draftInputRef.current?.focus());
@@ -233,7 +258,7 @@ const FormulaCalculator = ({
       if (e.key === 'Enter' && !e.shiftKey) {
         if (e.metaKey || e.ctrlKey) {
           e.preventDefault();
-          if (canDone) handleDone();
+          if (canDone) handleDone(false);
           return;
         }
         if (varFilterMode) {
@@ -284,6 +309,8 @@ const FormulaCalculator = ({
     }
     setVarNavIndex(-1);
     setVarFilterMode(true);
+    setVarListFilter('');
+    setPendingQuickMode(false);
     setNamingPhase(false);
     setPendingFormula('');
     setVariableName('');
@@ -343,20 +370,29 @@ const FormulaCalculator = ({
                 <button
                   type="button"
                   className="formula-calculator-btn formula-calculator-btn-done"
-                  onClick={handleAddVariable}
+                  onClick={() => handleAddVariable()}
                   disabled={!variableName.trim()}
-                  title={variableName.trim() ? 'Add variable' : 'Enter a name first'}
+                  title={
+                    variableName.trim()
+                      ? pendingQuickMode
+                        ? 'Add this column only (does not recompute other derived variables)'
+                        : 'Add variable and recompute all derived columns'
+                      : 'Enter a name first'
+                  }
                 >
-                  Add variable
+                  {pendingQuickMode ? 'Add variable (quick)' : 'Add variable'}
                 </button>
               </div>
             </div>
           ) : (
-            <>
+            <div className="formula-calculator-workspace">
+              <div className="formula-calculator-top">
               <p className="formula-calculator-help">
                 <kbd>Space</kbd> toggles: <strong>variable</strong> (teal) = filter, <kbd>→</kbd> <kbd>←</kbd>,{' '}
                 <kbd>Enter</kbd> latch · <strong>expression</strong> = type <code>cos(</code>, <code>+</code>, etc. ·{' '}
-                <kbd>Shift+Space</kbd> inserts a space · <kbd>Ctrl+Enter</kbd> or Done to finish
+                <kbd>Shift+Space</kbd> inserts a space · <strong>Filter</strong> narrows the variable list ·{' '}
+                <strong>Auto +</strong> inserts <code>+</code> between variable clicks · <strong>Done quickly</strong>{' '}
+                adds one column without recomputing others · <kbd>Ctrl+Enter</kbd> or Done to finish
               </p>
               <div className="formula-calculator-display-wrap">
                 <div className="formula-calculator-display-label-row">
@@ -427,7 +463,9 @@ const FormulaCalculator = ({
                 </div>
               </div>
 
-              <div className="formula-calculator-grid">
+              </div>
+
+              <div className="formula-calculator-keypad">
                 <div className="formula-calculator-row">
                   {['7', '8', '9'].map((d) => (
                     <button
@@ -492,11 +530,24 @@ const FormulaCalculator = ({
                   <button
                     type="button"
                     className="formula-calculator-btn formula-calculator-btn-done"
-                    onClick={handleDone}
+                    onClick={() => handleDone(false)}
                     disabled={!canDone}
-                    title={canDone ? 'Finish and name your variable' : 'Enter a formula first'}
+                    title={canDone ? 'Recompute all derived variables on disk' : 'Enter a formula first'}
                   >
                     Done
+                  </button>
+                  <button
+                    type="button"
+                    className="formula-calculator-btn formula-calculator-btn-done-quick"
+                    onClick={() => handleDone(true)}
+                    disabled={!canDone}
+                    title={
+                      canDone
+                        ? 'Add this column only — does not recompute other derived variables'
+                        : 'Enter a formula first'
+                    }
+                  >
+                    Done quickly
                   </button>
                 </div>
 
@@ -507,11 +558,40 @@ const FormulaCalculator = ({
                     </button>
                   ))}
                 </div>
+              </div>
 
-                {allPickItems.length > 0 && (
+              {allPickItems.length > 0 && (
                   <div className="formula-calculator-vars">
-                    <div className="formula-calculator-vars-label">Variables</div>
-                    {draft && filteredPickItems.length === 0 ? (
+                    <div className="formula-calculator-vars-header">
+                      <div className="formula-calculator-vars-label">Variables</div>
+                      <div className="formula-calculator-vars-header-actions">
+                        <input
+                          type="text"
+                          className="formula-calculator-vars-filter-input"
+                          value={varListFilter}
+                          onChange={(e) => {
+                            setVarListFilter(e.target.value);
+                            setVarNavIndex(-1);
+                          }}
+                          placeholder="Filter variables…"
+                          spellCheck={false}
+                          autoComplete="off"
+                          aria-label="Filter variables list"
+                        />
+                        <label className="formula-calculator-auto-plus-toggle" title="Insert + between each variable you click">
+                          <span className="formula-calculator-auto-plus-label">Auto +</span>
+                          <input
+                            type="checkbox"
+                            role="switch"
+                            checked={autoPlusBetweenVars}
+                            onChange={(e) => setAutoPlusBetweenVars(e.target.checked)}
+                            aria-label="Automatically insert plus between variables"
+                          />
+                          <span className="formula-calculator-auto-plus-switch" aria-hidden="true" />
+                        </label>
+                      </div>
+                    </div>
+                    {hasActiveVarFilter && filteredPickItems.length === 0 ? (
                       <p className="formula-calculator-vars-hint" role="status">
                         No variable names include this filter. Change what you are typing, or clear it, to see the
                         full list.
@@ -571,8 +651,7 @@ const FormulaCalculator = ({
                     )}
                   </div>
                 )}
-              </div>
-            </>
+            </div>
           )}
         </div>
       </div>

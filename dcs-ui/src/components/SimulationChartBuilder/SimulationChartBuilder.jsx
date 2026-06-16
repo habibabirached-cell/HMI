@@ -192,9 +192,9 @@ function SimulationChartBuilder({
     return m;
   }, [ensembleColumnGroups]);
 
-  const handleFormulaDone = async (formula, variableName) => {
+  const handleFormulaDone = async (formula, variableName, options = {}) => {
     try {
-      await onAddDerivedVariable?.(formula, variableName);
+      await onAddDerivedVariable?.(formula, variableName, options);
     } finally {
       setFormulaCalculatorOpen(false);
     }

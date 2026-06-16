@@ -17977,14 +17977,14 @@
     }
   ],
   "systemState": {
-    "simulationRunning": true,
-    "zoom": 0.30000000000000004,
+    "simulationRunning": false,
+    "zoom": 0.5516541271073087,
     "pan": {
-      "x": 107.53408772969703,
-      "y": 236.27666203987278
+      "x": 9.467192039506813,
+      "y": 183.19398726858776
     },
     "mode": "design",
-    "uiFontPxShift": 4,
+    "uiFontPxShift": 5,
     "canvasFontPxShift": 5,
     "collapsedComponentFontPxShift": 24
   },
@@ -17992,13 +17992,32 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781584433516-0": 128,
-    "sim-chart-1781584433516-1": 128,
-    "sim-chart-1781584433516-2": 128,
-    "sim-chart-1781584433516-3": 128
+    "sim-chart-1781631606428-0": 128,
+    "sim-chart-1781631606428-1": 128,
+    "sim-chart-1781631606428-2": 128,
+    "sim-chart-1781631606428-3": 128,
+    "sim-chart-1781631606428-4": 128,
+    "sim-chart-1781631606428-5": 128
   },
   "designUiSession": {
-    "ensembleId": "all_"
+    "ensembleId": "all_",
+    "designSectionVisibility": {
+      "showUpper": true,
+      "showLower": true,
+      "hideBranches": []
+    },
+    "quickScenarioBranchCollapsed": {
+      "noBessNoStatcom": true,
+      "withBessandStatCom": true,
+      "withBessAlone": true,
+      "withStatcomAlone": true
+    },
+    "hiddenChartPanelNamedConfigs": [
+      "TurnOffAllPower",
+      "noBessNoStatcom",
+      "toto",
+      "withBessandStatCom"
+    ]
   },
   "quickScenarioButtons": [
     {
@@ -18052,5 +18071,36 @@
     "trip-all-turbines",
     "grid-loss",
     "open-all-breakers"
-  ]
+  ],
+  "ideumControlButtons": [],
+  "ideumKioskMode": false,
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "add8Turbines": {
+        "label": "No Bess No Statcom",
+        "presetName": "noBessNoStatcom",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      },
+      "addStatcomAndGFMe": {
+        "label": "With Bess and StatCom",
+        "presetName": "withBessandStatCom",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      },
+      "addBessOnly": {
+        "label": "With BESS Alone",
+        "presetName": "withBessAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      },
+      "addGfmeOnly": {
+        "label": "With STATCOM Alone",
+        "presetName": "withStatcomAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      }
+    }
+  }
 }

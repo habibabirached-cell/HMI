@@ -241,3 +241,128 @@ def materialize_formula_scenario_for_ensemble(
         "columns": int(len(out_df.columns)),
         "bundle_dir": bundle_root,
     }
+
+
+def materialize_single_derived_variable_for_ensemble(
+    dir_path: str,
+    _catalog_rel: str,
+    ensemble_id: str,
+    ens_path: str,
+    *,
+    variable_name: str,
+    formula_sim_id: str = "formula",
+) -> dict[str, Any]:
+    """
+    Incremental materialize: evaluate and append/replace one derived column on the existing
+    formula Parquet bundle without recomputing other derived variables.
+    """
+    _e, members, derived_variables = _load_ensemble_and_members(ens_path, ensemble_id)
+    name = str(variable_name or "").strip()
+    if not name:
+        raise ValueError("variable_name required for incremental materialize")
+
+    fml: Optional[str] = None
+    for item in derived_variables:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("name", "")).strip() == name:
+            fml = str(item.get("formula", "")).strip()
+            break
+    if not fml:
+        raise ValueError(
+            f"Derived variable {name!r} not found in ensemble chart_panel.derived_variables"
+        )
+
+    safe_fid = re.sub(r"[^\w\-]", "", formula_sim_id) or "formula"
+    per_member: dict[str, pd.DataFrame] = {}
+    for sid in members:
+        bundle_root = scenario_data_dir(dir_path, sid)
+        if not os.path.isdir(bundle_root):
+            raise FileNotFoundError(
+                f"Member scenario data not found: {sid}.data/ (Parquet bundle required for materialize)"
+            )
+        per_member[sid] = read_bundle_dataframe(dir_path, sid)
+    n = min(len(df) for df in per_member.values())
+    if n <= 0:
+        raise ValueError("No data rows in member scenarios")
+
+    primary = members[0]
+    primary_df = per_member[primary]
+    time_col = _time_column_name(primary_df)
+    primary_id = primary
+
+    formula_bundle = scenario_data_dir(dir_path, safe_fid)
+    if os.path.isdir(formula_bundle):
+        existing_df = read_bundle_dataframe(dir_path, safe_fid)
+        n = min(n, len(existing_df))
+    else:
+        existing_df = pd.DataFrame({time_col: [primary_df.iloc[i][time_col] for i in range(n)]})
+
+    if n <= 0:
+        raise ValueError("No data rows for incremental materialize")
+
+    col_vals: list = []
+    for i in range(n):
+        ev: dict[str, float] = {}
+        for sid in members:
+            df = per_member[sid]
+            for col in df.columns:
+                key = _qualify_ensemble_column(sid, str(col))
+                raw = df.iloc[i][col]
+                try:
+                    ev[key] = float(raw)
+                except (TypeError, ValueError):
+                    ev[key] = 0.0
+        for col in existing_df.columns:
+            if col == time_col or col == name:
+                continue
+            rv = existing_df.iloc[i][col]
+            try:
+                pv = float(rv)
+            except (TypeError, ValueError):
+                pv = 0.0
+            pv = pv if math.isfinite(pv) else 0.0
+            ev[str(col)] = pv
+            ev[_qualify_ensemble_column(primary_id, str(col))] = pv
+            ev[_qualify_ensemble_column(safe_fid, str(col))] = pv
+        v = _evaluate_formula(fml, ev)
+        col_vals.append(v if math.isfinite(v) else float("nan"))
+
+    out_df = existing_df.iloc[:n].copy()
+    if time_col not in out_df.columns:
+        out_df.insert(0, time_col, [primary_df.iloc[i][time_col] for i in range(n)])
+    out_df[name] = col_vals
+
+    bundle_root = write_bundle_from_dataframe(out_df, dir_path, safe_fid)
+    sim_path_out = os.path.join(dir_path, f"{safe_fid}.sim.json")
+    if os.path.isfile(sim_path_out):
+        with open(sim_path_out, "r", encoding="utf-8") as fp:
+            scfg = json.load(fp)
+        if not isinstance(scfg, dict):
+            scfg = {}
+    else:
+        scfg = {
+            "display_name": "Formula",
+            "description": "Materialized ensemble formulas (precomputed from member CSVs).",
+            "charts_to_display": [],
+            "event_markers": {},
+        }
+    scfg["display_name"] = scfg.get("display_name") or "Formula"
+    scfg["data_row_count"] = int(n)
+    scfg["data_column_count"] = int(len(out_df.columns))
+    scfg["description"] = (
+        scfg.get("description")
+        or "Precomputed values from ensemble chart_panel.derived_variables."
+    )
+    with open(sim_path_out, "w", encoding="utf-8") as fp:
+        json.dump(scfg, fp, indent=2, ensure_ascii=False)
+
+    return {
+        "ok": True,
+        "incremental": True,
+        "variable_name": name,
+        "formula_sim_id": safe_fid,
+        "rows": n,
+        "columns": int(len(out_df.columns)),
+        "bundle_dir": bundle_root,
+    }

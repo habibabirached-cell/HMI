@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "columns": [
+    "t",
+    "_PowerGasTurbinesAll"
+  ],
+  "row_count": 15001,
+  "column_files": [
+    "c0000.parquet",
+    "c0001.parquet"
+  ]
+}

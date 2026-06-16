@@ -145,6 +145,18 @@ export function normalizeHiddenDefaultQuickScenarios(raw) {
   return [...new Set(raw.map((id) => String(id).trim()).filter((id) => valid.has(id)))];
 }
 
+/** Named chart presets hidden from the CHARTS bar (preset still on disk + quick scenarios). */
+export function normalizeHiddenChartPanelNamedConfigs(raw) {
+  if (!Array.isArray(raw)) return [];
+  return [
+    ...new Set(
+      raw
+        .map((name) => String(name).trim())
+        .filter((name) => name.length > 0),
+    ),
+  ];
+}
+
 /** Design shortcuts rendered under Controls instead of Quick Scenarios. */
 export const QUICK_SCENARIO_CONTROLS_PRESETS = new Set(['TurnOffAllPower']);
 

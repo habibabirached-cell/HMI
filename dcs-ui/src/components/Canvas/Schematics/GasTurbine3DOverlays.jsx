@@ -30,6 +30,8 @@ export default function GasTurbine3DOverlays({
   zoom,
   canvasRef,
   blockTypeScale = {},
+  ideumTouchButtonByComponentId,
+  onIdeumControlButtonClick,
 }) {
   const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsP = adjSvgFontPx(GT3D_TITLE_BASE_FONT, fontPxDelta);
@@ -101,10 +103,13 @@ export default function GasTurbine3DOverlays({
 
   return (
     <div className="gas-turbine-3d-overlay-root" aria-hidden>
-      {slots.map((slot) => (
+      {slots.map((slot) => {
+        const ideumButton = ideumTouchButtonByComponentId?.get?.(slot.id);
+        const ideumTouch = !!ideumButton;
+        return (
         <div
           key={slot.id}
-          className="gas-turbine-3d-overlay-slot"
+          className={`gas-turbine-3d-overlay-slot${ideumTouch ? ' ideum-3d-touch-slot' : ''}`}
           style={{
             left: slot.left,
             top: slot.top,
@@ -113,6 +118,17 @@ export default function GasTurbine3DOverlays({
             transform: slot.rotation ? `rotate(${slot.rotation}deg)` : undefined,
             transformOrigin: 'center center',
           }}
+          onClick={
+            ideumTouch
+              ? (e) => {
+                  e.stopPropagation();
+                  onIdeumControlButtonClick?.(ideumButton);
+                }
+              : undefined
+          }
+          role={ideumTouch ? 'button' : undefined}
+          tabIndex={ideumTouch ? 0 : undefined}
+          aria-label={ideumTouch ? ideumButton.label : undefined}
         >
           <GasTurbine3DViewer
             width={slot.pixelWidth}
@@ -140,7 +156,8 @@ export default function GasTurbine3DOverlays({
             </div>
           ) : null}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

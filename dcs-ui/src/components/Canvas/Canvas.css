@@ -34,6 +34,11 @@
   overflow: hidden;
 }
 
+.gas-turbine-3d-overlay-slot.ideum-3d-touch-slot {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .gas-turbine-3d-overlay-slot {
   position: absolute;
   pointer-events: none;
@@ -113,6 +118,20 @@
 
 .canvas-component:hover {
   filter: brightness(1.2);
+}
+
+.canvas-component.canvas-ideum-decor {
+  opacity: 0;
+}
+
+.canvas-component.canvas-ideum-touch:not(.dragging) {
+  filter: drop-shadow(0 0 10px rgba(21, 101, 192, 0.35));
+}
+
+.canvas-component.canvas-ideum-touch:hover {
+  filter:
+    brightness(1.1)
+    drop-shadow(0 0 14px rgba(21, 101, 192, 0.55));
 }
 
 /* Collapsed tie aggregate — soft teal bloom (matches STATCOM / GFME palette) */

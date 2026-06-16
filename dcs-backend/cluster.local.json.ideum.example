@@ -1,0 +1,6 @@
+{
+  "role": "ideum",
+  "ethernetIp": "192.168.50.2",
+  "peerEthernetIp": "192.168.50.1",
+  "peerBackendUrl": "http://192.168.50.1:5000"
+}

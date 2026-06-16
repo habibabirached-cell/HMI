@@ -308,6 +308,26 @@
   color: #00d4a8;
 }
 
+.chart-panel-named-config-hide {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: calc(16px + var(--ui-font-px-shift, 0px));
+  line-height: 1;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: rgba(42, 42, 42, 0.9);
+  color: #ccc;
+  cursor: pointer;
+}
+
+.chart-panel-named-config-hide:hover {
+  background: #3d2020;
+  border-color: #c62828;
+  color: #ff8a80;
+}
+
 .chart-panel-named-config-btn {
   padding: 3px 10px;
   font-size: calc(12px + var(--ui-font-px-shift, 0px));
@@ -1272,6 +1292,35 @@
 
 .chart-panel-fullscreen-btn:active {
   transform: scale(0.95);
+}
+
+/* Plotly legend: keyboard move mode armed state */
+.js-plotly-plot .legend.chart-legend--move-armed,
+.js-plotly-plot .legend.chart-legend--move-armed .bg {
+  outline: 2px solid rgba(0, 188, 188, 0.85);
+  outline-offset: 2px;
+}
+
+.chart-legend-move-btn--active {
+  opacity: 1;
+  color: #4dd0e1 !important;
+  border-color: rgba(77, 208, 225, 0.55) !important;
+}
+
+.chart-legend-move-hint {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(0, 94, 96, 0.92);
+  border: 1px solid rgba(77, 208, 225, 0.45);
+  color: #e0f7fa;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .chart-panel-fullscreen-btn svg {
