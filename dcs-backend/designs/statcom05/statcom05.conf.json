@@ -17981,7 +17981,7 @@
     "zoom": 0.5516541271073087,
     "pan": {
       "x": 9.467192039506813,
-      "y": 183.19398726858776
+      "y": 58.19398726858776
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17992,12 +17992,12 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781631606428-0": 128,
-    "sim-chart-1781631606428-1": 128,
-    "sim-chart-1781631606428-2": 128,
-    "sim-chart-1781631606428-3": 128,
-    "sim-chart-1781631606428-4": 128,
-    "sim-chart-1781631606428-5": 128
+    "sim-chart-1781638166792-0": 8,
+    "sim-chart-1781638166792-1": 8,
+    "sim-chart-1781638166792-2": 8,
+    "sim-chart-1781638166792-3": 8,
+    "sim-chart-1781638166792-4": 8,
+    "sim-chart-1781638166792-5": 8
   },
   "designUiSession": {
     "ensembleId": "all_",
@@ -18081,25 +18081,25 @@
         "label": "No Bess No Statcom",
         "presetName": "noBessNoStatcom",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       },
       "addStatcomAndGFMe": {
         "label": "With Bess and StatCom",
         "presetName": "withBessandStatCom",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       },
       "addBessOnly": {
         "label": "With BESS Alone",
         "presetName": "withBessAlone",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       },
       "addGfmeOnly": {
         "label": "With STATCOM Alone",
         "presetName": "withStatcomAlone",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       }
     }
   }

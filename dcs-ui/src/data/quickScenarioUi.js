@@ -186,3 +186,16 @@ export function isQuickScenarioPlaceholderPreset(presetName) {
 export function isQuickScenarioDesignFirstPreset(presetName) {
   return QUICK_SCENARIO_DESIGN_FIRST_PRESETS.has(presetName);
 }
+
+/** Resolve ensemble id — tolerates legacy `all` vs `all_` mismatch across designs. */
+export function resolveDesignEnsemble(designEnsembles, ensembleId) {
+  if (!ensembleId || !Array.isArray(designEnsembles) || designEnsembles.length === 0) {
+    return null;
+  }
+  const exact = designEnsembles.find((e) => e.id === ensembleId);
+  if (exact) return exact;
+  const alias =
+    ensembleId === 'all' ? 'all_' : ensembleId === 'all_' ? 'all' : null;
+  if (alias) return designEnsembles.find((e) => e.id === alias) ?? null;
+  return null;
+}

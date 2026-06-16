@@ -18061,13 +18061,13 @@
         "label": "No Bess No Statcom",
         "presetName": "noBessNoStatcom",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       },
       "addStatcomAndGFMe": {
         "label": "With Bess and StatCom",
         "presetName": "withBessandStatCom",
         "targetType": "ensemble",
-        "ensembleId": "all"
+        "ensembleId": "all_"
       }
     }
   }

@@ -84,9 +84,9 @@
             "y_columns": [
               "Tm0_gt_1"
             ],
-            "title": "Mechanical Torque, When BESS and STATCOM are off",
+            "title": "Mechanical Torque, When BESS and STATCOM Are Off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 4,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "axis_range": {
@@ -100,130 +100,27 @@
             "chart_type": "2d",
             "x_column": "t",
             "y_column": "freq_gt_1",
-            "title": "Frequency When BESS And STATCOM Are Off",
+            "title": "Frequency, When BESS And STATCOM Are Off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
-            "x_label": "Time, Seconds",
+            "sample_step": 4,
+            "x_label": "Time, seconds",
             "y_label": "Frequency, HZ",
             "ui_drawer": "chart2"
           },
           {
             "type": "single",
             "component_id": "comp-upper-left-gen-bank",
-            "chart_type": "nd",
-            "x_column": "_LM2500_1 — t",
-            "y_columns": [
-              "_LM2500_1 — Tm0_gt_1",
-              "bs_LM2500_2 — Tm0_gt_2"
-            ],
-            "title": "Mechanical Torque, When BESS and STATCOM are both on",
-            "ensemble_cross_member": true,
-            "sample_step": 128,
-            "x_label": "Time, seconds",
-            "y_label": "Torque, pu",
-            "legend_labels": {
-              "_LM2500_1 — Tm0_gt_1": "ground truth",
-              "bs_LM2500_2 — Tm0_gt_2": "BESS + STATCOM"
-            },
-            "legend_position": {
-              "x": 0.5099999999999996,
-              "y": 0.9500000000000005,
-              "xanchor": "right",
-              "yanchor": "top"
-            },
-            "variable_styles": {
-              "_LM2500_1 — Tm0_gt_1": {
-                "rigid": true
-              },
-              "bs_LM2500_2 — Tm0_gt_2": {
-                "color": "#209242"
-              }
-            },
-            "axis_range": {
-              "x_threshold": 8
-            },
-            "ui_drawer": "chart3"
-          },
-          {
-            "type": "single",
-            "component_id": "comp-upper-left-gen-bank",
             "chart_type": "2d",
-            "x_column": "t",
-            "y_column": "_PowerGasTurbinesAll",
-            "title": "Power For All Gas Turbines When BESS And STATCOM Are Off",
-            "ensemble_sim_id": "formula",
-            "sample_step": 128,
+            "x_column": "s_STATCOM_2 — t",
+            "y_column": "formula — _PowerGasTurbinesAll",
+            "title": "Power all gas turbines",
+            "ensemble_cross_member": true,
+            "sample_step": 4,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "axis_range": {
               "x_threshold": 8
             }
-          },
-          {
-            "type": "single",
-            "component_id": "comp-upper-left-gen-bank",
-            "chart_type": "nd",
-            "x_column": "formula — t",
-            "y_columns": [
-              "formula — PowerAllTurbines_BESS_STAT",
-              "formula — _PowerGasTurbinesAll",
-              "formula — Power_all_Besses_BESS_STATCOM",
-              "bs_STATCOM_1 — P_STATCOM_1"
-            ],
-            "title": "Power Turbine, BESS, STATCOM",
-            "ensemble_cross_member": true,
-            "sample_step": 128,
-            "x_label": "Time, seconds",
-            "y_label": "Power, MW",
-            "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Power All Turbines With BESS And STATCOM",
-              "formula — _PowerGasTurbinesAll": "Power All Turbines when No BESS no STATCOM ",
-              "formula — Power_all_Besses_BESS_STATCOM": "Power BESS",
-              "bs_STATCOM_1 — P_STATCOM_1": "Power STATCOM"
-            },
-            "legend_position": {
-              "x": 0.6499999999999997,
-              "y": 0.6300000000000002,
-              "xanchor": "right",
-              "yanchor": "top"
-            },
-            "variable_styles": {
-              "formula — PowerAllTurbines_BESS_STAT": {
-                "color": "#2fb651"
-              },
-              "formula — _PowerGasTurbinesAll": {
-                "color": "#005E60",
-                "rigid": true
-              },
-              "formula — Power_all_Besses_BESS_STATCOM": {
-                "color": "#4ccd66"
-              },
-              "bs_STATCOM_1 — P_STATCOM_1": {
-                "color": "#30f891"
-              }
-            },
-            "ui_drawer": "chart3"
-          },
-          {
-            "type": "single",
-            "component_id": "comp-upper-left-gen-bank",
-            "chart_type": "2d",
-            "x_column": "t",
-            "y_column": "freq_gt_1",
-            "title": "Frequency When BESS And STATCOM Are On",
-            "ensemble_sim_id": "bs_LM2500_1",
-            "sample_step": 128,
-            "x_label": "Time, seconds",
-            "y_label": "Frequency, HZ",
-            "variable_styles": {
-              "freq_gt_1": {
-                "color": "#22aa6b"
-              }
-            },
-            "axis_range": {
-              "x_threshold": 8
-            },
-            "ui_drawer": "chart4"
           }
         ],
         "chart_stacks": [],
@@ -286,7 +183,7 @@
             ],
             "title": "Mechanical Torque, When BESS and STATCOM Are Off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 4,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "axis_range": {
@@ -302,7 +199,7 @@
             "y_column": "freq_gt_1",
             "title": "Frequency, When BESS And STATCOM Are Off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 4,
             "x_label": "Time, seconds",
             "y_label": "Frequency, HZ",
             "ui_drawer": "chart2"
@@ -315,7 +212,7 @@
             "y_column": "formula — _PowerGasTurbinesAll",
             "title": "Power all gas turbines",
             "ensemble_cross_member": true,
-            "sample_step": 128,
+            "sample_step": 4,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "axis_range": {
@@ -372,7 +269,7 @@
             ],
             "title": "Mechanical Torque, When BESS and STATCOM are off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "axis_range": {
@@ -388,7 +285,7 @@
             "y_column": "freq_gt_1",
             "title": "Frequency When BESS And STATCOM Are Off",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, Seconds",
             "y_label": "Frequency, HZ",
             "ui_drawer": "chart2"
@@ -404,7 +301,7 @@
             ],
             "title": "Mechanical Torque, When BESS and STATCOM are both on",
             "ensemble_cross_member": true,
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "legend_labels": {
@@ -438,7 +335,7 @@
             "y_column": "_PowerGasTurbinesAll",
             "title": "Power For All Gas Turbines When BESS And STATCOM Are Off",
             "ensemble_sim_id": "formula",
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "axis_range": {
@@ -458,7 +355,7 @@
             ],
             "title": "Power Turbine, BESS, STATCOM",
             "ensemble_cross_member": true,
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
@@ -497,7 +394,7 @@
             "y_column": "freq_gt_1",
             "title": "Frequency When BESS And STATCOM Are On",
             "ensemble_sim_id": "bs_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 8,
             "x_label": "Time, seconds",
             "y_label": "Frequency, HZ",
             "variable_styles": {

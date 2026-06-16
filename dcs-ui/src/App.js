@@ -18,6 +18,7 @@ import {
   normalizeHiddenChartPanelNamedConfigs,
   isQuickScenarioPlaceholderPreset,
   isQuickScenarioDesignFirstPreset,
+  resolveDesignEnsemble,
 } from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
 import {
@@ -2989,6 +2990,7 @@ function App() {
     if (!shortcut?.presetName || !designApiPath) return;
     const isPlaceholder = isQuickScenarioPlaceholderPreset(shortcut.presetName);
     const isDesignFirst = isQuickScenarioDesignFirstPreset(shortcut.presetName);
+    const fromRemote = !!shortcut.fromRemote;
     const isSecondDesignFirstClick =
       isDesignFirst && quickScenarioDesignPrimedPreset === shortcut.presetName;
 
@@ -3014,7 +3016,8 @@ function App() {
       ),
     );
 
-    if (isDesignFirst && !isSecondDesignFirstClick) {
+    // Local "No Bess No Statcom" needs two clicks (design, then charts). Ideum remote = one tap.
+    if (isDesignFirst && !isSecondDesignFirstClick && !fromRemote) {
       handleStopSimulation();
       setOpenCharts([]);
       setChartStacks([]);
@@ -3025,7 +3028,7 @@ function App() {
       return;
     }
 
-    if (isSecondDesignFirstClick) {
+    if (isSecondDesignFirstClick || (isDesignFirst && fromRemote)) {
       setQuickScenarioDesignPrimedPreset(null);
     }
 
@@ -3038,12 +3041,12 @@ function App() {
     }
     try {
       if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
-        const ensemble = designEnsembles.find((e) => e.id === shortcut.ensembleId);
+        const ensemble = resolveDesignEnsemble(designEnsembles, shortcut.ensembleId);
         if (!ensemble) {
           alert('This ensemble no longer exists in the design.');
           return;
         }
-        if (simulationMetadata?.ensembleId !== shortcut.ensembleId) {
+        if (simulationMetadata?.ensembleId !== ensemble.id) {
           await handleSelectEnsemble(ensemble);
         }
         const ensembleOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
@@ -3087,6 +3090,7 @@ function App() {
       targetType: spec.targetType || 'ensemble',
       ensembleId: spec.ensembleId,
       simulationId: spec.simulationId,
+      fromRemote: true,
     };
     await handleQuickScenarioShortcutClick(shortcut);
   };
