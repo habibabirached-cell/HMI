@@ -1,0 +1,49 @@
+.quick-scenario-context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+}
+
+.quick-scenario-context-menu {
+  position: fixed;
+  min-width: 200px;
+  background: #1a1a1a;
+  border: 1px solid #005e60;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px 0;
+  animation: quick-scenario-context-appear 0.12s ease-out;
+}
+
+@keyframes quick-scenario-context-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.quick-scenario-context-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.quick-scenario-context-item:hover,
+.quick-scenario-context-item:focus-visible {
+  background: rgba(0, 94, 96, 0.25);
+  color: #fff;
+  outline: none;
+}

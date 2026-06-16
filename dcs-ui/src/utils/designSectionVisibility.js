@@ -8,6 +8,7 @@ import {
   getGasTurbineBankCollapseSurfaceMemberIds,
 } from './gasTurbineBank';
 import { isTieBreakerNetwork } from './tieBreakerNetwork';
+import { collectHiddenBranchMemberIds } from './designBranchVisibility';
 
 /** Y split between upper stack (buses at y≈0) and lower stack (buses at y≈1900). */
 export const DESIGN_SECTION_Y_THRESHOLD = 1800;
@@ -15,6 +16,7 @@ export const DESIGN_SECTION_Y_THRESHOLD = 1800;
 export const DEFAULT_DESIGN_SECTION_VISIBILITY = {
   showUpper: true,
   showLower: true,
+  hideBranches: [],
 };
 
 /** Named simulation presets → canvas section visibility (statcom05 quick scenarios). */
@@ -22,6 +24,8 @@ export const QUICK_SCENARIO_DESIGN_VISIBILITY = {
   TurnOffAllPower: { showUpper: false, showLower: false },
   noBessNoStatcom: { showUpper: true, showLower: false },
   withBessandStatCom: { showUpper: true, showLower: true },
+  withBessAlone: { showUpper: true, showLower: true, hideBranches: ['statcom'] },
+  withStatcomAlone: { showUpper: true, showLower: true, hideBranches: ['bess'] },
 };
 
 export function normalizeDesignSectionVisibility(raw) {
@@ -31,20 +35,23 @@ export function normalizeDesignSectionVisibility(raw) {
   return {
     showUpper: raw.showUpper !== false,
     showLower: raw.showLower !== false,
+    hideBranches: Array.isArray(raw.hideBranches)
+      ? raw.hideBranches.filter((b) => b === 'bess' || b === 'statcom')
+      : [],
   };
 }
 
 export function resolveQuickScenarioDesignVisibility(presetName) {
   if (!presetName || typeof presetName !== 'string') return null;
   const mapped = QUICK_SCENARIO_DESIGN_VISIBILITY[presetName];
-  return mapped ? { ...mapped } : null;
+  return mapped ? normalizeDesignSectionVisibility(mapped) : null;
 }
 
 function isLowerSectionByY(y) {
   return (y ?? 0) >= DESIGN_SECTION_Y_THRESHOLD;
 }
 
-function isLowerGasTurbineBank(bank) {
+export function isLowerGasTurbineBank(bank) {
   const minY = bank.properties?.gasTurbineGroup?.verticalBand?.minY;
   if (Number.isFinite(minY)) return minY >= DESIGN_SECTION_Y_THRESHOLD;
   return isLowerSectionByY(bank.position?.y);
@@ -112,18 +119,22 @@ export function buildDesignSectionMemberIdSets(components) {
 }
 
 /** Component ids that should not render for the given section visibility. */
-export function getDesignSectionHiddenMemberIdSet(components, visibility) {
+export function getDesignSectionHiddenMemberIdSet(components, visibility, connections = []) {
   const v = normalizeDesignSectionVisibility(visibility);
-  if (v.showUpper && v.showLower) return new Set();
-
   const hidden = new Set();
-  const { upper, lower } = buildDesignSectionMemberIdSets(components);
 
-  if (!v.showUpper) {
-    for (const id of upper) hidden.add(id);
+  if (!v.showUpper || !v.showLower) {
+    const { upper, lower } = buildDesignSectionMemberIdSets(components);
+    if (!v.showUpper) {
+      for (const id of upper) hidden.add(id);
+    }
+    if (!v.showLower) {
+      for (const id of lower) hidden.add(id);
+    }
   }
-  if (!v.showLower) {
-    for (const id of lower) hidden.add(id);
+
+  for (const id of collectHiddenBranchMemberIds(components, connections, v.hideBranches)) {
+    hidden.add(id);
   }
 
   return hidden;

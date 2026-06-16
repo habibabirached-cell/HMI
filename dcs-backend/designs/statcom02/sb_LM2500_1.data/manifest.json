@@ -5,15 +5,15 @@
     "P_g1",
     "Q_g1",
     "V_g1",
+    "Pmech_gt_1",
+    "Tm_gt_1",
+    "Te_gt_1",
+    "Tm0_gt_1",
+    "Wpu_gt_1",
     "freq_gt_1",
-    "Vlow_gt_1",
-    "Tm_1",
-    "Tm0_1",
-    "Te_1",
-    "Wpu_1",
-    "Pmech_1"
+    "Vlow_gt_1"
   ],
-  "row_count": 15001,
+  "row_count": 120001,
   "column_files": [
     "c0000.parquet",
     "c0001.parquet",

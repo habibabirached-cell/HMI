@@ -1,19 +1,57 @@
-/** chart1 = anything not explicitly uiDrawer 'chart2' */
+/** Labeled chart drawers: chart1 (default) through chart4 (conf3 quad grid). */
 
+export const CHART_DRAWER_KEYS = ['chart1', 'chart2', 'chart3', 'chart4'];
+
+export function normalizeChartUiDrawer(raw) {
+  const d = typeof raw === 'string' ? raw.trim() : '';
+  if (d === 'chart2' || d === 'chart3' || d === 'chart4') return d;
+  return 'chart1';
+}
+
+export function getChartUiDrawer(c) {
+  return normalizeChartUiDrawer(c?.uiDrawer);
+}
+
+/** @deprecated use getChartUiDrawer(c) === 'chart2' */
 export function isChartUiDrawer2(c) {
-  return c?.uiDrawer === 'chart2';
+  return getChartUiDrawer(c) === 'chart2';
+}
+
+export function uiDrawerFieldsFromChartDef(chartDef) {
+  const d = normalizeChartUiDrawer(chartDef?.ui_drawer ?? chartDef?.uiDrawer);
+  return d === 'chart1' ? {} : { uiDrawer: d };
+}
+
+export function drawerShortLabel(drawerKey) {
+  return String(drawerKey || 'chart1').replace('chart', 'c');
+}
+
+/**
+ * Bucket for stack validation: conf1/2/4 use chart1|chart2; conf3 uses all four.
+ */
+export function stackDrawerBucket(chart, { quad = false } = {}) {
+  const d = getChartUiDrawer(chart);
+  if (quad) return d;
+  return d === 'chart2' ? 'chart2' : 'chart1';
 }
 
 /**
  * @param {Array} fullCharts — openCharts
  * @param {Array<Array<number>>} stacks — indices into fullCharts
- * @param {boolean} drawer2 — true = chart2 bucket, false = chart1
- * @returns {{ subset: Array, stacks: Array<Array<number>> }} stacks index into subset
+ * @param {string} drawerKey — chart1…chart4
+ * @param {boolean} [dualLegacy] — conf1/2/4: chart1 bucket = not chart2
  */
-export function remapStacksPerDrawerRow(fullCharts, stacks, drawer2) {
-  const subset = fullCharts.filter((c) =>
-    drawer2 ? isChartUiDrawer2(c) : !isChartUiDrawer2(c),
-  );
+export function remapStacksPerDrawerRow(fullCharts, stacks, drawerKey, dualLegacy = false) {
+  let subset;
+  if (dualLegacy) {
+    const isDrawer2 = drawerKey === 'chart2';
+    subset = fullCharts.filter((c) =>
+      isDrawer2 ? getChartUiDrawer(c) === 'chart2' : getChartUiDrawer(c) !== 'chart2',
+    );
+  } else {
+    const target = normalizeChartUiDrawer(drawerKey);
+    subset = fullCharts.filter((c) => getChartUiDrawer(c) === target);
+  }
   const idToSubsetIdx = {};
   subset.forEach((c, i) => {
     idToSubsetIdx[c.id] = i;
@@ -54,9 +92,8 @@ export function buildDisplayUnitsFromStacks(chartsList, stacksIntoThisList) {
 }
 
 /** Drop stacks that span charts in different drawers (after a move). */
-export function sanitizeStacksForDrawers(openChartsArr, stacks) {
-  const drawerBucket = (i) =>
-    openChartsArr[i] && isChartUiDrawer2(openChartsArr[i]) ? 'chart2' : 'chart1';
+export function sanitizeStacksForDrawers(openChartsArr, stacks, { quad = false } = {}) {
+  const drawerBucket = (i) => stackDrawerBucket(openChartsArr[i], { quad });
   return (stacks || []).filter((stack) => {
     if (!stack.length) return false;
     const d0 = drawerBucket(stack[0]);

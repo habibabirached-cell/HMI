@@ -25,6 +25,7 @@ import {
   buildTraceLineStyle,
   compactVariableStylesForSave,
   getChartVariableKeys,
+  chartHasMultiTraceLegend,
   getChartXThreshold,
   rowPassesXThreshold,
   sampleIndexedRowsForVariable,
@@ -42,6 +43,9 @@ import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
   buildDisplayUnitsFromStacks,
+  getChartUiDrawer,
+  drawerShortLabel,
+  CHART_DRAWER_KEYS,
 } from '../../utils/chartPanelDrawerBuckets';
 import { flyChartToDrawer } from '../../utils/chartDrawerFlyTransition';
 
@@ -69,7 +73,8 @@ const selectionListenersByChart = new Map();
  * - sidePanelWidth / onSidePanelWidthChange: width when layoutMode is sideRight
  * - dualChartDrawers: workspace conf1/conf2/conf4 → two labeled strips (chart1 / chart2)
  * - dualChartDrawersStacked: conf4 → chart2 under chart1 (default: side-by-side columns)
- * - onMoveChartDrawer(chartId, 'chart1' | 'chart2'): move chart between drawers
+ * - quadChartDrawers: conf3 → four equal quadrants (chart1–chart4) in a 2×2 grid
+ * - onMoveChartDrawer(chartId, 'chart1' | 'chart2' | 'chart3' | 'chart4'): move chart between drawers
  */
 const ChartPanel = ({ 
   charts, 
@@ -127,6 +132,7 @@ const ChartPanel = ({
   onSidePanelWidthChange,
   dualChartDrawers = false,
   dualChartDrawersStacked = false,
+  quadChartDrawers = false,
   onMoveChartDrawer,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
@@ -360,6 +366,7 @@ const ChartPanel = ({
       legendLabels: yKeys.length
         ? Object.fromEntries(yKeys.map((k) => [k, chart.legendLabels?.[k] ?? '']))
         : null,
+      legendTitle: chart.legendTitle ?? '',
       variableStyles: yKeys.length ? seedVariableStylesForEditor(chart, yKeys) : null,
       selectedVarKeys: [],
     });
@@ -380,6 +387,11 @@ const ChartPanel = ({
       xLabel: editingLabels.xLabel || undefined,
       yLabel: editingLabels.yLabel || undefined,
       ...(legendLabels && Object.keys(legendLabels).length ? { legendLabels } : { legendLabels: undefined }),
+      ...(chartHasMultiTraceLegend(chart)
+        ? editingLabels.legendTitle?.trim()
+          ? { legendTitle: editingLabels.legendTitle.trim() }
+          : { legendTitle: undefined }
+        : {}),
       ...(variableStyles ? { variableStyles } : { variableStyles: undefined }),
     };
     if (chart?.yColumns?.length || (chart?.chartType === 'nd' || chart?.chartType === 'pie' || chart?.chartType === 'stacked-nd')) {
@@ -517,6 +529,25 @@ const ChartPanel = ({
           placeholder="default (column name)"
         />
       </label>
+      {(() => {
+        const chart = charts.find((c) => c.id === editingLabels.chartId);
+        if (!chartHasMultiTraceLegend(chart)) return null;
+        return (
+          <label className="chart-label-editor-row">
+            <span>Legend title</span>
+            <input
+              className="chart-label-editor-input"
+              value={editingLabels.legendTitle ?? ''}
+              onChange={(e) => setEditingLabels((p) => ({ ...p, legendTitle: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitLabelEdit();
+                if (e.key === 'Escape') setEditingLabels(null);
+              }}
+              placeholder="optional heading above legend"
+            />
+          </label>
+        );
+      })()}
       {editingLabels.variableStyles && (
         <>
           <div className="chart-label-editor-section-head">
@@ -1733,6 +1764,30 @@ const ChartPanel = ({
     const gridRgba = rgba(42, 42, 42);
     const lineRgba = rgba(68, 68, 68);
 
+    /** Legend overlaid inside the plot area (top-right), optional title from chart editor. */
+    const buildInPlotLegendLayout = () => {
+      const legend = {
+        orientation: 'v',
+        x: 0.99,
+        xanchor: 'right',
+        y: 0.99,
+        yanchor: 'top',
+        font: { family: 'Arial, sans-serif', size: 11, color: '#e0e0e0' },
+        bgcolor: rgba(0, 0, 0, 0.55 * o),
+        bordercolor: lineRgba,
+        borderwidth: 1,
+        traceorder: 'normal',
+      };
+      const titleText = chart.legendTitle?.trim();
+      if (titleText) {
+        legend.title = {
+          text: titleText,
+          font: { family: 'Arial, sans-serif', size: 12, color: '#e0e0e0' },
+        };
+      }
+      return legend;
+    };
+
     const baseLayout = {
       // When this string stays the same, Plotly keeps user zoom/pan across Plotly.react updates (e.g. new colors after opacity slider).
       uirevision: getPlotlyUiRevision(chart, data),
@@ -1835,19 +1890,8 @@ const ChartPanel = ({
         ...baseLayout,
         title: { ...baseLayout.title, text: chart.title || `${chart.componentName || ''} - Stacked nD` },
         showlegend: true,
-        legend: {
-          orientation: 'v',
-          x: 1.02,
-          xanchor: 'left',
-          y: 1,
-          yanchor: 'top',
-          font: { family: 'Arial, sans-serif', size: 11, color: '#e0e0e0' },
-          bgcolor: rgba(0, 0, 0, 0.6 * o),
-          bordercolor: lineRgba,
-          borderwidth: 2,
-          traceorder: 'normal'
-        },
-        margin: { l: 50, r: 200, t: 50, b: 50 },
+        legend: buildInPlotLegendLayout(),
+        margin: { l: 50, r: 40, t: 50, b: 50 },
         shapes: [...(baseLayout.shapes || []), ...shapes],
         xaxis: {
           title: { text: chart.xLabel ?? chart.xColumn, font: { family: 'Arial, sans-serif', size: 13, color: '#999', weight: 600 } },
@@ -1914,17 +1958,8 @@ const ChartPanel = ({
           ...yLockProps
         },
         showlegend: true,
-        legend: {
-          orientation: 'h',
-          x: 0.5,
-          xanchor: 'center',
-          y: -0.15,
-          yanchor: 'top',
-          font: { family: 'Arial, sans-serif', size: 12, color: '#e0e0e0' },
-          bgcolor: rgba(0, 0, 0, 0.5 * o),
-          bordercolor: rgba(0, 94, 96, 0.5 * o),
-          borderwidth: 2
-        }
+        legend: buildInPlotLegendLayout(),
+        margin: { ...baseLayout.margin, b: 60 },
       });
     }
 
@@ -1987,22 +2022,9 @@ const ChartPanel = ({
           ...(yRange ? { range: yRange } : {})
         },
         barmode: 'group', // Grouped bars
-        showlegend: true, // Show legend for multi-component
-        legend: {
-          orientation: 'h', // Horizontal legend at bottom
-          x: 0.5,
-          xanchor: 'center',
-          y: -0.15,
-          yanchor: 'top',
-          font: {
-            family: 'Arial, sans-serif',
-            size: 12,
-            color: '#e0e0e0'
-          },
-          bgcolor: rgba(0, 0, 0, 0.5 * o),
-          bordercolor: rgba(0, 94, 96, 0.5 * o),
-          borderwidth: 2
-        },
+        showlegend: true,
+        legend: buildInPlotLegendLayout(),
+        margin: { ...baseLayout.margin, b: 60 },
         // Add annotations for component count
         annotations: [{
           text: `${chart.components.length} Components`,
@@ -2029,6 +2051,9 @@ const ChartPanel = ({
       
       return withDangerY({
         ...baseLayout,
+        ...(chartHasMultiTraceLegend(chart)
+          ? { showlegend: true, legend: buildInPlotLegendLayout() }
+          : {}),
         xaxis: {
           title: {
             text: chart.xLabel ?? chart.xColumn,
@@ -2346,8 +2371,9 @@ const ChartPanel = ({
     return null;
   }
 
-  /** Two labeled drawers (chart1 / chart2) for workspace conf 1–2 · same chart map for each bucket. */
-  const drawerRowsConfig = !dualChartDrawers
+  /** Two labeled drawers (chart1 / chart2) or four quadrants (conf3) · same chart map per bucket. */
+  const hasLabeledDrawers = dualChartDrawers || quadChartDrawers;
+  const drawerRowsConfig = !hasLabeledDrawers
     ? [
         {
           drawerKey: 'all',
@@ -2355,22 +2381,31 @@ const ChartPanel = ({
           units: buildDisplayUnitsFromStacks(charts, chartStacks),
         },
       ]
-    : (() => {
-        const row1 = remapStacksPerDrawerRow(charts, chartStacks, false);
-        const row2 = remapStacksPerDrawerRow(charts, chartStacks, true);
-        return [
-          {
-            drawerKey: 'chart1',
-            drawerLabel: 'chart1',
-            units: buildDisplayUnitsFromStacks(row1.subset, row1.stacks),
-          },
-          {
-            drawerKey: 'chart2',
-            drawerLabel: 'chart2',
-            units: buildDisplayUnitsFromStacks(row2.subset, row2.stacks),
-          },
-        ];
-      })();
+    : quadChartDrawers
+      ? CHART_DRAWER_KEYS.map((drawerKey) => {
+          const row = remapStacksPerDrawerRow(charts, chartStacks, drawerKey, false);
+          return {
+            drawerKey,
+            drawerLabel: drawerKey,
+            units: buildDisplayUnitsFromStacks(row.subset, row.stacks),
+          };
+        })
+      : (() => {
+          const row1 = remapStacksPerDrawerRow(charts, chartStacks, 'chart1', true);
+          const row2 = remapStacksPerDrawerRow(charts, chartStacks, 'chart2', true);
+          return [
+            {
+              drawerKey: 'chart1',
+              drawerLabel: 'chart1',
+              units: buildDisplayUnitsFromStacks(row1.subset, row1.stacks),
+            },
+            {
+              drawerKey: 'chart2',
+              drawerLabel: 'chart2',
+              units: buildDisplayUnitsFromStacks(row2.subset, row2.stacks),
+            },
+          ];
+        })();
 
   const toggleChartSelection = (chartId) => {
     setSelectedChartIds(prev => {
@@ -2396,7 +2431,7 @@ const ChartPanel = ({
     e.stopPropagation();
     if (!onMoveChartDrawer || flyingChartId) return;
 
-    const fromDrawer = chart.uiDrawer === 'chart2' ? 'chart2' : 'chart1';
+    const fromDrawer = getChartUiDrawer(chart);
     if (fromDrawer === targetDrawer) return;
 
     const sourceEl = document.getElementById(`chart-${chart.id}`);
@@ -2427,10 +2462,63 @@ const ChartPanel = ({
 
   const layoutClass =
     layoutMode === 'sideRight'
-      ? 'chart-panel--layout-side-right'
+      ? `chart-panel--layout-side-right${
+          quadChartDrawers ? ' chart-panel--layout-side-right-quad' : ''
+        }`
       : layoutMode === 'top'
         ? 'chart-panel--layout-top'
         : 'chart-panel--layout-bottom';
+
+  const drawerEmptyHint = (drawerKey) => {
+    if (quadChartDrawers) {
+      if (drawerKey === 'chart1') return 'No charts';
+      return `Empty — click “${drawerShortLabel(drawerKey)}” on a chart in another quadrant`;
+    }
+    return drawerKey === 'chart2'
+      ? 'Empty — click “▸ chart2” on a chart in chart1'
+      : 'No charts';
+  };
+
+  const renderChartDrawerShiftButtons = (chart) => {
+    if (!hasLabeledDrawers || typeof onMoveChartDrawer !== 'function') return null;
+    const currentDrawer = getChartUiDrawer(chart);
+
+    if (quadChartDrawers) {
+      return (
+        <div className="chart-drawer-shift-group">
+          {CHART_DRAWER_KEYS.filter((target) => target !== currentDrawer).map((target) => (
+            <button
+              key={target}
+              type="button"
+              className="chart-drawer-shift-btn chart-drawer-shift-btn--quad"
+              disabled={flyingChartId === chart.id}
+              onClick={(e) => requestDrawerMove(chart, target, e)}
+              title={`Fly chart to ${target}`}
+            >
+              {drawerShortLabel(target)}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    const target = currentDrawer === 'chart2' ? 'chart1' : 'chart2';
+    return (
+      <button
+        type="button"
+        className="chart-drawer-shift-btn"
+        disabled={flyingChartId === chart.id}
+        onClick={(e) => requestDrawerMove(chart, target, e)}
+        title={
+          currentDrawer === 'chart2'
+            ? 'Fly chart to chart1 drawer'
+            : 'Fly chart to chart2 drawer'
+        }
+      >
+        {currentDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
+      </button>
+    );
+  };
 
   const shellPositionStyle =
     layoutMode === 'sideRight'
@@ -2838,36 +2926,38 @@ const ChartPanel = ({
           Single strip: wrapper uses display:contents so layout is unchanged vs one merged row */}
       <div
         className={
-          dualChartDrawers
+          hasLabeledDrawers
             ? `chart-panel-drawers-row${
-                dualChartDrawersStacked ? ' chart-panel-drawers-row--stacked' : ''
+                quadChartDrawers
+                  ? ' chart-panel-drawers-row--quad-grid'
+                  : dualChartDrawersStacked
+                    ? ' chart-panel-drawers-row--stacked'
+                    : ''
               }`
             : undefined
         }
-        style={!dualChartDrawers ? { display: 'contents' } : undefined}
+        style={!hasLabeledDrawers ? { display: 'contents' } : undefined}
       >
       {drawerRowsConfig.map(({ drawerKey, drawerLabel, units: drawerUnits }) => (
         <div
           key={drawerKey}
-          className={dualChartDrawers ? 'chart-panel-drawer-slot' : undefined}
-          style={!dualChartDrawers ? { display: 'contents' } : undefined}
-          {...(dualChartDrawers ? { 'data-chart-drawer': drawerKey } : {})}
+          className={hasLabeledDrawers ? 'chart-panel-drawer-slot' : undefined}
+          style={!hasLabeledDrawers ? { display: 'contents' } : undefined}
+          {...(hasLabeledDrawers ? { 'data-chart-drawer': drawerKey } : {})}
         >
-          {dualChartDrawers ? (
+          {hasLabeledDrawers ? (
             <div className="chart-panel-drawer-label">{drawerLabel}</div>
           ) : null}
           <div
             className={
-              dualChartDrawers
+              hasLabeledDrawers
                 ? 'chart-panel-content chart-panel-content--dual-drawer'
                 : 'chart-panel-content'
             }
           >
-            {dualChartDrawers && drawerUnits.length === 0 ? (
+            {hasLabeledDrawers && drawerUnits.length === 0 ? (
               <div className="chart-panel-drawer-empty-hint">
-                {drawerKey === 'chart2'
-                  ? 'Empty — click “▸ chart2” on a chart in chart1'
-                  : 'No charts'}
+                {drawerEmptyHint(drawerKey)}
               </div>
             ) : drawerUnits.map((unit) => (
           unit.type === 'stack' ? (
@@ -2934,27 +3024,7 @@ const ChartPanel = ({
                   <option key={n} value={n}>1 in {n}</option>
                 ))}
               </select>
-              {dualChartDrawers && typeof onMoveChartDrawer === 'function' && (
-                <button
-                  type="button"
-                  className="chart-drawer-shift-btn"
-                  disabled={flyingChartId === chart.id}
-                  onClick={(e) =>
-                    requestDrawerMove(
-                      chart,
-                      chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2',
-                      e,
-                    )
-                  }
-                  title={
-                    chart.uiDrawer === 'chart2'
-                      ? 'Fly chart to chart1 drawer'
-                      : 'Fly chart to chart2 drawer'
-                  }
-                >
-                  {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
-                </button>
-              )}
+              {renderChartDrawerShiftButtons(chart)}
               <button 
                 className="chart-panel-chart-close"
                 onClick={() => onRemoveChart(chart.id)}
@@ -3102,27 +3172,7 @@ const ChartPanel = ({
                         <option key={n} value={n}>1 in {n}</option>
                       ))}
                     </select>
-                    {dualChartDrawers && typeof onMoveChartDrawer === 'function' && (
-                      <button
-                        type="button"
-                        className="chart-drawer-shift-btn"
-                        disabled={flyingChartId === chart.id}
-                        onClick={(e) =>
-                          requestDrawerMove(
-                            chart,
-                            chart.uiDrawer === 'chart2' ? 'chart1' : 'chart2',
-                            e,
-                          )
-                        }
-                        title={
-                          chart.uiDrawer === 'chart2'
-                            ? 'Fly chart to chart1 drawer'
-                            : 'Fly chart to chart2 drawer'
-                        }
-                      >
-                        {chart.uiDrawer === 'chart2' ? 'chart1 ◂' : '▸ chart2'}
-                      </button>
-                    )}
+                    {renderChartDrawerShiftButtons(chart)}
                     <button className="chart-panel-chart-close" onClick={() => onRemoveChart(chart.id)} title="Remove Chart">×</button>
                   </div>
                   <div className="chart-panel-chart-body">

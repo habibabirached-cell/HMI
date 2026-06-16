@@ -107,7 +107,7 @@ const Toolbar = ({
                 : id === 'conf2'
                   ? 'Conf 2: charts on the right, Controls bottom-left'
                   : id === 'conf3'
-                    ? 'Conf 3: charts top, Controls bottom-left'
+                    ? 'Conf 3: 2×2 chart grid in right drawer, Controls bottom-left'
                     : 'Conf 4: like conf 2, chart2 under chart1'
             }
           >

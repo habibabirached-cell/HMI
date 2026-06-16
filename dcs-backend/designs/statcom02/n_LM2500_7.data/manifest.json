@@ -4,16 +4,16 @@
     "t",
     "Q_g7",
     "V_g7",
+    "Pmech_gt_7",
+    "Tm_gt_7",
+    "Te_gt_7",
+    "Tm0_gt_7",
+    "Wpu_gt_7",
     "freq_gt_7",
     "Vlow_gt_7",
-    "P_g7",
-    "Tm_1.5",
-    "Tm0_1.5",
-    "Te_1.5",
-    "Wpu_1.5",
-    "Pmech_1.5"
+    "P_g7"
   ],
-  "row_count": 15001,
+  "row_count": 60001,
   "column_files": [
     "c0000.parquet",
     "c0001.parquet",

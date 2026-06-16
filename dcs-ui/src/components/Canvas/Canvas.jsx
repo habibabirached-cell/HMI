@@ -253,7 +253,7 @@ const Canvas = forwardRef(({
   onZoomOut,
   pan,
   onPan,
-  canvasZoomMin = 0.5,
+  canvasZoomMin = 0.1,
   canvasZoomMax = 10,
   onCanvasViewport,
   mode,
@@ -314,8 +314,8 @@ const Canvas = forwardRef(({
   );
 
   const designSectionHiddenMemberIds = useMemo(
-    () => getDesignSectionHiddenMemberIdSet(components, designSectionVisibility),
-    [components, designSectionVisibility],
+    () => getDesignSectionHiddenMemberIdSet(components, designSectionVisibility, connections),
+    [components, designSectionVisibility, connections],
   );
 
   const hiddenAggregateMemberIds = useMemo(() => {
@@ -1123,7 +1123,7 @@ const Canvas = forwardRef(({
   }, [resizingComponent, onUpdateComponent]);
 
   // Two-finger trackpad pan; Ctrl/Meta+wheel pinch zoom; touch two-finger pan/pinch;
-  // Safari trackpad pinch (GestureEvent). Same zoom bounds as toolbar (50%–1000%).
+  // Safari trackpad pinch (GestureEvent). Same zoom bounds as toolbar (10%–1000%).
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;

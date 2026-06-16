@@ -286,10 +286,6 @@
             "paste-1779985373163-181-tk6ka",
             "paste-1779985373163-182-qsiol",
             "paste-1779985373163-183-j63e7",
-            "paste-1779985373163-188-8o8wf",
-            "paste-1779985373163-189-oq7z8",
-            "paste-1779985373163-190-wzd8w",
-            "paste-1779985373163-191-8nkae",
             "paste-1779985373163-210-dbohp",
             "paste-1779985373163-211-sjypn",
             "paste-1779985373163-212-wa7zx",
@@ -317,8 +313,7 @@
           },
           "collapseCompanionMemberId": "comp-lower-right-gen-aux-preview",
           "collapseExtraMemberIds": [
-            "comp-lower-right-gen-bess-preview",
-            "comp-lower-right-gen-gfme-preview"
+            "comp-lower-right-gen-bess-preview"
           ]
         }
       },
@@ -837,63 +832,6 @@
           {
             "ensembleSimId": "_STATCOM_1",
             "column": "Vrms_STATCOM_1",
-            "unit": "V",
-            "decimals": 2
-          }
-        ]
-      }
-    },
-    {
-      "id": "comp-lower-right-gen-gfme-preview",
-      "type": "gfme-statcom",
-      "name": "GEV FACTSFLEX GFMe  #2",
-      "fullName": "GFME Static Synchronous Compensator #2",
-      "position": {
-        "x": 2575,
-        "y": 2712.5
-      },
-      "status": "online",
-      "properties": {
-        "rating": 50,
-        "voltage": 34.5,
-        "unit": "MVAR"
-      },
-      "visualOverrides": {
-        "width": 750,
-        "height": 375
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "connectionReadout": {
-        "side": "right",
-        "swatchColor": "#cddc39",
-        "slots": [
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "P_STATCOM_2",
-            "unit": "MW",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "Q_STATCOM_2",
-            "unit": "MVAR",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "freq_STATCOM_2",
-            "unit": "Hz",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "Vrms_STATCOM_2",
             "unit": "V",
             "decimals": 2
           }
@@ -11471,129 +11409,6 @@
       "isTripped": false
     },
     {
-      "id": "paste-1779985373163-188-8o8wf",
-      "type": "gfme-statcom",
-      "name": "GEV FACTSFLEX GFMe  #2",
-      "fullName": "GFME Static Synchronous Compensator #2",
-      "position": {
-        "x": 2975,
-        "y": 2700
-      },
-      "status": "online",
-      "properties": {
-        "rating": 50,
-        "voltage": 34.5,
-        "unit": "MVAR"
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "connectionReadout": {
-        "side": "right",
-        "swatchColor": "#cddc39",
-        "slots": [
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "P_STATCOM_2",
-            "unit": "MW",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "Q_STATCOM_2",
-            "unit": "MVAR",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "freq_STATCOM_2",
-            "unit": "Hz",
-            "decimals": 2
-          },
-          {
-            "ensembleSimId": "_STATCOM_2",
-            "column": "Vrms_STATCOM_2",
-            "unit": "V",
-            "decimals": 2
-          }
-        ]
-      }
-    },
-    {
-      "id": "paste-1779985373163-189-oq7z8",
-      "type": "breaker-bess",
-      "name": "STATCOM CB",
-      "fullName": "STATCOM Circuit Breaker",
-      "position": {
-        "x": 2775,
-        "y": 2706
-      },
-      "status": "online",
-      "properties": {
-        "rating": 2000,
-        "voltage": 34.5,
-        "unit": "A"
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false
-    },
-    {
-      "id": "paste-1779985373163-190-wzd8w",
-      "type": "bess-xfmr",
-      "name": "STATCOM Xfmr R",
-      "fullName": "STATCOM Transformer",
-      "position": {
-        "x": 2600,
-        "y": 2700
-      },
-      "status": "online",
-      "properties": {
-        "rating": 50,
-        "unit": "MVA",
-        "secondaryVoltageKv": 0.7,
-        "primaryVoltageKv": 34.5
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false
-    },
-    {
-      "id": "paste-1779985373163-191-8nkae",
-      "type": "ct",
-      "name": "CT",
-      "fullName": "Current Transformer 2000:1",
-      "position": {
-        "x": 2475,
-        "y": 2700
-      },
-      "status": "online",
-      "properties": {
-        "rating": 2000,
-        "voltage": 0,
-        "unit": "2000:1"
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false
-    },
-    {
       "id": "paste-1779985373163-192-djhus",
       "type": "ct",
       "name": "CT",
@@ -17897,81 +17712,6 @@
       }
     },
     {
-      "id": "conn-paste-1779985373163-238",
-      "from": "paste-1779985373163-1-43w91",
-      "to": "paste-1779985373163-191-8nkae",
-      "type": "power",
-      "status": "idle",
-      "style": {
-        "useAuto": false,
-        "color": "#2d7a32",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        }
-      }
-    },
-    {
-      "id": "conn-paste-1779985373163-239",
-      "from": "paste-1779985373163-191-8nkae",
-      "to": "paste-1779985373163-190-wzd8w",
-      "type": "power",
-      "status": "idle",
-      "style": {
-        "useAuto": false,
-        "color": "#2d7a32",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        },
-        "flowArrows": "reverse"
-      }
-    },
-    {
-      "id": "conn-paste-1779985373163-240",
-      "from": "paste-1779985373163-190-wzd8w",
-      "to": "paste-1779985373163-189-oq7z8",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-paste-1779985373163-241",
-      "from": "paste-1779985373163-189-oq7z8",
-      "to": "paste-1779985373163-188-8o8wf",
-      "type": "power",
-      "status": "idle",
-      "style": {
-        "useAuto": false,
-        "color": "#2d7a32",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        },
-        "flowArrows": "reverse"
-      }
-    },
-    {
       "id": "conn-1780007122211",
       "from": "comp-upper-left-gen-3d-preview",
       "to": "comp-bus-left",
@@ -18234,50 +17974,31 @@
         },
         "flowArrows": "forward"
       }
-    },
-    {
-      "id": "conn-lower-right-gen-gfme-bus",
-      "from": "comp-lower-right-gen-gfme-preview",
-      "to": "paste-1779985373163-1-43w91",
-      "voltage": 0,
-      "type": "AC",
-      "status": "normal",
-      "style": {
-        "useAuto": false,
-        "color": "#2d7a32",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        },
-        "flowArrows": "forward"
-      }
     }
   ],
   "systemState": {
-    "simulationRunning": false,
-    "zoom": 0.5,
+    "simulationRunning": true,
+    "zoom": 0.30000000000000004,
     "pan": {
-      "x": 171.53408772969715,
-      "y": 97.60999537320549
+      "x": 107.53408772969703,
+      "y": 236.27666203987278
     },
     "mode": "design",
-    "uiFontPxShift": 3,
+    "uiFontPxShift": 4,
     "canvasFontPxShift": 5,
     "collapsedComponentFontPxShift": 24
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
-  "globalSampleStep": 8,
-  "perChartSampleStep": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {
+    "sim-chart-1781584433516-0": 128,
+    "sim-chart-1781584433516-1": 128,
+    "sim-chart-1781584433516-2": 128,
+    "sim-chart-1781584433516-3": 128
+  },
   "designUiSession": {
-    "ensembleId": "all"
+    "ensembleId": "all_"
   },
   "quickScenarioButtons": [
     {
@@ -18287,7 +18008,7 @@
       "color": "#455a64",
       "presetName": "noBessNoStatcom",
       "targetType": "ensemble",
-      "ensembleId": "all"
+      "ensembleId": "all_"
     },
     {
       "id": "qs-1779820073898-7ersa2",
@@ -18295,6 +18016,24 @@
       "icon": "\ud83d\udd0b",
       "color": "#2e7d32",
       "presetName": "withBessandStatCom",
+      "targetType": "ensemble",
+      "ensembleId": "all_"
+    },
+    {
+      "id": "qs-placeholder-bess-alone",
+      "label": "With BESS Alone",
+      "icon": "\ud83d\udd0b",
+      "color": "#00695c",
+      "presetName": "withBessAlone",
+      "targetType": "ensemble",
+      "ensembleId": "all"
+    },
+    {
+      "id": "qs-placeholder-statcom-alone",
+      "label": "With STATCOM Alone",
+      "icon": "\u26a1",
+      "color": "#388e3c",
+      "presetName": "withStatcomAlone",
       "targetType": "ensemble",
       "ensembleId": "all"
     },
@@ -18305,7 +18044,7 @@
       "color": "#47413e",
       "presetName": "TurnOffAllPower",
       "targetType": "ensemble",
-      "ensembleId": "all"
+      "ensembleId": "all_"
     }
   ],
   "hiddenDefaultQuickScenarios": [

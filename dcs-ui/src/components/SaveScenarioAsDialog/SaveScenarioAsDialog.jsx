@@ -13,6 +13,7 @@ import './SaveScenarioAsDialog.css';
 function SaveScenarioAsDialog({
   open,
   existingPresetNames,
+  replaceTarget = null,
   onClose,
   onSave,
 }) {
@@ -22,16 +23,29 @@ function SaveScenarioAsDialog({
   const [overwrite, setOverwrite] = useState(false);
   const [color, setColor] = useState(defaultColor);
   const [icon, setIcon] = useState(QUICK_SCENARIO_ICON_OPTIONS[0]);
+  const replaceMode = Boolean(replaceTarget?.id);
 
   useEffect(() => {
     if (open) {
-      setLabel('');
-      setPresetName('');
-      setOverwrite(false);
-      setColor(defaultColor);
-      setIcon(QUICK_SCENARIO_ICON_OPTIONS[0]);
+      if (replaceTarget) {
+        setLabel(String(replaceTarget.label || '').trim());
+        setPresetName(String(replaceTarget.presetName || '').trim());
+        setOverwrite(false);
+        setColor(normalizeButtonColor(replaceTarget.color, defaultColor));
+        setIcon(
+          typeof replaceTarget.icon === 'string' && replaceTarget.icon.trim()
+            ? replaceTarget.icon.trim()
+            : QUICK_SCENARIO_ICON_OPTIONS[0],
+        );
+      } else {
+        setLabel('');
+        setPresetName('');
+        setOverwrite(false);
+        setColor(defaultColor);
+        setIcon(QUICK_SCENARIO_ICON_OPTIONS[0]);
+      }
     }
-  }, [open, defaultColor]);
+  }, [open, defaultColor, replaceTarget]);
 
   const colorNormalized = useMemo(() => normalizeButtonColor(color, defaultColor), [color, defaultColor]);
 
@@ -52,11 +66,14 @@ function SaveScenarioAsDialog({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!buttonLabel || !configName) return;
-    if (presetTaken && !overwrite) return;
+    const keepSamePreset =
+      replaceMode && configName === String(replaceTarget?.presetName || '').trim();
+    const effectiveOverwrite = overwrite || keepSamePreset;
+    if (presetTaken && !effectiveOverwrite) return;
     onSave({
       label: buttonLabel,
       presetName: configName,
-      overwrite: presetTaken ? overwrite : false,
+      overwrite: presetTaken ? effectiveOverwrite : false,
       color: colorNormalized,
       icon,
     });
@@ -83,11 +100,23 @@ function SaveScenarioAsDialog({
       aria-labelledby="save-scenario-as-title"
     >
       <div className="save-scenario-as-dialog">
-        <h2 id="save-scenario-as-title">Save scenario as</h2>
+        <h2 id="save-scenario-as-title">
+          {replaceMode ? 'Replace scenario button' : 'Save scenario as'}
+        </h2>
         <p className="save-scenario-as-help">
-          Saves the current charts and panel settings as a preset (same as{' '}
-          <strong>Save configuration as</strong>), then adds a button under{' '}
-          <strong>Quick Scenarios</strong> that loads that preset when clicked.
+          {replaceMode ? (
+            <>
+              Saves the current charts and panel settings as a preset (same as{' '}
+              <strong>Save configuration as</strong>), then updates the Quick Scenarios
+              button you right-clicked so it loads that preset when clicked.
+            </>
+          ) : (
+            <>
+              Saves the current charts and panel settings as a preset (same as{' '}
+              <strong>Save configuration as</strong>), then adds a button under{' '}
+              <strong>Quick Scenarios</strong> that loads that preset when clicked.
+            </>
+          )}
         </p>
         <form onSubmit={handleSubmit}>
           <label className="save-scenario-as-label">
@@ -205,7 +234,13 @@ function SaveScenarioAsDialog({
             <button
               type="submit"
               className="save-scenario-as-btn submit"
-              disabled={!buttonLabel || !configName || (presetTaken && !overwrite)}
+              disabled={
+                !buttonLabel ||
+                !configName ||
+                (presetTaken &&
+                  !overwrite &&
+                  !(replaceMode && configName === String(replaceTarget?.presetName || '').trim()))
+              }
             >
               Save
             </button>

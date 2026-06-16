@@ -2,18 +2,18 @@
   "version": 1,
   "columns": [
     "t",
-    "P_g4",
     "Q_g4",
     "V_g4",
+    "Pmech_gt_4",
+    "Tm_gt_4",
+    "Te_gt_4",
+    "Tm0_gt_4",
+    "Wpu_gt_4",
     "freq_gt_4",
-    "Vlow_gt_4",
-    "Tm_1.3",
-    "Tm0_1.3",
-    "Te_1.3",
-    "Wpu_1.3",
-    "Pmech_1.3"
+    "P_g4",
+    "Vlow_gt_4"
   ],
-  "row_count": 15001,
+  "row_count": 120001,
   "column_files": [
     "c0000.parquet",
     "c0001.parquet",

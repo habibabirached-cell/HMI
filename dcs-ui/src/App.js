@@ -15,6 +15,8 @@ import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenario
 import {
   normalizeQuickScenarioButtons,
   normalizeHiddenDefaultQuickScenarios,
+  isQuickScenarioPlaceholderPreset,
+  isQuickScenarioDesignFirstPreset,
 } from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
 import {
@@ -22,6 +24,17 @@ import {
   normalizeDesignSectionVisibility,
   resolveQuickScenarioDesignVisibility,
 } from './utils/designSectionVisibility';
+import {
+  applyBranchCollapseToComponents,
+  normalizeQuickScenarioBranchCollapsed,
+} from './utils/designCollapseState';
+import {
+  uiDrawerFieldsFromChartDef,
+  getChartUiDrawer,
+  sanitizeStacksForDrawers,
+  normalizeChartUiDrawer,
+  CHART_DRAWER_KEYS,
+} from './utils/chartPanelDrawerBuckets';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -59,7 +72,6 @@ import {
   computePlaybackStartSeconds,
 } from './utils/playbackClockOrigin';
 import { readSimulationSpeedFromConfig } from './utils/simulationSpeed';
-import { sanitizeStacksForDrawers } from './utils/chartPanelDrawerBuckets';
 import { normalizeVariableStylesFromDef } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -95,7 +107,7 @@ import {
 import './styles/App.css';
 
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
-const CANVAS_ZOOM_MIN = 0.5;
+const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
 
 /** Verbose trace for deep links / session restore / copy-link debugging — filter console by `[DCS:` */
@@ -146,12 +158,13 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
         isMultiComponent: true,
         ...(chartDef.ensemble_sim_id && !chartDef.ensemble_cross_member && { ensembleSimId: chartDef.ensemble_sim_id }),
         ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
+        ...(chartDef.legend_labels != null && typeof chartDef.legend_labels === 'object' && { legendLabels: chartDef.legend_labels }),
+        ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
+          legendTitle: String(chartDef.legend_title).trim(),
+        }),
       };
       const pcw = chartCardWidthFromDef(chartDef);
-      const drawer =
-        chartDef.ui_drawer === 'chart2' || chartDef.uiDrawer === 'chart2'
-          ? { uiDrawer: 'chart2' }
-          : {};
+      const drawer = uiDrawerFieldsFromChartDef(chartDef);
       const multiBase = pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
       return { ...multiBase, ...drawer };
     }
@@ -188,6 +201,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.x_label != null && { xLabel: chartDef.x_label }),
       ...(chartDef.y_label != null && { yLabel: chartDef.y_label }),
       ...(chartDef.legend_labels != null && typeof chartDef.legend_labels === 'object' && { legendLabels: chartDef.legend_labels }),
+      ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
+        legendTitle: String(chartDef.legend_title).trim(),
+      }),
       ...(() => {
         const vs = normalizeVariableStylesFromDef(chartDef.variable_styles);
         return vs ? { variableStyles: vs } : {};
@@ -228,12 +244,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.ensemble_cross_member && { ensembleCrossMember: true }),
     };
     const pcw = chartCardWidthFromDef(chartDef);
-    const drawer2 =
-      chartDef.ui_drawer === 'chart2' || chartDef.uiDrawer === 'chart2'
-        ? { uiDrawer: 'chart2' }
-        : {};
+    const drawer = uiDrawerFieldsFromChartDef(chartDef);
     const singleBase = pcw != null ? { ...single, chartCardWidth: pcw } : single;
-    return { ...singleBase, ...drawer2 };
+    return { ...singleBase, ...drawer };
   }).filter(Boolean);
   return { newCharts, initialPerChart };
 }
@@ -289,7 +302,7 @@ function App() {
       window.removeEventListener('resize', sync);
     };
   }, [viewMode]);
-  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = charts top + Controls bottom-left; conf4 = like conf2 but chart2 under chart1. */
+  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = 2×2 chart grid in right drawer + Controls bottom-left; conf4 = like conf2 but chart2 under chart1. */
   const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState(() => {
     try {
       const v = window.localStorage?.getItem('dcsWorkspaceLayoutPreset');
@@ -329,8 +342,13 @@ function App() {
     }
   }, [chartSideDockWidth]);
   const chartPanelLayoutMode = useMemo(() => {
-    if (workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf4') return 'sideRight';
-    if (workspaceLayoutPreset === 'conf3') return 'top';
+    if (
+      workspaceLayoutPreset === 'conf2' ||
+      workspaceLayoutPreset === 'conf3' ||
+      workspaceLayoutPreset === 'conf4'
+    ) {
+      return 'sideRight';
+    }
     return 'bottom';
   }, [workspaceLayoutPreset]);
   /** conf1, conf2 & conf4: split chart tray into chart1 / chart2 drawers */
@@ -340,6 +358,8 @@ function App() {
     workspaceLayoutPreset === 'conf4';
   /** conf4: same side dock as conf2, but chart2 stacks under chart1 instead of beside it. */
   const dualChartDrawersStacked = workspaceLayoutPreset === 'conf4';
+  /** conf3: four equal quadrants (chart1–chart4) in a 2×2 grid in the right-side drawer. */
+  const quadChartDrawers = workspaceLayoutPreset === 'conf3';
   /** conf1: Controls full-height on the right; conf2/conf3/conf4: bottom-half vertical strip on the left. */
   const controlsDockRight = workspaceLayoutPreset === 'conf1';
   const controlsDockLeftBottom =
@@ -630,15 +650,22 @@ function App() {
   const ensemblesHydratedForPathRef = useRef(null);
   const [saveSimConfigDialogOpen, setSaveSimConfigDialogOpen] = useState(false);
   const [saveScenarioAsDialogOpen, setSaveScenarioAsDialogOpen] = useState(false);
+  const [saveScenarioAsReplaceTarget, setSaveScenarioAsReplaceTarget] = useState(null);
   /** User shortcuts in Quick Scenarios → named chart presets (persisted in design .conf.json). */
   const [quickScenarioButtons, setQuickScenarioButtons] = useState([]);
   /** Default quick-scenario ids hidden for this design until reload without saved design. */
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
   /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
   const [activeQuickScenarioPlaying, setActiveQuickScenarioPlaying] = useState(null);
+  /** Preset awaiting a second click to load charts + simulation (design-first quick scenarios). */
+  const [quickScenarioDesignPrimedPreset, setQuickScenarioDesignPrimedPreset] = useState(null);
   /** Upper / lower stacked canvas sections — collapse state stays in components; this only hides rendering. */
   const [designSectionVisibility, setDesignSectionVisibility] = useState(
     () => ({ ...DEFAULT_DESIGN_SECTION_VISIBILITY }),
+  );
+  /** Per quick-scenario preset: true = compact branches, false = expanded SLD. */
+  const [quickScenarioBranchCollapsed, setQuickScenarioBranchCollapsed] = useState(
+    () => normalizeQuickScenarioBranchCollapsed(null),
   );
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
@@ -2773,6 +2800,7 @@ function App() {
                     ? simulationMetadata.ensembleId
                     : null,
                 designSectionVisibility,
+                quickScenarioBranchCollapsed,
               },
               systemState: {
                 simulationRunning,
@@ -2814,6 +2842,7 @@ function App() {
       canvasFontPxShift,
       collapsedComponentFontPxShift,
       designSectionVisibility,
+      quickScenarioBranchCollapsed,
     ],
   );
 
@@ -2832,10 +2861,13 @@ function App() {
     const isEnsembleTab = Boolean(
       simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
     );
+    const replaceTarget = saveScenarioAsReplaceTarget;
     try {
       await saveNamedSimulationPreset({ name: presetName, overwrite });
       const shortcut = {
-        id: `qs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id:
+          replaceTarget?.id ??
+          `qs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         label,
         icon,
         color,
@@ -2845,19 +2877,24 @@ function App() {
           ? { ensembleId: simulationMetadata.ensembleId }
           : { simulationId: simulationMetadata.id }),
       };
-      const nextButtons = [
-        ...quickScenarioButtons.filter(
-          (b) =>
-            !(
-              b.presetName === presetName &&
-              b.targetType === shortcut.targetType &&
-              (isEnsembleTab
-                ? b.ensembleId === shortcut.ensembleId
-                : b.simulationId === shortcut.simulationId)
-            ),
-        ),
-        shortcut,
-      ];
+      const matchesShortcutTarget = (b) =>
+        b.presetName === presetName &&
+        b.targetType === shortcut.targetType &&
+        (isEnsembleTab
+          ? b.ensembleId === shortcut.ensembleId
+          : b.simulationId === shortcut.simulationId);
+
+      let nextButtons;
+      if (replaceTarget?.id) {
+        nextButtons = quickScenarioButtons
+          .map((b) => (b.id === replaceTarget.id ? shortcut : b))
+          .filter((b) => b.id === shortcut.id || !matchesShortcutTarget(b));
+      } else {
+        nextButtons = [
+          ...quickScenarioButtons.filter((b) => !matchesShortcutTarget(b)),
+          shortcut,
+        ];
+      }
       setQuickScenarioButtons(nextButtons);
       if (currentConfigName) {
         const ok = await persistQuickScenarioUiToDesign(
@@ -2868,6 +2905,7 @@ function App() {
           alert('Preset saved, but Quick Scenario button could not be written to the design file.');
         }
       }
+      setSaveScenarioAsReplaceTarget(null);
       setSaveScenarioAsDialogOpen(false);
     } catch (e) {
       console.warn(e);
@@ -2875,12 +2913,66 @@ function App() {
     }
   };
 
+  const handleOpenSaveScenarioAs = useCallback((replaceTarget = null) => {
+    setSaveScenarioAsReplaceTarget(replaceTarget);
+    setSaveScenarioAsDialogOpen(true);
+  }, []);
+
+  const handleCloseSaveScenarioAsDialog = useCallback(() => {
+    setSaveScenarioAsDialogOpen(false);
+    setSaveScenarioAsReplaceTarget(null);
+  }, []);
+
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
-    handleStopSimulation();
+    const isPlaceholder = isQuickScenarioPlaceholderPreset(shortcut.presetName);
+    const isDesignFirst = isQuickScenarioDesignFirstPreset(shortcut.presetName);
+    const isSecondDesignFirstClick =
+      isDesignFirst && quickScenarioDesignPrimedPreset === shortcut.presetName;
+
+    if (
+      quickScenarioDesignPrimedPreset &&
+      quickScenarioDesignPrimedPreset !== shortcut.presetName
+    ) {
+      setQuickScenarioDesignPrimedPreset(null);
+    }
+
     const sectionVisibility = resolveQuickScenarioDesignVisibility(shortcut.presetName);
+    const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
     if (sectionVisibility) {
       setDesignSectionVisibility(sectionVisibility);
+    }
+    const branchCollapsed = quickScenarioBranchCollapsed[shortcut.presetName] ?? true;
+    setCanvasComponents((prev) =>
+      applyBranchCollapseToComponents(
+        prev,
+        visibilityForCollapse,
+        branchCollapsed,
+        shortcut.presetName,
+      ),
+    );
+
+    if (isDesignFirst && !isSecondDesignFirstClick) {
+      handleStopSimulation();
+      setOpenCharts([]);
+      setChartStacks([]);
+      setPerChartSampleStep({});
+      setActiveNamedSimulationConfig(null);
+      setQuickScenarioDesignPrimedPreset(shortcut.presetName);
+      setActiveQuickScenarioPlaying(shortcut);
+      return;
+    }
+
+    if (isSecondDesignFirstClick) {
+      setQuickScenarioDesignPrimedPreset(null);
+    }
+
+    if (!isPlaceholder && !isDesignFirst) {
+      handleStopSimulation();
+    }
+    if (isPlaceholder) {
+      setActiveQuickScenarioPlaying(shortcut);
+      return;
     }
     try {
       if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
@@ -2940,6 +3032,27 @@ function App() {
       alert(e.message || 'Failed to save quick scenario configuration');
     }
   };
+
+  const handleQuickScenarioCollapseChange = useCallback((shortcut, collapsed) => {
+    if (!shortcut?.presetName) return;
+    setQuickScenarioBranchCollapsed((prev) => ({
+      ...prev,
+      [shortcut.presetName]: collapsed,
+    }));
+    const sectionVisibility = resolveQuickScenarioDesignVisibility(shortcut.presetName);
+    const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
+    if (sectionVisibility) {
+      setDesignSectionVisibility(sectionVisibility);
+    }
+    setCanvasComponents((prev) =>
+      applyBranchCollapseToComponents(
+        prev,
+        visibilityForCollapse,
+        collapsed,
+        shortcut.presetName,
+      ),
+    );
+  }, [designSectionVisibility]);
 
   const handleDeleteQuickScenarioButton = async (buttonId) => {
     const nextButtons = quickScenarioButtons.filter((b) => b.id !== buttonId);
@@ -3453,6 +3566,9 @@ function App() {
         if (c.legendLabels != null && typeof c.legendLabels === 'object' && Object.keys(c.legendLabels).length) {
           base.legend_labels = c.legendLabels;
         }
+        if (c.legendTitle != null && String(c.legendTitle).trim()) {
+          base.legend_title = String(c.legendTitle).trim();
+        }
         if (c.variableStyles != null && typeof c.variableStyles === 'object' && Object.keys(c.variableStyles).length) {
           base.variable_styles = c.variableStyles;
         }
@@ -3478,7 +3594,8 @@ function App() {
           }
           if (Object.keys(rangeObj).length) base.axis_range = rangeObj;
         }
-        if (c.uiDrawer === 'chart2') base.ui_drawer = 'chart2';
+        const uiDrawer = getChartUiDrawer(c);
+        if (uiDrawer !== 'chart1') base.ui_drawer = uiDrawer;
         return base;
       });
       const body = {
@@ -4974,11 +5091,21 @@ function App() {
       .filter(i => i >= 0)
       .sort((a, b) => a - b);
     if (indices.length < 2) return;
-    if (dualWorkspaceDrawers) {
-      const drawerOf = (i) => (openCharts[i]?.uiDrawer === 'chart2' ? 'chart2' : 'chart1');
+    if (dualWorkspaceDrawers || quadChartDrawers) {
+      const drawerOf = (i) => {
+        const ch = openCharts[i];
+        if (!ch) return 'chart1';
+        const d = getChartUiDrawer(ch);
+        if (quadChartDrawers) return d;
+        return d === 'chart2' ? 'chart2' : 'chart1';
+      };
       const d0 = drawerOf(indices[0]);
       if (indices.some((i) => drawerOf(i) !== d0)) {
-        alert('You can only stack charts that are in the same drawer (chart1 or chart2).');
+        alert(
+          quadChartDrawers
+            ? 'You can only stack charts that are in the same quadrant (chart1–chart4).'
+            : 'You can only stack charts that are in the same drawer (chart1 or chart2).',
+        );
         return;
       }
     }
@@ -5003,19 +5130,24 @@ function App() {
     persistChartsToSimJson(openCharts, { chart_stacks: nextStacks });
   };
 
-  /** Move chart between chart1 / chart2 drawers (conf1 bottom + conf2 side). */
+  /** Move chart between chart1–chart4 drawers. */
   const handleMoveChartDrawer = (chartId, drawer) => {
-    if (!chartId || (drawer !== 'chart1' && drawer !== 'chart2')) return;
+    const normalized = normalizeChartUiDrawer(drawer);
+    if (!chartId || !CHART_DRAWER_KEYS.includes(normalized)) return;
     setOpenCharts((prev) => {
       const nextCharts = prev.map((c) => {
         if (c.id !== chartId) return c;
-        if (drawer === 'chart2') return { ...c, uiDrawer: 'chart2' };
-        const next = { ...c };
-        delete next.uiDrawer;
-        return next;
+        if (normalized === 'chart1') {
+          const next = { ...c };
+          delete next.uiDrawer;
+          return next;
+        }
+        return { ...c, uiDrawer: normalized };
       });
       setChartStacks((prevStacks) => {
-        const nextStacks = sanitizeStacksForDrawers(nextCharts, prevStacks);
+        const nextStacks = sanitizeStacksForDrawers(nextCharts, prevStacks, {
+          quad: quadChartDrawers,
+        });
         persistChartsToSimJson(nextCharts, { chart_stacks: nextStacks });
         return nextStacks;
       });
@@ -5139,6 +5271,9 @@ function App() {
     } else {
       setDesignSectionVisibility({ ...DEFAULT_DESIGN_SECTION_VISIBILITY });
     }
+    setQuickScenarioBranchCollapsed(
+      normalizeQuickScenarioBranchCollapsed(dus?.quickScenarioBranchCollapsed),
+    );
 
     setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
     setHiddenDefaultQuickScenarios(
@@ -5251,6 +5386,7 @@ function App() {
             ? simulationMetadata.ensembleId
             : null,
         designSectionVisibility,
+        quickScenarioBranchCollapsed,
       },
       quickScenarioButtons,
       hiddenDefaultQuickScenarios,
@@ -5607,10 +5743,15 @@ function App() {
       quickScenarioButtons={quickScenarioButtons}
       hiddenDefaultQuickScenarios={hiddenDefaultQuickScenarios}
       activeQuickScenarioPlaying={activeQuickScenarioPlaying}
+      activeNamedSimulationConfig={activeNamedSimulationConfig}
       onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
+      quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
+      onQuickScenarioCollapseChange={handleQuickScenarioCollapseChange}
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
       onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
+      canSaveScenarioAs={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
+      onSaveScenarioAsReplace={handleOpenSaveScenarioAs}
       rightRailGridPeek={gridPeek}
       onToggleRightRailGridPeek={toggleRightRailGridPeek}
     />
@@ -5632,7 +5773,9 @@ function App() {
               left: `${controlsLeftInsetPx}px`,
               ['--controls-left-inset']: `${controlsLeftInsetPx}px`,
               ['--chart-side-dock-width']:
-                workspaceLayoutPreset === 'conf2' || workspaceLayoutPreset === 'conf4'
+                workspaceLayoutPreset === 'conf2' ||
+                workspaceLayoutPreset === 'conf3' ||
+                workspaceLayoutPreset === 'conf4'
                   ? `${chartSideDockWidth}px`
                   : '0px',
               ['--controls-chart-gap']: `${CONTROLS_CHART_GAP_PX}px`,
@@ -5801,7 +5944,7 @@ function App() {
           onSave={handleQuickSave}
           onSaveAs={handleOpenSaveDialog}
           onSaveSimulationConfig={() => setSaveSimConfigDialogOpen(true)}
-          onSaveScenarioAs={() => setSaveScenarioAsDialogOpen(true)}
+          onSaveScenarioAs={() => handleOpenSaveScenarioAs(null)}
           onLoad={handleOpenLoadDialog}
           hasComponents={canvasComponents.length > 0}
           canSave={currentConfigName !== null}
@@ -6025,6 +6168,7 @@ function App() {
           onSidePanelWidthChange={handleChartSideDockWidthChange}
           dualChartDrawers={dualWorkspaceDrawers}
           dualChartDrawersStacked={dualChartDrawersStacked}
+          quadChartDrawers={quadChartDrawers}
           onMoveChartDrawer={handleMoveChartDrawer}
         />
       )}
@@ -6039,7 +6183,8 @@ function App() {
       <SaveScenarioAsDialog
         open={saveScenarioAsDialogOpen}
         existingPresetNames={namedSimulationConfigs}
-        onClose={() => setSaveScenarioAsDialogOpen(false)}
+        replaceTarget={saveScenarioAsReplaceTarget}
+        onClose={handleCloseSaveScenarioAsDialog}
         onSave={handleConfirmSaveScenarioAs}
       />
 

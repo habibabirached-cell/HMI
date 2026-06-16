@@ -576,7 +576,7 @@ body {
 .app-right-rail--grid-peek
   .simulation-controls
   .controls-body
-  > *:not(.scenario-playing-now-section):not(.quick-scenarios-section--top):not(.simulation-speed-section--after-quick-scenarios) {
+  > *:not(.scenario-playing-now-section):not(.quick-scenarios-section--top):not(.controls-shortcuts-section--top):not(.simulation-speed-section--after-quick-scenarios) {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease;
@@ -584,6 +584,7 @@ body {
 
 .app-right-rail--grid-peek .simulation-controls .scenario-playing-now-section,
 .app-right-rail--grid-peek .simulation-controls .quick-scenarios-section--top,
+.app-right-rail--grid-peek .simulation-controls .controls-shortcuts-section--top,
 .app-right-rail--grid-peek .simulation-controls .simulation-speed-section--after-quick-scenarios {
   opacity: 1;
   pointer-events: auto;

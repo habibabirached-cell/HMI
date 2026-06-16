@@ -60,6 +60,16 @@ export const QUICK_SCENARIO_COLOR_OPTIONS = [
 ];
 
 /**
+ * Matched greens for statcom05 lower-plant quick scenarios (Material Green / Teal ramp).
+ * Full combo = deepest green; BESS = teal; STATCOM = mid green — distinct but cohesive.
+ */
+export const QUICK_SCENARIO_LOWER_PLANT_COLORS = {
+  withBessandStatCom: '#2e7d32',
+  withBessAlone: '#00695c',
+  withStatcomAlone: '#388e3c',
+};
+
+/**
  * Icons for “Save scenario as” — data-center / power / IT operations themed (~120).
  * Deduped; order puts common controls first, then thematic groups.
  */
@@ -133,4 +143,34 @@ export function normalizeHiddenDefaultQuickScenarios(raw) {
   if (!Array.isArray(raw)) return [];
   const valid = new Set(DEFAULT_QUICK_SCENARIOS.map((d) => d.id));
   return [...new Set(raw.map((id) => String(id).trim()).filter((id) => valid.has(id)))];
+}
+
+/** Design shortcuts rendered under Controls instead of Quick Scenarios. */
+export const QUICK_SCENARIO_CONTROLS_PRESETS = new Set(['TurnOffAllPower']);
+
+/** Named presets that only adjust canvas view for now (no simulation config yet). */
+export const QUICK_SCENARIO_PLACEHOLDER_PRESETS = new Set([
+  'withBessAlone',
+  'withStatcomAlone',
+]);
+
+/**
+ * First click = canvas design only (section visibility + collapse); second click = charts + simulation.
+ * Used for statcom05 “No Bess No Statcom”.
+ */
+export const QUICK_SCENARIO_DESIGN_FIRST_PRESETS = new Set(['noBessNoStatcom']);
+
+export function isQuickScenarioControlsShortcut(shortcut) {
+  return (
+    shortcut?.presetName != null &&
+    QUICK_SCENARIO_CONTROLS_PRESETS.has(shortcut.presetName)
+  );
+}
+
+export function isQuickScenarioPlaceholderPreset(presetName) {
+  return QUICK_SCENARIO_PLACEHOLDER_PRESETS.has(presetName);
+}
+
+export function isQuickScenarioDesignFirstPreset(presetName) {
+  return QUICK_SCENARIO_DESIGN_FIRST_PRESETS.has(presetName);
 }

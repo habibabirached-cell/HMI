@@ -837,6 +837,76 @@
   border-bottom: none;
 }
 
+/* conf3: four equal quadrants — chart1 | chart2 / chart3 | chart4 */
+.chart-panel-drawers-row--quad-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.chart-panel-drawers-row--quad-grid > .chart-panel-drawer-slot {
+  flex: none;
+  min-height: 0;
+  border-right: 1px solid rgba(0, 94, 96, 0.28);
+  border-bottom: 1px solid rgba(0, 94, 96, 0.28);
+  padding: 4px 6px 6px;
+}
+
+.chart-panel-drawers-row--quad-grid > .chart-panel-drawer-slot:nth-child(2n) {
+  border-right: none;
+}
+
+.chart-panel-drawers-row--quad-grid > .chart-panel-drawer-slot:nth-child(n + 3) {
+  border-bottom: none;
+}
+
+.chart-panel--layout-side-right-quad .chart-panel-side-inner {
+  min-width: 0;
+}
+
+.chart-panel--layout-side-right-quad .chart-panel-drawers-row--quad-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.chart-panel--layout-side-right-quad .chart-panel-expand-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.chart-panel-drawers-row--quad-grid .chart-panel-content--dual-drawer {
+  flex-direction: column;
+  overflow: auto;
+  padding: 0 8px;
+  gap: 8px;
+}
+
+.chart-panel-drawers-row--quad-grid .chart-panel-chart {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 120px;
+  height: auto;
+}
+
+.chart-drawer-shift-group {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.chart-drawer-shift-btn--quad {
+  margin-right: 0;
+  padding: 2px 6px;
+  min-width: 26px;
+}
+
 .chart-panel-drawer-label {
   flex-shrink: 0;
   font-size: calc(10px + var(--ui-font-px-shift, 0px));

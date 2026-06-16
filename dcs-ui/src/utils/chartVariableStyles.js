@@ -30,6 +30,15 @@ export function getChartVariableKeys(chart) {
   return [];
 }
 
+/** Charts that show a multi-trace legend (nD, stacked nD, multi-component). */
+export function chartHasMultiTraceLegend(chart) {
+  if (!chart) return false;
+  if (chart.isMultiComponent && (chart.components?.length ?? 0) > 1) return true;
+  if (chart.chartType === 'stacked-nd' && chart.yColumns?.length) return true;
+  if (chart.chartType === 'nd' && chart.yColumns?.length > 1) return true;
+  return false;
+}
+
 export function defaultVariableStyle(index) {
   return {
     color: defaultColorForIndex(index),
