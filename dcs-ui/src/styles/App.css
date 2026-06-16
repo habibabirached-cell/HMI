@@ -504,7 +504,9 @@ body {
   width: var(--sim-grid-peek-max-width);
   max-width: var(--sim-grid-peek-max-width);
   min-width: var(--sim-grid-peek-min-width);
-  overflow: hidden;
+  max-height: 92vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.55);
   border-top: 2px solid var(--vernova-border);
   background: #1a1a1a;

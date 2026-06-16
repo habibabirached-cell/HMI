@@ -139,6 +139,8 @@ const SimulationControls = ({
   simulationTime,
   simulationSpeed,
   onSetSimulationSpeed,
+  playbackTimeRange = { t1: 8, t2: 60 },
+  onPlaybackTimeRangeChange,
   availableSimulations,
   simConfig,
   onRunSimulation,
@@ -736,14 +738,54 @@ const SimulationControls = ({
           </div>
         )}
 
-        {/* Simulation time + speed — pinned below quick scenarios; always visible in grid peek */}
-        {(simulationRunning || rightRailGridPeek) && (
+        {/* Simulation time + speed — visible in grid peek (Reveal) or when sim data is loaded */}
+        {(rightRailGridPeek || simulationRunning || (mode === 'simulation' && !!activeSimulationId) || !!activeEnsembleId) && (
           <div className="simulation-speed-section simulation-speed-section--after-quick-scenarios">
             <h4 className="scenarios-title">Simulation Speed</h4>
 
             <div className="simulation-time-display">
               <div className="time-label">Simulation Time:</div>
               <div className="time-value">{simulationTime?.toFixed(1) || '0.0'} seconds</div>
+            </div>
+
+            <div className="playback-range-section">
+              <div className="playback-range-label">Playback range (s)</div>
+              <div className="playback-range-inputs">
+                <label className="playback-range-field">
+                  <span className="playback-range-field-label">t1</span>
+                  <input
+                    type="number"
+                    className="playback-range-input"
+                    min={0}
+                    step={0.1}
+                    value={playbackTimeRange?.t1 ?? 8}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (Number.isFinite(v) && onPlaybackTimeRangeChange) {
+                        onPlaybackTimeRangeChange({ t1: v });
+                      }
+                    }}
+                    title="Loop start time (seconds)"
+                  />
+                </label>
+                <label className="playback-range-field">
+                  <span className="playback-range-field-label">t2</span>
+                  <input
+                    type="number"
+                    className="playback-range-input"
+                    min={0}
+                    step={0.1}
+                    value={playbackTimeRange?.t2 ?? 60}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (Number.isFinite(v) && onPlaybackTimeRangeChange) {
+                        onPlaybackTimeRangeChange({ t2: v });
+                      }
+                    }}
+                    title="Loop end time (seconds)"
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="speed-buttons">

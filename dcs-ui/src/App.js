@@ -77,9 +77,13 @@ import {
 import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSessionStorageKey } from './utils/simDeepLink';
 import {
   computePlaybackClockOriginSeconds,
-  computePlaybackStartSeconds,
 } from './utils/playbackClockOrigin';
 import { readSimulationSpeedFromConfig } from './utils/simulationSpeed';
+import {
+  DEFAULT_PLAYBACK_TIME_RANGE,
+  normalizePlaybackTimeRange,
+  resolvePlaybackLoopBounds,
+} from './utils/playbackTimeRange';
 import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -480,9 +484,16 @@ function App() {
   const [simulationTime, setSimulationTime] = useState(0); // Current simulation time in seconds
   const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 0.001× … 10000×
   const simulationSpeedRef = useRef(1);
+  const [playbackTimeRange, setPlaybackTimeRange] = useState(() => ({
+    ...DEFAULT_PLAYBACK_TIME_RANGE,
+  }));
+  const playbackTimeRangeRef = useRef({ ...DEFAULT_PLAYBACK_TIME_RANGE });
   useLayoutEffect(() => {
     simulationSpeedRef.current = simulationSpeed;
   }, [simulationSpeed]);
+  useLayoutEffect(() => {
+    playbackTimeRangeRef.current = playbackTimeRange;
+  }, [playbackTimeRange]);
 
   useEffect(() => {
     if (!simulationRunning) {
@@ -1175,17 +1186,21 @@ function App() {
     }
   };
 
+  /** Effective loop start/end (seconds) from user t1/t2 clamped to loaded data. */
+  const getPlaybackLoopBounds = useCallback(() => {
+    return resolvePlaybackLoopBounds(
+      playbackTimeRangeRef.current,
+      playbackMinTimeRef.current,
+      playbackMaxTimeRef.current,
+    );
+  }, []);
+
   // Start simulation
   const handleStartSimulation = () => {
     const start = () => {
-      const tOrigin = computePlaybackClockOriginSeconds(
-        simulationMetadataRef.current,
-        simulationDataRef.current?.length ? simulationDataRef.current : [],
-        ensembleMemberSimulationDataRef.current,
-      );
-      const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
+      const { loopStart } = getPlaybackLoopBounds();
       setSimulationRunning(true);
-      setSimulationTime(tStart);
+      setSimulationTime(loopStart);
 
       resetPlaybackVisualsRef.current();
 
@@ -1519,20 +1534,13 @@ function App() {
         const spd = simulationSpeedRef.current;
         const dt = 0.1 * spd;
         const next = prev + dt;
-        const tMax = playbackMaxTimeRef.current;
-        const tOrigin = computePlaybackClockOriginSeconds(
-          simulationMetadataRef.current,
-          simulationDataRef.current?.length ? simulationDataRef.current : [],
-          ensembleMemberSimulationDataRef.current,
-        );
-        const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
-        if (
-          Number.isFinite(tMax) &&
-          tMax > tStart &&
-          next >= tMax
-        ) {
+        const { loopStart, loopEnd } = getPlaybackLoopBounds();
+        if (Number.isFinite(loopEnd) && loopEnd > loopStart && next >= loopEnd) {
           queueMicrotask(() => resetPlaybackVisualsRef.current());
-          return tStart;
+          return loopStart;
+        }
+        if (Number.isFinite(loopStart) && next < loopStart) {
+          return loopStart;
         }
         return next;
       });
@@ -1546,18 +1554,13 @@ function App() {
     }
   };
 
-  /** Stop playback, rewind to CSV time origin, reset canvas visuals, then press Play. */
+  /** Stop playback, rewind to loop start (t1), reset canvas visuals, then press Play. */
   const restartSimulationPlaybackFromStart = async () => {
     stopSimulationClock();
     setSimulationRunning(false);
 
-    const tOrigin = computePlaybackClockOriginSeconds(
-      simulationMetadataRef.current,
-      simulationDataRef.current?.length ? simulationDataRef.current : [],
-      ensembleMemberSimulationDataRef.current,
-    );
-    const tStart = computePlaybackStartSeconds(tOrigin, openChartsRef.current);
-    setSimulationTime(tStart);
+    const { loopStart } = getPlaybackLoopBounds();
+    setSimulationTime(loopStart);
     resetPlaybackVisualsRef.current();
 
     await new Promise((resolve) => {
@@ -1577,6 +1580,23 @@ function App() {
       startSimulationClock(speed);
     }
   };
+
+  const handleSetPlaybackTimeRange = useCallback((patch) => {
+    setPlaybackTimeRange((prev) => {
+      const next = normalizePlaybackTimeRange({ ...prev, ...patch });
+      setSimulationTime((cur) => {
+        const { loopStart, loopEnd } = resolvePlaybackLoopBounds(
+          next,
+          playbackMinTimeRef.current,
+          playbackMaxTimeRef.current,
+        );
+        if (!Number.isFinite(cur)) return loopStart;
+        if (cur < loopStart || cur > loopEnd) return loopStart;
+        return cur;
+      });
+      return next;
+    });
+  }, []);
   
   // Clean up interval on unmount
   React.useEffect(() => {
@@ -2817,6 +2837,7 @@ function App() {
               canvasBlockTypeScale,
               globalSampleStep,
               perChartSampleStep,
+              playbackTimeRange,
               quickScenarioButtons: buttons,
               hiddenDefaultQuickScenarios: hiddenDefaults,
               designUiSession: {
@@ -2858,6 +2879,7 @@ function App() {
       canvasBlockTypeScale,
       globalSampleStep,
       perChartSampleStep,
+      playbackTimeRange,
       simulationMetadata?.isEnsemble,
       simulationMetadata?.ensembleId,
       simulationRunning,
@@ -5336,6 +5358,8 @@ function App() {
     const gss = data.globalSampleStep;
     setGlobalSampleStep(normalizeSampleStep(gss));
 
+    setPlaybackTimeRange(normalizePlaybackTimeRange(data.playbackTimeRange));
+
     if (
       data.perChartSampleStep != null &&
       typeof data.perChartSampleStep === 'object' &&
@@ -5495,6 +5519,7 @@ function App() {
       canvasBlockTypeScale,
       globalSampleStep,
       perChartSampleStep,
+      playbackTimeRange,
       designUiSession: {
         ensembleId:
           simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
@@ -5907,6 +5932,8 @@ function App() {
       simulationTime={simulationTime}
       simulationSpeed={simulationSpeed}
       onSetSimulationSpeed={handleSetSimulationSpeed}
+      playbackTimeRange={playbackTimeRange}
+      onPlaybackTimeRangeChange={handleSetPlaybackTimeRange}
       availableSimulations={availableSimulations}
       simConfig={simConfig}
       onRunSimulation={handleRunSimulation}

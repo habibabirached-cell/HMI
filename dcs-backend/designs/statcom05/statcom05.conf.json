@@ -17978,7 +17978,7 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.5516541271073087,
+    "zoom": 0.3516541271073087,
     "pan": {
       "x": 9.467192039506813,
       "y": 58.19398726858776
@@ -17992,12 +17992,12 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781638166792-0": 8,
-    "sim-chart-1781638166792-1": 8,
-    "sim-chart-1781638166792-2": 8,
-    "sim-chart-1781638166792-3": 8,
-    "sim-chart-1781638166792-4": 8,
-    "sim-chart-1781638166792-5": 8
+    "sim-chart-1781640083134-1": 8,
+    "sim-chart-1781640083134-4": 8,
+    "open-1781641336057": 4,
+    "open-1781642007973": 4,
+    "open-1781642283314": 4,
+    "open-1781642959955": 4
   },
   "designUiSession": {
     "ensembleId": "all_",
@@ -18073,34 +18073,5 @@
     "open-all-breakers"
   ],
   "ideumControlButtons": [],
-  "ideumKioskMode": false,
-  "remoteControlProfile": {
-    "enabled": true,
-    "commands": {
-      "add8Turbines": {
-        "label": "No Bess No Statcom",
-        "presetName": "noBessNoStatcom",
-        "targetType": "ensemble",
-        "ensembleId": "all_"
-      },
-      "addStatcomAndGFMe": {
-        "label": "With Bess and StatCom",
-        "presetName": "withBessandStatCom",
-        "targetType": "ensemble",
-        "ensembleId": "all_"
-      },
-      "addBessOnly": {
-        "label": "With BESS Alone",
-        "presetName": "withBessAlone",
-        "targetType": "ensemble",
-        "ensembleId": "all_"
-      },
-      "addGfmeOnly": {
-        "label": "With STATCOM Alone",
-        "presetName": "withStatcomAlone",
-        "targetType": "ensemble",
-        "ensembleId": "all_"
-      }
-    }
-  }
+  "ideumKioskMode": false
 }

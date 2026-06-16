@@ -766,6 +766,80 @@
   transform: translateY(-1px);
 }
 
+.playback-range-section {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(0, 94, 96, 0.08);
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+
+.playback-range-label {
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.playback-range-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.playback-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.playback-range-field-label {
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  color: #aaa;
+  font-weight: 600;
+}
+
+.playback-range-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 2px solid #444;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #1a8b8d;
+  font-size: calc(14px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+}
+
+.playback-range-input:focus {
+  outline: none;
+  border-color: #005E60;
+  box-shadow: 0 0 8px rgba(0, 94, 96, 0.4);
+}
+
+.simulation-controls--grid-peek .playback-range-section {
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.simulation-controls--grid-peek .playback-range-label {
+  font-size: calc(9px + var(--ui-font-px-shift, 0px));
+  margin-bottom: 6px;
+}
+
+.simulation-controls--grid-peek .playback-range-inputs {
+  gap: 6px;
+}
+
+.simulation-controls--grid-peek .playback-range-input {
+  padding: 10px 4px;
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
+}
+
 /* ============================================================================
    SIMULATION SCENARIOS SECTION
    ============================================================================ */
