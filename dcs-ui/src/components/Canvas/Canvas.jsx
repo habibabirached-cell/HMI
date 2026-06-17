@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, forwardRef, useMemo, useImperativeHandle } from 'react';
 import ChartContextMenu from '../ChartContextMenu/ChartContextMenu';
 import MultiComponentContextMenu from '../MultiComponentContextMenu/MultiComponentContextMenu';
 import MultiConnectionContextMenu from '../MultiConnectionContextMenu/MultiConnectionContextMenu';
@@ -19,6 +19,7 @@ import {
   normalizeCanvasRect,
 } from '../../utils/canvasDesignClipboard';
 import { markSelectionInteractionStart } from '../../utils/perfDebug';
+import { CANVAS_PAN_SPEED, CANVAS_WHEEL_PAN_SPEED, CANVAS_ARROW_PAN_STEP } from '../../utils/canvasPanSpeed';
 import {
   getTieHiddenMemberIdSet,
   tieEffectiveDimensions,
@@ -280,13 +281,26 @@ const Canvas = forwardRef(({
   onIdeumExpansionToggle,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
+  const canvasContainerRef = useRef(null);
   const canvasRef = useRef(null);
+  useImperativeHandle(ref, () => canvasContainerRef.current);
   const zoomRef = useRef(zoom);
   /** Keep latest pan + zoom for native wheel/touch/gesture handlers (avoid stale closures). */
   const panForGesturesRef = useRef(pan);
   zoomRef.current = zoom;
   panForGesturesRef.current = pan;
   const twoTouchPanRef = useRef(null);
+
+  const applyPanDelta = useCallback(
+    (dx, dy) => {
+      const p = panForGesturesRef.current;
+      const next = { x: p.x + dx, y: p.y + dy };
+      panForGesturesRef.current = next;
+      onPan(next);
+    },
+    [onPan],
+  );
+
   /** Stable identities for React.memo(CanvasBlock) — latest implementation swapped in each render. */
   const handleComponentMouseDownLatestRef = useRef(null);
   const handleComponentContextMenuLatestRef = useRef(null);
@@ -547,7 +561,7 @@ const Canvas = forwardRef(({
   const [draggingComponent, setDraggingComponent] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [panning, setPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const panGestureRef = useRef(null);
   const [connecting, setConnecting] = useState(null);
   const [connectingTo, setConnectingTo] = useState(null);
   const [contextMenu, setContextMenu] = useState(null); // { component, position }
@@ -602,6 +616,10 @@ const Canvas = forwardRef(({
     e.dataTransfer.dropEffect = 'copy';
   };
 
+  const focusCanvasForKeys = useCallback(() => {
+    canvasContainerRef.current?.focus({ preventScroll: true });
+  }, []);
+
   // ========================================================================
   // FUNCTION: handleComponentMouseDown
   // ========================================================================
@@ -617,6 +635,7 @@ const Canvas = forwardRef(({
   // ========================================================================
   const handleComponentMouseDown = (e, component) => {
     e.stopPropagation();
+    focusCanvasForKeys();
     
     // CRITICAL: Ignore right-click (button 2) - let contextmenu handler deal with it
     if (e.button === 2) {
@@ -880,10 +899,15 @@ const Canvas = forwardRef(({
   };
 
   const handleCanvasMouseDown = (e) => {
+    focusCanvasForKeys();
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
       // Middle mouse or Alt+Left mouse for panning
       setPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      panGestureRef.current = {
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startPan: { x: pan.x, y: pan.y },
+      };
     } else if (e.button === 0 && !draggingComponent && mode === 'design' && !connecting) {
       const pt = clientToCanvasPoint(canvasRef.current, pan, zoom, e.clientX, e.clientY);
       setMarqueeTrack({
@@ -1024,10 +1048,15 @@ const Canvas = forwardRef(({
         onMoveComponent(draggingComponent, snapped);
       }
     } else if (panning) {
-      onPan({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y
-      });
+      const g = panGestureRef.current;
+      if (g) {
+        const dx = (e.clientX - g.startClientX) * CANVAS_PAN_SPEED;
+        const dy = (e.clientY - g.startClientY) * CANVAS_PAN_SPEED;
+        onPan({
+          x: g.startPan.x + dx,
+          y: g.startPan.y + dy,
+        });
+      }
     } else if (connecting) {
       // Update connecting line
       const rect = canvasRef.current.getBoundingClientRect();
@@ -1100,6 +1129,7 @@ const Canvas = forwardRef(({
     }
     if (panning) {
       setPanning(false);
+      panGestureRef.current = null;
     }
   };
 
@@ -1160,10 +1190,11 @@ const Canvas = forwardRef(({
     };
   }, [resizingComponent, onUpdateComponent]);
 
-  // Two-finger trackpad pan; Ctrl/Meta+wheel pinch zoom; touch two-finger pan/pinch;
-  // Safari trackpad pinch (GestureEvent). Same zoom bounds as toolbar (10%–1000%).
+  // Two-finger trackpad pan (wheel); Ctrl/Meta+wheel pinch zoom; touch two-finger pan/pinch;
+  // Safari trackpad pinch (GestureEvent). Wheel uses capture on the full canvas container so
+  // trackpad scroll is not lost when the pointer is over HTML overlays (3D viewers, etc.).
   useEffect(() => {
-    const el = canvasRef.current;
+    const el = canvasContainerRef.current;
     if (!el) return;
 
     const PINCH_DIST_PX = 6;
@@ -1186,6 +1217,7 @@ const Canvas = forwardRef(({
     };
 
     const onWheel = (e) => {
+      if (!el.contains(e.target)) return;
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         e.stopPropagation();
@@ -1210,7 +1242,7 @@ const Canvas = forwardRef(({
         dx *= 80;
         dy *= 80;
       }
-      onPan((p) => ({ x: p.x - dx, y: p.y - dy }));
+      applyPanDelta(-dx * CANVAS_WHEEL_PAN_SPEED, -dy * CANVAS_WHEEL_PAN_SPEED);
     };
 
     /** Safari (macOS / iOS): trackpad pinch uses GestureEvent, not ctrl+wheel. */
@@ -1275,10 +1307,12 @@ const Canvas = forwardRef(({
       }
 
       if (s.phase === 'pan') {
-        onPan({
-          x: s.startPan.x + (midClientX - s.startMidClientX),
-          y: s.startPan.y + (midClientY - s.startMidClientY),
-        });
+        const next = {
+          x: s.startPan.x + (midClientX - s.startMidClientX) * CANVAS_PAN_SPEED,
+          y: s.startPan.y + (midClientY - s.startMidClientY) * CANVAS_PAN_SPEED,
+        };
+        panForGesturesRef.current = next;
+        onPan(next);
         return;
       }
 
@@ -1292,7 +1326,7 @@ const Canvas = forwardRef(({
       }
     };
 
-    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
     el.addEventListener('touchstart', onTouchStart, { passive: false });
     el.addEventListener('touchmove', onTouchMove, { passive: false });
     el.addEventListener('touchend', onTouchEnd, { passive: true });
@@ -1305,7 +1339,7 @@ const Canvas = forwardRef(({
     }
 
     return () => {
-      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('wheel', onWheel, { capture: true });
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onTouchEnd);
@@ -1316,6 +1350,7 @@ const Canvas = forwardRef(({
       }
     };
   }, [
+    applyPanDelta,
     onPan,
     onCanvasViewport,
     canvasZoomMin,
@@ -1431,11 +1466,62 @@ const Canvas = forwardRef(({
         console.log('⌨️  Escape - Cleared selection');
       }
       
-      // Arrow Up / Down — zoom in / out (same limits as toolbar)
-      if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !e.shiftKey) {
+      // Ctrl+↑/↓ — zoom (arrows alone pan the viewport)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+      ) {
         e.preventDefault();
         if (e.key === 'ArrowUp') onZoomIn?.();
         else onZoomOut?.();
+        return;
+      }
+
+      const isArrow =
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'ArrowLeft' ||
+        e.key === 'ArrowRight';
+
+      // Shift+arrows — nudge selected components (design mode)
+      if (isArrow && e.shiftKey && mode === 'design' && selectedComponents.length > 0) {
+        const gridSize = 50;
+        let dx = 0;
+        let dy = 0;
+        if (e.key === 'ArrowUp') dy = -gridSize;
+        else if (e.key === 'ArrowDown') dy = gridSize;
+        else if (e.key === 'ArrowLeft') dx = -gridSize;
+        else if (e.key === 'ArrowRight') dx = gridSize;
+        if (dx !== 0 || dy !== 0) {
+          e.preventDefault();
+          selectedComponents.forEach((compId) => {
+            const comp = components.find((c) => c.id === compId);
+            if (comp) {
+              const { width, height } = getLayoutDimensionsForSnap(comp, canvasBlockTypeScale);
+              const snapped = snapCenterToGrid(
+                comp.position.x + dx,
+                comp.position.y + dy,
+                width,
+                height,
+              );
+              onMoveComponent(compId, snapped);
+            }
+          });
+        }
+        return;
+      }
+
+      // ↑↓←→ — pan checkerboard (small step)
+      if (isArrow && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        const step = CANVAS_ARROW_PAN_STEP;
+        let dx = 0;
+        let dy = 0;
+        if (e.key === 'ArrowUp') dy = step;
+        else if (e.key === 'ArrowDown') dy = -step;
+        else if (e.key === 'ArrowLeft') dx = step;
+        else if (e.key === 'ArrowRight') dx = -step;
+        applyPanDelta(dx, dy);
         return;
       }
       
@@ -1472,41 +1558,6 @@ const Canvas = forwardRef(({
         e.preventDefault();
         onDeleteSelection?.();
       }
-      
-      // ARROW KEYS — nudge selected components (Shift+Up/Down for vertical; Left/Right without Shift)
-      if (mode === 'design' && selectedComponents.length > 0) {
-        const gridSize = 50;
-        let dx = 0, dy = 0;
-        if (e.key === 'ArrowUp' && e.shiftKey) {
-          e.preventDefault();
-          dy = -gridSize;
-        } else if (e.key === 'ArrowDown' && e.shiftKey) {
-          e.preventDefault();
-          dy = gridSize;
-        } else if (e.key === 'ArrowLeft' && !e.shiftKey) {
-          e.preventDefault();
-          dx = -gridSize;
-        } else if (e.key === 'ArrowRight' && !e.shiftKey) {
-          e.preventDefault();
-          dx = gridSize;
-        }
-        if (dx !== 0 || dy !== 0) {
-          selectedComponents.forEach(compId => {
-            const comp = components.find(c => c.id === compId);
-            if (comp) {
-              const { width, height } = getLayoutDimensionsForSnap(comp, canvasBlockTypeScale);
-              const snapped = snapCenterToGrid(
-                comp.position.x + dx,
-                comp.position.y + dy,
-                width,
-                height
-              );
-              onMoveComponent(compId, snapped);
-            }
-          });
-          console.log('⌨️  Arrow keys - Moved', selectedComponents.length, 'components by', dx, dy);
-        }
-      }
     };
     
     window.addEventListener('keydown', handleKeyDown);
@@ -1521,6 +1572,7 @@ const Canvas = forwardRef(({
     onMoveComponent,
     onZoomIn,
     onZoomOut,
+    applyPanDelta,
     contextMenu,
     showMultiChartDialog,
     canvasBlockTypeScale,
@@ -1638,7 +1690,14 @@ const Canvas = forwardRef(({
   }, [contextMenu]);
 
   return (
-    <div className="canvas-container">
+    <div
+      className="canvas-container"
+      ref={canvasContainerRef}
+      tabIndex={0}
+      role="application"
+      aria-label="Design canvas — arrow keys pan, Ctrl+arrow up/down zooms"
+      onMouseDown={focusCanvasForKeys}
+    >
       <svg
         ref={canvasRef}
         className="canvas-svg"

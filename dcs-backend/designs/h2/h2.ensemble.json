@@ -84,13 +84,16 @@
             "y_column": "freq_gt_1",
             "title": "System Frequency ",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 8,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Frequency, Hz",
-            "variable_styles": {
-              "freq_gt_1": {
-                "rigid": true
-              }
+            "axis_range": {
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 42,
+              "y_max": 62,
+              "y_locked": true
             },
             "ui_drawer": "chart2"
           },
@@ -107,7 +110,7 @@
             ],
             "title": "Total Electrical Power: Alternative",
             "ensemble_cross_member": true,
-            "sample_step": 8,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
@@ -137,7 +140,10 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true
             },
             "ui_drawer": "chart3"
           },
@@ -149,9 +155,14 @@
             "y_column": "_PowerGasTurbinesAll",
             "title": "Total LM2500 Electrical Power: Baseline ",
             "ensemble_sim_id": "formula",
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
-            "y_label": "Power, MW"
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true
+            }
           },
           {
             "type": "single",
@@ -161,7 +172,7 @@
             "y_column": "Wpu_gt_1",
             "title": "Mechanical Torque FFT : LM2500 #1  ",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 1,
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "ui_drawer": "chart2"
@@ -174,11 +185,17 @@
             "y_column": "Tm_gt_1",
             "title": "Mechanical Torque : LM2500 #1",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "axis_range": {
-              "danger_y_threshold": 1
+              "danger_y_threshold": 1,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 0,
+              "y_max": 1.2,
+              "y_locked": true
             }
           },
           {
@@ -192,7 +209,7 @@
             ],
             "title": "Mechanical Torque : LM2500 #1",
             "ensemble_cross_member": true,
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "legend_labels": {
@@ -212,7 +229,13 @@
             },
             "axis_range": {
               "x_threshold": 8,
-              "danger_y_threshold": 1
+              "danger_y_threshold": 1,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 0,
+              "y_max": 1.2,
+              "y_locked": true
             },
             "ui_drawer": "chart3"
           },
@@ -227,7 +250,7 @@
             ],
             "title": "System Frequency",
             "ensemble_cross_member": true,
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Frequency, Hz",
             "legend_labels": {
@@ -246,7 +269,13 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 42,
+              "y_max": 62,
+              "y_locked": true
             },
             "ui_drawer": "chart4"
           },
@@ -261,7 +290,7 @@
             ],
             "title": "Mechanical Torque FFT : LM2500 #1",
             "ensemble_sim_id": "bs_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 1,
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
@@ -288,19 +317,19 @@
             "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
           },
           {
-            "name": "PowerAllTurbines_BESS_STAT",
-            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+            "name": "Power_all_Besses_BESS_STATCOM",
+            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
           },
           {
             "name": "PowerAllTurbine_BESS_STAT",
             "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           },
           {
-            "name": "Power_all_Besses_BESS_STATCOM",
-            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
+            "name": "PowerAllTurbines_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           }
         ],
-        "simulation_speed": 10.0
+        "simulation_speed": 2.0
       },
       "toto": {
         "charts_to_display": [
@@ -329,48 +358,80 @@
           {
             "type": "single",
             "component_id": "comp-upper-left-gen-bank",
-            "chart_type": "nd",
-            "x_column": "t",
-            "y_columns": [
-              "Tm0_gt_1"
-            ],
-            "title": "Mechanical Torque, When BESS and STATCOM Are Off",
-            "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 4,
-            "x_label": "Time, seconds",
-            "y_label": "Torque, pu",
-            "axis_range": {
-              "x_threshold": 8,
-              "danger_y_threshold": 0.6
-            }
-          },
-          {
-            "type": "single",
-            "component_id": "comp-upper-left-gen-bank",
             "chart_type": "2d",
             "x_column": "t",
             "y_column": "freq_gt_1",
-            "title": "Frequency, When BESS And STATCOM Are Off",
+            "title": "System Frequency ",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
-            "y_label": "Frequency, HZ",
+            "y_label": "Frequency, Hz",
+            "axis_range": {
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            },
             "ui_drawer": "chart2"
           },
           {
             "type": "single",
             "component_id": "comp-upper-left-gen-bank",
             "chart_type": "2d",
-            "x_column": "s_STATCOM_2 — t",
-            "y_column": "formula — _PowerGasTurbinesAll",
-            "title": "Power all gas turbines",
-            "ensemble_cross_member": true,
-            "sample_step": 4,
+            "x_column": "t",
+            "y_column": "_PowerGasTurbinesAll",
+            "title": "Total LM2500 Electrical Power: Baseline ",
+            "ensemble_sim_id": "formula",
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "axis_range": {
-              "x_threshold": 8
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
             }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "Tm_gt_1",
+            "title": "Mechanical Torque : LM2500 #1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "danger_y_threshold": 1,
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "P_g1",
+            "y_columns": [
+              "Q_g1",
+              "V_g1"
+            ],
+            "title": "Mechanical Torque FFT : LM2500 #1",
+            "ensemble_sim_id": "bs_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Frequency, Hz",
+            "y_label": "Amplitude, % of Maximum Torque",
+            "legend_labels": {
+              "Q_g1": "Baseline",
+              "V_g1": "Alternative"
+            },
+            "variable_styles": {
+              "V_g1": {
+                "color": "#10411f"
+              }
+            },
+            "ui_drawer": "chart2"
           }
         ],
         "chart_stacks": [],
@@ -379,25 +440,25 @@
         "chart_panel_opacity": 1.0,
         "chart_card_width": 850,
         "view_mode": "customer",
-        "simulation_speed": 10.0,
         "derived_variables": [
           {
             "name": "_PowerGasTurbinesAll",
             "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
           },
           {
-            "name": "PowerAllTurbines_BESS_STAT",
-            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+            "name": "Power_all_Besses_BESS_STATCOM",
+            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
           },
           {
             "name": "PowerAllTurbine_BESS_STAT",
             "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           },
           {
-            "name": "Power_all_Besses_BESS_STATCOM",
-            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
+            "name": "PowerAllTurbines_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           }
-        ]
+        ],
+        "simulation_speed": 2.0
       },
       "TurnOffAllPower": {
         "charts_to_display": [],
@@ -420,13 +481,16 @@
             "y_column": "freq_gt_1",
             "title": "System Frequency ",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 8,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Frequency, Hz",
-            "variable_styles": {
-              "freq_gt_1": {
-                "rigid": true
-              }
+            "axis_range": {
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 42,
+              "y_max": 62,
+              "y_locked": true
             },
             "ui_drawer": "chart2"
           },
@@ -443,7 +507,7 @@
             ],
             "title": "Total Electrical Power: Alternative",
             "ensemble_cross_member": true,
-            "sample_step": 8,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
@@ -473,7 +537,10 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true
             },
             "ui_drawer": "chart3"
           },
@@ -485,9 +552,14 @@
             "y_column": "_PowerGasTurbinesAll",
             "title": "Total LM2500 Electrical Power: Baseline ",
             "ensemble_sim_id": "formula",
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
-            "y_label": "Power, MW"
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true
+            }
           },
           {
             "type": "single",
@@ -497,7 +569,7 @@
             "y_column": "Wpu_gt_1",
             "title": "Mechanical Torque FFT : LM2500 #1  ",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 1,
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "ui_drawer": "chart2"
@@ -510,11 +582,17 @@
             "y_column": "Tm_gt_1",
             "title": "Mechanical Torque : LM2500 #1",
             "ensemble_sim_id": "_LM2500_1",
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "axis_range": {
-              "danger_y_threshold": 1
+              "danger_y_threshold": 1,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 0,
+              "y_max": 1.2,
+              "y_locked": true
             }
           },
           {
@@ -528,7 +606,7 @@
             ],
             "title": "Mechanical Torque : LM2500 #1",
             "ensemble_cross_member": true,
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "legend_labels": {
@@ -548,7 +626,13 @@
             },
             "axis_range": {
               "x_threshold": 8,
-              "danger_y_threshold": 1
+              "danger_y_threshold": 1,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 0,
+              "y_max": 1.2,
+              "y_locked": true
             },
             "ui_drawer": "chart3"
           },
@@ -563,7 +647,7 @@
             ],
             "title": "System Frequency",
             "ensemble_cross_member": true,
-            "sample_step": 4,
+            "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Frequency, Hz",
             "legend_labels": {
@@ -582,7 +666,13 @@
               }
             },
             "axis_range": {
-              "x_threshold": 8
+              "x_threshold": 8,
+              "x_min": 5,
+              "x_max": 50,
+              "x_locked": true,
+              "y_min": 42,
+              "y_max": 62,
+              "y_locked": true
             },
             "ui_drawer": "chart4"
           },
@@ -597,7 +687,7 @@
             ],
             "title": "Mechanical Torque FFT : LM2500 #1",
             "ensemble_sim_id": "bs_LM2500_1",
-            "sample_step": 128,
+            "sample_step": 1,
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
@@ -618,25 +708,239 @@
         "chart_panel_opacity": 1.0,
         "chart_card_width": 850,
         "view_mode": "customer",
-        "simulation_speed": 10.0,
         "derived_variables": [
           {
             "name": "_PowerGasTurbinesAll",
             "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
           },
           {
-            "name": "PowerAllTurbines_BESS_STAT",
-            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+            "name": "Power_all_Besses_BESS_STATCOM",
+            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
           },
           {
             "name": "PowerAllTurbine_BESS_STAT",
             "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           },
           {
+            "name": "PowerAllTurbines_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+          }
+        ],
+        "simulation_speed": 2.0
+      },
+      "withBessAlone": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "freq_gt_1",
+            "title": "System Frequency ",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Frequency, Hz",
+            "axis_range": {
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "_PowerGasTurbinesAll",
+            "title": "Total LM2500 Electrical Power: Baseline ",
+            "ensemble_sim_id": "formula",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "Tm_gt_1",
+            "title": "Mechanical Torque : LM2500 #1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "danger_y_threshold": 1,
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "P_g1",
+            "y_columns": [
+              "Q_g1",
+              "V_g1"
+            ],
+            "title": "Mechanical Torque FFT : LM2500 #1",
+            "ensemble_sim_id": "bs_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Frequency, Hz",
+            "y_label": "Amplitude, % of Maximum Torque",
+            "legend_labels": {
+              "Q_g1": "Baseline",
+              "V_g1": "Alternative"
+            },
+            "variable_styles": {
+              "V_g1": {
+                "color": "#10411f"
+              }
+            },
+            "ui_drawer": "chart2"
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [
+          {
+            "name": "_PowerGasTurbinesAll",
+            "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
+          },
+          {
             "name": "Power_all_Besses_BESS_STATCOM",
             "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
+          },
+          {
+            "name": "PowerAllTurbine_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+          },
+          {
+            "name": "PowerAllTurbines_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
           }
-        ]
+        ],
+        "simulation_speed": 2.0
+      },
+      "withStatcomAlone": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "freq_gt_1",
+            "title": "System Frequency ",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Frequency, Hz",
+            "axis_range": {
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "_PowerGasTurbinesAll",
+            "title": "Total LM2500 Electrical Power: Baseline ",
+            "ensemble_sim_id": "formula",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Power, MW",
+            "axis_range": {
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "Tm_gt_1",
+            "title": "Mechanical Torque : LM2500 #1",
+            "ensemble_sim_id": "_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Time, seconds",
+            "y_label": "Torque, pu",
+            "axis_range": {
+              "danger_y_threshold": 1,
+              "x_min": 6.8,
+              "x_max": 50,
+              "x_locked": true
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-upper-left-gen-bank",
+            "chart_type": "nd",
+            "x_column": "P_g1",
+            "y_columns": [
+              "Q_g1",
+              "V_g1"
+            ],
+            "title": "Mechanical Torque FFT : LM2500 #1",
+            "ensemble_sim_id": "bs_LM2500_1",
+            "sample_step": 1,
+            "x_label": "Frequency, Hz",
+            "y_label": "Amplitude, % of Maximum Torque",
+            "legend_labels": {
+              "Q_g1": "Baseline",
+              "V_g1": "Alternative"
+            },
+            "variable_styles": {
+              "V_g1": {
+                "color": "#10411f"
+              }
+            },
+            "ui_drawer": "chart2"
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 850,
+        "view_mode": "customer",
+        "derived_variables": [
+          {
+            "name": "_PowerGasTurbinesAll",
+            "formula": "_LM2500_1 — P_g1+_LM2500_2 — P_g2+_LM2500_3 — P_g3+_LM2500_4 — P_g4+_LM2500_5 — P_g5+_LM2500_6 — P_g6+_LM2500_7 — P_g7+_LM2500_8 — P_g8"
+          },
+          {
+            "name": "Power_all_Besses_BESS_STATCOM",
+            "formula": "bs_BESS_1 — P_BESS1 + bs_BESS_2 — P_BESS2"
+          },
+          {
+            "name": "PowerAllTurbine_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+          },
+          {
+            "name": "PowerAllTurbines_BESS_STAT",
+            "formula": "bs_LM2500_1 — P_g1 + bs_LM2500_2 — P_g2 + bs_LM2500_3 — P_g3 + bs_LM2500_4 — P_g4 + bs_LM2500_5 — P_g5 + bs_LM2500_6 — P_g6 + bs_LM2500_7 — P_g7 + bs_LM2500_8 — P_g8"
+          }
+        ],
+        "simulation_speed": 2.0
       }
     }
   ]

@@ -1,5 +1,5 @@
 {
-  "name": "HabLight",
+  "name": "H2",
   "description": "",
   "canvasComponents": [
     {
@@ -17980,8 +17980,8 @@
     "simulationRunning": false,
     "zoom": 0.5797796392913064,
     "pan": {
-      "x": -60.34128964191268,
-      "y": 199.35217099662736
+      "x": 39.65871035808732,
+      "y": -21.647829003372635
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17990,17 +17990,22 @@
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
-  "globalSampleStep": 1,
+  "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781661960879-0": 1,
-    "sim-chart-1781661960879-1": 1,
-    "sim-chart-1781661960879-2": 1
+    "sim-chart-1781707401930-0": 1,
+    "sim-chart-1781707401930-1": 1,
+    "sim-chart-1781707401930-2": 1,
+    "sim-chart-1781707401930-3": 1,
+    "sim-chart-1781707401930-4": 1,
+    "sim-chart-1781707401930-5": 1,
+    "sim-chart-1781707401930-6": 1,
+    "sim-chart-1781707401930-7": 1
   },
   "designUiSession": {
     "ensembleId": "all_",
     "designSectionVisibility": {
       "showUpper": true,
-      "showLower": false,
+      "showLower": true,
       "hideBranches": []
     },
     "quickScenarioBranchCollapsed": {
@@ -18013,7 +18018,9 @@
       "TurnOffAllPower",
       "noBessNoStatcom",
       "toto",
-      "withBessandStatCom"
+      "withBessandStatCom",
+      "withStatcomAlone",
+      "withBessAlone"
     ]
   },
   "quickScenarioButtons": [
@@ -18042,7 +18049,7 @@
       "color": "#00695c",
       "presetName": "withBessAlone",
       "targetType": "ensemble",
-      "ensembleId": "all"
+      "ensembleId": "all_"
     },
     {
       "id": "qs-placeholder-statcom-alone",
@@ -18051,7 +18058,7 @@
       "color": "#388e3c",
       "presetName": "withStatcomAlone",
       "targetType": "ensemble",
-      "ensembleId": "all"
+      "ensembleId": "all_"
     },
     {
       "id": "qs-1780124031952-rednbd",
@@ -18097,6 +18104,14 @@
         "presetName": "withStatcomAlone",
         "targetType": "ensemble",
         "ensembleId": "all_"
+      },
+      "toggleBreakersExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "breakers"
+      },
+      "togglePeripheralsExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "peripherals"
       }
     }
   }

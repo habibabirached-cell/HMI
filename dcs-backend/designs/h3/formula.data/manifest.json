@@ -3,9 +3,9 @@
   "columns": [
     "t",
     "_PowerGasTurbinesAll",
-    "PowerAllTurbines_BESS_STAT",
+    "Power_all_Besses_BESS_STATCOM",
     "PowerAllTurbine_BESS_STAT",
-    "Power_all_Besses_BESS_STATCOM"
+    "PowerAllTurbines_BESS_STAT"
   ],
   "row_count": 1876,
   "column_files": [

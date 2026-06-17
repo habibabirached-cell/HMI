@@ -1,5 +1,5 @@
 {
-  "name": "Habib2",
+  "name": "H3",
   "description": "",
   "canvasComponents": [
     {
@@ -17978,10 +17978,10 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.5797796392913064,
+    "zoom": 0.4797796392913064,
     "pan": {
-      "x": 39.65871035808732,
-      "y": 103.35217099662736
+      "x": 183.65871035808732,
+      "y": 180.85217099662736
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17992,14 +17992,14 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781669854549-0": 1,
-    "sim-chart-1781669854549-1": 1,
-    "sim-chart-1781669854549-2": 1,
-    "sim-chart-1781669854549-3": 1,
-    "sim-chart-1781669854549-4": 1,
-    "sim-chart-1781669854549-5": 1,
-    "sim-chart-1781669854549-6": 1,
-    "sim-chart-1781669854549-7": 1
+    "sim-chart-1781708499416-0": 1,
+    "sim-chart-1781708499416-1": 1,
+    "sim-chart-1781708499417-2": 1,
+    "sim-chart-1781708499417-3": 1,
+    "sim-chart-1781708499417-4": 1,
+    "sim-chart-1781708499417-5": 1,
+    "sim-chart-1781708499417-6": 1,
+    "sim-chart-1781708499417-7": 1
   },
   "designUiSession": {
     "ensembleId": "all_",
@@ -18021,11 +18021,7 @@
       "withBessandStatCom",
       "withStatcomAlone",
       "withBessAlone"
-    ],
-    "designExpansion": {
-      "breakersCompact": true,
-      "peripheralsCompact": true
-    }
+    ]
   },
   "quickScenarioButtons": [
     {
