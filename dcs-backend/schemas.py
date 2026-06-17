@@ -333,6 +333,16 @@ class SaveNamedSimulationConfigRequest(BaseModel):
     overwrite: bool = Field(False, description="If true, replace an existing preset with this name")
 
 
+class CloneGraphPresetsRequest(BaseModel):
+    """Copy graph UI presets from another design's ensemble sidecar (no Parquet / formulas)."""
+    source_design: str = Field(..., description="Catalog path of source design (e.g. partha or archive/foo)")
+    ensemble_id: str = Field("all_", description="Ensemble id on both designs (default all_)")
+    preset_names: Optional[list[str]] = Field(
+        default=None,
+        description="Named preset keys to clone; defaults to quick-scenario graph presets",
+    )
+
+
 # ------------------------------------------------------------------------------------------------------
 # UPDATE SIMULATION CONFIG REQUEST (Step 3 – persist charts to .sim.json)
 # ------------------------------------------------------------------------------------------------------

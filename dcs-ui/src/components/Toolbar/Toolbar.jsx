@@ -21,6 +21,8 @@ const Toolbar = ({
   onSaveScenarioAs,
   onCopyScenarioLink,
   onLoad,
+  onCloneGraphs,
+  canCloneGraphs,
   hasComponents,
   canSave, // Whether we can do a quick save (config name exists)
   canSaveSimulationConfig, // Design-dir scenario loaded: open “Save configuration as” for .sim.json presets
@@ -45,7 +47,32 @@ const Toolbar = ({
     collapsedComponentDelta: collapsedComponentFontPxShift,
   } = useFontScaleToolbar();
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
   const saveDropdownRef = useRef(null);
+  const layoutDropdownRef = useRef(null);
+
+  const workspaceLayouts = [
+    {
+      id: 'conf1',
+      label: '#1',
+      title: 'Conf 1: charts bottom, Controls full-height on the right',
+    },
+    {
+      id: 'conf2',
+      label: '#2',
+      title: 'Conf 2: charts on the right, Controls bottom-left',
+    },
+    {
+      id: 'conf3',
+      label: '#3',
+      title: 'Conf 3: 2×2 chart grid in right drawer, Controls bottom-left',
+    },
+    {
+      id: 'conf4',
+      label: '#4',
+      title: 'Conf 4: like conf 2, chart2 under chart1',
+    },
+  ];
 
   useEffect(() => {
     if (!saveMenuOpen) return;
@@ -65,7 +92,26 @@ const Toolbar = ({
     };
   }, [saveMenuOpen]);
 
+  useEffect(() => {
+    if (!layoutMenuOpen) return;
+    const onDocMouseDown = (e) => {
+      if (layoutDropdownRef.current && !layoutDropdownRef.current.contains(e.target)) {
+        setLayoutMenuOpen(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLayoutMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [layoutMenuOpen]);
+
   const closeSaveMenu = () => setSaveMenuOpen(false);
+  const closeLayoutMenu = () => setLayoutMenuOpen(false);
 
   /**
    * Toggle fullscreen for the entire page
@@ -95,31 +141,44 @@ const Toolbar = ({
   return (
     <div className="toolbar">
       <div className="toolbar-section toolbar-workspace-layout" role="group" aria-label="Chart and panel layout">
-        {(['conf1', 'conf2', 'conf3', 'conf4']).map((id) => (
+        <div className="toolbar-layout-dropdown" ref={layoutDropdownRef}>
           <button
-            key={id}
             type="button"
-            className={`btn-workspace-layout${workspaceLayoutPreset === id ? ' btn-workspace-layout--active' : ''}`}
-            onClick={() => onWorkspaceLayoutPresetChange?.(id)}
-            title={
-              id === 'conf1'
-                ? 'Conf 1: charts bottom, Controls full-height on the right'
-                : id === 'conf2'
-                  ? 'Conf 2: charts on the right, Controls bottom-left'
-                  : id === 'conf3'
-                    ? 'Conf 3: 2×2 chart grid in right drawer, Controls bottom-left'
-                    : 'Conf 4: like conf 2, chart2 under chart1'
-            }
+            className={`btn-layout-trigger${layoutMenuOpen ? ' btn-layout-trigger--open' : ''}`}
+            onClick={() => setLayoutMenuOpen((o) => !o)}
+            title="Layout configuration"
+            aria-label="Layout configuration"
+            aria-expanded={layoutMenuOpen}
+            aria-haspopup="menu"
           >
-            {id === 'conf1'
-              ? 'conf 1'
-              : id === 'conf2'
-                ? 'conf 2'
-                : id === 'conf3'
-                  ? 'conf 3'
-                  : 'conf 4'}
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" strokeWidth="1.25" />
+              <circle cx="8" cy="8" r="1.75" />
+            </svg>
           </button>
-        ))}
+          {layoutMenuOpen && (
+            <div className="toolbar-layout-menu" role="menu">
+              {workspaceLayouts.map((layout) => (
+                <button
+                  key={layout.id}
+                  type="button"
+                  className={`toolbar-layout-menu-item${
+                    workspaceLayoutPreset === layout.id ? ' toolbar-layout-menu-item--active' : ''
+                  }`}
+                  role="menuitemradio"
+                  aria-checked={workspaceLayoutPreset === layout.id}
+                  title={layout.title}
+                  onClick={() => {
+                    closeLayoutMenu();
+                    onWorkspaceLayoutPresetChange?.(layout.id);
+                  }}
+                >
+                  {layout.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* In Customer view, show Start/Stop Simulation buttons */}
@@ -226,6 +285,15 @@ const Toolbar = ({
         <button className="btn-load" onClick={onLoad} title="Load configuration">
           📂 Load
         </button>
+        {canCloneGraphs && (
+          <button
+            className="btn-clone-graphs"
+            onClick={onCloneGraphs}
+            title="Clone graph layout from another design (quick-scenario presets only)"
+          >
+            📋
+          </button>
+        )}
       </div>
 
       <div className="toolbar-section">

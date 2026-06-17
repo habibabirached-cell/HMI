@@ -5,6 +5,7 @@ import QuickScenarioContextMenu from './QuickScenarioContextMenu';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
 import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut } from '../../data/quickScenarioUi';
 import { hasQuickScenarioCollapseControl } from '../../utils/designCollapseState';
+import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
 
 function QuickScenarioCollapseSwitch({
   shortcut,
@@ -33,6 +34,28 @@ function QuickScenarioCollapseSwitch({
     >
       <span className="quick-scenario-collapse-switch__thumb" aria-hidden="true" />
     </button>
+  );
+}
+
+function ExpansionToggleSwitch({ label, compact, onChange, titleCompact, titleExpanded }) {
+  const isExpanded = !compact;
+  return (
+    <div className="expansion-switch-row">
+      <span className="expansion-switch-label">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        className={`quick-scenario-collapse-switch${
+          isExpanded ? ' quick-scenario-collapse-switch--expanded' : ''
+        }`}
+        aria-checked={isExpanded}
+        aria-label={isExpanded ? `${label} expanded` : `${label} compact`}
+        title={isExpanded ? titleExpanded : titleCompact}
+        onClick={() => onChange?.(!isExpanded)}
+      >
+        <span className="quick-scenario-collapse-switch__thumb" aria-hidden="true" />
+      </button>
+    </div>
   );
 }
 
@@ -141,6 +164,7 @@ const SimulationControls = ({
   onSetSimulationSpeed,
   playbackTimeRange = { t1: 8, t2: 60 },
   onPlaybackTimeRangeChange,
+  onPublishPlaybackTimeRange,
   availableSimulations,
   simConfig,
   onRunSimulation,
@@ -191,6 +215,9 @@ const SimulationControls = ({
   onSaveScenarioAsReplace,
   rightRailGridPeek = false,
   onToggleRightRailGridPeek,
+  showExpansionPanel = false,
+  designExpansion = { breakersCompact: true, peripheralsCompact: true },
+  onDesignExpansionChange,
 }) => {
   const [quickScenarioContextMenu, setQuickScenarioContextMenu] = React.useState(null);
 
@@ -786,66 +813,51 @@ const SimulationControls = ({
                   />
                 </label>
               </div>
+              <button
+                type="button"
+                className="playback-range-publish-btn"
+                onClick={() => onPublishPlaybackTimeRange?.()}
+                title="Lock all time-based chart X axes to t1–t2, limit simulation playback to that window, and save with the design"
+              >
+                Publish
+              </button>
             </div>
 
             <div className="speed-buttons">
-              <button
-                className={`speed-btn ${Math.abs(simulationSpeed - 0.001) < 1e-9 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.001)}
-                title="1000× slower (0.001× speed)"
-              >
-                0.001×
-              </button>
-              <button
-                className={`speed-btn ${Math.abs(simulationSpeed - 0.01) < 1e-9 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.01)}
-                title="100× slower (0.01× speed)"
-              >
-                0.01×
-              </button>
-              <button
-                className={`speed-btn ${Math.abs(simulationSpeed - 0.1) < 1e-9 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(0.1)}
-                title="10× slower (0.1× speed)"
-              >
-                0.1×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 1 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1)}
-                title="Real-time speed"
-              >
-                1×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 10 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10)}
-                title="10× speed"
-              >
-                10×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 100 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(100)}
-                title="100× speed"
-              >
-                100×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 1000 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(1000)}
-                title="1000× speed"
-              >
-                1000×
-              </button>
-              <button
-                className={`speed-btn ${simulationSpeed === 10000 ? 'active' : ''}`}
-                onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(10000)}
-                title="10000× speed"
-              >
-                10000×
-              </button>
+              {SIMULATION_SPEED_OPTIONS.map((speed) => (
+                <button
+                  key={speed}
+                  type="button"
+                  className={`speed-btn${
+                    Math.abs(simulationSpeed - speed) < 1e-9 ? ' active' : ''
+                  }`}
+                  onClick={() => onSetSimulationSpeed && onSetSimulationSpeed(speed)}
+                  title={`${speed}× speed`}
+                >
+                  {speed}×
+                </button>
+              ))}
             </div>
+
+            {showExpansionPanel && (
+              <div className="expansion-section">
+                <h4 className="scenarios-title expansion-section-title">Expansion</h4>
+                <ExpansionToggleSwitch
+                  label="Breakers"
+                  compact={designExpansion?.breakersCompact !== false}
+                  onChange={(expanded) => onDesignExpansionChange?.('breakers', expanded)}
+                  titleCompact="Compact tie networks — tap to expand both middle sections"
+                  titleExpanded="Expanded tie networks — tap to compact"
+                />
+                <ExpansionToggleSwitch
+                  label="Peripherals"
+                  compact={designExpansion?.peripheralsCompact !== false}
+                  onChange={(expanded) => onDesignExpansionChange?.('peripherals', expanded)}
+                  titleCompact="Compact turbines, BESS, STATCOM, loads — tap to expand"
+                  titleExpanded="Expanded equipment detail — tap to compact"
+                />
+              </div>
+            )}
           </div>
         )}
 

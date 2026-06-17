@@ -29,6 +29,10 @@ function SaveLoadDialog({
   /** If set, called at save click (and for preview) so payload always matches latest canvas state. */
   getCurrentConfiguration,
   currentConfigName,
+  /** Catalog path of the design being edited (clone mode: cannot clone from self). */
+  destinationDesignDir = null,
+  /** cloneGraphs mode: copy graph presets from chosen source design. */
+  onCloneGraphsFromDesign,
   /** Full-screen saving overlay (same as toolbar quick save). */
   setSavingOverlay,
 }) {
@@ -58,7 +62,7 @@ function SaveLoadDialog({
   }, [mode]);
 
   useEffect(() => {
-    if (mode !== 'load') return;
+    if (mode !== 'load' && mode !== 'cloneGraphs') return;
 
     const fetchLoadList = async () => {
       const t0 = performance.now();
@@ -381,21 +385,50 @@ function SaveLoadDialog({
     }
   };
 
+  const handleCloneFromDisk = async (designDir) => {
+    if (!onCloneGraphsFromDesign) return;
+    if (designDir === destinationDesignDir) {
+      setMessage({
+        type: 'error',
+        text: 'Choose a different design — cannot clone graph presets from the design you are editing.',
+      });
+      return;
+    }
+    setLoading(true);
+    setDiskBusyDesignDir(designDir);
+    setMessage(null);
+    try {
+      await onCloneGraphsFromDesign(designDir);
+    } catch (error) {
+      console.error('❌ Error cloning graph presets:', error);
+      setMessage({ type: 'error', text: error.message || 'Clone failed' });
+    } finally {
+      setLoading(false);
+      setDiskBusyDesignDir(null);
+    }
+  };
+
   const diskTotalCount = diskCatalog.active.length + diskCatalog.archived.length;
 
   const renderDiskCard = (config, isArchivedEntry) => {
     const rowKey = `disk-${config.design_dir}`;
     const selected = selectedConfig?.design_dir === config.design_dir;
     const busyHere = diskBusyDesignDir === config.design_dir;
+    const isSelf = mode === 'cloneGraphs' && config.design_dir === destinationDesignDir;
     return (
       <div
         key={rowKey}
-        className={`config-item ${selected ? 'selected' : ''} ${isArchivedEntry ? 'config-item-archived' : ''}`}
+        className={`config-item ${selected ? 'selected' : ''} ${isArchivedEntry ? 'config-item-archived' : ''}${isSelf ? ' config-item-disabled' : ''}`}
         onClick={() => {
-          if (loading || busyHere) return;
+          if (loading || busyHere || isSelf) return;
           setSelectedConfig(config);
-          handleLoadFromDisk(config.design_dir);
+          if (mode === 'cloneGraphs') {
+            void handleCloneFromDisk(config.design_dir);
+          } else {
+            handleLoadFromDisk(config.design_dir);
+          }
         }}
+        title={isSelf ? 'Current design — choose another source' : undefined}
       >
         <div className="config-item-header">
           <h3>{config.name}</h3>
@@ -403,7 +436,7 @@ function SaveLoadDialog({
             <span className="config-id" title="Design folder">
               {config.design_dir}
             </span>
-            {!isArchivedEntry && (
+            {mode !== 'cloneGraphs' && !isArchivedEntry && (
               <button
                 type="button"
                 className="btn-disk-action"
@@ -414,15 +447,17 @@ function SaveLoadDialog({
                 {busyHere ? '⏳' : '📦'}
               </button>
             )}
-            <button
-              type="button"
-              className="btn-disk-action btn-disk-action-danger"
-              title="Delete design folder and matching database row"
-              disabled={loading || busyHere}
-              onClick={(e) => handleDeleteDiskClick(e, config.design_dir, config.name)}
-            >
-              {busyHere ? '⏳' : '🗑️'}
-            </button>
+            {mode !== 'cloneGraphs' && (
+              <button
+                type="button"
+                className="btn-disk-action btn-disk-action-danger"
+                title="Delete design folder and matching database row"
+                disabled={loading || busyHere}
+                onClick={(e) => handleDeleteDiskClick(e, config.design_dir, config.name)}
+              >
+                {busyHere ? '⏳' : '🗑️'}
+              </button>
+            )}
           </div>
         </div>
         {config.description ? (
@@ -444,7 +479,13 @@ function SaveLoadDialog({
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
         <div className="dialog-header">
-          <h2>{mode === 'save' ? '💾 Save Design' : '📂 Load Configuration'}</h2>
+          <h2>
+            {mode === 'save'
+              ? '💾 Save Design'
+              : mode === 'cloneGraphs'
+                ? '📋 Clone graphs from design'
+                : '📂 Load Configuration'}
+          </h2>
           <button className="dialog-close" onClick={onClose}>
             ×
           </button>
@@ -504,29 +545,33 @@ function SaveLoadDialog({
             </div>
           ) : (
             <div className="load-list">
-              <div className="load-source-switch-row">
-                <span className={`load-source-label ${!useDatabaseList ? 'active' : ''}`}>Disk</span>
-                <button
-                  type="button"
-                  className={`load-source-switch ${useDatabaseList ? 'on' : ''}`}
-                  role="switch"
-                  aria-checked={useDatabaseList}
-                  aria-label="Use database for the design list"
-                  onClick={() => setUseDatabaseList((v) => !v)}
-                  disabled={loading}
-                >
-                  <span className="load-source-switch-knob" />
-                </button>
-                <span className={`load-source-label ${useDatabaseList ? 'active' : ''}`}>
-                  Database
-                </span>
-              </div>
+              {mode === 'load' && (
+                <div className="load-source-switch-row">
+                  <span className={`load-source-label ${!useDatabaseList ? 'active' : ''}`}>Disk</span>
+                  <button
+                    type="button"
+                    className={`load-source-switch ${useDatabaseList ? 'on' : ''}`}
+                    role="switch"
+                    aria-checked={useDatabaseList}
+                    aria-label="Use database for the design list"
+                    onClick={() => setUseDatabaseList((v) => !v)}
+                    disabled={loading}
+                  >
+                    <span className="load-source-switch-knob" />
+                  </button>
+                  <span className={`load-source-label ${useDatabaseList ? 'active' : ''}`}>
+                    Database
+                  </span>
+                </div>
+              )}
               <p className="load-source-hint">
-                {useDatabaseList
-                  ? 'Listing saved rows from SQLite. Loading uses the database snapshot.'
-                  : 'Designs on disk (designs/). Archived designs appear under the Archived section. Delete removes the folder and the matching database row.'}
+                {mode === 'cloneGraphs'
+                  ? 'Pick a source design. Copies graph layout and styling for the four quick-scenario presets (No BESS/STATCOM, With BESS+STATCOM, BESS alone, STATCOM alone). Parquet data, ensemble members, and derived formulas are not changed.'
+                  : useDatabaseList
+                    ? 'Listing saved rows from SQLite. Loading uses the database snapshot.'
+                    : 'Designs on disk (designs/). Archived designs appear under the Archived section. Delete removes the folder and the matching database row.'}
               </p>
-              {useDatabaseList ? (
+              {mode === 'load' && useDatabaseList ? (
                 loading && !configurations.length ? (
                   <div className="loading">Loading…</div>
                 ) : configurations.length === 0 ? (

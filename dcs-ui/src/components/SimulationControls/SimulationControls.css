@@ -122,6 +122,46 @@
   justify-content: center;
 }
 
+.expansion-section {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.expansion-section-title {
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.expansion-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.expansion-switch-row:last-child {
+  margin-bottom: 0;
+}
+
+.expansion-switch-label {
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.simulation-controls--grid-peek .expansion-section {
+  margin-top: 10px;
+  padding: 8px;
+}
+
+.simulation-controls--grid-peek .expansion-switch-label {
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+}
+
 .simulation-controls--grid-peek .quick-scenario-row {
   margin-bottom: 6px;
 }
@@ -686,7 +726,7 @@
 /* ============================================================================
    SIMULATION SPEED CONTROLS
    ============================================================================
-   Shows simulation time and speed multiplier buttons (0.001× … 10000×) */
+   Shows simulation time and speed multiplier buttons (0.1× … 20×) */
 
 .simulation-speed-section {
   margin-top: 24px;
@@ -729,7 +769,7 @@
 
 .speed-buttons {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
 
@@ -785,7 +825,7 @@
 
 .playback-range-inputs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
@@ -819,6 +859,32 @@
   outline: none;
   border-color: #005E60;
   box-shadow: 0 0 8px rgba(0, 94, 96, 0.4);
+}
+
+.playback-range-publish-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 2px solid #005e60;
+  border-radius: 6px;
+  background: rgba(0, 94, 96, 0.2);
+  color: #00d4a8;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.playback-range-publish-btn:hover {
+  background: rgba(0, 94, 96, 0.35);
+  border-color: #00a896;
+  color: #e0f7f1;
+}
+
+.playback-range-publish-btn:active {
+  transform: scale(0.99);
 }
 
 .simulation-controls--grid-peek .playback-range-section {

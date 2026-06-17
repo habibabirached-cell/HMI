@@ -72,6 +72,13 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#66bb6a',
     shape: 'schematic-ideum-touch',
   },
+  'ideum-expansion-panel': {
+    width: 480,
+    height: 900,
+    icon: '⬍',
+    color: '#e65100',
+    shape: 'schematic-ideum-touch',
+  },
   'gas-turbine-3d': {
     width: 500,
     height: 250,

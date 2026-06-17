@@ -67,6 +67,7 @@ from simulation_parquet_bundle import (
     scenario_data_dir,
     time_column_min_max_from_bundle,
 )
+from clone_graph_presets import clone_graph_presets_between_designs
 # Import Pydantic schemas for request/response validation
 from schemas import (
     ConfigurationSaveRequest,
@@ -77,6 +78,7 @@ from schemas import (
     CreateSimulationRequest,
     UpdateSimulationConfigRequest,
     SaveNamedSimulationConfigRequest,
+    CloneGraphPresetsRequest,
     CreateEnsembleRequest,
     UpdateEnsembleRequest,
 )
@@ -2956,6 +2958,41 @@ async def activate_named_ensemble_configuration(
         raise
     except Exception as e:
         print(f"❌ Error activating named ensemble config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/designs/{design_name:path}/clone-graph-presets-from")
+async def clone_graph_presets_from_design(design_name: str, body: CloneGraphPresetsRequest):
+    """
+    Copy graph UI from named ensemble presets in another design into this design.
+    Does not modify Parquet bundles, member lists, or derived variable formulas.
+    """
+    try:
+        dest_dir, dest_catalog = resolve_design_storage_from_api(design_name)
+        source_dir, source_catalog = resolve_design_storage_from_api(body.source_design.strip())
+        result = clone_graph_presets_between_designs(
+            dest_dir=dest_dir,
+            source_dir=source_dir,
+            ensemble_id=(body.ensemble_id or "all_").strip(),
+            preset_names=body.preset_names,
+        )
+        print(
+            f"✅ Cloned graph presets from {source_catalog} → {dest_catalog}: "
+            f"{result.get('cloned')}"
+        )
+        return {
+            "destination_design": dest_catalog,
+            "source_design": source_catalog,
+            **result,
+        }
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error cloning graph presets: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -31,6 +31,12 @@ import {
   normalizeQuickScenarioBranchCollapsed,
 } from './utils/designCollapseState';
 import {
+  applyDesignExpansionToComponents,
+  DEFAULT_DESIGN_EXPANSION,
+  designSupportsExpansionPanel,
+  normalizeDesignExpansion,
+} from './utils/designExpansion';
+import {
   uiDrawerFieldsFromChartDef,
   getChartUiDrawer,
   sanitizeStacksForDrawers,
@@ -84,6 +90,7 @@ import {
   normalizePlaybackTimeRange,
   resolvePlaybackLoopBounds,
 } from './utils/playbackTimeRange';
+import { applyPlaybackRangeToCharts, isTimeBasedChart } from './utils/publishPlaybackTimeRange';
 import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -482,7 +489,7 @@ function App() {
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [systemState, setSystemState] = useState({});
   const [simulationTime, setSimulationTime] = useState(0); // Current simulation time in seconds
-  const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 0.001× … 10000×
+  const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 0.1× … 20×
   const simulationSpeedRef = useRef(1);
   const [playbackTimeRange, setPlaybackTimeRange] = useState(() => ({
     ...DEFAULT_PLAYBACK_TIME_RANGE,
@@ -688,6 +695,8 @@ function App() {
   const [ideumControlButtons, setIdeumControlButtons] = useState([]);
   /** Maps Ideum remote commands → quick-scenario presets on Maingear (statcom05 and save-as copies). */
   const [remoteControlProfile, setRemoteControlProfile] = useState(null);
+  /** Ideum designs: Maingear target for remote commands (habib / habib2). */
+  const [remoteControlTarget, setRemoteControlTarget] = useState(null);
   const [machineRole, setMachineRole] = useState(null);
   /** Default quick-scenario ids hidden for this design until reload without saved design. */
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
@@ -703,6 +712,12 @@ function App() {
   const [quickScenarioBranchCollapsed, setQuickScenarioBranchCollapsed] = useState(
     () => normalizeQuickScenarioBranchCollapsed(null),
   );
+  const [designExpansion, setDesignExpansion] = useState(() => ({
+    ...DEFAULT_DESIGN_EXPANSION,
+  }));
+  const [ideumExpansionMirror, setIdeumExpansionMirror] = useState(() => ({
+    ...DEFAULT_DESIGN_EXPANSION,
+  }));
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -2847,6 +2862,7 @@ function App() {
                     : null,
                 designSectionVisibility,
                 quickScenarioBranchCollapsed,
+                designExpansion,
                 hiddenChartPanelNamedConfigs,
               },
               systemState: {
@@ -3008,9 +3024,77 @@ function App() {
     }
   };
 
+  const handleIdeumExpansionRemoteToggle = async (expansionKey) => {
+    const command =
+      expansionKey === 'breakers' ? 'toggleBreakersExpansion' : 'togglePeripheralsExpansion';
+    setIdeumExpansionMirror((prev) => ({
+      ...prev,
+      ...(expansionKey === 'breakers'
+        ? { breakersCompact: !prev.breakersCompact }
+        : { peripheralsCompact: !prev.peripheralsCompact }),
+    }));
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return;
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. These switches send commands from the Ideum touch table to the Maingear display.',
+      );
+      return;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return;
+    }
+    try {
+      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      if (!result.deliveredToClients) {
+        alert(
+          'Command reached the Maingear PC, but no browser is listening. On Maingear: open the target design, wait a few seconds, then try again (the page must stay open).',
+        );
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send expansion command to Maingear.');
+    }
+  };
+
+  const handleDesignExpansionChange = useCallback((key, expanded) => {
+    setDesignExpansion((prev) => {
+      const next = normalizeDesignExpansion({
+        ...prev,
+        ...(key === 'breakers'
+          ? { breakersCompact: !expanded }
+          : { peripheralsCompact: !expanded }),
+      });
+      setCanvasComponents((comps) => applyDesignExpansionToComponents(comps, next));
+      return next;
+    });
+  }, []);
+
+  const handleRemoteExpansionToggle = useCallback((expansionKey) => {
+    setDesignExpansion((prev) => {
+      const next = normalizeDesignExpansion({
+        ...prev,
+        ...(expansionKey === 'breakers'
+          ? { breakersCompact: !prev.breakersCompact }
+          : { peripheralsCompact: !prev.peripheralsCompact }),
+      });
+      setCanvasComponents((comps) => applyDesignExpansionToComponents(comps, next));
+      return next;
+    });
+  }, []);
+
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
-    const isPlaceholder = isQuickScenarioPlaceholderPreset(shortcut.presetName);
+    const isPlaceholder =
+      isQuickScenarioPlaceholderPreset(shortcut.presetName) &&
+      !namedSimulationConfigs.includes(shortcut.presetName);
     const isDesignFirst = isQuickScenarioDesignFirstPreset(shortcut.presetName);
     const fromRemote = !!shortcut.fromRemote;
     const isSecondDesignFirstClick =
@@ -3029,14 +3113,18 @@ function App() {
       setDesignSectionVisibility(sectionVisibility);
     }
     const branchCollapsed = quickScenarioBranchCollapsed[shortcut.presetName] ?? true;
-    setCanvasComponents((prev) =>
-      applyBranchCollapseToComponents(
+    setCanvasComponents((prev) => {
+      let next = applyBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         branchCollapsed,
         shortcut.presetName,
-      ),
-    );
+      );
+      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
+        next = applyDesignExpansionToComponents(next, designExpansion);
+      }
+      return next;
+    });
 
     // Local "No Bess No Statcom" needs two clicks (design, then charts). Ideum remote = one tap.
     if (isDesignFirst && !isSecondDesignFirstClick && !fromRemote) {
@@ -3099,8 +3187,20 @@ function App() {
   const handleRemoteClusterCommand = async (command) => {
     if (!remoteControlProfile?.enabled || !command) return;
     const spec = remoteControlProfile.commands?.[command];
-    if (!spec?.presetName || !designApiPath) {
+    if (!spec) {
       console.warn('Remote command ignored — no remoteControlProfile mapping:', command);
+      return;
+    }
+    if (spec.action === 'toggleExpansion' && spec.expansionKey) {
+      if (!designSupportsExpansionPanel(designApiPath, currentConfigName)) {
+        console.warn('Remote expansion ignored — design does not support expansion panel');
+        return;
+      }
+      handleRemoteExpansionToggle(spec.expansionKey);
+      return;
+    }
+    if (!spec?.presetName || !designApiPath) {
+      console.warn('Remote command ignored — no presetName mapping:', command);
       return;
     }
     const shortcut = {
@@ -3152,15 +3252,19 @@ function App() {
     if (sectionVisibility) {
       setDesignSectionVisibility(sectionVisibility);
     }
-    setCanvasComponents((prev) =>
-      applyBranchCollapseToComponents(
+    setCanvasComponents((prev) => {
+      let next = applyBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         collapsed,
         shortcut.presetName,
-      ),
-    );
-  }, [designSectionVisibility]);
+      );
+      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
+        next = applyDesignExpansionToComponents(next, designExpansion);
+      }
+      return next;
+    });
+  }, [designSectionVisibility, designExpansion, designApiPath, currentConfigName]);
 
   const handleDeleteQuickScenarioButton = async (buttonId) => {
     const nextButtons = quickScenarioButtons.filter((b) => b.id !== buttonId);
@@ -3584,6 +3688,70 @@ function App() {
     setDialogMode('load');
     setShowDialog(true);
   };
+
+  const handleOpenCloneGraphsDialog = () => {
+    if (!designApiPath || !csvStatus?.use_design_dir) {
+      alert('Load a design from disk first.');
+      return;
+    }
+    setDialogMode('cloneGraphs');
+    setShowDialog(true);
+  };
+
+  const handleCloneGraphsFromDesign = useCallback(
+    async (sourceDesignDir) => {
+      if (!designApiPath) {
+        throw new Error('No design loaded.');
+      }
+      if (sourceDesignDir === designApiPath) {
+        throw new Error('Choose a different design than the one you are editing.');
+      }
+      const ensembleId =
+        simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
+          ? simulationMetadata.ensembleId
+          : 'all_';
+      setIsSaving(true);
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/clone-graph-presets-from`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              source_design: sourceDesignDir,
+              ensemble_id: ensembleId,
+            }),
+          },
+        );
+        if (!res.ok) {
+          throw new Error((await res.text()) || `Clone failed (${res.status})`);
+        }
+        const result = await res.json();
+        setShowDialog(false);
+        setDialogMode(null);
+        const activePreset = activeNamedSimulationConfigRef.current;
+        if (simulationMetadata?.isEnsemble && activePreset) {
+          await handleActivateNamedSimulationConfig(activePreset);
+        }
+        const parts = [];
+        if (result.cloned?.length) {
+          parts.push(`Cloned presets: ${result.cloned.join(', ')}`);
+        }
+        if (result.skipped?.length) {
+          parts.push(`Skipped (missing in source): ${result.skipped.join(', ')}`);
+        }
+        alert(parts.join('\n') || 'Nothing was cloned.');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      designApiPath,
+      simulationMetadata?.isEnsemble,
+      simulationMetadata?.ensembleId,
+      handleActivateNamedSimulationConfig,
+    ],
+  );
 
   /**
    * Close Dialog
@@ -5328,6 +5496,10 @@ function App() {
     
     // Extract data from the loaded configuration
     const { data } = loadedConfig;
+    const dus = data.designUiSession;
+    const loadedExpansion = normalizeDesignExpansion(dus?.designExpansion);
+    setDesignExpansion(loadedExpansion);
+    setIdeumExpansionMirror({ ...DEFAULT_DESIGN_EXPANSION });
     
     // Apply the loaded state to the application
     if (data.canvasComponents) {
@@ -5338,7 +5510,9 @@ function App() {
         status: 'idle',
         isTripped: false
       }));
-      setCanvasComponents(componentsWithIdleStatus);
+      setCanvasComponents(
+        applyDesignExpansionToComponents(componentsWithIdleStatus, loadedExpansion),
+      );
     }
     
     if (data.connections) {
@@ -5376,7 +5550,6 @@ function App() {
       setPerChartSampleStep({});
     }
 
-    const dus = data.designUiSession;
     if (
       dus &&
       typeof dus === 'object' &&
@@ -5413,6 +5586,11 @@ function App() {
     setRemoteControlProfile(
       data.remoteControlProfile && typeof data.remoteControlProfile === 'object'
         ? data.remoteControlProfile
+        : null,
+    );
+    setRemoteControlTarget(
+      data.remoteControlTarget && typeof data.remoteControlTarget === 'object'
+        ? data.remoteControlTarget
         : null,
     );
     setHiddenDefaultQuickScenarios(
@@ -5527,6 +5705,7 @@ function App() {
             : null,
         designSectionVisibility,
         quickScenarioBranchCollapsed,
+        designExpansion,
         hiddenChartPanelNamedConfigs,
       },
       quickScenarioButtons,
@@ -5534,6 +5713,7 @@ function App() {
       ideumKioskMode,
       ideumControlButtons,
       remoteControlProfile,
+      remoteControlTarget,
       systemState: {
         simulationRunning,
         zoom,
@@ -5545,6 +5725,61 @@ function App() {
       },
     };
   };
+
+  const handlePublishPlaybackTimeRange = useCallback(async () => {
+    const { range, charts: nextCharts } = applyPlaybackRangeToCharts(
+      openCharts,
+      playbackTimeRangeRef.current,
+    );
+    const timeChartCount = nextCharts.filter(isTimeBasedChart).length;
+
+    setPlaybackTimeRange(range);
+    playbackTimeRangeRef.current = range;
+    setSimulationTime((cur) => {
+      const { loopStart, loopEnd } = resolvePlaybackLoopBounds(
+        range,
+        playbackMinTimeRef.current,
+        playbackMaxTimeRef.current,
+      );
+      if (!Number.isFinite(cur) || cur < loopStart || cur > loopEnd) return loopStart;
+      return cur;
+    });
+    setOpenCharts(nextCharts);
+
+    try {
+      if (simulationMetadata?.id && currentConfigName && designApiPath) {
+        await persistChartsToSimJson(nextCharts);
+      }
+      if (currentConfigName) {
+        const res = await fetch(`${API_BASE_URL}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentConfigName,
+            data: {
+              ...getCurrentConfiguration(),
+              playbackTimeRange: range,
+            },
+          }),
+        });
+        if (!res.ok) {
+          throw new Error((await res.text()) || `Save failed (${res.status})`);
+        }
+      }
+      if (timeChartCount === 0 && openCharts.length > 0) {
+        console.warn('Publish: no time-based 2D/nD charts matched t1–t2 axis lock.');
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to publish playback range');
+    }
+  }, [
+    openCharts,
+    currentConfigName,
+    designApiPath,
+    simulationMetadata?.id,
+    persistChartsToSimJson,
+  ]);
 
   const handleHideChartPanelNamedConfig = useCallback(
     async (presetName) => {
@@ -5934,6 +6169,7 @@ function App() {
       onSetSimulationSpeed={handleSetSimulationSpeed}
       playbackTimeRange={playbackTimeRange}
       onPlaybackTimeRangeChange={handleSetPlaybackTimeRange}
+      onPublishPlaybackTimeRange={handlePublishPlaybackTimeRange}
       availableSimulations={availableSimulations}
       simConfig={simConfig}
       onRunSimulation={handleRunSimulation}
@@ -5966,6 +6202,9 @@ function App() {
       onSaveScenarioAsReplace={handleOpenSaveScenarioAs}
       rightRailGridPeek={gridPeek}
       onToggleRightRailGridPeek={toggleRightRailGridPeek}
+      showExpansionPanel={designSupportsExpansionPanel(designApiPath, currentConfigName)}
+      designExpansion={designExpansion}
+      onDesignExpansionChange={handleDesignExpansionChange}
     />
   );
 
@@ -6158,6 +6397,8 @@ function App() {
           onSaveSimulationConfig={() => setSaveSimConfigDialogOpen(true)}
           onSaveScenarioAs={() => handleOpenSaveScenarioAs(null)}
           onLoad={handleOpenLoadDialog}
+          onCloneGraphs={handleOpenCloneGraphsDialog}
+          canCloneGraphs={Boolean(csvStatus?.use_design_dir && designApiPath)}
           hasComponents={canvasComponents.length > 0}
           canSave={currentConfigName !== null}
           canSaveSimulationConfig={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
@@ -6246,6 +6487,8 @@ function App() {
               ideumKioskMode={ideumKioskMode}
               ideumControlButtons={ideumControlButtons}
               onIdeumControlButtonClick={handleIdeumControlButtonClick}
+              ideumExpansionMirror={ideumExpansionMirror}
+              onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
             />
           )}
         </div>
@@ -6260,6 +6503,8 @@ function App() {
           onClose={handleCloseDialog}
           onSave={handleConfigurationSaved}
           onLoad={handleConfigurationLoaded}
+          onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+          destinationDesignDir={designApiPath}
           getCurrentConfiguration={getCurrentConfiguration}
           currentConfiguration={getCurrentConfiguration()}
           currentConfigName={currentConfigName}
@@ -6386,6 +6631,7 @@ function App() {
           dualChartDrawersStacked={dualChartDrawersStacked}
           quadChartDrawers={quadChartDrawers}
           onMoveChartDrawer={handleMoveChartDrawer}
+          playbackTimeRange={playbackTimeRange}
         />
       )}
 

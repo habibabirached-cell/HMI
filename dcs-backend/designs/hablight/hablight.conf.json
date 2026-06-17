@@ -11,7 +11,7 @@
         "x": 27,
         "y": -12
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -87,7 +87,7 @@
         "x": 2789,
         "y": -12
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -163,7 +163,7 @@
         "x": 27,
         "y": 1876
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -251,7 +251,7 @@
         "x": 2789,
         "y": 1876
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -334,7 +334,7 @@
         "x": -325,
         "y": 162.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "4 Gas Turbines",
         "rating": 0,
@@ -362,7 +362,7 @@
         "x": 2525,
         "y": 162.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "4 Gas Turbines",
         "rating": 0,
@@ -390,7 +390,7 @@
         "x": -375,
         "y": 812.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -447,7 +447,7 @@
         "x": 2525,
         "y": 812.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -504,7 +504,7 @@
         "x": -325,
         "y": 1862.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "4 Gas Turbines",
         "rating": 0,
@@ -532,7 +532,7 @@
         "x": 2525,
         "y": 1862.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "4 Gas Turbines",
         "rating": 0,
@@ -560,7 +560,7 @@
         "x": -425,
         "y": 3112.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -617,7 +617,7 @@
         "x": 2475,
         "y": 3112.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -674,7 +674,7 @@
         "x": -525,
         "y": 2262.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "voltage": 34.5,
@@ -732,7 +732,7 @@
         "x": 2575,
         "y": 2262.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "voltage": 34.5,
@@ -790,7 +790,7 @@
         "x": -525,
         "y": 2712.5
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 50,
         "voltage": 34.5,
@@ -847,7 +847,7 @@
         "x": 487.5,
         "y": 0
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -874,7 +874,7 @@
         "x": 2387.5,
         "y": 0
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -902,7 +902,7 @@
         "x": 475,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -925,7 +925,7 @@
         "x": 2375,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -949,7 +949,7 @@
         "x": 475,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -972,7 +972,7 @@
         "x": 2375,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -996,7 +996,7 @@
         "x": 475,
         "y": 825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1020,7 +1020,7 @@
         "x": 2375,
         "y": 825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1044,7 +1044,7 @@
         "x": 475,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1067,7 +1067,7 @@
         "x": 2375,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1091,7 +1091,7 @@
         "x": 1333,
         "y": -12
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1272,7 +1272,7 @@
         "x": 625,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1295,7 +1295,7 @@
         "x": 725,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1318,7 +1318,7 @@
         "x": 825,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1341,7 +1341,7 @@
         "x": 925,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1364,7 +1364,7 @@
         "x": 1025,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1387,7 +1387,7 @@
         "x": 1125,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1410,7 +1410,7 @@
         "x": 1225,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1433,7 +1433,7 @@
         "x": 1325,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1456,7 +1456,7 @@
         "x": 1425,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1480,7 +1480,7 @@
         "x": 1525,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1504,7 +1504,7 @@
         "x": 1625,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1528,7 +1528,7 @@
         "x": 1725,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1552,7 +1552,7 @@
         "x": 1825,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1576,7 +1576,7 @@
         "x": 1925,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1600,7 +1600,7 @@
         "x": 2025,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1624,7 +1624,7 @@
         "x": 2125,
         "y": 100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1648,7 +1648,7 @@
         "x": 2225,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1672,7 +1672,7 @@
         "x": 825,
         "y": 25
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1695,7 +1695,7 @@
         "x": 2025,
         "y": 25
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1719,7 +1719,7 @@
         "x": 625,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1742,7 +1742,7 @@
         "x": 725,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1765,7 +1765,7 @@
         "x": 825,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1788,7 +1788,7 @@
         "x": 925,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1811,7 +1811,7 @@
         "x": 1025,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1834,7 +1834,7 @@
         "x": 1125,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1857,7 +1857,7 @@
         "x": 1225,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1880,7 +1880,7 @@
         "x": 1325,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1903,7 +1903,7 @@
         "x": 1425,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1927,7 +1927,7 @@
         "x": 1525,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1951,7 +1951,7 @@
         "x": 1625,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -1975,7 +1975,7 @@
         "x": 1725,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -1999,7 +1999,7 @@
         "x": 1825,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2023,7 +2023,7 @@
         "x": 1925,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2047,7 +2047,7 @@
         "x": 2025,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2071,7 +2071,7 @@
         "x": 2125,
         "y": 300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2095,7 +2095,7 @@
         "x": 2225,
         "y": 325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2119,7 +2119,7 @@
         "x": 825,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2142,7 +2142,7 @@
         "x": 2025,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2166,7 +2166,7 @@
         "x": 625,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2189,7 +2189,7 @@
         "x": 725,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2212,7 +2212,7 @@
         "x": 825,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2235,7 +2235,7 @@
         "x": 925,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2258,7 +2258,7 @@
         "x": 1025,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2281,7 +2281,7 @@
         "x": 1125,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2304,7 +2304,7 @@
         "x": 1225,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2327,7 +2327,7 @@
         "x": 1325,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2350,7 +2350,7 @@
         "x": 1425,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2374,7 +2374,7 @@
         "x": 1525,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2398,7 +2398,7 @@
         "x": 1625,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2422,7 +2422,7 @@
         "x": 1725,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2446,7 +2446,7 @@
         "x": 1825,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2470,7 +2470,7 @@
         "x": 1925,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2494,7 +2494,7 @@
         "x": 2025,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2518,7 +2518,7 @@
         "x": 2125,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2542,7 +2542,7 @@
         "x": 2225,
         "y": 525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2566,7 +2566,7 @@
         "x": 825,
         "y": 425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2589,7 +2589,7 @@
         "x": 2025,
         "y": 425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2613,7 +2613,7 @@
         "x": 625,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2636,7 +2636,7 @@
         "x": 725,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2659,7 +2659,7 @@
         "x": 825,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2682,7 +2682,7 @@
         "x": 925,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2705,7 +2705,7 @@
         "x": 1025,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2728,7 +2728,7 @@
         "x": 1125,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2751,7 +2751,7 @@
         "x": 1225,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2774,7 +2774,7 @@
         "x": 1325,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2797,7 +2797,7 @@
         "x": 1425,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2821,7 +2821,7 @@
         "x": 1525,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2845,7 +2845,7 @@
         "x": 1625,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2869,7 +2869,7 @@
         "x": 1725,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2893,7 +2893,7 @@
         "x": 1825,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2917,7 +2917,7 @@
         "x": 1925,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2941,7 +2941,7 @@
         "x": 2025,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -2965,7 +2965,7 @@
         "x": 2125,
         "y": 700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -2989,7 +2989,7 @@
         "x": 2225,
         "y": 725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3013,7 +3013,7 @@
         "x": 825,
         "y": 625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3036,7 +3036,7 @@
         "x": 2025,
         "y": 625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3060,7 +3060,7 @@
         "x": 625,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3083,7 +3083,7 @@
         "x": 725,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3106,7 +3106,7 @@
         "x": 825,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3129,7 +3129,7 @@
         "x": 925,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3152,7 +3152,7 @@
         "x": 1025,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3175,7 +3175,7 @@
         "x": 1125,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3198,7 +3198,7 @@
         "x": 1225,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3221,7 +3221,7 @@
         "x": 1325,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3244,7 +3244,7 @@
         "x": 1425,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3268,7 +3268,7 @@
         "x": 1525,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3292,7 +3292,7 @@
         "x": 1625,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3316,7 +3316,7 @@
         "x": 1725,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3340,7 +3340,7 @@
         "x": 1825,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3364,7 +3364,7 @@
         "x": 1925,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3388,7 +3388,7 @@
         "x": 2025,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3412,7 +3412,7 @@
         "x": 2125,
         "y": 900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3436,7 +3436,7 @@
         "x": 2225,
         "y": 925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3460,7 +3460,7 @@
         "x": 825,
         "y": 825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3483,7 +3483,7 @@
         "x": 2025,
         "y": 825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3507,7 +3507,7 @@
         "x": 625,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3530,7 +3530,7 @@
         "x": 725,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3553,7 +3553,7 @@
         "x": 825,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3576,7 +3576,7 @@
         "x": 925,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3599,7 +3599,7 @@
         "x": 1025,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3622,7 +3622,7 @@
         "x": 1125,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3645,7 +3645,7 @@
         "x": 1225,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3668,7 +3668,7 @@
         "x": 1325,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3691,7 +3691,7 @@
         "x": 1425,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3715,7 +3715,7 @@
         "x": 1525,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3739,7 +3739,7 @@
         "x": 1625,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3763,7 +3763,7 @@
         "x": 1725,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3787,7 +3787,7 @@
         "x": 1825,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3811,7 +3811,7 @@
         "x": 1925,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3835,7 +3835,7 @@
         "x": 2025,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3859,7 +3859,7 @@
         "x": 2125,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -3883,7 +3883,7 @@
         "x": 2225,
         "y": 1125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3907,7 +3907,7 @@
         "x": 825,
         "y": 1025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3930,7 +3930,7 @@
         "x": 2025,
         "y": 1025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3954,7 +3954,7 @@
         "x": 625,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -3977,7 +3977,7 @@
         "x": 725,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4000,7 +4000,7 @@
         "x": 825,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4023,7 +4023,7 @@
         "x": 925,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4046,7 +4046,7 @@
         "x": 1025,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4069,7 +4069,7 @@
         "x": 1125,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4092,7 +4092,7 @@
         "x": 1225,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4115,7 +4115,7 @@
         "x": 1325,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4138,7 +4138,7 @@
         "x": 1425,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4162,7 +4162,7 @@
         "x": 1525,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4186,7 +4186,7 @@
         "x": 1625,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4210,7 +4210,7 @@
         "x": 1725,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4234,7 +4234,7 @@
         "x": 1825,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4258,7 +4258,7 @@
         "x": 1925,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4282,7 +4282,7 @@
         "x": 2025,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4306,7 +4306,7 @@
         "x": 2125,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -4330,7 +4330,7 @@
         "x": 2225,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4354,7 +4354,7 @@
         "x": 825,
         "y": 1225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4377,7 +4377,7 @@
         "x": 2025,
         "y": 1225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -4401,7 +4401,7 @@
         "x": -175,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -4454,7 +4454,7 @@
         "x": 2975,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -4508,7 +4508,7 @@
         "x": 75,
         "y": 356
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -4531,7 +4531,7 @@
         "x": 2775,
         "y": 356
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -4555,7 +4555,7 @@
         "x": 200,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -4580,7 +4580,7 @@
         "x": 2600,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -4605,7 +4605,7 @@
         "x": 375,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -4628,7 +4628,7 @@
         "x": 2475,
         "y": 350
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -4651,7 +4651,7 @@
         "x": -175,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -4704,7 +4704,7 @@
         "x": 2975,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -4758,7 +4758,7 @@
         "x": 75,
         "y": 506
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -4781,7 +4781,7 @@
         "x": 2775,
         "y": 506
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -4805,7 +4805,7 @@
         "x": 200,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -4830,7 +4830,7 @@
         "x": 2600,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -4855,7 +4855,7 @@
         "x": 375,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -4878,7 +4878,7 @@
         "x": 2475,
         "y": 500
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -4901,7 +4901,7 @@
         "x": -175,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -4954,7 +4954,7 @@
         "x": 2975,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -5008,7 +5008,7 @@
         "x": 75,
         "y": 956
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -5031,7 +5031,7 @@
         "x": 2775,
         "y": 956
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -5055,7 +5055,7 @@
         "x": 200,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5080,7 +5080,7 @@
         "x": 2600,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5105,7 +5105,7 @@
         "x": 375,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -5128,7 +5128,7 @@
         "x": 2475,
         "y": 950
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -5151,7 +5151,7 @@
         "x": -175,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -5204,7 +5204,7 @@
         "x": 2975,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -5258,7 +5258,7 @@
         "x": 75,
         "y": 1106
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -5281,7 +5281,7 @@
         "x": 2775,
         "y": 1106
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -5305,7 +5305,7 @@
         "x": 200,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5330,7 +5330,7 @@
         "x": 2600,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5355,7 +5355,7 @@
         "x": 375,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -5378,7 +5378,7 @@
         "x": 2475,
         "y": 1100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -5401,7 +5401,7 @@
         "x": 375,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -5424,7 +5424,7 @@
         "x": 250,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5448,7 +5448,7 @@
         "x": 125,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -5471,7 +5471,7 @@
         "x": 75,
         "y": 0
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -5524,7 +5524,7 @@
         "x": 125,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -5547,7 +5547,7 @@
         "x": 25,
         "y": 206
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -5570,7 +5570,7 @@
         "x": -100,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -5593,7 +5593,7 @@
         "x": -250,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -5616,7 +5616,7 @@
         "x": -400,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -5669,7 +5669,7 @@
         "x": 375,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -5692,7 +5692,7 @@
         "x": 250,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5716,7 +5716,7 @@
         "x": 125,
         "y": 1275
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -5739,7 +5739,7 @@
         "x": 75,
         "y": 1400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -5792,7 +5792,7 @@
         "x": 125,
         "y": 1325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -5815,7 +5815,7 @@
         "x": 25,
         "y": 1256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -5838,7 +5838,7 @@
         "x": -100,
         "y": 1275
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -5861,7 +5861,7 @@
         "x": -250,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -5884,7 +5884,7 @@
         "x": -400,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -5937,7 +5937,7 @@
         "x": 2475,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -5960,7 +5960,7 @@
         "x": 2550,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -5985,7 +5985,7 @@
         "x": 2675,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -6008,7 +6008,7 @@
         "x": 2625,
         "y": 0
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -6062,7 +6062,7 @@
         "x": 2675,
         "y": 125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -6086,7 +6086,7 @@
         "x": 2775,
         "y": 206
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -6110,7 +6110,7 @@
         "x": 2900,
         "y": 225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -6134,7 +6134,7 @@
         "x": 3050,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -6158,7 +6158,7 @@
         "x": 3200,
         "y": 200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -6212,7 +6212,7 @@
         "x": 2475,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -6235,7 +6235,7 @@
         "x": 2550,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -6261,7 +6261,7 @@
         "x": 2675,
         "y": 1275
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -6285,7 +6285,7 @@
         "x": 2625,
         "y": 1400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -6339,7 +6339,7 @@
         "x": 2675,
         "y": 1325
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -6363,7 +6363,7 @@
         "x": 2775,
         "y": 1256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -6387,7 +6387,7 @@
         "x": 2900,
         "y": 1275
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -6411,7 +6411,7 @@
         "x": 3050,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -6435,7 +6435,7 @@
         "x": 3200,
         "y": 1250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -6489,7 +6489,7 @@
         "x": 487.5,
         "y": 1900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6516,7 +6516,7 @@
         "x": 2387.5,
         "y": 1900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6544,7 +6544,7 @@
         "x": 475,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6567,7 +6567,7 @@
         "x": 2375,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6591,7 +6591,7 @@
         "x": 475,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6614,7 +6614,7 @@
         "x": 2375,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6638,7 +6638,7 @@
         "x": 475,
         "y": 2725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6662,7 +6662,7 @@
         "x": 2375,
         "y": 2725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6686,7 +6686,7 @@
         "x": 475,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6709,7 +6709,7 @@
         "x": 2375,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6733,7 +6733,7 @@
         "x": 1333,
         "y": 1888
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -6914,7 +6914,7 @@
         "x": 625,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -6937,7 +6937,7 @@
         "x": 725,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -6960,7 +6960,7 @@
         "x": 825,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -6983,7 +6983,7 @@
         "x": 925,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7006,7 +7006,7 @@
         "x": 1025,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7029,7 +7029,7 @@
         "x": 1125,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7052,7 +7052,7 @@
         "x": 1225,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7075,7 +7075,7 @@
         "x": 1325,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7098,7 +7098,7 @@
         "x": 1425,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7122,7 +7122,7 @@
         "x": 1525,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7146,7 +7146,7 @@
         "x": 1625,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7170,7 +7170,7 @@
         "x": 1725,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7194,7 +7194,7 @@
         "x": 1825,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7218,7 +7218,7 @@
         "x": 1925,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7242,7 +7242,7 @@
         "x": 2025,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7266,7 +7266,7 @@
         "x": 2125,
         "y": 2000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7290,7 +7290,7 @@
         "x": 2225,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7314,7 +7314,7 @@
         "x": 825,
         "y": 1925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7337,7 +7337,7 @@
         "x": 2025,
         "y": 1925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7361,7 +7361,7 @@
         "x": 625,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7384,7 +7384,7 @@
         "x": 725,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7407,7 +7407,7 @@
         "x": 825,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7430,7 +7430,7 @@
         "x": 925,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7453,7 +7453,7 @@
         "x": 1025,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7476,7 +7476,7 @@
         "x": 1125,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7499,7 +7499,7 @@
         "x": 1225,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7522,7 +7522,7 @@
         "x": 1325,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7545,7 +7545,7 @@
         "x": 1425,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7569,7 +7569,7 @@
         "x": 1525,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7593,7 +7593,7 @@
         "x": 1625,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7617,7 +7617,7 @@
         "x": 1725,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7641,7 +7641,7 @@
         "x": 1825,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7665,7 +7665,7 @@
         "x": 1925,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7689,7 +7689,7 @@
         "x": 2025,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7713,7 +7713,7 @@
         "x": 2125,
         "y": 2200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7737,7 +7737,7 @@
         "x": 2225,
         "y": 2225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7761,7 +7761,7 @@
         "x": 825,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7784,7 +7784,7 @@
         "x": 2025,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7808,7 +7808,7 @@
         "x": 625,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7831,7 +7831,7 @@
         "x": 725,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7854,7 +7854,7 @@
         "x": 825,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7877,7 +7877,7 @@
         "x": 925,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7900,7 +7900,7 @@
         "x": 1025,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7923,7 +7923,7 @@
         "x": 1125,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7946,7 +7946,7 @@
         "x": 1225,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -7969,7 +7969,7 @@
         "x": 1325,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -7992,7 +7992,7 @@
         "x": 1425,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8016,7 +8016,7 @@
         "x": 1525,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8040,7 +8040,7 @@
         "x": 1625,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8064,7 +8064,7 @@
         "x": 1725,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8088,7 +8088,7 @@
         "x": 1825,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8112,7 +8112,7 @@
         "x": 1925,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8136,7 +8136,7 @@
         "x": 2025,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8160,7 +8160,7 @@
         "x": 2125,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8184,7 +8184,7 @@
         "x": 2225,
         "y": 2425
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8208,7 +8208,7 @@
         "x": 825,
         "y": 2325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8231,7 +8231,7 @@
         "x": 2025,
         "y": 2325
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8255,7 +8255,7 @@
         "x": 625,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8278,7 +8278,7 @@
         "x": 725,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8301,7 +8301,7 @@
         "x": 825,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8324,7 +8324,7 @@
         "x": 925,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8347,7 +8347,7 @@
         "x": 1025,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8370,7 +8370,7 @@
         "x": 1125,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8393,7 +8393,7 @@
         "x": 1225,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8416,7 +8416,7 @@
         "x": 1325,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8439,7 +8439,7 @@
         "x": 1425,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8463,7 +8463,7 @@
         "x": 1525,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8487,7 +8487,7 @@
         "x": 1625,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8511,7 +8511,7 @@
         "x": 1725,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8535,7 +8535,7 @@
         "x": 1825,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8559,7 +8559,7 @@
         "x": 1925,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8583,7 +8583,7 @@
         "x": 2025,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8607,7 +8607,7 @@
         "x": 2125,
         "y": 2600
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8631,7 +8631,7 @@
         "x": 2225,
         "y": 2625
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8655,7 +8655,7 @@
         "x": 825,
         "y": 2525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8678,7 +8678,7 @@
         "x": 2025,
         "y": 2525
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8702,7 +8702,7 @@
         "x": 625,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8725,7 +8725,7 @@
         "x": 725,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8748,7 +8748,7 @@
         "x": 825,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8771,7 +8771,7 @@
         "x": 925,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8794,7 +8794,7 @@
         "x": 1025,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8817,7 +8817,7 @@
         "x": 1125,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8840,7 +8840,7 @@
         "x": 1225,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8863,7 +8863,7 @@
         "x": 1325,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8886,7 +8886,7 @@
         "x": 1425,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8910,7 +8910,7 @@
         "x": 1525,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8934,7 +8934,7 @@
         "x": 1625,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -8958,7 +8958,7 @@
         "x": 1725,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -8982,7 +8982,7 @@
         "x": 1825,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9006,7 +9006,7 @@
         "x": 1925,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9030,7 +9030,7 @@
         "x": 2025,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9054,7 +9054,7 @@
         "x": 2125,
         "y": 2800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9078,7 +9078,7 @@
         "x": 2225,
         "y": 2825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9102,7 +9102,7 @@
         "x": 825,
         "y": 2725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9125,7 +9125,7 @@
         "x": 2025,
         "y": 2725
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9149,7 +9149,7 @@
         "x": 625,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9172,7 +9172,7 @@
         "x": 725,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9195,7 +9195,7 @@
         "x": 825,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9218,7 +9218,7 @@
         "x": 925,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9241,7 +9241,7 @@
         "x": 1025,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9264,7 +9264,7 @@
         "x": 1125,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9287,7 +9287,7 @@
         "x": 1225,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9310,7 +9310,7 @@
         "x": 1325,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9333,7 +9333,7 @@
         "x": 1425,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9357,7 +9357,7 @@
         "x": 1525,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9381,7 +9381,7 @@
         "x": 1625,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9405,7 +9405,7 @@
         "x": 1725,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9429,7 +9429,7 @@
         "x": 1825,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9453,7 +9453,7 @@
         "x": 1925,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9477,7 +9477,7 @@
         "x": 2025,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9501,7 +9501,7 @@
         "x": 2125,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9525,7 +9525,7 @@
         "x": 2225,
         "y": 3025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9549,7 +9549,7 @@
         "x": 825,
         "y": 2925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9572,7 +9572,7 @@
         "x": 2025,
         "y": 2925
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9596,7 +9596,7 @@
         "x": 625,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9619,7 +9619,7 @@
         "x": 725,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9642,7 +9642,7 @@
         "x": 825,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9665,7 +9665,7 @@
         "x": 925,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9688,7 +9688,7 @@
         "x": 1025,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9711,7 +9711,7 @@
         "x": 1125,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9734,7 +9734,7 @@
         "x": 1225,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9757,7 +9757,7 @@
         "x": 1325,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9780,7 +9780,7 @@
         "x": 1425,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9804,7 +9804,7 @@
         "x": 1525,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9828,7 +9828,7 @@
         "x": 1625,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9852,7 +9852,7 @@
         "x": 1725,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9876,7 +9876,7 @@
         "x": 1825,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9900,7 +9900,7 @@
         "x": 1925,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9924,7 +9924,7 @@
         "x": 2025,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9948,7 +9948,7 @@
         "x": 2125,
         "y": 3200
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -9972,7 +9972,7 @@
         "x": 2225,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -9996,7 +9996,7 @@
         "x": 825,
         "y": 3125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -10019,7 +10019,7 @@
         "x": 2025,
         "y": 3125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3500,
         "voltage": 34.5,
@@ -10043,7 +10043,7 @@
         "x": -175,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10096,7 +10096,7 @@
         "x": 2975,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10150,7 +10150,7 @@
         "x": 75,
         "y": 2256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10173,7 +10173,7 @@
         "x": 2775,
         "y": 2256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10197,7 +10197,7 @@
         "x": 200,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10222,7 +10222,7 @@
         "x": 2600,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10247,7 +10247,7 @@
         "x": 375,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10270,7 +10270,7 @@
         "x": 2475,
         "y": 2250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10293,7 +10293,7 @@
         "x": -175,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10346,7 +10346,7 @@
         "x": 2975,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10400,7 +10400,7 @@
         "x": 75,
         "y": 2406
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10423,7 +10423,7 @@
         "x": 2775,
         "y": 2406
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10447,7 +10447,7 @@
         "x": 200,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10472,7 +10472,7 @@
         "x": 2600,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10497,7 +10497,7 @@
         "x": 375,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10520,7 +10520,7 @@
         "x": 2475,
         "y": 2400
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10543,7 +10543,7 @@
         "x": -175,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10596,7 +10596,7 @@
         "x": 2975,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10650,7 +10650,7 @@
         "x": 75,
         "y": 2856
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10673,7 +10673,7 @@
         "x": 2775,
         "y": 2856
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10697,7 +10697,7 @@
         "x": 200,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10722,7 +10722,7 @@
         "x": 2600,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10747,7 +10747,7 @@
         "x": 375,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10770,7 +10770,7 @@
         "x": 2475,
         "y": 2850
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -10793,7 +10793,7 @@
         "x": -175,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10846,7 +10846,7 @@
         "x": 2975,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -10900,7 +10900,7 @@
         "x": 75,
         "y": 3006
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10923,7 +10923,7 @@
         "x": 2775,
         "y": 3006
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -10947,7 +10947,7 @@
         "x": 200,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10972,7 +10972,7 @@
         "x": 2600,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -10997,7 +10997,7 @@
         "x": 375,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -11020,7 +11020,7 @@
         "x": 2475,
         "y": 3000
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -11043,7 +11043,7 @@
         "x": -175,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "voltage": 34.5,
@@ -11097,7 +11097,7 @@
         "x": 75,
         "y": 2556
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 34.5,
@@ -11120,7 +11120,7 @@
         "x": 200,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -11144,7 +11144,7 @@
         "x": 375,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 0,
@@ -11167,7 +11167,7 @@
         "x": 2975,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "voltage": 34.5,
@@ -11222,7 +11222,7 @@
         "x": 2775,
         "y": 2556
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 34.5,
@@ -11246,7 +11246,7 @@
         "x": 2600,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -11271,7 +11271,7 @@
         "x": 2475,
         "y": 2550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 0,
@@ -11294,7 +11294,7 @@
         "x": -175,
         "y": 2700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 50,
         "voltage": 34.5,
@@ -11347,7 +11347,7 @@
         "x": 75,
         "y": 2706
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 34.5,
@@ -11370,7 +11370,7 @@
         "x": 200,
         "y": 2700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 50,
         "unit": "MVA",
@@ -11394,7 +11394,7 @@
         "x": 375,
         "y": 2700
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 0,
@@ -11417,7 +11417,7 @@
         "x": 375,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -11440,7 +11440,7 @@
         "x": 250,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -11464,7 +11464,7 @@
         "x": 125,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -11487,7 +11487,7 @@
         "x": 75,
         "y": 1900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -11540,7 +11540,7 @@
         "x": 125,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -11563,7 +11563,7 @@
         "x": 25,
         "y": 2106
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -11586,7 +11586,7 @@
         "x": -100,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -11609,7 +11609,7 @@
         "x": -250,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -11632,7 +11632,7 @@
         "x": -400,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -11685,7 +11685,7 @@
         "x": 375,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -11708,7 +11708,7 @@
         "x": 250,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -11732,7 +11732,7 @@
         "x": 125,
         "y": 3175
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -11755,7 +11755,7 @@
         "x": 75,
         "y": 3300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -11808,7 +11808,7 @@
         "x": 125,
         "y": 3225
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -11831,7 +11831,7 @@
         "x": 25,
         "y": 3156
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -11854,7 +11854,7 @@
         "x": -100,
         "y": 3175
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -11877,7 +11877,7 @@
         "x": -250,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -11900,7 +11900,7 @@
         "x": -400,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -11953,7 +11953,7 @@
         "x": 2475,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -11976,7 +11976,7 @@
         "x": 2550,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -12001,7 +12001,7 @@
         "x": 2675,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -12024,7 +12024,7 @@
         "x": 2625,
         "y": 1900
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -12078,7 +12078,7 @@
         "x": 2675,
         "y": 2025
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -12102,7 +12102,7 @@
         "x": 2775,
         "y": 2106
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -12126,7 +12126,7 @@
         "x": 2900,
         "y": 2125
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -12150,7 +12150,7 @@
         "x": 3050,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -12174,7 +12174,7 @@
         "x": 3200,
         "y": 2100
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -12228,7 +12228,7 @@
         "x": 2475,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -12251,7 +12251,7 @@
         "x": 2550,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -12277,7 +12277,7 @@
         "x": 2675,
         "y": 3175
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -12301,7 +12301,7 @@
         "x": 2625,
         "y": 3300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -12355,7 +12355,7 @@
         "x": 2675,
         "y": 3225
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -12379,7 +12379,7 @@
         "x": 2775,
         "y": 3156
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -12403,7 +12403,7 @@
         "x": 2900,
         "y": 3175
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -12427,7 +12427,7 @@
         "x": 3050,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -12451,7 +12451,7 @@
         "x": 3200,
         "y": 3150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -17980,8 +17980,8 @@
     "simulationRunning": false,
     "zoom": 0.5797796392913064,
     "pan": {
-      "x": 129.65871035808732,
-      "y": -10.647829003372635
+      "x": -60.34128964191268,
+      "y": 199.35217099662736
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17990,12 +17990,17 @@
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
-  "globalSampleStep": 128,
-  "perChartSampleStep": {},
+  "globalSampleStep": 1,
+  "perChartSampleStep": {
+    "sim-chart-1781661960879-0": 1,
+    "sim-chart-1781661960879-1": 1,
+    "sim-chart-1781661960879-2": 1
+  },
   "designUiSession": {
+    "ensembleId": "all_",
     "designSectionVisibility": {
       "showUpper": true,
-      "showLower": true,
+      "showLower": false,
       "hideBranches": []
     },
     "quickScenarioBranchCollapsed": {

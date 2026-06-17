@@ -356,6 +356,16 @@
   background-color: #f1f8f4;
 }
 
+.config-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.config-item-disabled:hover {
+  border-color: #ddd;
+  box-shadow: none;
+}
+
 .config-item-header {
   display: flex;
   justify-content: space-between;

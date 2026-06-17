@@ -674,6 +674,10 @@
   flex-shrink: 0;
 }
 
+.chart-panel-size-arrow-gap--tight {
+  width: 10px;
+}
+
 .chart-panel-opacity-wrap {
   display: flex;
   align-items: center;
@@ -857,11 +861,11 @@
   border-bottom: none;
 }
 
-/* conf3: four equal quadrants — chart1 | chart2 / chart3 | chart4 */
+/* conf3: four quadrants — chart1 | chart2 / chart3 | chart4 (row split via inline gridTemplateRows) */
 .chart-panel-drawers-row--quad-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: var(--quad-grid-rows, 1fr 1fr);
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;

@@ -105,6 +105,31 @@
         "frequency": 60
       },
       "isTripped": false
+    },
+    {
+      "id": "comp-ideum-expansion-panel",
+      "type": "ideum-expansion-panel",
+      "name": "Expansion",
+      "fullName": "Expansion",
+      "position": {
+        "x": 2060,
+        "y": 120
+      },
+      "status": "online",
+      "properties": {
+        "title": "Expansion"
+      },
+      "visualOverrides": {
+        "width": 480,
+        "height": 900
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
     }
   ],
   "connections": [],
@@ -141,5 +166,9 @@
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
-  "ideumKioskMode": true
+  "ideumKioskMode": true,
+  "remoteControlTarget": {
+    "designDir": "habib",
+    "designName": "Habib"
+  }
 }

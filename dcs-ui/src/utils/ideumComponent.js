@@ -7,12 +7,14 @@ export const IDEUM_TURBINE_BUTTON_TYPE = 'ideum-turbine-button';
 export const IDEUM_BESS_GFME_BUTTON_TYPE = 'ideum-bess-gfme-button';
 export const IDEUM_BESS_BUTTON_TYPE = 'ideum-bess-button';
 export const IDEUM_GFME_BUTTON_TYPE = 'ideum-gfme-button';
+export const IDEUM_EXPANSION_PANEL_TYPE = 'ideum-expansion-panel';
 
 export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_TURBINE_BUTTON_TYPE,
   IDEUM_BESS_GFME_BUTTON_TYPE,
   IDEUM_BESS_BUTTON_TYPE,
   IDEUM_GFME_BUTTON_TYPE,
+  IDEUM_EXPANSION_PANEL_TYPE,
 ]);
 
 export function isIdeumComponent(component) {
@@ -59,6 +61,15 @@ export function isIdeumGfmeButton(component) {
 
 export function isIdeumTurbineButton(component) {
   return component?.type === IDEUM_TURBINE_BUTTON_TYPE;
+}
+
+export function isIdeumExpansionPanel(component) {
+  return component?.type === IDEUM_EXPANSION_PANEL_TYPE;
+}
+
+export function getIdeumExpansionPanels(components) {
+  if (!Array.isArray(components)) return [];
+  return components.filter(isIdeumExpansionPanel);
 }
 
 export function getIdeumButtonStyleClass(component) {

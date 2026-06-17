@@ -1,0 +1,74 @@
+.ideum-expansion-dock {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  min-width: 200px;
+  padding: 12px 14px;
+  border: 2px solid #444;
+  border-radius: 8px;
+  background: rgba(13, 13, 13, 0.92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.ideum-expansion-dock__title {
+  margin-bottom: 10px;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #e65100;
+  text-align: center;
+}
+
+.ideum-expansion-dock__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ideum-expansion-dock__row:last-child {
+  margin-bottom: 0;
+}
+
+.ideum-expansion-dock__label {
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.ideum-expansion-dock__switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 2px solid #555;
+  border-radius: 12px;
+  background: #2a2a2a;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ideum-expansion-dock__switch--on {
+  background: rgba(0, 94, 96, 0.45);
+  border-color: #00d4a8;
+}
+
+.ideum-expansion-dock__switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #888;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.ideum-expansion-dock__switch--on .ideum-expansion-dock__switch-thumb {
+  transform: translateX(20px);
+  background: #00d4a8;
+}

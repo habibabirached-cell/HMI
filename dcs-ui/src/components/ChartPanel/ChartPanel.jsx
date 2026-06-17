@@ -49,6 +49,15 @@ import {
   CHART_DRAWER_KEYS,
 } from '../../utils/chartPanelDrawerBuckets';
 import { flyChartToDrawer } from '../../utils/chartDrawerFlyTransition';
+import { isTimeBasedChart } from '../../utils/publishPlaybackTimeRange';
+import {
+  QUAD_BOTTOM_ROW_SHARE_DEFAULT,
+  QUAD_BOTTOM_ROW_SHARE_MAX,
+  QUAD_BOTTOM_ROW_SHARE_MIN,
+  QUAD_BOTTOM_ROW_SHARE_STEP,
+  clampQuadBottomRowShare,
+  quadGridRowStyleFromShare,
+} from '../../utils/chartPanelQuadGrid';
 
 // Store native selection listeners per chart so we can clean up on unmount
 const selectionListenersByChart = new Map();
@@ -189,6 +198,7 @@ const ChartPanel = ({
   dualChartDrawersStacked = false,
   quadChartDrawers = false,
   onMoveChartDrawer,
+  playbackTimeRange = null,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
   const panelRootRef = useRef(null);
@@ -215,6 +225,28 @@ const ChartPanel = ({
       return n;
     });
   };
+  const [quadBottomRowShare, setQuadBottomRowShare] = useState(() => {
+    try {
+      const n = Number(window.localStorage?.getItem('dcsQuadBottomRowShare'));
+      if (Number.isFinite(n)) {
+        return clampQuadBottomRowShare(n);
+      }
+    } catch {
+      /* ignore */
+    }
+    return QUAD_BOTTOM_ROW_SHARE_DEFAULT;
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dcsQuadBottomRowShare', String(quadBottomRowShare));
+    } catch {
+      /* ignore */
+    }
+  }, [quadBottomRowShare]);
+  const quadGridRowStyle = useMemo(() => {
+    if (!quadChartDrawers) return undefined;
+    return quadGridRowStyleFromShare(quadBottomRowShare);
+  }, [quadChartDrawers, quadBottomRowShare]);
   const CHART_COLLAPSED_MIN_PX = 60;
   /** Side-dock collapsed: rail-style vertical hinge only (matches Controls rail ~30px). */
   const CHART_SIDE_COLLAPSED_PX = 30;
@@ -1862,9 +1894,13 @@ const ChartPanel = ({
    */
   const getPlotlyUiRevision = (chart, data) => {
     const step = getSampleStep(chart.id);
-    const n = data?.length ?? 0;
     const sid = simulationMetadata?.id ?? '';
     const csv = chart.csvName ?? '';
+    // Locked time axes must not bump uirevision as rows stream in during playback.
+    const n =
+      chart.axisRange?.xLocked && isTimeBasedChart(chart)
+        ? 'xlocked'
+        : (data?.length ?? 0);
     return `${chart.id}|${sid}|${csv}|${n}|${step}`;
   };
 
@@ -1873,7 +1909,7 @@ const ChartPanel = ({
    * For each axis: if locked and min/max are saved, embed `range` so Home snaps to
    * them; if unlocked, use `autorange: true` so Home and the default view follow data.
    */
-  const resolveAxisProps = (ar) => {
+  const resolveAxisProps = (chart, ar) => {
     if (!ar) {
       return {
         xRangeProps: { autorange: true },
@@ -1884,12 +1920,22 @@ const ChartPanel = ({
     }
     const xLocked = ar.xLocked ?? false;
     const yLocked = ar.yLocked ?? false;
-    const xHas = ar.xMin != null || ar.xMax != null;
+    let xMin = ar.xMin;
+    let xMax = ar.xMax;
+    if (xLocked && isTimeBasedChart(chart) && playbackTimeRange) {
+      if (xMin == null && Number.isFinite(Number(playbackTimeRange.t1))) {
+        xMin = Number(playbackTimeRange.t1);
+      }
+      if (xMax == null && Number.isFinite(Number(playbackTimeRange.t2))) {
+        xMax = Number(playbackTimeRange.t2);
+      }
+    }
+    const xHas = xMin != null || xMax != null;
     const yHas = ar.yMin != null || ar.yMax != null;
 
     const xRangeProps =
       xLocked && xHas
-        ? { range: [ar.xMin ?? null, ar.xMax ?? null], autorange: false }
+        ? { range: [xMin ?? null, xMax ?? null], autorange: false, rangemode: 'normal' }
         : { autorange: true };
     const yRangeProps =
       yLocked && yHas
@@ -2064,6 +2110,8 @@ const ChartPanel = ({
         });
       }
 
+      const { xRangeProps, xLockProps } = resolveAxisProps(chart, chart.axisRange);
+
       const layout = {
         ...baseLayout,
         title: { ...baseLayout.title, text: chart.title || `${chart.componentName || ''} - Stacked nD` },
@@ -2075,7 +2123,9 @@ const ChartPanel = ({
           title: { text: chart.xLabel ?? chart.xColumn, font: { family: 'Arial, sans-serif', size: 13, color: '#999', weight: 600 } },
           domain: [0, 1],
           anchor: n === 1 ? 'y' : `y${n}`,
-          ...axisStyle
+          ...axisStyle,
+          ...xRangeProps,
+          ...xLockProps,
         }
       };
 
@@ -2097,7 +2147,7 @@ const ChartPanel = ({
     if (chart.isMultiComponent && chart.chartType === 'multi-line-chart') {
       const eventShapes = generateEventMarkerShapes();
       const yLabelHTML = getMultiBarYAxisLabelHTML(chart);
-      const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart.axisRange);
+      const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart, chart.axisRange);
       return withDangerY({
         ...baseLayout,
         shapes: eventShapes,
@@ -2225,7 +2275,7 @@ const ChartPanel = ({
     // Chart-specific layout
     if (chart.chartType === '2d' || chart.chartType === 'nd' || chart.chartType === 'bar') {
       const eventShapes = generateEventMarkerShapes();
-      const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart.axisRange);
+      const { xRangeProps, yRangeProps, xLockProps, yLockProps } = resolveAxisProps(chart, chart.axisRange);
       
       return withDangerY({
         ...baseLayout,
@@ -3105,6 +3155,48 @@ const ChartPanel = ({
               >
                 ▶
               </button>
+              {quadChartDrawers && (
+                <>
+                  <span
+                    className="chart-panel-size-arrow-gap chart-panel-size-arrow-gap--tight"
+                    aria-hidden="true"
+                  />
+                  <button
+                    type="button"
+                    className="chart-panel-size-arrow"
+                    onClick={() =>
+                      setQuadBottomRowShare((prev) =>
+                        Math.min(
+                          QUAD_BOTTOM_ROW_SHARE_MAX,
+                          prev + QUAD_BOTTOM_ROW_SHARE_STEP,
+                        ),
+                      )
+                    }
+                    disabled={quadBottomRowShare >= QUAD_BOTTOM_ROW_SHARE_MAX}
+                    aria-label="Taller chart3 and chart4 row"
+                    title="Taller chart3 + chart4 row"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    className="chart-panel-size-arrow"
+                    onClick={() =>
+                      setQuadBottomRowShare((prev) =>
+                        Math.max(
+                          QUAD_BOTTOM_ROW_SHARE_MIN,
+                          prev - QUAD_BOTTOM_ROW_SHARE_STEP,
+                        ),
+                      )
+                    }
+                    disabled={quadBottomRowShare <= QUAD_BOTTOM_ROW_SHARE_MIN}
+                    aria-label="Shorter chart3 and chart4 row"
+                    title="Shorter chart3 + chart4 row"
+                  >
+                    ▼
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <button className="chart-panel-close" onClick={onClose} title="Close Chart Panel">
@@ -3128,7 +3220,11 @@ const ChartPanel = ({
               }`
             : undefined
         }
-        style={!hasLabeledDrawers ? { display: 'contents' } : undefined}
+        style={
+          !hasLabeledDrawers
+            ? { display: 'contents' }
+            : quadGridRowStyle
+        }
       >
       {drawerRowsConfig.map(({ drawerKey, drawerLabel, units: drawerUnits }) => (
         <div

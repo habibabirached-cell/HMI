@@ -14,6 +14,7 @@ import {
   ideumButtonPayload,
   isIdeumBessButton,
   isIdeumBessGfmeButton,
+  isIdeumExpansionPanel,
   isIdeumGfmeButton,
   isIdeumTurbineButton,
 } from '../../utils/ideumComponent';
@@ -22,6 +23,37 @@ import './IdeumComponentLayer.css';
 const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
 const TITLE_BAR_PX = 44;
 const INNER_PAD_PX = 12;
+
+function IdeumVerticalSwitch({ compact, onToggle, label, zoom, trackH }) {
+  const trackW = Math.max(44, Math.round(56 * zoom));
+  const thumbSize = Math.max(28, Math.round(36 * zoom));
+  return (
+    <button
+      type="button"
+      role="switch"
+      className={`ideum-expansion-panel__switch${!compact ? ' ideum-expansion-panel__switch--on' : ''}`}
+      style={{ width: trackW, height: trackH }}
+      aria-checked={!compact}
+      aria-label={compact ? `${label} compact` : `${label} expanded`}
+      title={
+        compact
+          ? `${label} compact — tap to expand on Maingear`
+          : `${label} expanded — tap to compact on Maingear`
+      }
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onToggle?.();
+      }}
+    >
+      <span
+        className="ideum-expansion-panel__switch-thumb"
+        style={{ width: thumbSize, height: thumbSize }}
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
 
 function layoutIdeumSlot(component, blockTypeScale, pan, zoom) {
   const vis = getComponentVisualConfig(component.type);
@@ -59,6 +91,8 @@ export default function IdeumComponentLayer({
   canvasRef,
   blockTypeScale = {},
   onIdeumClick,
+  ideumExpansionMirror = { breakersCompact: true, peripheralsCompact: true },
+  onIdeumExpansionToggle,
 }) {
   const [slots, setSlots] = useState([]);
 
@@ -98,9 +132,73 @@ export default function IdeumComponentLayer({
     if (payload) onIdeumClick?.(payload);
   };
 
+  const buttonSlots = slots.filter((s) => !isIdeumExpansionPanel(s.component));
+  const expansionSlots = slots.filter((s) => isIdeumExpansionPanel(s.component));
+
   return (
     <div className="ideum-component-layer" aria-hidden={false}>
-      {slots.map((slot) => {
+      {expansionSlots.map((slot) => {
+        const titlePx = Math.max(16, Math.round(24 * zoom));
+        const labelPx = Math.max(20, Math.round(32 * zoom));
+        const rowPad = Math.max(16, Math.round(24 * zoom));
+        const switchTrackH = Math.max(
+          140,
+          Math.round((slot.pixelHeight - titlePx - rowPad * 4) / 2),
+        );
+
+        return (
+          <div
+            key={slot.id}
+            className="ideum-expansion-panel"
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+              padding: rowPad,
+            }}
+            aria-label="Expansion remote controls"
+          >
+            <div
+              className="ideum-expansion-panel__title"
+              style={{ fontSize: titlePx, marginBottom: rowPad }}
+            >
+              Expansion
+            </div>
+            <div className="ideum-expansion-panel__row" style={{ marginBottom: rowPad }}>
+              <span
+                className="ideum-expansion-panel__label"
+                style={{ fontSize: labelPx }}
+              >
+                Breakers
+              </span>
+              <IdeumVerticalSwitch
+                compact={ideumExpansionMirror?.breakersCompact !== false}
+                onToggle={() => onIdeumExpansionToggle?.('breakers')}
+                label="Breakers"
+                zoom={zoom}
+                trackH={switchTrackH}
+              />
+            </div>
+            <div className="ideum-expansion-panel__row">
+              <span
+                className="ideum-expansion-panel__label"
+                style={{ fontSize: labelPx }}
+              >
+                Peripherals
+              </span>
+              <IdeumVerticalSwitch
+                compact={ideumExpansionMirror?.peripheralsCompact !== false}
+                onToggle={() => onIdeumExpansionToggle?.('peripherals')}
+                label="Peripherals"
+                zoom={zoom}
+                trackH={switchTrackH}
+              />
+            </div>
+          </div>
+        );
+      })}
+      {buttonSlots.map((slot) => {
         const previewH = Math.max(
           80,
           slot.pixelHeight - Math.round((TITLE_BAR_PX + INNER_PAD_PX * 2) * zoom),

@@ -276,6 +276,8 @@ const Canvas = forwardRef(({
   ideumKioskMode = false,
   ideumControlButtons = [],
   onIdeumControlButtonClick,
+  ideumExpansionMirror,
+  onIdeumExpansionToggle,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
   const canvasRef = useRef(null);
@@ -1983,6 +1985,8 @@ const Canvas = forwardRef(({
           canvasRef={canvasRef}
           blockTypeScale={canvasBlockTypeScale}
           onIdeumClick={onIdeumControlButtonClick}
+          ideumExpansionMirror={ideumExpansionMirror}
+          onIdeumExpansionToggle={onIdeumExpansionToggle}
         />
       )}
 

@@ -1,5 +1,5 @@
 /** Allowed playback speed multipliers (Simulation Controls grid). */
-export const SIMULATION_SPEED_OPTIONS = [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000];
+export const SIMULATION_SPEED_OPTIONS = [0.1, 1, 2, 4, 6, 8, 10, 15, 20];
 
 /** Coerce a saved value to a valid speed button choice. */
 export function normalizeSimulationSpeed(raw, fallback = 1) {
