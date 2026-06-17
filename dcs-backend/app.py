@@ -270,6 +270,23 @@ def _design_ui_session_for_disk(raw) -> dict:
     return out
 
 
+def _playback_time_range_for_disk(raw) -> Optional[dict]:
+    """Coerce playbackTimeRange to {t1, t2} for .conf.json round-trip."""
+    if not isinstance(raw, dict):
+        return None
+    try:
+        t1 = float(raw.get("t1", raw.get("start", 8)))
+        t2 = float(raw.get("t2", raw.get("end", 60)))
+    except (TypeError, ValueError):
+        return None
+    if not (t1 == t1 and t2 == t2):  # reject NaN
+        return None
+    t1, t2 = max(0.0, t1), max(0.0, t2)
+    if t1 > t2:
+        t1, t2 = t2, t1
+    return {"t1": t1, "t2": t2}
+
+
 def save_config_to_design_dir(
     config_name: str,
     description,
@@ -305,6 +322,7 @@ def save_config_to_design_dir(
         _cbs = data.get("canvasBlockTypeScale")
         _gs = data.get("globalSampleStep")
         _pcs = data.get("perChartSampleStep")
+        _ptr = data.get("playbackTimeRange")
         _dus = data.get("designUiSession")
         _qsb = data.get("quickScenarioButtons")
         _hdq = data.get("hiddenDefaultQuickScenarios")
@@ -324,6 +342,7 @@ def save_config_to_design_dir(
             if isinstance(_gs, (int, float)) and not isinstance(_gs, bool)
             else 128,
             "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
+            "playbackTimeRange": _playback_time_range_for_disk(_ptr),
             "designUiSession": _design_ui_session_for_disk(_dus),
             "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
             "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
@@ -355,6 +374,7 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _cbs = conf.get("canvasBlockTypeScale")
     _gs = conf.get("globalSampleStep")
     _pcs = conf.get("perChartSampleStep")
+    _ptr = conf.get("playbackTimeRange")
     _dus = conf.get("designUiSession")
     _qsb = conf.get("quickScenarioButtons")
     _hdq = conf.get("hiddenDefaultQuickScenarios")
@@ -375,6 +395,7 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         if isinstance(_gs, (int, float)) and not isinstance(_gs, bool)
         else 128,
         "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
+        "playbackTimeRange": _playback_time_range_for_disk(_ptr),
         "designUiSession": _design_ui_session_for_disk(_dus),
         "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
         "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],

@@ -21,12 +21,15 @@ export function normalizeDesignExpansion(raw) {
   return out;
 }
 
-/** Habib-family designs use the dual middle tie networks + peripheral banks. */
+/** Designs whose catalog folder or display name starts with “H” (Habib, h2, h3, …). */
 export function designSupportsExpansionPanel(designApiPath, configName) {
-  const key = String(designApiPath || configName || '')
+  const leaf = String(designApiPath || '')
     .trim()
+    .split(/[/\\]/)
+    .pop()
     .toLowerCase();
-  return key === 'habib' || key === 'habib2' || key.endsWith('/habib') || key.endsWith('/habib2');
+  const name = String(configName || '').trim();
+  return /^h/i.test(leaf) || /^h/i.test(name);
 }
 
 export function applyBreakersExpansionToComponents(components, compact) {

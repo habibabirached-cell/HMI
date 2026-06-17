@@ -4,38 +4,7 @@ import EnsembleEditorDialog from '../EnsembleEditorDialog/EnsembleEditorDialog';
 import QuickScenarioContextMenu from './QuickScenarioContextMenu';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
 import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut } from '../../data/quickScenarioUi';
-import { hasQuickScenarioCollapseControl } from '../../utils/designCollapseState';
 import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
-
-function QuickScenarioCollapseSwitch({
-  shortcut,
-  quickScenarioBranchCollapsed,
-  onQuickScenarioCollapseChange,
-}) {
-  if (!shortcut?.presetName || !hasQuickScenarioCollapseControl(shortcut.presetName)) {
-    return null;
-  }
-  const isExpanded = quickScenarioBranchCollapsed[shortcut.presetName] === false;
-  return (
-    <button
-      type="button"
-      role="switch"
-      className={`quick-scenario-collapse-switch${
-        isExpanded ? ' quick-scenario-collapse-switch--expanded' : ''
-      }`}
-      aria-checked={isExpanded}
-      aria-label={isExpanded ? 'Expanded view' : 'Compact view'}
-      title={
-        isExpanded ? 'Expanded — slide up to compact' : 'Compact — slide down to expand'
-      }
-      onClick={() => {
-        onQuickScenarioCollapseChange?.(shortcut, isExpanded);
-      }}
-    >
-      <span className="quick-scenario-collapse-switch__thumb" aria-hidden="true" />
-    </button>
-  );
-}
 
 function ExpansionToggleSwitch({ label, compact, onChange, titleCompact, titleExpanded }) {
   const isExpanded = !compact;
@@ -61,8 +30,7 @@ function ExpansionToggleSwitch({ label, compact, onChange, titleCompact, titleEx
 
 function QuickScenarioShortcutRow({
   shortcut,
-  quickScenarioBranchCollapsed,
-  onQuickScenarioCollapseChange,
+  isActive = false,
   onQuickScenarioShortcutClick,
   onSaveQuickScenarioPreset,
   onDeleteQuickScenarioButton,
@@ -73,7 +41,9 @@ function QuickScenarioShortcutRow({
     <div className="quick-scenario-row">
       <button
         type="button"
-        className="control-btn quick-scenario-shortcut"
+        className={`control-btn quick-scenario-shortcut${
+          isActive ? ' quick-scenario-shortcut--active' : ''
+        }`}
         style={{ background: shortcut.color }}
         onClick={() => onQuickScenarioShortcutClick?.(shortcut)}
         onContextMenu={(e) => onQuickScenarioContextMenu?.(e, shortcut)}
@@ -82,14 +52,10 @@ function QuickScenarioShortcutRow({
             ? ` (ensemble ${shortcut.ensembleId})`
             : ` (scenario ${shortcut.simulationId})`
         }`}
+        aria-pressed={isActive}
       >
         {shortcut.icon} {shortcut.label}
       </button>
-      <QuickScenarioCollapseSwitch
-        shortcut={shortcut}
-        quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
-        onQuickScenarioCollapseChange={onQuickScenarioCollapseChange}
-      />
       {onSaveQuickScenarioPreset && !rightRailGridPeek && (
         <button
           type="button"
@@ -205,8 +171,6 @@ const SimulationControls = ({
   activeQuickScenarioPlaying = null,
   activeNamedSimulationConfig = null,
   onQuickScenarioShortcutClick,
-  quickScenarioBranchCollapsed = {},
-  onQuickScenarioCollapseChange,
   onIdeumControlButtonClick,
   onSaveQuickScenarioPreset,
   onDeleteQuickScenarioButton,
@@ -262,24 +226,14 @@ const SimulationControls = ({
     );
   }, [activeQuickScenarioPlaying, activeNamedSimulationConfig, quickScenarioButtons]);
 
-  const inactiveQuickScenarioShortcuts = React.useMemo(
-    () =>
-      quickScenarioButtons.filter((shortcut) => {
-        const isActive =
-          simulationRunning && activeQuickScenarioShortcut?.id === shortcut.id;
-        return !isActive;
-      }),
-    [quickScenarioButtons, simulationRunning, activeQuickScenarioShortcut],
-  );
-
   const quickScenarioShortcuts = React.useMemo(
-    () => inactiveQuickScenarioShortcuts.filter((s) => !isQuickScenarioControlsShortcut(s)),
-    [inactiveQuickScenarioShortcuts],
+    () => quickScenarioButtons.filter((s) => !isQuickScenarioControlsShortcut(s)),
+    [quickScenarioButtons],
   );
 
   const controlShortcuts = React.useMemo(
-    () => inactiveQuickScenarioShortcuts.filter((s) => isQuickScenarioControlsShortcut(s)),
-    [inactiveQuickScenarioShortcuts],
+    () => quickScenarioButtons.filter((s) => isQuickScenarioControlsShortcut(s)),
+    [quickScenarioButtons],
   );
 
   const toggleSimScenariosCollapsed = () => {
@@ -629,40 +583,6 @@ const SimulationControls = ({
 
       {/* Body area where buttons appear */}
       <div className="controls-body">
-        {/* ================================================================
-            CURRENT SCENARIO + QUICK SCENARIOS (top of panel)
-            ================================================================ */}
-        <div className="scenario-playing-now-section">
-          <h4 className="scenarios-title">Current scenario:</h4>
-          {activeQuickScenarioShortcut && simulationRunning ? (
-            <div className="scenario-playing-now-display">
-              <div className="quick-scenario-row quick-scenario-row--playing">
-                <div
-                  className="scenario-playing-now-btn quick-scenario-playing-btn"
-                  style={{ '--scenario-play-color': activeQuickScenarioShortcut.color }}
-                  role="status"
-                  aria-label={`Playing: ${activeQuickScenarioShortcut.label}`}
-                  onContextMenu={(e) =>
-                    handleQuickScenarioContextMenu(e, activeQuickScenarioShortcut)
-                  }
-                >
-                  <span className="quick-scenario-playing-shimmer" aria-hidden="true" />
-                  <span className="quick-scenario-playing-label">
-                    {activeQuickScenarioShortcut.icon} {activeQuickScenarioShortcut.label}
-                  </span>
-                </div>
-                <QuickScenarioCollapseSwitch
-                  shortcut={activeQuickScenarioShortcut}
-                  quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
-                  onQuickScenarioCollapseChange={onQuickScenarioCollapseChange}
-                />
-              </div>
-            </div>
-          ) : rightRailGridPeek ? null : (
-            <p className="scenario-playing-now-empty">—</p>
-          )}
-        </div>
-
         {ideumControlButtons.length > 0 && (
           <div className="quick-scenarios-section ideum-control-section">
             <h4 className="scenarios-title">Ideum Controls</h4>
@@ -732,8 +652,7 @@ const SimulationControls = ({
               <QuickScenarioShortcutRow
                 key={shortcut.id}
                 shortcut={shortcut}
-                quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
-                onQuickScenarioCollapseChange={onQuickScenarioCollapseChange}
+                isActive={activeQuickScenarioShortcut?.id === shortcut.id}
                 onQuickScenarioShortcutClick={onQuickScenarioShortcutClick}
                 onSaveQuickScenarioPreset={onSaveQuickScenarioPreset}
                 onDeleteQuickScenarioButton={onDeleteQuickScenarioButton}
@@ -752,8 +671,7 @@ const SimulationControls = ({
                 <QuickScenarioShortcutRow
                   key={shortcut.id}
                   shortcut={shortcut}
-                  quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
-                  onQuickScenarioCollapseChange={onQuickScenarioCollapseChange}
+                  isActive={activeQuickScenarioShortcut?.id === shortcut.id}
                   onQuickScenarioShortcutClick={onQuickScenarioShortcutClick}
                   onSaveQuickScenarioPreset={onSaveQuickScenarioPreset}
                   onDeleteQuickScenarioButton={onDeleteQuickScenarioButton}

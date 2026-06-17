@@ -17978,10 +17978,10 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.5797796392913064,
+    "zoom": 0.4797796392913064,
     "pan": {
-      "x": 39.65871035808732,
-      "y": -21.647829003372635
+      "x": 135.65871035808732,
+      "y": 170.35217099662736
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17992,20 +17992,20 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781707401930-0": 1,
-    "sim-chart-1781707401930-1": 1,
-    "sim-chart-1781707401930-2": 1,
-    "sim-chart-1781707401930-3": 1,
-    "sim-chart-1781707401930-4": 1,
-    "sim-chart-1781707401930-5": 1,
-    "sim-chart-1781707401930-6": 1,
-    "sim-chart-1781707401930-7": 1
+    "sim-chart-1781710022610-0": 1,
+    "sim-chart-1781710022610-1": 1,
+    "sim-chart-1781710022610-2": 1,
+    "sim-chart-1781710022610-3": 1
+  },
+  "playbackTimeRange": {
+    "t1": 5.0,
+    "t2": 50.0
   },
   "designUiSession": {
     "ensembleId": "all_",
     "designSectionVisibility": {
       "showUpper": true,
-      "showLower": true,
+      "showLower": false,
       "hideBranches": []
     },
     "quickScenarioBranchCollapsed": {

@@ -34,8 +34,8 @@ function shaftAxisFromSize(THREE, size) {
 }
 
 const ACCENT_BLUE = 0x4488ff;
-const ACCENT_RED = 0xff3344;
-/** One blue-to-red-to-blue cycle per shaft revolution. */
+const ACCENT_GREEN = 0x33cc66;
+/** One blue-to-green-to-blue cycle per shaft revolution. */
 const COLOR_CYCLE_TURNS = 1;
 
 /**
@@ -94,7 +94,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
         scene.add(rimLight);
 
         const blueColor = new THREE.Color(ACCENT_BLUE);
-        const redColor = new THREE.Color(ACCENT_RED);
+        const greenColor = new THREE.Color(ACCENT_GREEN);
         const accentColor = new THREE.Color(ACCENT_BLUE);
 
         let turntable = null;
@@ -136,9 +136,9 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
             modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
             shaftSpinAngle += SHAFT_SPIN;
 
-            // Smooth blue/red accent each shaft revolution (cosine ease).
+            // Smooth blue/green accent each shaft revolution (cosine ease).
             const mix = 0.5 - 0.5 * Math.cos(shaftSpinAngle / COLOR_CYCLE_TURNS);
-            accentColor.copy(blueColor).lerp(redColor, mix);
+            accentColor.copy(blueColor).lerp(greenColor, mix);
             fillLight.color.copy(accentColor);
             accentSpecular.color.copy(accentColor);
             rimLight.color.copy(accentColor);

@@ -5532,7 +5532,9 @@ function App() {
     const gss = data.globalSampleStep;
     setGlobalSampleStep(normalizeSampleStep(gss));
 
-    setPlaybackTimeRange(normalizePlaybackTimeRange(data.playbackTimeRange));
+    const loadedPlaybackTimeRange = normalizePlaybackTimeRange(data.playbackTimeRange);
+    setPlaybackTimeRange(loadedPlaybackTimeRange);
+    playbackTimeRangeRef.current = loadedPlaybackTimeRange;
 
     if (
       data.perChartSampleStep != null &&
@@ -6192,8 +6194,6 @@ function App() {
       activeQuickScenarioPlaying={activeQuickScenarioPlaying}
       activeNamedSimulationConfig={activeNamedSimulationConfig}
       onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
-      quickScenarioBranchCollapsed={quickScenarioBranchCollapsed}
-      onQuickScenarioCollapseChange={handleQuickScenarioCollapseChange}
       onIdeumControlButtonClick={handleIdeumControlButtonClick}
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}

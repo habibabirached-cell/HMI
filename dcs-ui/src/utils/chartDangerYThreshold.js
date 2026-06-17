@@ -159,7 +159,7 @@ function plotlyYRefsFromLayout(layout) {
   return [...refs];
 }
 
-/** Red horizontal reference line(s) at danger Y. */
+/** Amber horizontal reference line(s) at danger Y. */
 export function applyDangerYThresholdLayout(layout, chart) {
   const y0 = getChartDangerYThreshold(chart);
   if (y0 == null || !layout) return layout;
@@ -172,7 +172,7 @@ export function applyDangerYThresholdLayout(layout, chart) {
     x1: 1,
     y0: y0,
     y1: y0,
-    line: { color: '#f44336', width: 2 },
+    line: { color: '#ff9800', width: 2 },
     layer: 'above',
   });
 

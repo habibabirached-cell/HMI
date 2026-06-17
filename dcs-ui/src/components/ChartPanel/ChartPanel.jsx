@@ -546,7 +546,7 @@ const ChartPanel = ({
             />
           </label>
           <span className="chart-axis-range-threshold-hint">
-            Red line at Y = y0; amber alert when a non-rigid trace reaches Y ≥ y0 during playback
+            Amber line at Y = y0; amber alert when a non-rigid trace reaches Y ≥ y0 during playback
           </span>
         </div>
 
