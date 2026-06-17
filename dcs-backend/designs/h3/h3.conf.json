@@ -17980,8 +17980,8 @@
     "simulationRunning": false,
     "zoom": 0.4797796392913064,
     "pan": {
-      "x": 183.65871035808732,
-      "y": 180.85217099662736
+      "x": 135.65871035808732,
+      "y": 170.35217099662736
     },
     "mode": "design",
     "uiFontPxShift": 5,
@@ -17992,14 +17992,18 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1781708499416-0": 1,
-    "sim-chart-1781708499416-1": 1,
-    "sim-chart-1781708499417-2": 1,
-    "sim-chart-1781708499417-3": 1,
-    "sim-chart-1781708499417-4": 1,
-    "sim-chart-1781708499417-5": 1,
-    "sim-chart-1781708499417-6": 1,
-    "sim-chart-1781708499417-7": 1
+    "sim-chart-1781713744034-0": 1,
+    "sim-chart-1781713744034-1": 1,
+    "sim-chart-1781713744034-2": 1,
+    "sim-chart-1781713744034-3": 1,
+    "sim-chart-1781713744034-4": 1,
+    "sim-chart-1781713744034-5": 1,
+    "sim-chart-1781713744034-6": 1,
+    "sim-chart-1781713744034-7": 1
+  },
+  "playbackTimeRange": {
+    "t1": 5.0,
+    "t2": 50.0
   },
   "designUiSession": {
     "ensembleId": "all_",

@@ -197,6 +197,8 @@ const ChartPanel = ({
   dualChartDrawers = false,
   dualChartDrawersStacked = false,
   quadChartDrawers = false,
+  quadBottomRowShare: quadBottomRowShareProp,
+  onQuadBottomRowShareChange,
   onMoveChartDrawer,
   playbackTimeRange = null,
 }) => {
@@ -225,7 +227,7 @@ const ChartPanel = ({
       return n;
     });
   };
-  const [quadBottomRowShare, setQuadBottomRowShare] = useState(() => {
+  const [quadBottomRowShareLocal, setQuadBottomRowShareLocal] = useState(() => {
     try {
       const n = Number(window.localStorage?.getItem('dcsQuadBottomRowShare'));
       if (Number.isFinite(n)) {
@@ -236,13 +238,32 @@ const ChartPanel = ({
     }
     return QUAD_BOTTOM_ROW_SHARE_DEFAULT;
   });
+  const quadBottomRowShareControlled =
+    typeof quadBottomRowShareProp === 'number' && Number.isFinite(quadBottomRowShareProp);
+  const quadBottomRowShare = quadBottomRowShareControlled
+    ? clampQuadBottomRowShare(quadBottomRowShareProp)
+    : quadBottomRowShareLocal;
+  const setQuadBottomRowShare = useCallback(
+    (next) => {
+      const resolved =
+        typeof next === 'function' ? next(quadBottomRowShare) : next;
+      const clamped = clampQuadBottomRowShare(resolved);
+      if (onQuadBottomRowShareChange) {
+        onQuadBottomRowShareChange(clamped);
+      } else {
+        setQuadBottomRowShareLocal(clamped);
+      }
+    },
+    [quadBottomRowShare, onQuadBottomRowShareChange],
+  );
   useEffect(() => {
+    if (quadBottomRowShareControlled) return;
     try {
       window.localStorage.setItem('dcsQuadBottomRowShare', String(quadBottomRowShare));
     } catch {
       /* ignore */
     }
-  }, [quadBottomRowShare]);
+  }, [quadBottomRowShare, quadBottomRowShareControlled]);
   const quadGridRowStyle = useMemo(() => {
     if (!quadChartDrawers) return undefined;
     return quadGridRowStyleFromShare(quadBottomRowShare);

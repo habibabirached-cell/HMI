@@ -31,6 +31,23 @@ import {
   normalizeQuickScenarioBranchCollapsed,
 } from './utils/designCollapseState';
 import {
+  QUAD_BOTTOM_ROW_SHARE_DEFAULT,
+  clampQuadBottomRowShare,
+} from './utils/chartPanelQuadGrid';
+import {
+  CANVAS_PANE_LOWER,
+  CANVAS_PANE_UPPER,
+  assignDesignSectionCanvasPanes,
+  designHasStackedSections,
+  normalizeLoadedCanvasComponents,
+  resolveComponentCanvasPane,
+} from './utils/canvasConf3Split';
+import {
+  designUsesH2SplitTitles,
+  resolveH2ActivePresetName,
+  resolveH2SplitPaneTitles,
+} from './utils/h2SplitCanvasTitles';
+import {
   applyDesignExpansionToComponents,
   DEFAULT_DESIGN_EXPANSION,
   designSupportsExpansionPanel,
@@ -396,6 +413,16 @@ function App() {
   const controlsLeftInsetPx = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
   const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
     if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3' || preset === 'conf4') {
+      if (preset === 'conf3') {
+        setCanvasComponents((prev) => {
+          if (!designHasStackedSections(prev) || prev.some(
+            (c) => c.canvasPane === CANVAS_PANE_UPPER || c.canvasPane === CANVAS_PANE_LOWER,
+          )) {
+            return prev;
+          }
+          return assignDesignSectionCanvasPanes(prev);
+        });
+      }
       setWorkspaceLayoutPreset(preset);
     }
   }, []);
@@ -469,12 +496,41 @@ function App() {
   // Canvas viewport
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  /** conf3: independent pan per split canvas half (shared zoom). */
+  const [panTop, setPanTop] = useState({ x: 0, y: 0 });
+  const [panBottom, setPanBottom] = useState({ x: 0, y: 0 });
+  /** One-shot: center UpperCanvas after loading stacked H-family designs in conf3. */
+  const [autoFitUpperPane, setAutoFitUpperPane] = useState(false);
+  const [quadBottomRowShare, setQuadBottomRowShare] = useState(() => {
+    try {
+      const n = Number(window.localStorage?.getItem('dcsQuadBottomRowShare'));
+      if (Number.isFinite(n)) return clampQuadBottomRowShare(n);
+    } catch {
+      /* ignore */
+    }
+    return QUAD_BOTTOM_ROW_SHARE_DEFAULT;
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dcsQuadBottomRowShare', String(quadBottomRowShare));
+    } catch {
+      /* ignore */
+    }
+  }, [quadBottomRowShare]);
 
   /** Pixel pan + pinch-zoom updates (same limits as toolbar zoom). */
-  const applyCanvasViewport = useCallback((nextZoom, nextPan) => {
+  const applyCanvasViewport = useCallback((nextZoom, nextPan, paneKey = null) => {
     setZoom(Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, nextZoom)));
+    if (quadChartDrawers && paneKey === 'bottom') {
+      setPanBottom(nextPan);
+      return;
+    }
+    if (quadChartDrawers && paneKey === 'top') {
+      setPanTop(nextPan);
+      return;
+    }
     setPan(nextPan);
-  }, []);
+  }, [quadChartDrawers]);
 
   /** UI chrome (panels/dialogs/charts); diagram uses `canvasFontPxShift` via context. Persisted + saved with design `systemState`. */
   const [uiFontPxShift, setUiFontPxShift] = useState(() => readStoredUiCanvasFontPxShifts().ui);
@@ -773,6 +829,25 @@ function App() {
     return currentConfigName;
   }, [currentConfigName, csvStatus?.use_design_dir, csvStatus?.design_catalog_rel]);
 
+  const h2SplitPaneTitles = useMemo(() => {
+    if (!quadChartDrawers || !designUsesH2SplitTitles(designApiPath, currentConfigName)) {
+      return null;
+    }
+    const preset = resolveH2ActivePresetName({
+      activeQuickScenarioPreset: activeQuickScenarioPlaying?.presetName,
+      activeNamedSimulationConfig,
+      designSectionVisibility,
+    });
+    return resolveH2SplitPaneTitles(preset);
+  }, [
+    quadChartDrawers,
+    designApiPath,
+    currentConfigName,
+    activeQuickScenarioPlaying?.presetName,
+    activeNamedSimulationConfig,
+    designSectionVisibility,
+  ]);
+
   const designImageUrl = currentConfigName && csvStatus?.use_design_dir && designApiPath
     ? `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/image`
     : null;
@@ -854,7 +929,7 @@ function App() {
   };
 
   // Add component to canvas
-  const handleAddComponent = useCallback((componentDef, position) => {
+  const handleAddComponent = useCallback((componentDef, position, canvasPane) => {
     const newComponent = {
       ...componentDef,
       id: `${componentDef.id}-${Date.now()}`,
@@ -866,11 +941,14 @@ function App() {
         voltage: componentDef.properties?.voltage || 0,
         current: 0,
         frequency: 60
-      }
+      },
+      ...(workspaceLayoutPreset === 'conf3'
+        ? { canvasPane: canvasPane || CANVAS_PANE_UPPER }
+        : {}),
     };
     
     setCanvasComponents(prev => [...prev, newComponent]);
-  }, []);
+  }, [workspaceLayoutPreset]);
 
   // Update component position
   const handleMoveComponent = useCallback((componentId, newPosition) => {
@@ -932,7 +1010,7 @@ function App() {
     connections,
   ]);
 
-  const handlePasteCanvasSelection = useCallback(() => {
+  const handlePasteCanvasSelection = useCallback((targetCanvasPane = CANVAS_PANE_UPPER) => {
     if (mode !== 'design') return;
     const payload = canvasDesignClipboardRef.current;
     if (!payload) return;
@@ -944,13 +1022,18 @@ function App() {
       y: base.y * gen,
     });
     if (!materialized) return;
-    setCanvasComponents((prev) => [...prev, ...materialized.components]);
+    const pane =
+      workspaceLayoutPreset === 'conf3' ? targetCanvasPane || CANVAS_PANE_UPPER : undefined;
+    const pastedComponents = materialized.components.map((comp) =>
+      pane ? { ...comp, canvasPane: pane } : comp,
+    );
+    setCanvasComponents((prev) => [...prev, ...pastedComponents]);
     setConnections((prev) => [...prev, ...materialized.connections]);
     setSelectedComponents(materialized.componentIds);
     setSelectedConnections(materialized.connectionIds);
-    setSelectedComponent(materialized.components[0] ?? null);
+    setSelectedComponent(pastedComponents[0] ?? null);
     setSelectedConnection(null);
-  }, [mode, canvasBlockTypeScale]);
+  }, [mode, canvasBlockTypeScale, workspaceLayoutPreset]);
 
   const handleMarqueeCanvasSelect = useCallback(({ componentIds, connectionIds }) => {
     setSelectedComponents(componentIds || []);
@@ -5511,7 +5594,10 @@ function App() {
         isTripped: false
       }));
       setCanvasComponents(
-        applyDesignExpansionToComponents(componentsWithIdleStatus, loadedExpansion),
+        applyDesignExpansionToComponents(
+          normalizeLoadedCanvasComponents(componentsWithIdleStatus),
+          loadedExpansion,
+        ),
       );
     }
     
@@ -5626,6 +5712,39 @@ function App() {
       if (data.systemState.pan) {
         setPan(data.systemState.pan);
       }
+      // conf3 stacked designs: restore saved UpperCanvas pan; auto-fit only on first load.
+      if (designHasStackedSections(data.canvasComponents)) {
+        const savedTop = data.systemState.panTop;
+        if (
+          savedTop &&
+          typeof savedTop.x === 'number' &&
+          typeof savedTop.y === 'number' &&
+          Number.isFinite(savedTop.x) &&
+          Number.isFinite(savedTop.y)
+        ) {
+          setPanTop(savedTop);
+        } else {
+          setPanTop({ x: 0, y: 0 });
+          setAutoFitUpperPane(true);
+        }
+      } else if (data.systemState.panTop) {
+        setPanTop(data.systemState.panTop);
+      } else if (data.systemState.pan) {
+        setPanTop(data.systemState.pan);
+      } else {
+        setPanTop({ x: 0, y: 0 });
+      }
+      if (data.systemState.panBottom) {
+        setPanBottom(data.systemState.panBottom);
+      } else {
+        setPanBottom({ x: 0, y: 0 });
+      }
+      if (data.systemState.quadBottomRowShare !== undefined) {
+        const share = Number(data.systemState.quadBottomRowShare);
+        if (Number.isFinite(share)) {
+          setQuadBottomRowShare(clampQuadBottomRowShare(share));
+        }
+      }
       if (data.systemState.simulationRunning !== undefined) {
         setSimulationRunning(data.systemState.simulationRunning);
       }
@@ -5692,8 +5811,16 @@ function App() {
    * Get current configuration for saving
    */
   const getCurrentConfiguration = () => {
+    const componentsForSave =
+      quadChartDrawers && designHasStackedSections(canvasComponents)
+        ? canvasComponents.map((c) => ({
+            ...c,
+            canvasPane: resolveComponentCanvasPane(c),
+          }))
+        : canvasComponents;
+
     return {
-      canvasComponents,
+      canvasComponents: componentsForSave,
       connections,
       variableDrivenPresence,
       canvasBlockTypeScale,
@@ -5720,6 +5847,9 @@ function App() {
         simulationRunning,
         zoom,
         pan,
+        panTop,
+        panBottom,
+        quadBottomRowShare,
         mode,
         uiFontPxShift,
         canvasFontPxShift,
@@ -6324,7 +6454,7 @@ function App() {
       <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 
-            src="/ge-vernova-logo.svg" 
+            src="/ge-vernova-logo.png" 
             alt="GE Vernova" 
             className="ge-vernova-logo"
           />
@@ -6391,6 +6521,13 @@ function App() {
           onResetView={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
+            setPanBottom({ x: 0, y: 0 });
+            if (designHasStackedSections(canvasComponents)) {
+              setPanTop({ x: 0, y: 0 });
+              setAutoFitUpperPane(true);
+            } else {
+              setPanTop({ x: 0, y: 0 });
+            }
           }}
           onSave={handleQuickSave}
           onSaveAs={handleOpenSaveDialog}
@@ -6469,6 +6606,15 @@ function App() {
               canvasZoomMin={CANVAS_ZOOM_MIN}
               canvasZoomMax={CANVAS_ZOOM_MAX}
               onCanvasViewport={applyCanvasViewport}
+              splitView={quadChartDrawers}
+              splitBottomShare={quadBottomRowShare}
+              panTop={panTop}
+              panBottom={panBottom}
+              onPanTop={setPanTop}
+              onPanBottom={setPanBottom}
+              autoFitUpperPane={autoFitUpperPane}
+              onAutoFitUpperPaneDone={() => setAutoFitUpperPane(false)}
+              splitPaneTitles={h2SplitPaneTitles}
               mode={mode}
               viewMode={viewMode}
               simulationRunning={simulationRunning}
@@ -6630,6 +6776,8 @@ function App() {
           dualChartDrawers={dualWorkspaceDrawers}
           dualChartDrawersStacked={dualChartDrawersStacked}
           quadChartDrawers={quadChartDrawers}
+          quadBottomRowShare={quadBottomRowShare}
+          onQuadBottomRowShareChange={setQuadBottomRowShare}
           onMoveChartDrawer={handleMoveChartDrawer}
           playbackTimeRange={playbackTimeRange}
         />

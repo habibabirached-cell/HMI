@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useMemo, useImperativeHandle } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, forwardRef, useMemo, useImperativeHandle } from 'react';
 import ChartContextMenu from '../ChartContextMenu/ChartContextMenu';
 import MultiComponentContextMenu from '../MultiComponentContextMenu/MultiComponentContextMenu';
 import MultiConnectionContextMenu from '../MultiConnectionContextMenu/MultiConnectionContextMenu';
 import MultiComponentChartDialog from '../MultiComponentChartDialog/MultiComponentChartDialog';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CanvasBlock from './CanvasBlock';
+import SplitPaneTitleOrnament from './SplitPaneTitleOrnament';
+import SplitPaneTitleLines from './SplitPaneTitleLines';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import { isIdeumComponent } from '../../utils/ideumComponent';
@@ -20,6 +22,17 @@ import {
 } from '../../utils/canvasDesignClipboard';
 import { markSelectionInteractionStart } from '../../utils/perfDebug';
 import { CANVAS_PAN_SPEED, CANVAS_WHEEL_PAN_SPEED, CANVAS_ARROW_PAN_STEP } from '../../utils/canvasPanSpeed';
+import { QUAD_BOTTOM_ROW_SHARE_DEFAULT } from '../../utils/chartPanelQuadGrid';
+import {
+  resolveSplitPaneAtClientY,
+  splitTopSharePercent,
+  CANVAS_PANE_UPPER,
+  CANVAS_PANE_LOWER,
+  resolveComponentCanvasPane,
+  canvasPaneFromPaneKey,
+  filterComponentsForCanvasPane,
+  computePaneCenteringPan,
+} from '../../utils/canvasConf3Split';
 import {
   getTieHiddenMemberIdSet,
   tieEffectiveDimensions,
@@ -44,7 +57,7 @@ import {
 } from '../../utils/designSectionVisibility';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
-import { getCanvasBlockTypeScale } from './shapes/canvasBlockUtils';
+import { getCanvasBlockTypeScale, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
 import './Canvas.css';
 
 function sanitizeSvgGradientId(connId) {
@@ -279,26 +292,109 @@ const Canvas = forwardRef(({
   onIdeumControlButtonClick,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
+  /** conf3: split design canvas — shared zoom, independent pan per half. */
+  splitView = false,
+  splitBottomShare = QUAD_BOTTOM_ROW_SHARE_DEFAULT,
+  panTop = { x: 0, y: 0 },
+  panBottom = { x: 0, y: 0 },
+  onPanTop,
+  onPanBottom,
+  autoFitUpperPane = false,
+  onAutoFitUpperPaneDone,
+  /** H2 conf3: fixed labels for upper / lower canvas panes */
+  splitPaneTitles = null,
 }, ref) => {
   const fontPxDelta = useCanvasFontPxDelta();
   const canvasContainerRef = useRef(null);
   const canvasRef = useRef(null);
+  const activeSplitPaneRef = useRef('top');
   useImperativeHandle(ref, () => canvasContainerRef.current);
   const zoomRef = useRef(zoom);
+  const panTopRef = useRef(panTop);
+  const panBottomRef = useRef(panBottom);
+  panTopRef.current = panTop;
+  panBottomRef.current = panBottom;
   /** Keep latest pan + zoom for native wheel/touch/gesture handlers (avoid stale closures). */
   const panForGesturesRef = useRef(pan);
   zoomRef.current = zoom;
-  panForGesturesRef.current = pan;
+  if (splitView) {
+    panForGesturesRef.current = {
+      top: panTop,
+      bottom: panBottom,
+      active: activeSplitPaneRef.current,
+    };
+  } else {
+    panForGesturesRef.current = pan;
+  }
   const twoTouchPanRef = useRef(null);
 
+  const getPanePan = useCallback(
+    (paneKey) => {
+      if (!splitView) return pan;
+      return paneKey === 'bottom' ? panBottomRef.current : panTopRef.current;
+    },
+    [splitView, pan, panTop, panBottom],
+  );
+
+  const setPanePan = useCallback(
+    (paneKey, next) => {
+      if (!splitView) {
+        onPan?.(next);
+        return;
+      }
+      if (paneKey === 'bottom') onPanBottom?.(next);
+      else onPanTop?.(next);
+    },
+    [splitView, onPan, onPanTop, onPanBottom],
+  );
+
+  const getSvgRefForPane = useCallback(() => canvasRef, []);
+
+  const resolvePaneKeyFromEvent = useCallback(
+    (e) => {
+      if (!splitView) return null;
+      const root = canvasContainerRef.current;
+      if (!root) return 'top';
+      return resolveSplitPaneAtClientY(root, e.clientY, splitBottomShare);
+    },
+    [splitView, splitBottomShare],
+  );
+
+  const resolveInteractionPaneKey = useCallback(
+    (e) => {
+      if (!splitView) return null;
+      return activeSplitPaneRef.current || (e ? resolvePaneKeyFromEvent(e) : 'top');
+    },
+    [splitView, resolvePaneKeyFromEvent],
+  );
+
+  const resolveInteractionPan = useCallback(
+    (e) => getPanePan(resolveInteractionPaneKey(e)),
+    [getPanePan, resolveInteractionPaneKey],
+  );
+
   const applyPanDelta = useCallback(
-    (dx, dy) => {
+    (dx, dy, paneKey = null) => {
+      if (splitView) {
+        const pk = paneKey || activeSplitPaneRef.current || 'top';
+        const p = getPanePan(pk);
+        const next = { x: p.x + dx, y: p.y + dy };
+        if (splitView) {
+          panForGesturesRef.current = {
+            top: pk === 'bottom' ? panTopRef.current : next,
+            bottom: pk === 'bottom' ? next : panBottomRef.current,
+            active: pk,
+          };
+        }
+        setPanePan(pk, next);
+        return;
+      }
       const p = panForGesturesRef.current;
       const next = { x: p.x + dx, y: p.y + dy };
       panForGesturesRef.current = next;
       onPan(next);
     },
-    [onPan],
+    [splitView, getPanePan, setPanePan, onPan],
   );
 
   /** Stable identities for React.memo(CanvasBlock) — latest implementation swapped in each render. */
@@ -558,6 +654,35 @@ const Canvas = forwardRef(({
     }).filter(Boolean);
   }, [connections, renderComponents, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds, canvasBlockTypeScale]);
 
+  const componentPaneById = useMemo(() => {
+    const m = new Map();
+    for (const c of components) {
+      m.set(c.id, resolveComponentCanvasPane(c));
+    }
+    return m;
+  }, [components]);
+
+  const renderComponentsForPane = useCallback(
+    (canvasPane) => {
+      if (!splitView) return renderComponents;
+      return renderComponents.filter((c) => componentPaneById.get(c.id) === canvasPane);
+    },
+    [splitView, renderComponents, componentPaneById],
+  );
+
+  const connectionRenderListForPane = useCallback(
+    (canvasPane) => {
+      if (!splitView) return connectionRenderList;
+      return connectionRenderList.filter((row) => {
+        if (!row) return false;
+        const fromPane = componentPaneById.get(row.conn.from);
+        const toPane = componentPaneById.get(row.conn.to);
+        return fromPane === canvasPane && toPane === canvasPane;
+      });
+    },
+    [splitView, connectionRenderList, componentPaneById],
+  );
+
   const [draggingComponent, setDraggingComponent] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [panning, setPanning] = useState(false);
@@ -571,7 +696,17 @@ const Canvas = forwardRef(({
   const [resizingComponent, setResizingComponent] = useState(null); // { id, handle: 'top'|'bottom'|'left'|'right' }
   const resizeStateRef = useRef(null); // holds latest components, pan, zoom for document-level resize
 
-  resizeStateRef.current = { components, pan, zoom, onUpdateComponent, resizingComponent, canvasRef };
+  resizeStateRef.current = {
+    components,
+    pan,
+    panTop,
+    panBottom,
+    splitView,
+    zoom,
+    onUpdateComponent,
+    resizingComponent,
+    canvasRef,
+  };
 
   // ========================================================================
   // HELPER: snapCenterToGrid – snap component CENTER to grid, return top-left
@@ -597,10 +732,12 @@ const Canvas = forwardRef(({
     if (!componentData) return;
 
     const component = JSON.parse(componentData);
+    const pk = resolveInteractionPaneKey(e);
+    const panePan = getPanePan(pk);
     const rect = canvasRef.current.getBoundingClientRect();
 
-    const rawX = (e.clientX - rect.left - pan.x) / zoom;
-    const rawY = (e.clientY - rect.top - pan.y) / zoom;
+    const rawX = (e.clientX - rect.left - panePan.x) / zoom;
+    const rawY = (e.clientY - rect.top - panePan.y) / zoom;
 
     const base = getComponentVisualConfig(component.type || component.id);
     const s = getCanvasBlockTypeScale(canvasBlockTypeScale, component.type || component.id);
@@ -608,7 +745,11 @@ const Canvas = forwardRef(({
     const height = (component.visualOverrides?.height ?? base.height) * s;
     const snapped = snapCenterToGrid(rawX, rawY, width, height);
 
-    onAddComponent(component, snapped);
+    onAddComponent(
+      component,
+      snapped,
+      splitView ? canvasPaneFromPaneKey(pk) : undefined,
+    );
   };
 
   const handleDragOver = (e) => {
@@ -636,6 +777,9 @@ const Canvas = forwardRef(({
   const handleComponentMouseDown = (e, component) => {
     e.stopPropagation();
     focusCanvasForKeys();
+    if (splitView) {
+      activeSplitPaneRef.current = resolvePaneKeyFromEvent(e);
+    }
     
     // CRITICAL: Ignore right-click (button 2) - let contextmenu handler deal with it
     if (e.button === 2) {
@@ -752,11 +896,12 @@ const Canvas = forwardRef(({
       startClientY: e.clientY,
       movedBeyondDragThreshold: false,
     };
+    const panePan = resolveInteractionPan(e);
     const rect = canvasRef.current.getBoundingClientRect();
     // Blocks are drawn with render-only tie-collapse shift; drag must use authored JSON position.
     setDragOffset({
-      x: (e.clientX - rect.left - pan.x) / zoom - authoredComponent.position.x,
-      y: (e.clientY - rect.top - pan.y) / zoom - authoredComponent.position.y,
+      x: (e.clientX - rect.left - panePan.x) / zoom - authoredComponent.position.x,
+      y: (e.clientY - rect.top - panePan.y) / zoom - authoredComponent.position.y,
     });
     onSelectComponent(authoredComponent);
   };
@@ -898,24 +1043,30 @@ const Canvas = forwardRef(({
     }
   };
 
-  const handleCanvasMouseDown = (e) => {
+  const handleCanvasMouseDown = (e, paneKey = null) => {
     focusCanvasForKeys();
+    const pk = splitView ? paneKey || resolvePaneKeyFromEvent(e) : null;
+    if (splitView && pk) activeSplitPaneRef.current = pk;
+    const panePan = getPanePan(pk);
+    const svgRef = getSvgRefForPane(pk);
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
-      // Middle mouse or Alt+Left mouse for panning
       setPanning(true);
       panGestureRef.current = {
         startClientX: e.clientX,
         startClientY: e.clientY,
-        startPan: { x: pan.x, y: pan.y },
+        startPan: { x: panePan.x, y: panePan.y },
+        paneKey: pk,
       };
     } else if (e.button === 0 && !draggingComponent && mode === 'design' && !connecting) {
-      const pt = clientToCanvasPoint(canvasRef.current, pan, zoom, e.clientX, e.clientY);
+      const pt = clientToCanvasPoint(svgRef.current, panePan, zoom, e.clientX, e.clientY);
       setMarqueeTrack({
         x0: pt.x,
         y0: pt.y,
         clientX: e.clientX,
         clientY: e.clientY,
         active: false,
+        paneKey: pk,
+        panePan,
       });
       setMarqueeRect(null);
     } else if (e.button === 0 && !draggingComponent) {
@@ -933,9 +1084,10 @@ const Canvas = forwardRef(({
     }
 
     if (resizingComponent && onUpdateComponent) {
+      const panePan = resolveInteractionPan(e);
       const rect = canvasRef.current.getBoundingClientRect();
-      const canvasX = (e.clientX - rect.left - pan.x) / zoom;
-      const canvasY = (e.clientY - rect.top - pan.y) / zoom;
+      const canvasX = (e.clientX - rect.left - panePan.x) / zoom;
+      const canvasY = (e.clientY - rect.top - panePan.y) / zoom;
       const comp = components.find(c => c.id === resizingComponent.id);
       if (!comp) return;
       const baseConfig = getComponentVisualConfig(comp.type);
@@ -1004,9 +1156,10 @@ const Canvas = forwardRef(({
         }
       }
 
+      const panePan = resolveInteractionPan(e);
       const rect = canvasRef.current.getBoundingClientRect();
-      const rawX = (e.clientX - rect.left - pan.x) / zoom - dragOffset.x;
-      const rawY = (e.clientY - rect.top - pan.y) / zoom - dragOffset.y;
+      const rawX = (e.clientX - rect.left - panePan.x) / zoom - dragOffset.x;
+      const rawY = (e.clientY - rect.top - panePan.y) / zoom - dragOffset.y;
 
       const comp = components.find(c => c.id === draggingComponent);
       const { width, height } = comp
@@ -1052,17 +1205,17 @@ const Canvas = forwardRef(({
       if (g) {
         const dx = (e.clientX - g.startClientX) * CANVAS_PAN_SPEED;
         const dy = (e.clientY - g.startClientY) * CANVAS_PAN_SPEED;
-        onPan({
+        setPanePan(g.paneKey, {
           x: g.startPan.x + dx,
           y: g.startPan.y + dy,
         });
       }
     } else if (connecting) {
-      // Update connecting line
+      const panePan = resolveInteractionPan(e);
       const rect = canvasRef.current.getBoundingClientRect();
       setConnectingTo({
-        x: (e.clientX - rect.left - pan.x) / zoom,
-        y: (e.clientY - rect.top - pan.y) / zoom
+        x: (e.clientX - rect.left - panePan.x) / zoom,
+        y: (e.clientY - rect.top - panePan.y) / zoom
       });
     }
   };
@@ -1139,9 +1292,12 @@ const Canvas = forwardRef(({
     const onDocMove = (e) => {
       const s = resizeStateRef.current;
       if (!s?.resizingComponent || !s.canvasRef?.current) return;
+      const panePan = s.splitView
+        ? (activeSplitPaneRef.current === 'bottom' ? s.panBottom : s.panTop)
+        : s.pan;
       const rect = s.canvasRef.current.getBoundingClientRect();
-      const canvasX = (e.clientX - rect.left - s.pan.x) / s.zoom;
-      const canvasY = (e.clientY - rect.top - s.pan.y) / s.zoom;
+      const canvasX = (e.clientX - rect.left - panePan.x) / s.zoom;
+      const canvasY = (e.clientY - rect.top - panePan.y) / s.zoom;
       const comp = s.components.find(c => c.id === s.resizingComponent.id);
       if (!comp) return;
       const baseConfig = getComponentVisualConfig(comp.type);
@@ -1206,11 +1362,27 @@ const Canvas = forwardRef(({
      * Zoom toward a canvas-local point (lx, ly in px relative to SVG top-left)
      * so the diagram point under the cursor/focal stays fixed.
      */
-    const zoomAtLocalPoint = (lx, ly, nextZoom) => {
+    const zoomAtLocalPoint = (clientX, clientY, nextZoom) => {
       if (!onCanvasViewport) return;
       const prevZ = zoomRef.current;
-      const prevP = panForGesturesRef.current;
       const nz = clampZ(nextZoom);
+      if (splitView) {
+        const pk = resolveSplitPaneAtClientY(el, clientY, splitBottomShare);
+        const svg = getSvgRefForPane(pk).current;
+        if (!svg) return;
+        const svgRect = svg.getBoundingClientRect();
+        const lx = clientX - svgRect.left;
+        const ly = clientY - svgRect.top;
+        const prevP = pk === 'bottom' ? panBottomRef.current : panTopRef.current;
+        const cx = (lx - prevP.x) / prevZ;
+        const cy = (ly - prevP.y) / prevZ;
+        onCanvasViewport(nz, { x: lx - cx * nz, y: ly - cy * nz }, pk);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      const lx = clientX - rect.left;
+      const ly = clientY - rect.top;
+      const prevP = panForGesturesRef.current;
       const cx = (lx - prevP.x) / prevZ;
       const cy = (ly - prevP.y) / prevZ;
       onCanvasViewport(nz, { x: lx - cx * nz, y: ly - cy * nz });
@@ -1225,10 +1397,7 @@ const Canvas = forwardRef(({
         if (e.deltaMode === 1) dy *= 16;
         else if (e.deltaMode === 2) dy *= 80;
         const scale = Math.exp(-dy * 0.002);
-        const rect = el.getBoundingClientRect();
-        const lx = e.clientX - rect.left;
-        const ly = e.clientY - rect.top;
-        zoomAtLocalPoint(lx, ly, zoomRef.current * scale);
+        zoomAtLocalPoint(e.clientX, e.clientY, zoomRef.current * scale);
         return;
       }
       e.preventDefault();
@@ -1242,7 +1411,11 @@ const Canvas = forwardRef(({
         dx *= 80;
         dy *= 80;
       }
-      applyPanDelta(-dx * CANVAS_WHEEL_PAN_SPEED, -dy * CANVAS_WHEEL_PAN_SPEED);
+      const pk = splitView
+        ? resolveSplitPaneAtClientY(el, e.clientY, splitBottomShare)
+        : null;
+      if (splitView && pk) activeSplitPaneRef.current = pk;
+      applyPanDelta(-dx * CANVAS_WHEEL_PAN_SPEED, -dy * CANVAS_WHEEL_PAN_SPEED, pk);
     };
 
     /** Safari (macOS / iOS): trackpad pinch uses GestureEvent, not ctrl+wheel. */
@@ -1253,11 +1426,8 @@ const Canvas = forwardRef(({
     };
     const onGestureChange = (e) => {
       e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      const lx = e.clientX - rect.left;
-      const ly = e.clientY - rect.top;
       const nz = clampZ(gestureStartZoomRef.current * e.scale);
-      zoomAtLocalPoint(lx, ly, nz);
+      zoomAtLocalPoint(e.clientX, e.clientY, nz);
     };
 
     const onTouchStart = (e) => {
@@ -1268,13 +1438,18 @@ const Canvas = forwardRef(({
       const midClientX = (t0.clientX + t1.clientX) / 2;
       const midClientY = (t0.clientY + t1.clientY) / 2;
       const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
-      const p0 = panForGesturesRef.current;
+      const pk = splitView
+        ? resolveSplitPaneAtClientY(el, midClientY, splitBottomShare)
+        : null;
+      if (splitView && pk) activeSplitPaneRef.current = pk;
+      const p0 = splitView ? getPanePan(pk) : panForGesturesRef.current;
       twoTouchPanRef.current = {
         phase: 'undecided',
         startMidClientX: midClientX,
         startMidClientY: midClientY,
         startDist: dist,
         startPan: { x: p0.x, y: p0.y },
+        paneKey: pk,
       };
     };
 
@@ -1311,13 +1486,17 @@ const Canvas = forwardRef(({
           x: s.startPan.x + (midClientX - s.startMidClientX) * CANVAS_PAN_SPEED,
           y: s.startPan.y + (midClientY - s.startMidClientY) * CANVAS_PAN_SPEED,
         };
-        panForGesturesRef.current = next;
-        onPan(next);
+        if (splitView) {
+          setPanePan(s.paneKey, next);
+        } else {
+          panForGesturesRef.current = next;
+          onPan(next);
+        }
         return;
       }
 
       const nz = clampZ(s.pinchAnchorZoom * (dist / s.pinchBaseDist));
-      zoomAtLocalPoint(lx, ly, nz);
+      zoomAtLocalPoint(midClientX, midClientY, nz);
     };
 
     const onTouchEnd = (e) => {
@@ -1355,6 +1534,10 @@ const Canvas = forwardRef(({
     onCanvasViewport,
     canvasZoomMin,
     canvasZoomMax,
+    splitView,
+    splitBottomShare,
+    getPanePan,
+    setPanePan,
   ]);
 
   const handleComponentMouseUp = (e, component) => {
@@ -1533,7 +1716,9 @@ const Canvas = forwardRef(({
 
       if ((e.ctrlKey || e.metaKey) && e.key === 'v' && mode === 'design') {
         e.preventDefault();
-        onPasteSelection?.();
+        onPasteSelection?.(
+          splitView ? canvasPaneFromPaneKey(activeSplitPaneRef.current) : undefined,
+        );
         return;
       }
 
@@ -1598,7 +1783,7 @@ const Canvas = forwardRef(({
       session.active = true;
       const pt = clientToCanvasPoint(
         canvasRef.current,
-        pan,
+        session.panePan || pan,
         zoom,
         e.clientX,
         e.clientY,
@@ -1614,19 +1799,31 @@ const Canvas = forwardRef(({
         if (!rect) {
           const pt = clientToCanvasPoint(
             canvasRef.current,
-            pan,
+            session.panePan || pan,
             zoom,
             e.clientX,
             e.clientY,
           );
           rect = normalizeCanvasRect(session.x0, session.y0, pt.x, pt.y);
         }
-        const connectionSegments = connectionRenderList
+        const sessionPane = session.paneKey
+          ? canvasPaneFromPaneKey(session.paneKey)
+          : CANVAS_PANE_UPPER;
+        const paneAllComponents = splitView
+          ? filterComponentsForCanvasPane(components, sessionPane)
+          : components;
+        const paneRenderComponents = splitView
+          ? renderComponentsForPane(sessionPane)
+          : renderComponents;
+        const paneConnectionRows = splitView
+          ? connectionRenderListForPane(sessionPane)
+          : connectionRenderList;
+        const connectionSegments = paneConnectionRows
           .filter(Boolean)
           .map((row) => ({ conn: row.conn, segments: row.segments }));
         const sel = computeMarqueeSelection({
-          allComponents: components,
-          renderComponents,
+          allComponents: paneAllComponents,
+          renderComponents: paneRenderComponents,
           connections,
           marquee: rect,
           tieCollapseShiftById,
@@ -1689,41 +1886,228 @@ const Canvas = forwardRef(({
     };
   }, [contextMenu]);
 
+  const [splitHeights, setSplitHeights] = useState({ topPx: 240, totalPx: 480 });
+  useLayoutEffect(() => {
+    if (!splitView) return undefined;
+    const svg = canvasRef.current;
+    if (!svg) return undefined;
+    const sync = () => {
+      const totalPx = svg.clientHeight || 480;
+      const topPx = (totalPx * splitTopSharePercent(splitBottomShare)) / 100;
+      setSplitHeights({ topPx, totalPx });
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(svg);
+    window.addEventListener('resize', sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', sync);
+    };
+  }, [splitView, splitBottomShare]);
+
+  useLayoutEffect(() => {
+    if (!splitView || !autoFitUpperPane || !onPanTop) return undefined;
+    const root = canvasContainerRef.current;
+    if (!root || splitHeights.topPx <= 0) return undefined;
+    const upper = renderComponentsForPane(CANVAS_PANE_UPPER);
+    if (!upper.length) {
+      onAutoFitUpperPaneDone?.();
+      return undefined;
+    }
+    const next = computePaneCenteringPan(upper, {
+      viewWidthPx: root.clientWidth,
+      paneHeightPx: splitHeights.topPx,
+      zoom,
+      canvasBlockTypeScale,
+      getVisualConfig: getComponentVisualConfig,
+      getBlockDimensions: getScaledCanvasBlockDimensions,
+    });
+    onPanTop(next);
+    onAutoFitUpperPaneDone?.();
+    return undefined;
+  }, [
+    splitView,
+    autoFitUpperPane,
+    splitHeights.topPx,
+    zoom,
+    renderComponentsForPane,
+    canvasBlockTypeScale,
+    onPanTop,
+    onAutoFitUpperPaneDone,
+  ]);
+
+  const scenePanes = splitView
+    ? [
+        {
+          suffix: 'top',
+          panePan: panTop,
+          clipId: 'canvas-clip-top',
+          canvasPane: CANVAS_PANE_UPPER,
+        },
+        {
+          suffix: 'bottom',
+          panePan: panBottom,
+          clipId: 'canvas-clip-bottom',
+          canvasPane: CANVAS_PANE_LOWER,
+        },
+      ]
+    : [{ suffix: '', panePan: pan, clipId: null, canvasPane: null }];
+
+  const gradIdForPane = (baseId, suffix) => (suffix ? `${baseId}-${suffix}` : baseId);
+
+  const splitTitleAnchors = useMemo(() => {
+    if (!splitView || !splitPaneTitles) return null;
+
+    const tieCenterCanvasX = (paneComponents) => {
+      const ties = paneComponents.filter((c) => isTieBreakerNetwork(c));
+      if (!ties.length) return null;
+      const tie = ties.reduce((best, c) => {
+        const n = c.properties?.tieGroup?.memberIds?.length || 0;
+        const bn = best?.properties?.tieGroup?.memberIds?.length || 0;
+        return n >= bn ? c : best;
+      }, ties[0]);
+      const vis = getComponentVisualConfig(tie.type);
+      const baseW = tie.visualOverrides?.width ?? vis.width;
+      const baseH = tie.visualOverrides?.height ?? vis.height;
+      const { width } = tieEffectiveDimensions(tie, baseW, baseH);
+      const s = getCanvasBlockTypeScale(canvasBlockTypeScale, tie.type);
+      return (tie.position?.x ?? 0) + (width * s) / 2;
+    };
+
+    return {
+      upper: tieCenterCanvasX(renderComponentsForPane(CANVAS_PANE_UPPER)),
+      lower: tieCenterCanvasX(renderComponentsForPane(CANVAS_PANE_LOWER)),
+    };
+  }, [
+    splitView,
+    splitPaneTitles,
+    renderComponentsForPane,
+    canvasBlockTypeScale,
+  ]);
+
+  const SPLIT_TITLE_TOP_PAD_PX = 44;
+
   return (
     <div
-      className="canvas-container"
+      className={`canvas-container${splitView ? ' canvas-container--split' : ''}`}
       ref={canvasContainerRef}
       tabIndex={0}
       role="application"
       aria-label="Design canvas — arrow keys pan, Ctrl+arrow up/down zooms"
       onMouseDown={focusCanvasForKeys}
     >
+      {splitView && splitPaneTitles && (
+        <>
+          <div
+            className="canvas-split-pane-title canvas-split-pane-title--upper"
+            style={{
+              top: SPLIT_TITLE_TOP_PAD_PX,
+              left:
+                splitTitleAnchors?.upper != null
+                  ? panTop.x + splitTitleAnchors.upper * zoom
+                  : '50%',
+            }}
+          >
+            <div className="canvas-split-pane-title__content">
+              <SplitPaneTitleLines title={splitPaneTitles.upper} />
+              <SplitPaneTitleOrnament variant="upper" />
+            </div>
+          </div>
+          <div
+            className="canvas-split-pane-title canvas-split-pane-title--lower"
+            style={{
+              top: splitHeights.topPx + SPLIT_TITLE_TOP_PAD_PX,
+              left:
+                splitTitleAnchors?.lower != null
+                  ? panBottom.x + splitTitleAnchors.lower * zoom
+                  : '50%',
+            }}
+          >
+            <div className="canvas-split-pane-title__content">
+              <SplitPaneTitleLines title={splitPaneTitles.lower} />
+              <SplitPaneTitleOrnament variant="lower" />
+            </div>
+          </div>
+        </>
+      )}
       <svg
         ref={canvasRef}
         className="canvas-svg"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        onMouseDown={handleCanvasMouseDown}
+        onMouseDown={(e) => handleCanvasMouseDown(e, null)}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         onClick={handleCanvasClick}
       >
-        <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
+        {splitView && (
+          <defs>
+            <clipPath id="canvas-clip-top">
+              <rect x={-50000} y={-50000} width={100000} height={splitHeights.topPx + 50000} />
+            </clipPath>
+            <clipPath id="canvas-clip-bottom">
+              <rect
+                x={-50000}
+                y={splitHeights.topPx}
+                width={100000}
+                height={splitHeights.totalPx - splitHeights.topPx + 50000}
+              />
+            </clipPath>
+          </defs>
+        )}
+        {splitView && (
+          <line
+            x1={0}
+            y1={splitHeights.topPx}
+            x2="100%"
+            y2={splitHeights.topPx}
+            className="canvas-split-divider-line"
+            pointerEvents="none"
+          />
+        )}
+        {scenePanes.map(({ suffix, panePan, clipId, canvasPane }) => {
+          const paneConnections = connectionRenderListForPane(canvasPane);
+          const paneComponents = renderComponentsForPane(canvasPane);
+          const paneTieStubs = splitView
+            ? tieCollapsedStubSegments.filter((seg) => {
+                const match = seg.key?.match(/tie-stub-[LR]-(.+)-\d+/);
+                if (!match) return false;
+                return componentPaneById.get(match[1]) === canvasPane;
+              })
+            : tieCollapsedStubSegments;
+          const showMarquee =
+            marqueeRect &&
+            marqueeRect.w > 0 &&
+            marqueeRect.h > 0 &&
+            (!splitView || marqueeTrack?.paneKey === suffix);
+
+          return (
+        <g
+          key={suffix || 'single'}
+          clipPath={clipId ? `url(#${clipId})` : undefined}
+        >
+        <g transform={`translate(${panePan.x},${panePan.y}) scale(${zoom})`}>
           {/* Grid background */}
           <defs>
-            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <pattern
+              id={suffix ? `grid-${suffix}` : 'grid'}
+              width="50"
+              height="50"
+              patternUnits="userSpaceOnUse"
+            >
               <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#2a2a2a" strokeWidth="0.5"/>
             </pattern>
             {/*
               Per-connection shadow uses CSS filter on the <line> (see dropShadowCss in
               connectionLineStyle). SVG feDropShadow without feMerge drops the gradient stroke.
             */}
-            {connectionRenderList
+            {paneConnections
               .filter((row) => row.gradientLine)
               .map((row) => (
                 <linearGradient
-                  key={row.gradientId}
-                  id={row.gradientId}
+                  key={gradIdForPane(row.gradientId, suffix)}
+                  id={gradIdForPane(row.gradientId, suffix)}
                   gradientUnits="userSpaceOnUse"
                   x1={row.gradientLine.x1}
                   y1={row.gradientLine.y1}
@@ -1741,9 +2125,9 @@ const Canvas = forwardRef(({
                 </linearGradient>
               ))}
           </defs>
-          <rect width="10000" height="10000" fill="url(#grid)" />
+          <rect width="10000" height="10000" fill={`url(#${suffix ? `grid-${suffix}` : 'grid'})`} />
 
-          {marqueeRect && marqueeRect.w > 0 && marqueeRect.h > 0 && (
+          {showMarquee && (
             <rect
               x={marqueeRect.x}
               y={marqueeRect.y}
@@ -1755,7 +2139,7 @@ const Canvas = forwardRef(({
           )}
 
           {/* Electrical connections: static lines, role colors (producer / consumer / neutral), no flow animation */}
-          {connectionRenderList.map((row) => {
+          {paneConnections.map((row) => {
             const {
               conn,
               fromCenterX,
@@ -1798,7 +2182,7 @@ const Canvas = forwardRef(({
             const useGradientStroke = gradientLine != null;
             const endStop = resolved.stops[resolved.stops.length - 1];
             const segmentStroke = useGradientStroke
-              ? `url(#${gradientId})`
+              ? `url(#${gradIdForPane(gradientId, suffix)})`
               : endStop.color;
             const segmentStrokeOpacity = useGradientStroke ? undefined : endStop.opacity;
 
@@ -1895,7 +2279,7 @@ const Canvas = forwardRef(({
             );
           })}
 
-          {tieCollapsedStubSegments.map((seg) => {
+          {paneTieStubs.map((seg) => {
             const rst = tieCollapsedStubRenderResolved;
             const endStop = rst.stops[rst.stops.length - 1];
             return (
@@ -1918,7 +2302,7 @@ const Canvas = forwardRef(({
           })}
 
           {/* Temporary connection line while connecting */}
-          {connecting && connectingTo && (() => {
+          {connecting && connectingTo && (!splitView || componentPaneById.get(connecting) === canvasPane) && (() => {
             const fromComp = components.find(c => c.id === connecting);
             if (!fromComp) return null;
 
@@ -1967,7 +2351,7 @@ const Canvas = forwardRef(({
           })()}
 
           {/* Render components */}
-            {renderComponents.map((component) => (
+            {paneComponents.map((component) => (
             <CanvasBlock
               key={component.id}
               component={component}
@@ -2002,8 +2386,124 @@ const Canvas = forwardRef(({
             />
           ))}
         </g>
+        </g>
+          );
+        })}
       </svg>
 
+      {splitView ? (
+        <>
+          <div
+            className="canvas-split-overlay-pane canvas-split-overlay-pane--top"
+            style={{ height: `${splitTopSharePercent(splitBottomShare)}%` }}
+          >
+            <div
+              className="canvas-split-overlay-coords"
+              style={{ height: splitHeights.totalPx }}
+            >
+            <GasTurbine3DOverlays
+              components={renderComponentsForPane(CANVAS_PANE_UPPER)}
+              pan={panTop}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            <GFMe3DOverlays
+              renderComponents={renderComponentsForPane(CANVAS_PANE_UPPER)}
+              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)}
+              pan={panTop}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            <Bess3DOverlays
+              renderComponents={renderComponentsForPane(CANVAS_PANE_UPPER)}
+              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)}
+              pan={panTop}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            {ideumKioskMode && (
+              <IdeumComponentLayer
+                components={filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)}
+                pan={panTop}
+                zoom={zoom}
+                canvasRef={canvasRef}
+                blockTypeScale={canvasBlockTypeScale}
+                onIdeumClick={onIdeumControlButtonClick}
+                ideumExpansionMirror={ideumExpansionMirror}
+                onIdeumExpansionToggle={onIdeumExpansionToggle}
+              />
+            )}
+            </div>
+          </div>
+          <div
+            className="canvas-split-overlay-pane canvas-split-overlay-pane--bottom"
+            style={{
+              top: `${splitTopSharePercent(splitBottomShare)}%`,
+              height: `${splitBottomShare}%`,
+            }}
+          >
+            <div
+              className="canvas-split-overlay-coords"
+              style={{
+                height: splitHeights.totalPx,
+                marginTop: -splitHeights.topPx,
+              }}
+            >
+            <GasTurbine3DOverlays
+              components={renderComponentsForPane(CANVAS_PANE_LOWER)}
+              pan={panBottom}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            <GFMe3DOverlays
+              renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
+              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+              pan={panBottom}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            <Bess3DOverlays
+              renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
+              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+              pan={panBottom}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+            />
+            {ideumKioskMode && (
+              <IdeumComponentLayer
+                components={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+                pan={panBottom}
+                zoom={zoom}
+                canvasRef={canvasRef}
+                blockTypeScale={canvasBlockTypeScale}
+                onIdeumClick={onIdeumControlButtonClick}
+                ideumExpansionMirror={ideumExpansionMirror}
+                onIdeumExpansionToggle={onIdeumExpansionToggle}
+              />
+            )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
       <GasTurbine3DOverlays
         components={renderComponents}
         pan={pan}
@@ -2035,8 +2535,10 @@ const Canvas = forwardRef(({
         ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
         onIdeumControlButtonClick={onIdeumControlButtonClick}
       />
+        </>
+      )}
 
-      {ideumKioskMode && (
+      {ideumKioskMode && !splitView && (
         <IdeumComponentLayer
           components={components}
           pan={pan}
