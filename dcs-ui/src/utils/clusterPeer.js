@@ -30,6 +30,85 @@ export async function sendRemoteCommandToMaingear(peerBackendUrl, command) {
   return data;
 }
 
+/** Maingear UI → cluster WebSocket subscribers (Ideum mirrors simulation state). */
+export async function broadcastClusterMessage(message) {
+  const res = await fetch(`${API_BASE}/api/cluster/broadcast`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Cluster broadcast failed (${res.status})`);
+  }
+  return res.json();
+}
+
+function peerClusterWebSocketUrl(peerBackendUrl) {
+  const base = (peerBackendUrl || '').replace(/\/$/, '');
+  if (!base) return null;
+  return `${base.replace(/^http/, 'ws')}/ws/cluster`;
+}
+
+/**
+ * Ideum UI listens on the Maingear backend WebSocket for simulation_state, etc.
+ * @returns {() => void} cleanup
+ */
+export function connectPeerClusterWebSocket(peerBackendUrl, onMessage) {
+  let ws;
+  let closed = false;
+  let retryTimer = null;
+
+  const connect = () => {
+    if (closed) return;
+    const url = peerClusterWebSocketUrl(peerBackendUrl);
+    if (!url) return;
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      console.warn('Peer cluster WebSocket failed to open', e);
+      retryTimer = setTimeout(connect, 3000);
+      return;
+    }
+
+    ws.onopen = () => {
+      console.info('[cluster] Peer WebSocket connected', url);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        onMessage(msg);
+      } catch (e) {
+        console.warn('Peer cluster WebSocket parse error', e);
+      }
+    };
+
+    ws.onerror = (e) => {
+      console.warn('Peer cluster WebSocket error', e);
+    };
+
+    ws.onclose = () => {
+      if (!closed) {
+        retryTimer = setTimeout(connect, 3000);
+      }
+    };
+  };
+
+  connect();
+
+  return () => {
+    if (closed) return;
+    closed = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    try {
+      ws?.close();
+    } catch (_) {
+      /* ignore */
+    }
+  };
+}
+
 function clusterWebSocketUrl() {
   if (typeof window === 'undefined') {
     return `ws://127.0.0.1:${BACKEND_PORT}/ws/cluster`;

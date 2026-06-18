@@ -43,7 +43,7 @@ import {
   resolveComponentCanvasPane,
 } from './utils/canvasConf3Split';
 import {
-  designUsesH2SplitTitles,
+  designUsesSplitPaneTitles,
   resolveH2ActivePresetName,
   resolveH2SplitPaneTitles,
 } from './utils/h2SplitCanvasTitles';
@@ -61,7 +61,9 @@ import {
   CHART_DRAWER_KEYS,
 } from './utils/chartPanelDrawerBuckets';
 import {
+  broadcastClusterMessage,
   connectClusterWebSocket,
+  connectPeerClusterWebSocket,
   fetchMachineRole,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
@@ -754,6 +756,7 @@ function App() {
   /** Ideum designs: Maingear target for remote commands (habib / habib2). */
   const [remoteControlTarget, setRemoteControlTarget] = useState(null);
   const [machineRole, setMachineRole] = useState(null);
+  const machineRoleRef = useRef(null);
   /** Default quick-scenario ids hidden for this design until reload without saved design. */
   const [hiddenDefaultQuickScenarios, setHiddenDefaultQuickScenarios] = useState([]);
   /** Custom quick-scenario shortcut currently driving playback (cleared when simulation stops). */
@@ -774,6 +777,7 @@ function App() {
   const [ideumExpansionMirror, setIdeumExpansionMirror] = useState(() => ({
     ...DEFAULT_DESIGN_EXPANSION,
   }));
+  const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -829,8 +833,8 @@ function App() {
     return currentConfigName;
   }, [currentConfigName, csvStatus?.use_design_dir, csvStatus?.design_catalog_rel]);
 
-  const h2SplitPaneTitles = useMemo(() => {
-    if (!quadChartDrawers || !designUsesH2SplitTitles(designApiPath, currentConfigName)) {
+  const splitPaneTitles = useMemo(() => {
+    if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
       return null;
     }
     const preset = resolveH2ActivePresetName({
@@ -838,11 +842,14 @@ function App() {
       activeNamedSimulationConfig,
       designSectionVisibility,
     });
-    return resolveH2SplitPaneTitles(preset);
+    const titles = resolveH2SplitPaneTitles(preset);
+    if (designSectionVisibility?.showLower === false) {
+      return { upper: titles.upper, lower: null };
+    }
+    return titles;
   }, [
     quadChartDrawers,
-    designApiPath,
-    currentConfigName,
+    canvasComponents,
     activeQuickScenarioPlaying?.presetName,
     activeNamedSimulationConfig,
     designSectionVisibility,
@@ -1303,6 +1310,11 @@ function App() {
       resetPlaybackVisualsRef.current();
 
       startSimulationClock();
+      if (machineRoleRef.current?.isMaingear) {
+        void broadcastClusterMessage({ type: 'simulation_state', running: true }).catch((e) =>
+          console.warn('cluster simulation_state broadcast', e),
+        );
+      }
     };
 
     /*
@@ -1342,6 +1354,11 @@ function App() {
   const handleStopSimulation = () => {
     setSimulationRunning(false);
     stopSimulationClock();
+    if (machineRoleRef.current?.isMaingear) {
+      void broadcastClusterMessage({ type: 'simulation_state', running: false }).catch((e) =>
+        console.warn('cluster simulation_state broadcast', e),
+      );
+    }
   };
 
   /*
@@ -3147,6 +3164,41 @@ function App() {
     }
   };
 
+  const handleIdeumSimulationRemoteClick = async () => {
+    const command = ideumSimulationMirror ? 'stopSimulation' : 'startSimulation';
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return;
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. This button sends commands from the Ideum touch table to the Maingear display.',
+      );
+      return;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return;
+    }
+    try {
+      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      if (!result.deliveredToClients) {
+        alert(
+          'Command reached the Maingear PC, but no browser is listening. On Maingear: open the target design, wait a few seconds, then try again (the page must stay open).',
+        );
+        return;
+      }
+      setIdeumSimulationMirror(command === 'startSimulation');
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send simulation command to Maingear.');
+    }
+  };
+
   const handleDesignExpansionChange = useCallback((key, expanded) => {
     setDesignExpansion((prev) => {
       const next = normalizeDesignExpansion({
@@ -3179,7 +3231,6 @@ function App() {
       isQuickScenarioPlaceholderPreset(shortcut.presetName) &&
       !namedSimulationConfigs.includes(shortcut.presetName);
     const isDesignFirst = isQuickScenarioDesignFirstPreset(shortcut.presetName);
-    const fromRemote = !!shortcut.fromRemote;
     const isSecondDesignFirstClick =
       isDesignFirst && quickScenarioDesignPrimedPreset === shortcut.presetName;
 
@@ -3209,8 +3260,8 @@ function App() {
       return next;
     });
 
-    // Local "No Bess No Statcom" needs two clicks (design, then charts). Ideum remote = one tap.
-    if (isDesignFirst && !isSecondDesignFirstClick && !fromRemote) {
+    // "No Bess No Statcom" needs two clicks (design, then charts) — local and Ideum remote alike.
+    if (isDesignFirst && !isSecondDesignFirstClick) {
       handleStopSimulation();
       setOpenCharts([]);
       setChartStacks([]);
@@ -3221,7 +3272,7 @@ function App() {
       return;
     }
 
-    if (isSecondDesignFirstClick || (isDesignFirst && fromRemote)) {
+    if (isSecondDesignFirstClick) {
       setQuickScenarioDesignPrimedPreset(null);
     }
 
@@ -3280,6 +3331,14 @@ function App() {
         return;
       }
       handleRemoteExpansionToggle(spec.expansionKey);
+      return;
+    }
+    if (spec.action === 'startSimulation') {
+      handleStartSimulationRef.current?.();
+      return;
+    }
+    if (spec.action === 'stopSimulation') {
+      handleStopSimulation();
       return;
     }
     if (!spec?.presetName || !designApiPath) {
@@ -3554,6 +3613,38 @@ function App() {
       alert(`✅ Created simulation "${created?.name}" (${created?.rows} rows, ${created?.columns?.length} columns) from pkl2.`);
     } catch (e) {
       alert(`❌ Failed to load pkl2: ${e.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  /**
+   * Add simulation scenario(s) from CSV file(s). One file → one scenario (optional name);
+   * multiple files → one scenario per file with optional name prefix.
+   */
+  const handleAddSimulationsFromCsv = async (files, simName = '', prefix = '', sampleStep = 1) => {
+    if (!currentConfigName || !designApiPath || !files?.length) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      if (simName) formData.append('sim_name', simName);
+      if (prefix) formData.append('prefix', prefix);
+      if (sampleStep > 1) formData.append('sample_step', String(sampleStep));
+      const response = await fetch(
+        `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/from-csv`,
+        { method: 'POST', body: formData }
+      );
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || response.statusText || `HTTP ${response.status}`);
+      }
+      const result = await response.json();
+      await refreshSimulationsList();
+      const count = result.created?.length ?? 0;
+      alert(`✅ Created ${count} simulation scenario(s) from csv.`);
+    } catch (e) {
+      alert(`❌ Failed to load csv: ${e.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -5500,6 +5591,16 @@ function App() {
     persistChartsToSimJson(openCharts, { chart_stacks: nextStacks });
   };
 
+  const applyChartUiDrawer = useCallback((chart, drawer) => {
+    const normalized = normalizeChartUiDrawer(drawer);
+    if (normalized === 'chart1') {
+      const next = { ...chart };
+      delete next.uiDrawer;
+      return next;
+    }
+    return { ...chart, uiDrawer: normalized };
+  }, []);
+
   /** Move chart between chart1–chart4 drawers. */
   const handleMoveChartDrawer = (chartId, drawer) => {
     const normalized = normalizeChartUiDrawer(drawer);
@@ -5507,12 +5608,7 @@ function App() {
     setOpenCharts((prev) => {
       const nextCharts = prev.map((c) => {
         if (c.id !== chartId) return c;
-        if (normalized === 'chart1') {
-          const next = { ...c };
-          delete next.uiDrawer;
-          return next;
-        }
-        return { ...c, uiDrawer: normalized };
+        return applyChartUiDrawer(c, normalized);
       });
       setChartStacks((prevStacks) => {
         const nextStacks = sanitizeStacksForDrawers(nextCharts, prevStacks, {
@@ -5524,6 +5620,67 @@ function App() {
       return nextCharts;
     });
   };
+
+  /** Swap quadrant/stack slot between two charts (toolbar drag-and-drop). */
+  const handleSwapChartDrawers = useCallback((chartIdA, chartIdB) => {
+    if (!chartIdA || !chartIdB || chartIdA === chartIdB) return;
+    setOpenCharts((prev) => {
+      const idxA = prev.findIndex((c) => c.id === chartIdA);
+      const idxB = prev.findIndex((c) => c.id === chartIdB);
+      if (idxA < 0 || idxB < 0) return prev;
+
+      const chartA = prev[idxA];
+      const chartB = prev[idxB];
+      const drawerA = getChartUiDrawer(chartA);
+      const drawerB = getChartUiDrawer(chartB);
+
+      if (drawerA !== drawerB) {
+        const nextCharts = prev.map((c) => {
+          if (c.id === chartIdA) return applyChartUiDrawer(c, drawerB);
+          if (c.id === chartIdB) return applyChartUiDrawer(c, drawerA);
+          return c;
+        });
+        setChartStacks((prevStacks) => {
+          const nextStacks = sanitizeStacksForDrawers(nextCharts, prevStacks, {
+            quad: quadChartDrawers,
+          });
+          persistChartsToSimJson(nextCharts, { chart_stacks: nextStacks });
+          return nextStacks;
+        });
+        return nextCharts;
+      }
+
+      const stackAt = (chartStacks || []).findIndex(
+        (stack) => stack.length >= 2 && stack.includes(idxA) && stack.includes(idxB),
+      );
+      const remapStackIndices = (stack) =>
+        stack.map((fi) => {
+          if (fi === idxA) return idxB;
+          if (fi === idxB) return idxA;
+          return fi;
+        });
+
+      let nextCharts = prev;
+      let nextStacks;
+
+      if (stackAt >= 0) {
+        nextStacks = chartStacks.map((stack, i) =>
+          i === stackAt ? remapStackIndices(stack) : stack,
+        );
+      } else {
+        nextCharts = [...prev];
+        [nextCharts[idxA], nextCharts[idxB]] = [nextCharts[idxB], nextCharts[idxA]];
+        nextStacks = (chartStacks || []).map(remapStackIndices);
+      }
+
+      setChartStacks(() => {
+        persistChartsToSimJson(nextCharts, { chart_stacks: nextStacks });
+        return nextStacks;
+      });
+
+      return nextCharts;
+    });
+  }, [applyChartUiDrawer, chartStacks, quadChartDrawers, persistChartsToSimJson]);
 
   /**
    * Handle Load - Apply loaded configuration to the app
@@ -5583,6 +5740,7 @@ function App() {
     const loadedExpansion = normalizeDesignExpansion(dus?.designExpansion);
     setDesignExpansion(loadedExpansion);
     setIdeumExpansionMirror({ ...DEFAULT_DESIGN_EXPANSION });
+    setIdeumSimulationMirror(false);
     
     // Apply the loaded state to the application
     if (data.canvasComponents) {
@@ -5757,12 +5915,29 @@ function App() {
         setCanvasFontPxShift(clampFontPxShift(Math.round(c)));
       if (typeof col === 'number' && Number.isFinite(col))
         setCollapsedComponentFontPxShift(clampFontPxShift(Math.round(col)));
+
+      const restoredViewMode = data.systemState.designViewMode;
+      if (restoredViewMode === 'canvas' || restoredViewMode === 'image' || restoredViewMode === 'split') {
+        setDesignViewMode(restoredViewMode);
+      } else {
+        setDesignViewMode('canvas');
+      }
+
+      const restoredLayout = data.systemState.workspaceLayoutPreset;
+      if (
+        restoredLayout === 'conf1' ||
+        restoredLayout === 'conf2' ||
+        restoredLayout === 'conf3' ||
+        restoredLayout === 'conf4'
+      ) {
+        setWorkspaceLayoutPreset(restoredLayout);
+      }
+    } else {
+      setDesignViewMode('canvas');
     }
-    
-    // Chart tray is filled when user picks a scenario, or restored below via `pendingDesignUiRestoreRef`
-    // + handleSelectEnsemble when the design was saved with an active ensemble.
+
+    // Chart tray is filled when user picks a scenario, or restored via pendingDesignUiRestoreRef.
     setOpenCharts([]);
-    setDesignViewMode('canvas');
     
     // Reset selection
     setSelectedComponent(null);
@@ -5854,6 +6029,9 @@ function App() {
         uiFontPxShift,
         canvasFontPxShift,
         collapsedComponentFontPxShift,
+        splitPaneTitles,
+        designViewMode,
+        workspaceLayoutPreset,
       },
     };
   };
@@ -5967,9 +6145,16 @@ function App() {
 
   useEffect(() => {
     fetchMachineRole()
-      .then(setMachineRole)
+      .then((role) => {
+        setMachineRole(role);
+        machineRoleRef.current = role;
+      })
       .catch((e) => console.warn('Cluster machine role:', e));
   }, []);
+
+  useEffect(() => {
+    machineRoleRef.current = machineRole;
+  }, [machineRole]);
 
   const handleRemoteClusterCommandRef = useRef(handleRemoteClusterCommand);
   useEffect(() => {
@@ -5984,6 +6169,15 @@ function App() {
       }
     });
   }, [machineRole?.isMaingear]);
+
+  useEffect(() => {
+    if (!machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
+    return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
+      if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
+        setIdeumSimulationMirror(msg.running);
+      }
+    });
+  }, [machineRole?.isIdeum, machineRole?.peerBackendUrl]);
 
   useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
@@ -6316,6 +6510,7 @@ function App() {
       onAddSimulationsFromXlsx={handleAddSimulationsFromXlsx}
       onAddSimulationsFromPkl={handleAddSimulationsFromPkl}
       onAddSimulationFromPkl2={handleAddSimulationFromPkl2}
+      onAddSimulationsFromCsv={handleAddSimulationsFromCsv}
       simulationLoadProgress={simulationLoadProgress}
       quickScenarioButtons={quickScenarioButtons}
       ideumControlButtons={ideumControlButtons}
@@ -6614,7 +6809,7 @@ function App() {
               onPanBottom={setPanBottom}
               autoFitUpperPane={autoFitUpperPane}
               onAutoFitUpperPaneDone={() => setAutoFitUpperPane(false)}
-              splitPaneTitles={h2SplitPaneTitles}
+              splitPaneTitles={splitPaneTitles}
               mode={mode}
               viewMode={viewMode}
               simulationRunning={simulationRunning}
@@ -6635,6 +6830,8 @@ function App() {
               onIdeumControlButtonClick={handleIdeumControlButtonClick}
               ideumExpansionMirror={ideumExpansionMirror}
               onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
+              ideumSimulationMirror={ideumSimulationMirror}
+              onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
             />
           )}
         </div>
@@ -6728,6 +6925,8 @@ function App() {
             simulationMetadata?.isEnsemble ? onEnsureEnsembleChartColumns : undefined
           }
           simulationMetadata={simulationMetadata}
+          ensembleColumnGroups={ensembleColumnGroups}
+          derivedVariables={simulationMetadata?.derivedVariables || []}
           eventMarkers={simConfig?.simulations?.[simulationMetadata?.id]?.event_markers}
           globalSampleStep={globalSampleStep}
           perChartSampleStep={perChartSampleStep}
@@ -6779,6 +6978,7 @@ function App() {
           quadBottomRowShare={quadBottomRowShare}
           onQuadBottomRowShareChange={setQuadBottomRowShare}
           onMoveChartDrawer={handleMoveChartDrawer}
+          onSwapChartDrawers={handleSwapChartDrawers}
           playbackTimeRange={playbackTimeRange}
         />
       )}

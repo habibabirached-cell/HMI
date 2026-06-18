@@ -18073,5 +18073,48 @@
     "open-all-breakers"
   ],
   "ideumControlButtons": [],
-  "ideumKioskMode": false
+  "ideumKioskMode": false,
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "add8Turbines": {
+        "label": "No Bess No Statcom",
+        "presetName": "noBessNoStatcom",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addStatcomAndGFMe": {
+        "label": "With Bess and StatCom",
+        "presetName": "withBessandStatCom",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addBessOnly": {
+        "label": "With BESS Alone",
+        "presetName": "withBessAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addGfmeOnly": {
+        "label": "With STATCOM Alone",
+        "presetName": "withStatcomAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "toggleBreakersExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "breakers"
+      },
+      "togglePeripheralsExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "peripherals"
+      },
+      "startSimulation": {
+        "action": "startSimulation"
+      },
+      "stopSimulation": {
+        "action": "stopSimulation"
+      }
+    }
+  }
 }

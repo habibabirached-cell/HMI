@@ -1,4 +1,6 @@
-/** H2 conf3: fixed titles for UpperCanvas / BelowCanvas. */
+/** Split-canvas pane titles (upper / lower) for conf3 stacked designs. */
+
+import { designHasStackedSections } from './canvasConf3Split';
 
 export const H2_UPPER_CANVAS_TITLE = {
   line1: 'Base Configuration : ',
@@ -8,33 +10,48 @@ export const H2_UPPER_CANVAS_TITLE = {
 const LOWER_TITLE_BY_PRESET = {
   withBessandStatCom: {
     line1: 'Alternative Configuration : ',
-    line2: '+BESS and +STATCOM',
+    line2: '+ BESS and +STATCOM',
   },
   withBessAlone: {
     line1: 'Alternative Configuration : ',
-    line2: '+BESS',
+    line2: '+ BESS',
   },
   withStatcomAlone: {
     line1: 'Alternative Configuration : ',
-    line2: '+STATCOM',
+    line2: '+ STATCOM',
   },
-  noBessNoStatcom: {
-    line1: 'Alternative Configuration',
-    line2: '',
-  },
+  noBessNoStatcom: null,
 };
 
-export function designUsesH2SplitTitles(designApiPath, configName) {
-  const leaf = String(designApiPath || '')
-    .trim()
-    .split(/[/\\]/)
-    .pop()
-    ?.toLowerCase();
-  const name = String(configName || '').trim().toLowerCase();
-  return leaf === 'h2' || name === 'h2';
+function normalizeTitleLines(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  return {
+    line1: String(raw.line1 ?? ''),
+    line2: String(raw.line2 ?? ''),
+  };
 }
 
-/** Resolve active quick-scenario preset for H2 lower-canvas title. */
+/** True when the design has upper/lower stacked canvas sections (any design name). */
+export function designUsesSplitPaneTitles(components) {
+  return designHasStackedSections(components);
+}
+
+/** @deprecated Use designUsesSplitPaneTitles — kept for older imports. */
+export function designUsesH2SplitTitles(_designApiPath, _configName, components) {
+  if (Array.isArray(components)) return designUsesSplitPaneTitles(components);
+  return false;
+}
+
+/** Validate titles restored from systemState. */
+export function normalizeSplitPaneTitles(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const upper = normalizeTitleLines(raw.upper);
+  if (!upper) return null;
+  const lower = raw.lower == null ? null : normalizeTitleLines(raw.lower);
+  return { upper, lower };
+}
+
+/** Resolve active quick-scenario preset for lower-canvas title. */
 export function resolveH2ActivePresetName({
   activeQuickScenarioPreset,
   activeNamedSimulationConfig,
@@ -54,9 +71,11 @@ export function resolveH2ActivePresetName({
 }
 
 export function resolveH2SplitPaneTitles(presetName) {
-  const key = presetName && LOWER_TITLE_BY_PRESET[presetName] ? presetName : 'noBessNoStatcom';
+  const key = presetName && Object.prototype.hasOwnProperty.call(LOWER_TITLE_BY_PRESET, presetName)
+    ? presetName
+    : 'noBessNoStatcom';
   return {
     upper: H2_UPPER_CANVAS_TITLE,
-    lower: LOWER_TITLE_BY_PRESET[key],
+    lower: LOWER_TITLE_BY_PRESET[key] ?? null,
   };
 }

@@ -21,15 +21,9 @@ export function normalizeDesignExpansion(raw) {
   return out;
 }
 
-/** Designs whose catalog folder or display name starts with “H” (Habib, h2, h3, …). */
-export function designSupportsExpansionPanel(designApiPath, configName) {
-  const leaf = String(designApiPath || '')
-    .trim()
-    .split(/[/\\]/)
-    .pop()
-    .toLowerCase();
-  const name = String(configName || '').trim();
-  return /^h/i.test(leaf) || /^h/i.test(name);
+/** Expansion toggles are available for every design (not limited to H-family names). */
+export function designSupportsExpansionPanel(_designApiPath, _configName) {
+  return true;
 }
 
 export function applyBreakersExpansionToComponents(components, compact) {

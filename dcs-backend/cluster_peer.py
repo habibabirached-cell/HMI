@@ -22,6 +22,10 @@ VALID_REMOTE_COMMANDS = frozenset({
     "addStatcomAndGFMe",
     "addBessOnly",
     "addGfmeOnly",
+    "toggleBreakersExpansion",
+    "togglePeripheralsExpansion",
+    "startSimulation",
+    "stopSimulation",
 })
 
 

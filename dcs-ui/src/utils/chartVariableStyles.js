@@ -3,6 +3,7 @@
  */
 
 import { cellFloat } from './csvRowAccess';
+import { qualifyEnsembleColumn } from './simulationLazyApi';
 
 export const DEFAULT_CHART_COLORS = [
   '#005E60',
@@ -94,8 +95,20 @@ function clampIntensity(v) {
   return Math.min(1, Math.max(0.05, n));
 }
 
+/** Look up saved style by chart storage column key (with qualified-key fallback). */
+function savedStyleForColumn(chart, colKey) {
+  const styles = chart?.variableStyles;
+  if (!styles || !colKey) return undefined;
+  if (styles[colKey]) return styles[colKey];
+  if (chart.ensembleSimId && !chart.ensembleCrossMember) {
+    const qualified = qualifyEnsembleColumn(chart.ensembleSimId, colKey);
+    if (styles[qualified]) return styles[qualified];
+  }
+  return undefined;
+}
+
 export function resolveVariableStyle(chart, colKey, index) {
-  const saved = chart?.variableStyles?.[colKey];
+  const saved = savedStyleForColumn(chart, colKey);
   const base = defaultVariableStyle(index);
   return {
     color: typeof saved?.color === 'string' && saved.color.trim() ? saved.color.trim() : base.color,
@@ -131,7 +144,7 @@ export function applyIntensityToColor(hex, intensity) {
 }
 
 export function isVariableRigid(chart, colKey) {
-  return chart?.variableStyles?.[colKey]?.rigid === true;
+  return savedStyleForColumn(chart, colKey)?.rigid === true;
 }
 
 /** Minimum X (time) — points with x ≤ threshold are hidden when set. */

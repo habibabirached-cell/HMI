@@ -16,6 +16,7 @@ import {
   isIdeumBessGfmeButton,
   isIdeumExpansionPanel,
   isIdeumGfmeButton,
+  isIdeumStartSimulationButton,
   isIdeumTurbineButton,
 } from '../../utils/ideumComponent';
 import './IdeumComponentLayer.css';
@@ -93,6 +94,8 @@ export default function IdeumComponentLayer({
   onIdeumClick,
   ideumExpansionMirror = { breakersCompact: true, peripheralsCompact: true },
   onIdeumExpansionToggle,
+  ideumSimulationMirror = false,
+  onIdeumSimulationClick,
 }) {
   const [slots, setSlots] = useState([]);
 
@@ -132,8 +135,11 @@ export default function IdeumComponentLayer({
     if (payload) onIdeumClick?.(payload);
   };
 
-  const buttonSlots = slots.filter((s) => !isIdeumExpansionPanel(s.component));
+  const buttonSlots = slots.filter(
+    (s) => !isIdeumExpansionPanel(s.component) && !isIdeumStartSimulationButton(s.component),
+  );
   const expansionSlots = slots.filter((s) => isIdeumExpansionPanel(s.component));
+  const startSimSlots = slots.filter((s) => isIdeumStartSimulationButton(s.component));
 
   return (
     <div className="ideum-component-layer" aria-hidden={false}>
@@ -196,6 +202,38 @@ export default function IdeumComponentLayer({
               />
             </div>
           </div>
+        );
+      })}
+      {startSimSlots.map((slot) => {
+        const labelPx = Math.max(18, Math.round(28 * zoom));
+        const running = !!ideumSimulationMirror;
+        return (
+          <button
+            key={slot.id}
+            type="button"
+            className={`ideum-component-btn ideum-component-btn--start-sim${
+              running ? ' ideum-component-btn--start-sim-running' : ''
+            }`}
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onIdeumSimulationClick?.();
+            }}
+            aria-label={running ? 'Stop Simulation' : 'Start Simulation'}
+          >
+            <span
+              className="ideum-component-btn__start-sim-label"
+              style={{ fontSize: labelPx }}
+            >
+              {running ? '⏹ Stop Simulation' : '▶ Start Simulation'}
+            </span>
+          </button>
         );
       })}
       {buttonSlots.map((slot) => {

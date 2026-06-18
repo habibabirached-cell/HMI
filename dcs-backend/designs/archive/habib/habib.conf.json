@@ -18112,6 +18112,12 @@
       "togglePeripheralsExpansion": {
         "action": "toggleExpansion",
         "expansionKey": "peripherals"
+      },
+      "startSimulation": {
+        "action": "startSimulation"
+      },
+      "stopSimulation": {
+        "action": "stopSimulation"
       }
     }
   }

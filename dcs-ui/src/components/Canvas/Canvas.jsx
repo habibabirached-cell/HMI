@@ -292,6 +292,8 @@ const Canvas = forwardRef(({
   onIdeumControlButtonClick,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
+  ideumSimulationMirror = false,
+  onIdeumSimulationClick,
   /** conf3: split design canvas — shared zoom, independent pan per half. */
   splitView = false,
   splitBottomShare = QUAD_BOTTOM_ROW_SHARE_DEFAULT,
@@ -2014,21 +2016,23 @@ const Canvas = forwardRef(({
               <SplitPaneTitleOrnament variant="upper" />
             </div>
           </div>
-          <div
-            className="canvas-split-pane-title canvas-split-pane-title--lower"
-            style={{
-              top: splitHeights.topPx + SPLIT_TITLE_TOP_PAD_PX,
-              left:
-                splitTitleAnchors?.lower != null
-                  ? panBottom.x + splitTitleAnchors.lower * zoom
-                  : '50%',
-            }}
-          >
-            <div className="canvas-split-pane-title__content">
-              <SplitPaneTitleLines title={splitPaneTitles.lower} />
-              <SplitPaneTitleOrnament variant="lower" />
+          {splitPaneTitles.lower ? (
+            <div
+              className="canvas-split-pane-title canvas-split-pane-title--lower"
+              style={{
+                top: splitHeights.topPx + SPLIT_TITLE_TOP_PAD_PX,
+                left:
+                  splitTitleAnchors?.lower != null
+                    ? panBottom.x + splitTitleAnchors.lower * zoom
+                    : '50%',
+              }}
+            >
+              <div className="canvas-split-pane-title__content">
+                <SplitPaneTitleLines title={splitPaneTitles.lower} />
+                <SplitPaneTitleOrnament variant="lower" />
+              </div>
             </div>
-          </div>
+          ) : null}
         </>
       )}
       <svg
@@ -2440,6 +2444,8 @@ const Canvas = forwardRef(({
                 onIdeumClick={onIdeumControlButtonClick}
                 ideumExpansionMirror={ideumExpansionMirror}
                 onIdeumExpansionToggle={onIdeumExpansionToggle}
+                ideumSimulationMirror={ideumSimulationMirror}
+                onIdeumSimulationClick={onIdeumSimulationClick}
               />
             )}
             </div>
@@ -2497,6 +2503,8 @@ const Canvas = forwardRef(({
                 onIdeumClick={onIdeumControlButtonClick}
                 ideumExpansionMirror={ideumExpansionMirror}
                 onIdeumExpansionToggle={onIdeumExpansionToggle}
+                ideumSimulationMirror={ideumSimulationMirror}
+                onIdeumSimulationClick={onIdeumSimulationClick}
               />
             )}
             </div>
@@ -2548,6 +2556,8 @@ const Canvas = forwardRef(({
           onIdeumClick={onIdeumControlButtonClick}
           ideumExpansionMirror={ideumExpansionMirror}
           onIdeumExpansionToggle={onIdeumExpansionToggle}
+          ideumSimulationMirror={ideumSimulationMirror}
+          onIdeumSimulationClick={onIdeumSimulationClick}
         />
       )}
 

@@ -161,6 +161,7 @@ const SimulationControls = ({
   onAddSimulationsFromXlsx,
   onAddSimulationsFromPkl,
   onAddSimulationFromPkl2,
+  onAddSimulationsFromCsv,
   // Set by App while a scenario CSV is downloading or being processed. Used to render the linear meter,
   // show the current phase in plain language, and prevent double-clicks on another scenario mid-load.
   simulationLoadProgress = null,
@@ -217,6 +218,7 @@ const SimulationControls = ({
   const xlsxInputRef = React.useRef(null);
   const pklInputRef = React.useRef(null);
   const pkl2InputRef = React.useRef(null);
+  const csvInputRef = React.useRef(null);
 
   const activeQuickScenarioShortcut = React.useMemo(() => {
     if (activeQuickScenarioPlaying) return activeQuickScenarioPlaying;
@@ -796,7 +798,7 @@ const SimulationControls = ({
                 >
                   + Add simulation scenario
                 </button>
-                {(onAddSimulationsFromXlsx || onAddSimulationsFromPkl || onAddSimulationFromPkl2) && (
+                {(onAddSimulationsFromXlsx || onAddSimulationsFromPkl || onAddSimulationFromPkl2 || onAddSimulationsFromCsv) && (
                   <label className="import-sample-label">
                     Import sample:
                     <select
@@ -894,6 +896,46 @@ const SimulationControls = ({
                     </button>
                   </>
                 )}
+                {onAddSimulationsFromCsv && (
+                  <>
+                    <input
+                      ref={csvInputRef}
+                      type="file"
+                      accept=".csv,text/csv"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const picked = e.target.files ? Array.from(e.target.files) : [];
+                        if (!picked.length) return;
+                        if (picked.length === 1) {
+                          const f = picked[0];
+                          const raw = window.prompt(
+                            `Simulation name for "${f.name}":\n(e.g. "NoBESS_21Hz")\nLeave blank to use the file name.`,
+                            '',
+                          );
+                          if (raw === null) { e.target.value = ''; return; }
+                          onAddSimulationsFromCsv(picked, raw.trim(), '', importSampleStep);
+                        } else {
+                          const raw = window.prompt(
+                            `Prefix for simulation names from ${picked.length} CSV files:\n(e.g. "run1_" → run1_scenario_a, run1_scenario_b …)\nLeave blank for none.`,
+                            '',
+                          );
+                          if (raw === null) { e.target.value = ''; return; }
+                          onAddSimulationsFromCsv(picked, '', raw.trim(), importSampleStep);
+                        }
+                        e.target.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-add-sim btn-add-sim-xlsx"
+                      onClick={() => csvInputRef.current?.click()}
+                      title="Import one or more CSV files as simulation scenarios (UTF-8, comma-separated)"
+                    >
+                      Add simulation scenarios from csv
+                    </button>
+                  </>
+                )}
               </>
             ) : (
               <div className="add-sim-form">
@@ -979,6 +1021,21 @@ const SimulationControls = ({
                         </span>
                       </span>
                     </button>
+                    {onRefreshDesignEnsembles && (
+                      <button
+                        type="button"
+                        className="control-btn control-btn-ensemble-add"
+                        disabled={!!simulationLoadProgress}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEnsembleEditor({ mode: 'add-members', ensemble: ens });
+                        }}
+                        title="Add simulation scenarios to this ensemble"
+                        aria-label={`Add scenarios to ensemble ${ens.display_name || ens.id}`}
+                      >
+                        +
+                      </button>
+                    )}
                     {onRefreshDesignEnsembles && (
                       <button
                         type="button"

@@ -36,7 +36,7 @@ import os
 import pickle
 import re
 import shutil
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import unquote
 
 from cluster_peer import (
@@ -630,7 +630,9 @@ async def get_cluster_machine_role():
 async def post_cluster_remote_command(body: dict):
     """
     Ideum posts a remote command; Maingear broadcasts it to connected UI clients.
-    Body: { "command": "add8Turbines" | "addStatcomAndGFMe" | "addBessOnly" | "addGfmeOnly" }
+    Body: { "command": "add8Turbines" | "addStatcomAndGFMe" | "addBessOnly" | "addGfmeOnly"
+            | "toggleBreakersExpansion" | "togglePeripheralsExpansion"
+            | "startSimulation" | "stopSimulation" }
     """
     role = resolve_machine_role()
     if not role.get("isMaingear"):
@@ -655,6 +657,22 @@ async def post_cluster_remote_command(body: dict):
         "command": command,
         "deliveredToClients": delivered,
     }
+
+
+@app.post("/api/cluster/broadcast")
+async def post_cluster_broadcast(body: dict):
+    """Maingear UI broadcasts cluster events (e.g. simulation_state) to all WS clients."""
+    role = resolve_machine_role()
+    if not role.get("isMaingear"):
+        raise HTTPException(
+            status_code=403,
+            detail="Cluster broadcast is only accepted on the Maingear backend.",
+        )
+    message = body.get("message") if isinstance(body.get("message"), dict) else body
+    if not isinstance(message, dict) or not message.get("type"):
+        raise HTTPException(status_code=400, detail="Body must include message.type")
+    delivered = await cluster_manager.broadcast(message)
+    return {"ok": True, "deliveredToClients": delivered}
 
 
 @app.websocket("/ws/cluster")
@@ -3161,6 +3179,58 @@ def _sanitize_import_hyphens_in_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _read_csv_bytes_to_dataframe(raw: bytes) -> pd.DataFrame:
+    """Parse UTF-8 CSV bytes into a DataFrame (comma-separated, same rules as scenario data upload)."""
+    if not raw:
+        raise HTTPException(status_code=400, detail="Upload failed: File is empty.")
+    try:
+        decoded = raw.decode("utf-8-sig").strip()
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded") from e
+    if not decoded:
+        raise HTTPException(status_code=400, detail="Upload failed: File is empty.")
+
+    first_line = decoded.split("\n")[0] if "\n" in decoded else decoded
+    if "," not in first_line and "\t" not in first_line:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Upload failed: File does not look like CSV (no comma or tab in header). "
+                "Expected comma-separated columns."
+            ),
+        )
+
+    use_pandas = False
+    try:
+        reader = csv.DictReader(io.StringIO(decoded))
+        rows = list(reader)
+    except Exception:
+        use_pandas = True
+
+    if use_pandas:
+        try:
+            buf = io.StringIO(decoded)
+            try:
+                df = pd.read_csv(buf, sep=",")
+            except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError):
+                buf.seek(0)
+                df = pd.read_csv(buf, sep=",", on_bad_lines="skip", engine="python")
+        except Exception as pe:
+            raise HTTPException(status_code=400, detail=f"Upload failed: {str(pe)}") from pe
+    else:
+        df = pd.DataFrame(rows)
+
+    if df.empty:
+        raise HTTPException(status_code=400, detail="Upload failed: No data rows found.")
+    if len(df.columns) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Upload failed: No columns found. "
+                "Ensure the first line contains comma-separated column names."
+            ),
+        )
+    return df
 
 
 def _pkl_strip_first_pipe_and_suffix(s: str) -> str:
@@ -3501,6 +3571,85 @@ async def create_simulation_from_pkl2(
     except Exception as e:
         print(f"❌ Error importing pkl2: {e}")
         import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/designs/{design_name:path}/simulations/from-csv")
+async def create_simulations_from_csv(
+    design_name: str,
+    files: List[UploadFile] = File(...),
+    prefix: str = Form(""),
+    sim_name: str = Form(""),
+    sample_step: int = Form(1),
+    db: Session = Depends(get_db),
+):
+    """
+    Import simulation scenario(s) from one or more CSV files.
+    - Each file becomes one scenario ({name}.data/ Parquet bundle + SQLite mirror + .sim.json).
+    - Single file: optional sim_name (file stem used when blank).
+    - Multiple files: each stem becomes a scenario; optional prefix prepended to every name.
+    - sample_step: keep 1 in N rows (same as xlsx/pkl import).
+    """
+    try:
+        if not files:
+            raise HTTPException(status_code=400, detail="No CSV files uploaded.")
+        dir_path, catalog_rel = resolve_design_storage_from_api(design_name)
+        if not os.path.isdir(dir_path):
+            raise HTTPException(status_code=404, detail=f"Design directory not found: {design_name}")
+
+        created: list[dict] = []
+        safe_prefix = re.sub(r"[^\w\-]", "", prefix) if prefix else ""
+        step = max(1, int(sample_step))
+        multi = len(files) > 1
+
+        for upload in files:
+            name_lower = (upload.filename or "").lower()
+            if not name_lower.endswith(".csv"):
+                raise HTTPException(status_code=400, detail="Each file must be a CSV (.csv extension)")
+            raw = await upload.read()
+            df = _read_csv_bytes_to_dataframe(raw)
+            df = _sanitize_import_hyphens_in_column_names(df)
+            if step > 1:
+                df = df.iloc[::step].reset_index(drop=True)
+
+            default_stem = re.sub(r"[^\w\-]", "", os.path.splitext(upload.filename or "import")[0]) or "import"
+            if multi:
+                safe_sim = default_stem
+                if safe_prefix:
+                    safe_sim = f"{safe_prefix}{safe_sim}"
+            else:
+                safe_sim = re.sub(r"[^\w\-]", "", sim_name.strip()) if sim_name.strip() else default_stem
+                if safe_prefix and not sim_name.strip():
+                    safe_sim = f"{safe_prefix}{safe_sim}"
+            if not safe_sim:
+                safe_sim = default_stem
+
+            import_simulation_from_dataframe(db, catalog_rel, safe_sim, dir_path, df, force=True)
+            sim_json_path = os.path.join(dir_path, f"{safe_sim}.sim.json")
+            label = upload.filename or safe_sim
+            disp = (
+                (prefix + os.path.splitext(label)[0]).replace("_", " ").replace("-", " ").title()
+                if multi and safe_prefix
+                else (sim_name.strip() or os.path.splitext(label)[0]).replace("_", " ").replace("-", " ").title()
+            )
+            _write_or_update_sim_data_shape(
+                sim_json_path, len(df), len(df.columns), display_name_if_new=disp
+            )
+            created.append({"name": safe_sim, "rows": len(df)})
+            print(f"   Created {safe_sim}.data/ bundle ({len(df)} rows, step={step}) from csv {label!r}")
+
+        if not created:
+            raise HTTPException(status_code=400, detail="No non-empty scenarios found in the CSV file(s).")
+
+        print(f"✅ Imported {len(created)} simulation(s) from csv")
+        return {"design_name": design_name, "created": created}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error importing csv: {e}")
+        import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 

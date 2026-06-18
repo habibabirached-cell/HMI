@@ -9,12 +9,15 @@ export const IDEUM_BESS_BUTTON_TYPE = 'ideum-bess-button';
 export const IDEUM_GFME_BUTTON_TYPE = 'ideum-gfme-button';
 export const IDEUM_EXPANSION_PANEL_TYPE = 'ideum-expansion-panel';
 
+export const IDEUM_START_SIMULATION_BUTTON_TYPE = 'ideum-start-simulation-button';
+
 export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_TURBINE_BUTTON_TYPE,
   IDEUM_BESS_GFME_BUTTON_TYPE,
   IDEUM_BESS_BUTTON_TYPE,
   IDEUM_GFME_BUTTON_TYPE,
   IDEUM_EXPANSION_PANEL_TYPE,
+  IDEUM_START_SIMULATION_BUTTON_TYPE,
 ]);
 
 export function isIdeumComponent(component) {
@@ -67,12 +70,17 @@ export function isIdeumExpansionPanel(component) {
   return component?.type === IDEUM_EXPANSION_PANEL_TYPE;
 }
 
+export function isIdeumStartSimulationButton(component) {
+  return component?.type === IDEUM_START_SIMULATION_BUTTON_TYPE;
+}
+
 export function getIdeumExpansionPanels(components) {
   if (!Array.isArray(components)) return [];
   return components.filter(isIdeumExpansionPanel);
 }
 
 export function getIdeumButtonStyleClass(component) {
+  if (isIdeumStartSimulationButton(component)) return 'ideum-component-btn--start-sim';
   if (isIdeumBessGfmeButton(component)) return 'ideum-component-btn--grouped';
   if (isIdeumBessButton(component)) return 'ideum-component-btn--bess-only';
   if (isIdeumGfmeButton(component)) return 'ideum-component-btn--gfme-only';

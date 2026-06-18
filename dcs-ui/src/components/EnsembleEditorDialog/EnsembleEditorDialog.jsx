@@ -35,17 +35,35 @@ function EnsembleEditorDialog({
   React.useEffect(() => {
     if (!open) return;
     setError(null);
-    if (mode === 'edit' && ensemble) {
+    if ((mode === 'edit' || mode === 'add-members') && ensemble) {
       setEnsembleId(String(ensemble.id || '').trim());
       setDisplayName(String(ensemble.display_name || ensemble.id || '').trim());
       const members = ensemble.member_simulations || [];
-      setSelected(new Set(members.map((m) => String(m).trim()).filter(Boolean)));
+      if (mode === 'add-members') {
+        setSelected(new Set());
+      } else {
+        setSelected(new Set(members.map((m) => String(m).trim()).filter(Boolean)));
+      }
     } else {
       setEnsembleId('');
       setDisplayName('');
       setSelected(new Set());
     }
   }, [open, mode, ensemble]);
+
+  const existingMembers = React.useMemo(() => {
+    if (!ensemble?.member_simulations) return new Set();
+    return new Set(
+      (ensemble.member_simulations || []).map((m) => String(m).trim()).filter(Boolean),
+    );
+  }, [ensemble]);
+
+  const scenariosForList = React.useMemo(() => {
+    if (mode === 'add-members') {
+      return availableSimulations.filter((simId) => !existingMembers.has(simId));
+    }
+    return availableSimulations;
+  }, [mode, availableSimulations, existingMembers]);
 
   const toggleMember = (simId) => {
     setSelected((prev) => {
@@ -57,7 +75,7 @@ function EnsembleEditorDialog({
   };
 
   const selectAll = () => {
-    setSelected(new Set(availableSimulations));
+    setSelected(new Set(scenariosForList));
   };
 
   const clearAll = () => {
@@ -67,7 +85,13 @@ function EnsembleEditorDialog({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    const members = Array.from(selected);
+    const members =
+      mode === 'add-members'
+        ? [
+            ...Array.from(existingMembers),
+            ...Array.from(selected).filter((id) => !existingMembers.has(id)),
+          ]
+        : Array.from(selected);
     if (mode === 'create') {
       const id = ensembleId.trim();
       if (!id) {
@@ -79,7 +103,13 @@ function EnsembleEditorDialog({
         return;
       }
     }
-    if (members.length === 0) {
+    if (mode === 'add-members') {
+      const newOnes = Array.from(selected).filter((id) => !existingMembers.has(id));
+      if (newOnes.length === 0) {
+        setError('Select at least one scenario to add.');
+        return;
+      }
+    } else if (members.length === 0) {
       setError('Select at least one scenario to include.');
       return;
     }
@@ -110,7 +140,7 @@ function EnsembleEditorDialog({
           }
           throw new Error(msg);
         }
-      } else {
+      } else if (mode === 'edit' || mode === 'add-members') {
         const r = await fetch(
           `${pathBase}/ensembles/${encodeURIComponent(ensemble.id)}`,
           {
@@ -163,11 +193,16 @@ function EnsembleEditorDialog({
         onMouseDown={(ev) => ev.stopPropagation()}
       >
         <h3 id="ensemble-editor-title" className="ensemble-editor-title">
-          {mode === 'create' ? 'New ensemble' : 'Edit ensemble'}
+          {mode === 'create'
+            ? 'New ensemble'
+            : mode === 'add-members'
+              ? `Add scenarios to ${displayName || ensemble?.id || 'ensemble'}`
+              : 'Edit ensemble'}
         </h3>
         <p className="ensemble-editor-hint">
-          Ensembles group existing scenarios so you can compare them together. Pick which scenario tabs belong
-          to this group.
+          {mode === 'add-members'
+            ? 'Choose simulation scenarios to add to this ensemble. Only scenarios not already in the group are listed.'
+            : 'Ensembles group existing scenarios so you can compare them together. Pick which scenario tabs belong to this group.'}
         </p>
         <form onSubmit={handleSubmit}>
           {mode === 'create' && (
@@ -193,12 +228,13 @@ function EnsembleEditorDialog({
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={mode === 'create' ? 'Shown on the purple button' : ''}
               autoComplete="off"
-              disabled={saving}
+              disabled={saving || mode === 'add-members'}
+              readOnly={mode === 'add-members'}
             />
           </label>
 
           <div className="ensemble-editor-members-header">
-            <span>Member scenarios</span>
+            <span>{mode === 'add-members' ? 'Scenarios to add' : 'Member scenarios'}</span>
             <div className="ensemble-editor-members-actions">
               <button type="button" className="ensemble-editor-linkbtn" onClick={selectAll} disabled={saving}>
                 Select all
@@ -208,11 +244,15 @@ function EnsembleEditorDialog({
               </button>
             </div>
           </div>
-          {availableSimulations.length === 0 ? (
-            <p className="ensemble-editor-empty">No scenarios in this design yet. Add scenarios first.</p>
+          {scenariosForList.length === 0 ? (
+            <p className="ensemble-editor-empty">
+              {mode === 'add-members'
+                ? 'All simulation scenarios are already in this ensemble.'
+                : 'No scenarios in this design yet. Add scenarios first.'}
+            </p>
           ) : (
             <ul className="ensemble-editor-checklist">
-              {availableSimulations.map((simId) => {
+              {scenariosForList.map((simId) => {
                 const label =
                   simConfig?.simulations?.[simId]?.display_name || simId;
                 return (
@@ -242,9 +282,9 @@ function EnsembleEditorDialog({
             <button
               type="submit"
               className="ensemble-editor-save"
-              disabled={saving || availableSimulations.length === 0}
+              disabled={saving || scenariosForList.length === 0}
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? 'Saving…' : mode === 'add-members' ? 'Add selected' : 'Save'}
             </button>
           </div>
         </form>

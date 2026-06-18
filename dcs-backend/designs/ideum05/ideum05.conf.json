@@ -131,6 +131,31 @@
         "frequency": 60
       },
       "isTripped": false
+    },
+    {
+      "id": "comp-ideum-start-sim-btn",
+      "type": "ideum-start-simulation-button",
+      "name": "Start Simulation",
+      "fullName": "Start Simulation",
+      "position": {
+        "x": 2060,
+        "y": 1060
+      },
+      "status": "online",
+      "properties": {
+        "title": "Start Simulation"
+      },
+      "visualOverrides": {
+        "width": 480,
+        "height": 100
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false
     }
   ],
   "connections": [],
