@@ -1,7 +1,6 @@
 {
   "name": "Ideum05",
-  "description": "Ideum touch table \u2014 Ideum-only components, side drawers hidden.",
-  "ideumKioskMode": true,
+  "description": "",
   "canvasComponents": [
     {
       "id": "comp-ideum-turbine-btn",
@@ -12,7 +11,7 @@
         "x": 80,
         "y": 120
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "Add 8 turbine",
         "ideumCommand": "add8Turbines"
@@ -27,7 +26,8 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-ideum-bess-only-btn",
@@ -38,7 +38,7 @@
         "x": 80,
         "y": 640
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "Add BESS only",
         "ideumCommand": "addBessOnly"
@@ -53,7 +53,8 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-ideum-bess-gfme-btn",
@@ -64,7 +65,7 @@
         "x": 900,
         "y": 120
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "Add BESS and GFMe",
         "ideumCommand": "addStatcomAndGFMe"
@@ -79,7 +80,8 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-ideum-gfme-only-btn",
@@ -90,7 +92,7 @@
         "x": 900,
         "y": 580
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "ADD GFME only",
         "ideumCommand": "addGfmeOnly"
@@ -105,7 +107,8 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-ideum-expansion-panel",
@@ -116,7 +119,7 @@
         "x": 2060,
         "y": 120
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "Expansion"
       },
@@ -130,7 +133,8 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-ideum-start-sim-btn",
@@ -141,7 +145,7 @@
         "x": 2060,
         "y": 1060
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "title": "Start Simulation"
       },
@@ -155,27 +159,60 @@
         "current": 0,
         "frequency": 60
       },
-      "isTripped": false
+      "isTripped": false,
+      "canvasPane": "upper"
     }
   ],
   "connections": [],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.88,
+    "zoom": 1.5927268022622616,
     "pan": {
-      "x": 40,
-      "y": 60
+      "x": -62.7186775886903,
+      "y": 186.81629054826988
     },
-    "mode": "design"
+    "panTop": {
+      "x": 131.29628558719403,
+      "y": -57.845132789426906
+    },
+    "panBottom": {
+      "x": 0,
+      "y": 0
+    },
+    "quadBottomRowShare": 50,
+    "mode": "design",
+    "uiFontPxShift": 5,
+    "canvasFontPxShift": 5,
+    "collapsedComponentFontPxShift": 24,
+    "splitPaneTitles": null,
+    "designViewMode": "canvas",
+    "workspaceLayoutPreset": "conf4"
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {},
-  "designUiSession": {},
+  "playbackTimeRange": {
+    "t1": 8.0,
+    "t2": 60.0
+  },
+  "designUiSession": {
+    "designSectionVisibility": {
+      "showUpper": true,
+      "showLower": true,
+      "hideBranches": []
+    },
+    "quickScenarioBranchCollapsed": {
+      "noBessNoStatcom": true,
+      "withBessandStatCom": true,
+      "withBessAlone": true,
+      "withStatcomAlone": true
+    }
+  },
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
+  "ideumKioskMode": true,
   "remoteControlTarget": {
     "designDir": "habib2",
     "designName": "Habib2"

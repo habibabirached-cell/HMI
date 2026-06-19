@@ -20,6 +20,10 @@ export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_START_SIMULATION_BUTTON_TYPE,
 ]);
 
+export function isIdeumDesignName(name) {
+  return typeof name === 'string' && /^Ideum/i.test(name.trim());
+}
+
 export function isIdeumComponent(component) {
   return IDEUM_COMPONENT_TYPES.has(component?.type);
 }

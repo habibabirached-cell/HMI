@@ -67,7 +67,14 @@ import {
   fetchMachineRole,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
-import { getIdeumComponents } from './utils/ideumComponent';
+import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
+import {
+  getIdeum05NavScreen,
+  ideum05NavCardDrills,
+  isIdeum05ControlsScreen,
+  isIdeum05DesignName,
+  IDEUM05_NAV_ROOT,
+} from './utils/ideum05Navigation';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -778,6 +785,7 @@ function App() {
     ...DEFAULT_DESIGN_EXPANSION,
   }));
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
+  const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -832,6 +840,10 @@ function App() {
     }
     return currentConfigName;
   }, [currentConfigName, csvStatus?.use_design_dir, csvStatus?.design_catalog_rel]);
+
+  const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
+  const isIdeum05 = isIdeum05DesignName(currentConfigName);
+  const ideum05ShowControls = !isIdeum05 || isIdeum05ControlsScreen(ideum05NavScreen);
 
   const splitPaneTitles = useMemo(() => {
     if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
@@ -3186,18 +3198,29 @@ function App() {
     }
     try {
       const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      if (result?.ok) {
+        setIdeumSimulationMirror(command === 'startSimulation');
+      }
       if (!result.deliveredToClients) {
         alert(
           'Command reached the Maingear PC, but no browser is listening. On Maingear: open the target design, wait a few seconds, then try again (the page must stay open).',
         );
-        return;
       }
-      setIdeumSimulationMirror(command === 'startSimulation');
     } catch (e) {
       console.warn(e);
       alert(e.message || 'Failed to send simulation command to Maingear.');
     }
   };
+
+  const handleIdeum05NavSelect = useCallback((cardId) => {
+    if (ideum05NavCardDrills(cardId)) {
+      setIdeum05NavStack((prev) => [...prev, cardId]);
+    }
+  }, []);
+
+  const handleIdeum05NavBack = useCallback(() => {
+    setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }, []);
 
   const handleDesignExpansionChange = useCallback((key, expanded) => {
     setDesignExpansion((prev) => {
@@ -3319,7 +3342,20 @@ function App() {
   };
 
   const handleRemoteClusterCommand = async (command) => {
-    if (!remoteControlProfile?.enabled || !command) return;
+    if (!command) return;
+
+    // Transport commands — work on any Maingear design with a loaded simulation;
+    // do not require remoteControlProfile.commands entries (unlike scenario presets).
+    if (command === 'startSimulation') {
+      await restartSimulationPlaybackFromStart();
+      return;
+    }
+    if (command === 'stopSimulation') {
+      handleStopSimulation();
+      return;
+    }
+
+    if (!remoteControlProfile?.enabled) return;
     const spec = remoteControlProfile.commands?.[command];
     if (!spec) {
       console.warn('Remote command ignored — no remoteControlProfile mapping:', command);
@@ -3331,14 +3367,6 @@ function App() {
         return;
       }
       handleRemoteExpansionToggle(spec.expansionKey);
-      return;
-    }
-    if (spec.action === 'startSimulation') {
-      handleStartSimulationRef.current?.();
-      return;
-    }
-    if (spec.action === 'stopSimulation') {
-      handleStopSimulation();
       return;
     }
     if (!spec?.presetName || !designApiPath) {
@@ -5741,6 +5769,7 @@ function App() {
     setDesignExpansion(loadedExpansion);
     setIdeumExpansionMirror({ ...DEFAULT_DESIGN_EXPANSION });
     setIdeumSimulationMirror(false);
+    setIdeum05NavStack([IDEUM05_NAV_ROOT]);
     
     // Apply the loaded state to the application
     if (data.canvasComponents) {
@@ -6832,6 +6861,13 @@ function App() {
               onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
               ideumSimulationMirror={ideumSimulationMirror}
               onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
+              disableCanvasPan={isIdeumDesignName(currentConfigName)}
+              isIdeum05={isIdeum05}
+              ideum05ShowControls={ideum05ShowControls}
+              ideum05NavScreen={ideum05NavScreen}
+              ideum05NavStack={ideum05NavStack}
+              onIdeum05NavSelect={handleIdeum05NavSelect}
+              onIdeum05NavBack={handleIdeum05NavBack}
             />
           )}
         </div>
@@ -6900,7 +6936,7 @@ function App() {
       )}
 
       {/* Chart Panel */}
-      {openCharts.length > 0 && (
+      {openCharts.length > 0 && ideum05ShowControls && (
         <ChartPanel
           charts={openCharts}
           chartStacks={chartStacks}

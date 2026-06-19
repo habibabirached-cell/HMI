@@ -1243,8 +1243,8 @@
 }
 
 .chart-panel-chart-sample-blink {
-  width: 1px;
-  height: 1px;
+  width: 10px;
+  height: 10px;
   background: #00d4a8;
   flex-shrink: 0;
   animation: chart-panel-chart-sample-blink 5s infinite;
@@ -1252,10 +1252,10 @@
 
 @keyframes chart-panel-chart-sample-blink {
   0%,
-  4% {
+  50% {
     opacity: 1;
   }
-  8%,
+  50.01%,
   100% {
     opacity: 0;
   }

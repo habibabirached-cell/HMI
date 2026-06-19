@@ -1,0 +1,119 @@
+.ideum05-nav-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 510;
+}
+
+.ideum05-nav-back {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  z-index: 520;
+  pointer-events: auto;
+  margin: 0;
+  padding: 12px 22px;
+  border-radius: 8px;
+  border: 2px solid rgba(0, 212, 168, 0.75);
+  background: rgba(13, 13, 13, 0.88);
+  color: #e8f4f4;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 0 14px rgba(0, 212, 168, 0.2);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ideum05-nav-back:hover {
+  border-color: #00d4a8;
+  background: rgba(0, 94, 96, 0.35);
+  box-shadow: 0 0 20px rgba(0, 212, 168, 0.35);
+}
+
+.ideum-component-btn--nav-card {
+  border: 2px solid rgba(0, 212, 168, 0.75);
+  box-shadow: 0 0 10px rgba(0, 212, 168, 0.15);
+}
+
+.ideum-component-btn--nav-card:hover {
+  border-color: #00d4a8;
+  background: rgba(0, 94, 96, 0.25);
+  box-shadow: 0 0 20px rgba(0, 212, 168, 0.3);
+}
+
+.ideum05-nav-card__preview {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(0, 94, 96, 0.35) 0%, transparent 68%),
+    linear-gradient(180deg, rgba(8, 12, 14, 0.95) 0%, rgba(4, 6, 8, 0.98) 100%);
+  border-radius: 6px;
+}
+
+.ideum05-nav-card__preview--3d {
+  padding: 0 !important;
+  background: #0a0e10;
+}
+
+.ideum05-nav-card__preview--image {
+  padding: 0 !important;
+  background: #0a0e10;
+}
+
+.ideum05-nav-card__preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ideum05-nav-card__preview-image--matched {
+  width: auto;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.ideum05-nav-3d-viewer {
+  border-radius: 6px;
+}
+
+.ideum05-nav-3d-viewer canvas {
+  display: block;
+  border-radius: 6px;
+}
+
+.ideum05-nav-3d-viewer__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(200, 230, 225, 0.72);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px;
+}
+
+.ideum05-nav-card__preview-text {
+  color: rgba(200, 230, 225, 0.72);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-align: center;
+  padding: 0 16px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}

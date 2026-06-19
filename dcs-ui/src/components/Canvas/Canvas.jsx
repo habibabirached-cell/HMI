@@ -9,6 +9,9 @@ import SplitPaneTitleOrnament from './SplitPaneTitleOrnament';
 import SplitPaneTitleLines from './SplitPaneTitleLines';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
+import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
+import Ideum05BackButton from '../IdeumKiosk/Ideum05BackButton';
+import '../IdeumKiosk/Ideum05NavLayer.css';
 import { isIdeumComponent } from '../../utils/ideumComponent';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
 import Bess3DOverlays from './Schematics/Bess3DOverlays';
@@ -294,6 +297,14 @@ const Canvas = forwardRef(({
   onIdeumExpansionToggle,
   ideumSimulationMirror = false,
   onIdeumSimulationClick,
+  isIdeum05 = false,
+  ideum05ShowControls = true,
+  ideum05NavScreen = 'root',
+  ideum05NavStack = ['root'],
+  onIdeum05NavSelect,
+  onIdeum05NavBack,
+  /** Ideum designs: lock mouse / trackpad / touch pan; arrow keys still pan. */
+  disableCanvasPan = false,
   /** conf3: split design canvas — shared zoom, independent pan per half. */
   splitView = false,
   splitBottomShare = QUAD_BOTTOM_ROW_SHARE_DEFAULT,
@@ -318,6 +329,8 @@ const Canvas = forwardRef(({
   panBottomRef.current = panBottom;
   /** Keep latest pan + zoom for native wheel/touch/gesture handlers (avoid stale closures). */
   const panForGesturesRef = useRef(pan);
+  const disableCanvasPanRef = useRef(disableCanvasPan);
+  disableCanvasPanRef.current = disableCanvasPan;
   zoomRef.current = zoom;
   if (splitView) {
     panForGesturesRef.current = {
@@ -503,6 +516,64 @@ const Canvas = forwardRef(({
     }
     return map;
   }, [ideumKioskMode, ideumControlButtons]);
+
+  const renderIdeumKioskLayer = useCallback(
+    (ideumComponents, panePan, { primaryPane = true } = {}) => {
+      if (!ideumKioskMode) return null;
+      if (isIdeum05 && !ideum05ShowControls) {
+        if (!primaryPane) return null;
+        return (
+          <Ideum05NavLayer
+            screenId={ideum05NavScreen}
+            pan={panePan}
+            zoom={zoom}
+            canvasRef={canvasRef}
+            onSelectCard={onIdeum05NavSelect}
+            onBack={onIdeum05NavBack}
+            showBack={(ideum05NavStack?.length ?? 0) > 1}
+          />
+        );
+      }
+      if (!ideumComponents?.length) return null;
+      const showIdeum05Back = isIdeum05 && (ideum05NavStack?.length ?? 0) > 1;
+      return (
+        <div className="ideum05-nav-layer" aria-hidden={false}>
+          {showIdeum05Back && primaryPane && (
+            <Ideum05BackButton onBack={onIdeum05NavBack} />
+          )}
+          <IdeumComponentLayer
+            components={ideumComponents}
+            pan={panePan}
+            zoom={zoom}
+            canvasRef={canvasRef}
+            blockTypeScale={canvasBlockTypeScale}
+            onIdeumClick={onIdeumControlButtonClick}
+            ideumExpansionMirror={ideumExpansionMirror}
+            onIdeumExpansionToggle={onIdeumExpansionToggle}
+            ideumSimulationMirror={ideumSimulationMirror}
+            onIdeumSimulationClick={onIdeumSimulationClick}
+          />
+        </div>
+      );
+    },
+    [
+      ideumKioskMode,
+      isIdeum05,
+      ideum05ShowControls,
+      ideum05NavScreen,
+      ideum05NavStack,
+      zoom,
+      canvasRef,
+      canvasBlockTypeScale,
+      onIdeum05NavSelect,
+      onIdeum05NavBack,
+      onIdeumControlButtonClick,
+      ideumExpansionMirror,
+      onIdeumExpansionToggle,
+      ideumSimulationMirror,
+      onIdeumSimulationClick,
+    ],
+  );
 
   const tieCollapsedStubSegments = useMemo(() => {
     const accum = [];
@@ -1052,13 +1123,15 @@ const Canvas = forwardRef(({
     const panePan = getPanePan(pk);
     const svgRef = getSvgRefForPane(pk);
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
-      setPanning(true);
-      panGestureRef.current = {
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        startPan: { x: panePan.x, y: panePan.y },
-        paneKey: pk,
-      };
+      if (!disableCanvasPanRef.current) {
+        setPanning(true);
+        panGestureRef.current = {
+          startClientX: e.clientX,
+          startClientY: e.clientY,
+          startPan: { x: panePan.x, y: panePan.y },
+          paneKey: pk,
+        };
+      }
     } else if (e.button === 0 && !draggingComponent && mode === 'design' && !connecting) {
       const pt = clientToCanvasPoint(svgRef.current, panePan, zoom, e.clientX, e.clientY);
       setMarqueeTrack({
@@ -1402,6 +1475,7 @@ const Canvas = forwardRef(({
         zoomAtLocalPoint(e.clientX, e.clientY, zoomRef.current * scale);
         return;
       }
+      if (disableCanvasPanRef.current) return;
       e.preventDefault();
       e.stopPropagation();
       let dx = e.deltaX;
@@ -1484,6 +1558,7 @@ const Canvas = forwardRef(({
       }
 
       if (s.phase === 'pan') {
+        if (disableCanvasPanRef.current) return;
         const next = {
           x: s.startPan.x + (midClientX - s.startMidClientX) * CANVAS_PAN_SPEED,
           y: s.startPan.y + (midClientY - s.startMidClientY) * CANVAS_PAN_SPEED,
@@ -2434,19 +2509,10 @@ const Canvas = forwardRef(({
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
             />
-            {ideumKioskMode && (
-              <IdeumComponentLayer
-                components={filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)}
-                pan={panTop}
-                zoom={zoom}
-                canvasRef={canvasRef}
-                blockTypeScale={canvasBlockTypeScale}
-                onIdeumClick={onIdeumControlButtonClick}
-                ideumExpansionMirror={ideumExpansionMirror}
-                onIdeumExpansionToggle={onIdeumExpansionToggle}
-                ideumSimulationMirror={ideumSimulationMirror}
-                onIdeumSimulationClick={onIdeumSimulationClick}
-              />
+            {renderIdeumKioskLayer(
+              filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER),
+              panTop,
+              { primaryPane: true },
             )}
             </div>
           </div>
@@ -2493,19 +2559,10 @@ const Canvas = forwardRef(({
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
             />
-            {ideumKioskMode && (
-              <IdeumComponentLayer
-                components={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
-                pan={panBottom}
-                zoom={zoom}
-                canvasRef={canvasRef}
-                blockTypeScale={canvasBlockTypeScale}
-                onIdeumClick={onIdeumControlButtonClick}
-                ideumExpansionMirror={ideumExpansionMirror}
-                onIdeumExpansionToggle={onIdeumExpansionToggle}
-                ideumSimulationMirror={ideumSimulationMirror}
-                onIdeumSimulationClick={onIdeumSimulationClick}
-              />
+            {renderIdeumKioskLayer(
+              filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER),
+              panBottom,
+              { primaryPane: false },
             )}
             </div>
           </div>
@@ -2546,20 +2603,7 @@ const Canvas = forwardRef(({
         </>
       )}
 
-      {ideumKioskMode && !splitView && (
-        <IdeumComponentLayer
-          components={components}
-          pan={pan}
-          zoom={zoom}
-          canvasRef={canvasRef}
-          blockTypeScale={canvasBlockTypeScale}
-          onIdeumClick={onIdeumControlButtonClick}
-          ideumExpansionMirror={ideumExpansionMirror}
-          onIdeumExpansionToggle={onIdeumExpansionToggle}
-          ideumSimulationMirror={ideumSimulationMirror}
-          onIdeumSimulationClick={onIdeumSimulationClick}
-        />
-      )}
+      {renderIdeumKioskLayer(components, pan, { primaryPane: true })}
 
       {/* Canvas info overlay */}
       {!ideumKioskMode && (
