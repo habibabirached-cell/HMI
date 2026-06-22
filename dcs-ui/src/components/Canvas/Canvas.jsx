@@ -305,6 +305,8 @@ const Canvas = forwardRef(({
   onIdeum05NavBack,
   /** Ideum designs: lock mouse / trackpad / touch pan; arrow keys still pan. */
   disableCanvasPan = false,
+  /** Ideum05: block wheel / pinch / gesture zoom; toolbar +/- still works; arrow keys still pan. */
+  disableCanvasGestureZoom = false,
   /** conf3: split design canvas — shared zoom, independent pan per half. */
   splitView = false,
   splitBottomShare = QUAD_BOTTOM_ROW_SHARE_DEFAULT,
@@ -331,6 +333,8 @@ const Canvas = forwardRef(({
   const panForGesturesRef = useRef(pan);
   const disableCanvasPanRef = useRef(disableCanvasPan);
   disableCanvasPanRef.current = disableCanvasPan;
+  const disableCanvasGestureZoomRef = useRef(disableCanvasGestureZoom);
+  disableCanvasGestureZoomRef.current = disableCanvasGestureZoom;
   zoomRef.current = zoom;
   if (splitView) {
     panForGesturesRef.current = {
@@ -1468,6 +1472,7 @@ const Canvas = forwardRef(({
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         e.stopPropagation();
+        if (disableCanvasGestureZoomRef.current) return;
         let dy = e.deltaY;
         if (e.deltaMode === 1) dy *= 16;
         else if (e.deltaMode === 2) dy *= 80;
@@ -1498,10 +1503,12 @@ const Canvas = forwardRef(({
     const gestureStartZoomRef = { current: 1 };
     const onGestureStart = (e) => {
       e.preventDefault();
+      if (disableCanvasGestureZoomRef.current) return;
       gestureStartZoomRef.current = zoomRef.current;
     };
     const onGestureChange = (e) => {
       e.preventDefault();
+      if (disableCanvasGestureZoomRef.current) return;
       const nz = clampZ(gestureStartZoomRef.current * e.scale);
       zoomAtLocalPoint(e.clientX, e.clientY, nz);
     };
@@ -1545,17 +1552,30 @@ const Canvas = forwardRef(({
       if (s.phase === 'undecided') {
         const dDist = Math.abs(dist - s.startDist);
         if (dDist >= PINCH_DIST_PX) {
-          s.phase = 'pinch';
-          s.pinchAnchorZoom = zoomRef.current;
-          s.pinchBaseDist = dist;
+          if (disableCanvasGestureZoomRef.current) {
+            s.phase = 'blocked';
+          } else {
+            s.phase = 'pinch';
+            s.pinchAnchorZoom = zoomRef.current;
+            s.pinchBaseDist = dist;
+          }
         } else {
           s.phase = 'pan';
         }
-      } else if (s.phase === 'pan' && Math.abs(dist - s.startDist) >= PINCH_DIST_PX + 2) {
-        s.phase = 'pinch';
-        s.pinchAnchorZoom = zoomRef.current;
-        s.pinchBaseDist = dist;
+      } else if (
+        s.phase === 'pan' &&
+        Math.abs(dist - s.startDist) >= PINCH_DIST_PX + 2
+      ) {
+        if (disableCanvasGestureZoomRef.current) {
+          s.phase = 'blocked';
+        } else {
+          s.phase = 'pinch';
+          s.pinchAnchorZoom = zoomRef.current;
+          s.pinchBaseDist = dist;
+        }
       }
+
+      if (s.phase === 'blocked') return;
 
       if (s.phase === 'pan') {
         if (disableCanvasPanRef.current) return;
@@ -1732,8 +1752,10 @@ const Canvas = forwardRef(({
         (e.key === 'ArrowUp' || e.key === 'ArrowDown')
       ) {
         e.preventDefault();
-        if (e.key === 'ArrowUp') onZoomIn?.();
-        else onZoomOut?.();
+        if (!disableCanvasGestureZoomRef.current) {
+          if (e.key === 'ArrowUp') onZoomIn?.();
+          else onZoomOut?.();
+        }
         return;
       }
 

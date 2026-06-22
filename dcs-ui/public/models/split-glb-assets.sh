@@ -100,4 +100,59 @@ split_glb \
   "$ROOT/Meshy_AI_Windward_Island_Homes_0619195728_texture.glb" \
   "$ROOT/windward-island-homes"
 
+# 200MW reference model (single baseColor texture; geometry.bin stays under 50 MB after Draco).
+split_glb_200mw() {
+  local src_glb="$1"
+  local out_dir="$2"
+
+  if [[ ! -f "$src_glb" ]]; then
+    echo "Missing input: $src_glb" >&2
+    exit 1
+  fi
+
+  echo "==> Splitting $(basename "$src_glb") → $out_dir"
+  rm -rf "$out_dir"
+  mkdir -p "$out_dir/textures"
+
+  gltf-transform copy "$src_glb" "$out_dir/model.gltf"
+  mv "$out_dir/model.bin" "$out_dir/geometry.bin"
+  if [[ -f "$out_dir/baseColor.jpg" ]]; then
+    mv "$out_dir/baseColor.jpg" "$out_dir/textures/baseColor.jpg"
+  fi
+
+  jq '
+    .buffers[0].uri = "geometry.bin"
+    | .images |= map(
+        if .uri == "baseColor.jpg" then .uri = "textures/baseColor.jpg"
+        else . end
+      )
+  ' "$out_dir/model.gltf" > "$out_dir/model.tmp.gltf"
+  mv "$out_dir/model.tmp.gltf" "$out_dir/model.gltf"
+
+  gltf-transform draco "$out_dir/model.gltf" "$out_dir/_draco.gltf"
+  mv "$out_dir/_draco.gltf" "$out_dir/model.gltf"
+
+  for jpg in "$out_dir/textures"/*.jpg; do
+    [[ -f "$jpg" ]] || continue
+    local webp="${jpg%.jpg}.webp"
+    cwebp -q 85 "$jpg" -o "$webp" >/dev/null
+    rm -f "$jpg"
+  done
+
+  jq '
+    .images |= map(
+      .uri |= sub("\\.jpg$"; ".webp")
+      | .mimeType = "image/webp"
+    )
+  ' "$out_dir/model.gltf" > "$out_dir/model.tmp.gltf"
+  mv "$out_dir/model.tmp.gltf" "$out_dir/model.gltf"
+
+  echo "    geometry.bin: $(du -h "$out_dir/geometry.bin" | cut -f1)"
+  echo "    textures:     $(du -sh "$out_dir/textures" | cut -f1)"
+  echo "    total:        $(du -sh "$out_dir" | cut -f1)"
+}
+
+split_glb_200mw "$ROOT/200MW.glb" "$ROOT/200MWglb"
+split_glb_200mw "$ROOT/500MW.glb" "$ROOT/500MW"
+
 echo "Done. Load with: /models/<folder>/model.gltf"

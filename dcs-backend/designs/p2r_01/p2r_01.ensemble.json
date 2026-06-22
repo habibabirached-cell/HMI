@@ -140,7 +140,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -183,7 +183,7 @@
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
-              "csv_bs_ — Amplitude": "Alternative",
+              "csv_bs_ — Amplitude": "Augmented",
               "csv_gt — Amplitude": "Baseline"
             },
             "variable_styles": {
@@ -442,7 +442,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -485,7 +485,7 @@
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
-              "csv_bs_ — Amplitude": "Alternative",
+              "csv_bs_ — Amplitude": "Augmented",
               "csv_gt — Amplitude": "Baseline"
             },
             "variable_styles": {
@@ -638,7 +638,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -681,7 +681,7 @@
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
-              "cvs_bess — Amplitude": "Alternative",
+              "cvs_bess — Amplitude": "Augmented",
               "csv_gt — Amplitude": "Baseline"
             },
             "variable_styles": {
@@ -834,7 +834,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -877,7 +877,7 @@
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
-              "cvs_bess — Amplitude": "Alternative",
+              "cvs_bess — Amplitude": "Augmented",
               "csv_gt — Amplitude": "Baseline"
             },
             "variable_styles": {

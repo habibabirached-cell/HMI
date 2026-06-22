@@ -108,13 +108,13 @@
               "formula — Power_all_Besses_BESS_STATCOM",
               "bs_STATCOM_1 — P_STATCOM_1"
             ],
-            "title": "Total Electrical Power: Alternative",
+            "title": "Total Electrical Power: Augmented",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Alternative",
+              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Augmented",
               "formula — _PowerGasTurbinesAll": "Total LM2500: Baseline ",
               "formula — Power_all_Besses_BESS_STATCOM": "Total BESS",
               "bs_STATCOM_1 — P_STATCOM_1": "Total STATCOM"
@@ -214,7 +214,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -255,7 +255,7 @@
             "y_label": "Frequency, Hz",
             "legend_labels": {
               "_LM2500_1 — freq_gt_1": "Baseline",
-              "bs_LM2500_1 — freq_gt_1": "Alternative"
+              "bs_LM2500_1 — freq_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.95,
@@ -295,7 +295,7 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Q_g1": "Baseline",
-              "V_g1": "Alternative"
+              "V_g1": "Augmented"
             },
             "variable_styles": {
               "V_g1": {
@@ -387,13 +387,13 @@
               "formula — Power_all_Besses_BESS_STATCOM",
               "bs_STATCOM_1 — P_STATCOM_1"
             ],
-            "title": "Total Electrical Power: Alternative",
+            "title": "Total Electrical Power: Augmented",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Alternative",
+              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Augmented",
               "formula — _PowerGasTurbinesAll": "Total LM2500: Baseline ",
               "formula — Power_all_Besses_BESS_STATCOM": "Total BESS",
               "bs_STATCOM_1 — P_STATCOM_1": "Total STATCOM"
@@ -493,7 +493,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -534,7 +534,7 @@
             "y_label": "Frequency, Hz",
             "legend_labels": {
               "_LM2500_1 — freq_gt_1": "Baseline",
-              "bs_LM2500_1 — freq_gt_1": "Alternative"
+              "bs_LM2500_1 — freq_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.95,
@@ -574,7 +574,7 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Q_g1": "Baseline",
-              "V_g1": "Alternative"
+              "V_g1": "Augmented"
             },
             "variable_styles": {
               "V_g1": {
@@ -655,13 +655,13 @@
               "formula — Power_all_Besses_BESS_STATCOM",
               "bs_STATCOM_1 — P_STATCOM_1"
             ],
-            "title": "Total Electrical Power: Alternative",
+            "title": "Total Electrical Power: Augmented",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Alternative",
+              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Augmented",
               "formula — _PowerGasTurbinesAll": "Total LM2500: Baseline ",
               "formula — Power_all_Besses_BESS_STATCOM": "Total BESS",
               "bs_STATCOM_1 — P_STATCOM_1": "Total STATCOM"
@@ -761,7 +761,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -802,7 +802,7 @@
             "y_label": "Frequency, Hz",
             "legend_labels": {
               "_LM2500_1 — freq_gt_1": "Baseline",
-              "bs_LM2500_1 — freq_gt_1": "Alternative"
+              "bs_LM2500_1 — freq_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.95,
@@ -842,7 +842,7 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Q_g1": "Baseline",
-              "V_g1": "Alternative"
+              "V_g1": "Augmented"
             },
             "variable_styles": {
               "V_g1": {
@@ -912,13 +912,13 @@
               "formula — Power_all_Besses_BESS_STATCOM",
               "bs_STATCOM_1 — P_STATCOM_1"
             ],
-            "title": "Total Electrical Power: Alternative",
+            "title": "Total Electrical Power: Augmented",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Alternative",
+              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Augmented",
               "formula — _PowerGasTurbinesAll": "Total LM2500: Baseline ",
               "formula — Power_all_Besses_BESS_STATCOM": "Total BESS",
               "bs_STATCOM_1 — P_STATCOM_1": "Total STATCOM"
@@ -1018,7 +1018,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -1059,7 +1059,7 @@
             "y_label": "Frequency, Hz",
             "legend_labels": {
               "_LM2500_1 — freq_gt_1": "Baseline",
-              "bs_LM2500_1 — freq_gt_1": "Alternative"
+              "bs_LM2500_1 — freq_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.95,
@@ -1099,7 +1099,7 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Q_g1": "Baseline",
-              "V_g1": "Alternative"
+              "V_g1": "Augmented"
             },
             "variable_styles": {
               "V_g1": {
@@ -1169,13 +1169,13 @@
               "formula — Power_all_Besses_BESS_STATCOM",
               "bs_STATCOM_1 — P_STATCOM_1"
             ],
-            "title": "Total Electrical Power: Alternative",
+            "title": "Total Electrical Power: Augmented",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Power, MW",
             "legend_labels": {
-              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Alternative",
+              "formula — PowerAllTurbines_BESS_STAT": "Total LM2500: Augmented",
               "formula — _PowerGasTurbinesAll": "Total LM2500: Baseline ",
               "formula — Power_all_Besses_BESS_STATCOM": "Total BESS",
               "bs_STATCOM_1 — P_STATCOM_1": "Total STATCOM"
@@ -1275,7 +1275,7 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_gt_1": "Baseline",
-              "bs_LM2500_1 — Tm_gt_1": "Alternative"
+              "bs_LM2500_1 — Tm_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.9099999999999999,
@@ -1316,7 +1316,7 @@
             "y_label": "Frequency, Hz",
             "legend_labels": {
               "_LM2500_1 — freq_gt_1": "Baseline",
-              "bs_LM2500_1 — freq_gt_1": "Alternative"
+              "bs_LM2500_1 — freq_gt_1": "Augmented"
             },
             "legend_position": {
               "x": 0.95,
@@ -1356,7 +1356,7 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Q_g1": "Baseline",
-              "V_g1": "Alternative"
+              "V_g1": "Augmented"
             },
             "variable_styles": {
               "V_g1": {

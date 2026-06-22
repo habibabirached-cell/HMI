@@ -18449,11 +18449,11 @@
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": {
       "upper": {
-        "line1": "Base Configuration : ",
+        "line1": "Baseline Configuration : ",
         "line2": "LM2500 only"
       },
       "lower": {
-        "line1": "Alternative Configuration : ",
+        "line1": "Augmented Configuration : ",
         "line2": "+ STATCOM"
       }
     },

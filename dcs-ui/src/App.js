@@ -69,8 +69,8 @@ import {
 } from './utils/clusterPeer';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
+  getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
-  ideum05NavCardDrills,
   isIdeum05ControlsScreen,
   isIdeum05DesignName,
   IDEUM05_NAV_ROOT,
@@ -3213,10 +3213,12 @@ function App() {
   };
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
-    if (ideum05NavCardDrills(cardId)) {
-      setIdeum05NavStack((prev) => [...prev, cardId]);
+    const screenId = getIdeum05NavScreen(ideum05NavStack);
+    const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
+    if (drillTarget) {
+      setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
-  }, []);
+  }, [ideum05NavStack]);
 
   const handleIdeum05NavBack = useCallback(() => {
     setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
@@ -6862,6 +6864,7 @@ function App() {
               ideumSimulationMirror={ideumSimulationMirror}
               onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
               disableCanvasPan={isIdeumDesignName(currentConfigName)}
+              disableCanvasGestureZoom={isIdeum05}
               isIdeum05={isIdeum05}
               ideum05ShowControls={ideum05ShowControls}
               ideum05NavScreen={ideum05NavScreen}

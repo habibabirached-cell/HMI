@@ -3,21 +3,21 @@
 import { designHasStackedSections } from './canvasConf3Split';
 
 export const H2_UPPER_CANVAS_TITLE = {
-  line1: 'Base Configuration : ',
+  line1: 'Baseline Configuration : ',
   line2: 'LM2500 only',
 };
 
 const LOWER_TITLE_BY_PRESET = {
   withBessandStatCom: {
-    line1: 'Alternative Configuration : ',
+    line1: 'Augmented Configuration : ',
     line2: '+ BESS and +STATCOM',
   },
   withBessAlone: {
-    line1: 'Alternative Configuration : ',
+    line1: 'Augmented Configuration : ',
     line2: '+ BESS',
   },
   withStatcomAlone: {
-    line1: 'Alternative Configuration : ',
+    line1: 'Augmented Configuration : ',
     line2: '+ STATCOM',
   },
   noBessNoStatcom: null,

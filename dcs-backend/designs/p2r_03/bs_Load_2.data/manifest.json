@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "columns": [
+    "t",
+    "Paux_2",
+    "Qaux_2",
+    "Vaux_2",
+    "PUPS_2",
+    "QUPS_2",
+    "VUPS_2",
+    "Vload_2",
+    "Qload_2",
+    "Pload_2"
+  ],
+  "row_count": 100001,
+  "column_files": [
+    "c0000.parquet",
+    "c0001.parquet",
+    "c0002.parquet",
+    "c0003.parquet",
+    "c0004.parquet",
+    "c0005.parquet",
+    "c0006.parquet",
+    "c0007.parquet",
+    "c0008.parquet",
+    "c0009.parquet"
+  ]
+}

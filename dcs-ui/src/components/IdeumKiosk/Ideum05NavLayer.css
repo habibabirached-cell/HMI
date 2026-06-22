@@ -35,6 +35,7 @@
   box-shadow: 0 0 20px rgba(0, 212, 168, 0.35);
 }
 
+/* —— Active nav cards (default teal frame) —— */
 .ideum-component-btn--nav-card {
   border: 2px solid rgba(0, 212, 168, 0.75);
   box-shadow: 0 0 10px rgba(0, 212, 168, 0.15);
@@ -44,6 +45,121 @@
   border-color: #00d4a8;
   background: rgba(0, 94, 96, 0.25);
   box-shadow: 0 0 20px rgba(0, 212, 168, 0.3);
+}
+
+/* —— Featured: Data Centers (glossy GE green chrome, bright title) —— */
+.ideum-component-btn--nav-card-featured {
+  border: 2px solid rgba(0, 212, 168, 0.92);
+  box-shadow:
+    0 0 22px rgba(0, 212, 168, 0.38),
+    0 0 44px rgba(0, 94, 96, 0.22),
+    inset 0 0 1px rgba(0, 212, 168, 0.45);
+}
+
+.ideum-component-btn--nav-card-featured:hover {
+  border-color: #00e8b8;
+  background: rgba(0, 94, 96, 0.18);
+  box-shadow:
+    0 0 28px rgba(0, 212, 168, 0.48),
+    0 0 56px rgba(0, 94, 96, 0.28),
+    inset 0 0 1px rgba(0, 212, 168, 0.55);
+}
+
+.ideum-component-btn__title--featured {
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 0 14px rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 168, 142, 0.98) 0%,
+    #007a72 18%,
+    #005e60 48%,
+    #004648 82%,
+    #003a3c 100%
+  );
+  border-bottom: 1px solid rgba(0, 212, 168, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+    0 3px 14px rgba(0, 94, 96, 0.5);
+}
+
+.ideum-component-btn__title--featured::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 38%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.06) 62%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.ideum-component-btn__title--featured::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 36%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.18),
+    transparent
+  );
+  transform: skewX(-18deg);
+  pointer-events: none;
+  animation: ideum05-nav-title-shine 4.5s ease-in-out infinite;
+}
+
+@keyframes ideum05-nav-title-shine {
+  0%,
+  72%,
+  100% {
+    left: -40%;
+    opacity: 0;
+  }
+  78% {
+    opacity: 1;
+  }
+  92% {
+    left: 110%;
+    opacity: 0;
+  }
+}
+
+/* —— Disabled: gray frame + title bar only; 3D preview stays full color —— */
+.ideum-component-btn--nav-card-disabled,
+.ideum-component-btn--nav-card-disabled:hover,
+.ideum-component-btn--nav-card-disabled:active {
+  pointer-events: none;
+  cursor: default;
+  border-color: rgba(96, 104, 106, 0.55);
+  background: rgba(13, 13, 13, 0.55);
+  box-shadow: none;
+}
+
+.ideum-component-btn__title--disabled {
+  color: rgba(132, 138, 140, 0.92);
+  font-weight: 600;
+  text-shadow: none;
+  background: linear-gradient(
+    180deg,
+    rgba(42, 46, 48, 0.96) 0%,
+    rgba(30, 32, 34, 0.98) 100%
+  );
+  border-bottom: 1px solid rgba(72, 78, 80, 0.45);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .ideum05-nav-card__preview {
@@ -69,6 +185,39 @@
   background: #0a0e10;
 }
 
+.ideum05-nav-card__preview--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0 !important;
+  background: #0a0e10;
+  gap: 0;
+}
+
+.ideum05-nav-card__preview-image-strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.ideum05-nav-card__preview-image-strip .ideum05-nav-card__preview-image,
+.ideum05-nav-card__preview-image--stacked {
+  object-position: bottom center;
+}
+
+.ideum05-nav-card__preview-3d-strip {
+  flex: 0 0 auto;
+  min-height: 0;
+  width: 100%;
+  border-top: 1px solid rgba(0, 212, 168, 0.22);
+  background: #0a0e10;
+  line-height: 0;
+}
+
 .ideum05-nav-card__preview-image {
   width: 100%;
   height: 100%;
@@ -84,6 +233,12 @@
   width: auto;
   height: auto;
   flex-shrink: 0;
+}
+
+.ideum05-nav-card__preview-image--stacked {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
 }
 
 .ideum05-nav-3d-viewer {
