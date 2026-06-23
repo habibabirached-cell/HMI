@@ -158,7 +158,10 @@ export function normalizeHiddenChartPanelNamedConfigs(raw) {
 }
 
 /** Design shortcuts rendered under Controls instead of Quick Scenarios. */
-export const QUICK_SCENARIO_CONTROLS_PRESETS = new Set(['TurnOffAllPower']);
+export const QUICK_SCENARIO_CONTROLS_PRESETS = new Set(['TurnOffAllPower', 'Reset']);
+
+/** Canvas-only reset — hide diagram, close charts; does not load a named chart preset. */
+export const QUICK_SCENARIO_RESET_PRESETS = new Set(['Reset', 'TurnOffAllPower']);
 
 /** Named presets that only adjust canvas view for now (no simulation config yet). */
 export const QUICK_SCENARIO_PLACEHOLDER_PRESETS = new Set([
@@ -177,6 +180,10 @@ export function isQuickScenarioControlsShortcut(shortcut) {
     shortcut?.presetName != null &&
     QUICK_SCENARIO_CONTROLS_PRESETS.has(shortcut.presetName)
   );
+}
+
+export function isQuickScenarioResetPreset(presetName) {
+  return presetName != null && QUICK_SCENARIO_RESET_PRESETS.has(presetName);
 }
 
 export function isQuickScenarioPlaceholderPreset(presetName) {

@@ -26,6 +26,7 @@ VALID_REMOTE_COMMANDS = frozenset({
     "togglePeripheralsExpansion",
     "startSimulation",
     "stopSimulation",
+    "reset",
 })
 
 

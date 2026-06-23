@@ -18378,7 +18378,7 @@
       "withStatcomAlone": true
     },
     "hiddenChartPanelNamedConfigs": [
-      "TurnOffAllPower",
+      "Reset",
       "noBessNoStatcom",
       "toto",
       "withBessandStatCom",
@@ -18425,10 +18425,10 @@
     },
     {
       "id": "qs-1780124031952-rednbd",
-      "label": "Turn off All Power",
-      "icon": "\u274c",
+      "label": "Reset",
+      "icon": "↺",
       "color": "#47413e",
-      "presetName": "TurnOffAllPower",
+      "presetName": "Reset",
       "targetType": "ensemble",
       "ensembleId": "all_"
     }
@@ -18475,6 +18475,12 @@
       "togglePeripheralsExpansion": {
         "action": "toggleExpansion",
         "expansionKey": "peripherals"
+      },
+      "reset": {
+        "label": "Reset",
+        "presetName": "Reset",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
       }
     }
   }

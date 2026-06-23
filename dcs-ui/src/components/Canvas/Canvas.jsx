@@ -11,6 +11,7 @@ import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
 import Ideum05BackButton from '../IdeumKiosk/Ideum05BackButton';
+import Ideum05ResetButton from '../IdeumKiosk/Ideum05ResetButton';
 import '../IdeumKiosk/Ideum05NavLayer.css';
 import { isIdeumComponent } from '../../utils/ideumComponent';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
@@ -303,6 +304,7 @@ const Canvas = forwardRef(({
   ideum05NavStack = ['root'],
   onIdeum05NavSelect,
   onIdeum05NavBack,
+  onIdeum05Reset,
   /** Ideum designs: lock mouse / trackpad / touch pan; arrow keys still pan. */
   disableCanvasPan = false,
   /** Ideum05: block wheel / pinch / gesture zoom; toolbar +/- still works; arrow keys still pan. */
@@ -542,8 +544,13 @@ const Canvas = forwardRef(({
       const showIdeum05Back = isIdeum05 && (ideum05NavStack?.length ?? 0) > 1;
       return (
         <div className="ideum05-nav-layer" aria-hidden={false}>
-          {showIdeum05Back && primaryPane && (
-            <Ideum05BackButton onBack={onIdeum05NavBack} />
+          {isIdeum05 && ideum05ShowControls && primaryPane && (
+            <div className="ideum05-nav-top-actions">
+              {showIdeum05Back ? (
+                <Ideum05BackButton onBack={onIdeum05NavBack} />
+              ) : null}
+              <Ideum05ResetButton onReset={onIdeum05Reset} />
+            </div>
           )}
           <IdeumComponentLayer
             components={ideumComponents}
@@ -571,6 +578,7 @@ const Canvas = forwardRef(({
       canvasBlockTypeScale,
       onIdeum05NavSelect,
       onIdeum05NavBack,
+      onIdeum05Reset,
       onIdeumControlButtonClick,
       ideumExpansionMirror,
       onIdeumExpansionToggle,

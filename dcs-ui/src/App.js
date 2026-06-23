@@ -18,6 +18,7 @@ import {
   normalizeHiddenChartPanelNamedConfigs,
   isQuickScenarioPlaceholderPreset,
   isQuickScenarioDesignFirstPreset,
+  isQuickScenarioResetPreset,
   resolveDesignEnsemble,
 } from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
@@ -847,6 +848,12 @@ function App() {
 
   const splitPaneTitles = useMemo(() => {
     if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
+      return null;
+    }
+    if (
+      designSectionVisibility?.showUpper === false &&
+      designSectionVisibility?.showLower === false
+    ) {
       return null;
     }
     const preset = resolveH2ActivePresetName({
@@ -3285,6 +3292,17 @@ function App() {
       return next;
     });
 
+    if (isQuickScenarioResetPreset(shortcut.presetName)) {
+      handleStopSimulation();
+      setOpenCharts([]);
+      setChartStacks([]);
+      setPerChartSampleStep({});
+      setActiveNamedSimulationConfig(null);
+      setQuickScenarioDesignPrimedPreset(null);
+      setActiveQuickScenarioPlaying(shortcut);
+      return;
+    }
+
     // "No Bess No Statcom" needs two clicks (design, then charts) — local and Ideum remote alike.
     if (isDesignFirst && !isSecondDesignFirstClick) {
       handleStopSimulation();
@@ -3343,6 +3361,10 @@ function App() {
     }
   };
 
+  const handleIdeum05Reset = useCallback(async () => {
+    await handleIdeumControlButtonClick({ command: 'reset' });
+  }, [handleIdeumControlButtonClick]);
+
   const handleRemoteClusterCommand = async (command) => {
     if (!command) return;
 
@@ -3354,6 +3376,20 @@ function App() {
     }
     if (command === 'stopSimulation') {
       handleStopSimulation();
+      return;
+    }
+    if (command === 'reset') {
+      const resetShortcut =
+        quickScenarioButtons.find((b) => isQuickScenarioResetPreset(b.presetName)) ?? {
+          id: 'remote-reset',
+          label: 'Reset',
+          icon: '↺',
+          color: '#47413e',
+          presetName: 'Reset',
+          targetType: 'ensemble',
+          ensembleId: 'all_',
+        };
+      await handleQuickScenarioShortcutClick(resetShortcut);
       return;
     }
 
@@ -6871,6 +6907,7 @@ function App() {
               ideum05NavStack={ideum05NavStack}
               onIdeum05NavSelect={handleIdeum05NavSelect}
               onIdeum05NavBack={handleIdeum05NavBack}
+              onIdeum05Reset={handleIdeum05Reset}
             />
           )}
         </div>

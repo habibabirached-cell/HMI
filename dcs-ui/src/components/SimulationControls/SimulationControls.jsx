@@ -3,7 +3,7 @@ import './SimulationControls.css';
 import EnsembleEditorDialog from '../EnsembleEditorDialog/EnsembleEditorDialog';
 import QuickScenarioContextMenu from './QuickScenarioContextMenu';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
-import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut } from '../../data/quickScenarioUi';
+import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut, isQuickScenarioResetPreset } from '../../data/quickScenarioUi';
 import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
 
 function ExpansionToggleSwitch({ label, compact, onChange, titleCompact, titleExpanded }) {
@@ -47,11 +47,15 @@ function QuickScenarioShortcutRow({
         style={{ background: shortcut.color }}
         onClick={() => onQuickScenarioShortcutClick?.(shortcut)}
         onContextMenu={(e) => onQuickScenarioContextMenu?.(e, shortcut)}
-        title={`Load chart preset “${shortcut.presetName}”${
-          shortcut.targetType === 'ensemble'
-            ? ` (ensemble ${shortcut.ensembleId})`
-            : ` (scenario ${shortcut.simulationId})`
-        }`}
+        title={
+          isQuickScenarioResetPreset(shortcut.presetName)
+            ? 'Reset — clear canvas and close charts'
+            : `Load chart preset “${shortcut.presetName}”${
+                shortcut.targetType === 'ensemble'
+                  ? ` (ensemble ${shortcut.ensembleId})`
+                  : ` (scenario ${shortcut.simulationId})`
+              }`
+        }
         aria-pressed={isActive}
       >
         {shortcut.icon} {shortcut.label}

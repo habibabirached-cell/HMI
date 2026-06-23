@@ -21,6 +21,7 @@ export const DEFAULT_DESIGN_SECTION_VISIBILITY = {
 
 /** Named simulation presets → canvas section visibility (statcom05 quick scenarios). */
 export const QUICK_SCENARIO_DESIGN_VISIBILITY = {
+  Reset: { showUpper: false, showLower: false },
   TurnOffAllPower: { showUpper: false, showLower: false },
   noBessNoStatcom: { showUpper: true, showLower: false },
   withBessandStatCom: { showUpper: true, showLower: true },
