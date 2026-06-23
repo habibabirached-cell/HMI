@@ -16,6 +16,7 @@ import {
   BESS3D_TITLE_MARGIN,
 } from '../../../utils/bess3dLayout';
 import { isBessCollapseAggregateSurface } from '../../../utils/collapseAggregate';
+import OverlayConnectionReadout from './OverlayConnectionReadout';
 
 /**
  * Full-block WebGL + hollow title overlays for collapsed BESS tiles.
@@ -29,6 +30,11 @@ export default function Bess3DOverlays({
   blockTypeScale = {},
   ideumTouchButtonByComponentId,
   onIdeumControlButtonClick,
+  simulationData = [],
+  ensembleMemberSimulationData = null,
+  ensembleColumnGroups = [],
+  simulationColumns = [],
+  simulationTime = 0,
 }) {
   const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsTitle = adjSvgFontPx(BESS3D_TITLE_BASE_FONT, fontPxDelta);
@@ -76,6 +82,7 @@ export default function Bess3DOverlays({
             titleFontPx: fsTitle * zoom,
             subtitleFontPx: fsSub * zoom,
             titleMarginPx: BESS3D_TITLE_MARGIN * zoom,
+            connectionReadout: component.connectionReadout || null,
           };
         });
       setSlots(next);
@@ -153,6 +160,17 @@ export default function Bess3DOverlays({
         </div>
         );
       })}
+      {slots.map((slot) => (
+        <OverlayConnectionReadout
+          key={`readout-${slot.id}`}
+          slot={slot}
+          simulationData={simulationData}
+          ensembleMemberSimulationData={ensembleMemberSimulationData}
+          ensembleColumnGroups={ensembleColumnGroups}
+          simulationColumns={simulationColumns}
+          simulationTime={simulationTime}
+        />
+      ))}
     </div>
   );
 }

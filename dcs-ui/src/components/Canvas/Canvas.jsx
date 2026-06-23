@@ -2484,6 +2484,7 @@ const Canvas = forwardRef(({
               allComponents={components}
               ideumKioskMode={ideumKioskMode}
               isIdeumTouchTarget={ideumTouchComponentIds?.has(component.id) ?? false}
+              zoom={zoom}
             />
           ))}
         </g>
@@ -2510,6 +2511,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             <GFMe3DOverlays
               renderComponents={renderComponentsForPane(CANVAS_PANE_UPPER)}
@@ -2520,6 +2526,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             <Bess3DOverlays
               renderComponents={renderComponentsForPane(CANVAS_PANE_UPPER)}
@@ -2530,6 +2541,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             {renderIdeumKioskLayer(
               filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER),
@@ -2560,6 +2576,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             <GFMe3DOverlays
               renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
@@ -2570,6 +2591,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             <Bess3DOverlays
               renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
@@ -2580,6 +2606,11 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
               onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
             />
             {renderIdeumKioskLayer(
               filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER),
@@ -2599,6 +2630,11 @@ const Canvas = forwardRef(({
         blockTypeScale={canvasBlockTypeScale}
         ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
         onIdeumControlButtonClick={onIdeumControlButtonClick}
+        simulationData={simulationData}
+        ensembleMemberSimulationData={ensembleMemberSimulationData}
+        ensembleColumnGroups={ensembleColumnGroups}
+        simulationColumns={simulationColumns}
+        simulationTime={simulationTime}
       />
 
       <GFMe3DOverlays
@@ -2610,6 +2646,11 @@ const Canvas = forwardRef(({
         blockTypeScale={canvasBlockTypeScale}
         ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
         onIdeumControlButtonClick={onIdeumControlButtonClick}
+        simulationData={simulationData}
+        ensembleMemberSimulationData={ensembleMemberSimulationData}
+        ensembleColumnGroups={ensembleColumnGroups}
+        simulationColumns={simulationColumns}
+        simulationTime={simulationTime}
       />
 
       <Bess3DOverlays
@@ -2621,6 +2662,11 @@ const Canvas = forwardRef(({
         blockTypeScale={canvasBlockTypeScale}
         ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
         onIdeumControlButtonClick={onIdeumControlButtonClick}
+        simulationData={simulationData}
+        ensembleMemberSimulationData={ensembleMemberSimulationData}
+        ensembleColumnGroups={ensembleColumnGroups}
+        simulationColumns={simulationColumns}
+        simulationTime={simulationTime}
       />
         </>
       )}

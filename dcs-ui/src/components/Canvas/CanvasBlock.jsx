@@ -16,6 +16,7 @@ import { useCanvasFontPxDelta, useCollapsedComponentFontPxDelta } from '../../co
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
 import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface, isGFMeCollapseAggregateSurface, isBessCollapseAggregateSurface } from '../../utils/collapseAggregate';
+import { GAS_TURBINE_3D_TYPE } from '../../utils/gasTurbine3dLayout';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
@@ -56,6 +57,7 @@ function CanvasBlock({
   allComponents = [],
   ideumKioskMode = false,
   isIdeumTouchTarget = false,
+  zoom = 1,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
   const collapsedFontPxDelta = useCollapsedComponentFontPxDelta();
@@ -538,7 +540,7 @@ function CanvasBlock({
         )}
       </g>
 
-      {!stripMode && (
+      {!stripMode && component.type !== GAS_TURBINE_3D_TYPE && !bessCollapse3d && !gfmeCollapse3d && (
         <ComponentConnectionReadout
           connectionReadout={component.connectionReadout}
           simulationData={simulationData}
@@ -548,6 +550,7 @@ function CanvasBlock({
           simulationTime={simulationTime}
           width={width}
           height={height}
+          zoom={zoom}
         />
       )}
     </g>

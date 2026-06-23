@@ -18,6 +18,7 @@ import {
   GT3D_MW_BASE_FONT,
   GT3D_TITLE_MARGIN,
 } from '../../../utils/gasTurbine3dLayout';
+import OverlayConnectionReadout from './OverlayConnectionReadout';
 
 /**
  * Full-block WebGL + hollow title/MW overlays (above SVG accent rails).
@@ -32,6 +33,11 @@ export default function GasTurbine3DOverlays({
   blockTypeScale = {},
   ideumTouchButtonByComponentId,
   onIdeumControlButtonClick,
+  simulationData = [],
+  ensembleMemberSimulationData = null,
+  ensembleColumnGroups = [],
+  simulationColumns = [],
+  simulationTime = 0,
 }) {
   const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsP = adjSvgFontPx(GT3D_TITLE_BASE_FONT, fontPxDelta);
@@ -81,6 +87,7 @@ export default function GasTurbine3DOverlays({
             titleFontPx: fsP * zoom,
             mwFontPx: fsMw * zoom,
             titleMarginPx: GT3D_TITLE_MARGIN * zoom,
+            connectionReadout: component.connectionReadout || null,
           };
         });
       setSlots(next);
@@ -158,6 +165,17 @@ export default function GasTurbine3DOverlays({
         </div>
         );
       })}
+      {slots.map((slot) => (
+        <OverlayConnectionReadout
+          key={`readout-${slot.id}`}
+          slot={slot}
+          simulationData={simulationData}
+          ensembleMemberSimulationData={ensembleMemberSimulationData}
+          ensembleColumnGroups={ensembleColumnGroups}
+          simulationColumns={simulationColumns}
+          simulationTime={simulationTime}
+        />
+      ))}
     </div>
   );
 }

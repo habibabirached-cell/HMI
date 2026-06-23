@@ -16,6 +16,7 @@ import {
   GFME3D_TITLE_MARGIN,
 } from '../../../utils/gfme3dLayout';
 import { isGFMeCollapseAggregateSurface } from '../../../utils/collapseAggregate';
+import OverlayConnectionReadout from './OverlayConnectionReadout';
 
 /**
  * Full-block WebGL + hollow title overlays for collapsed GFMe STATCOM tiles.
@@ -29,6 +30,11 @@ export default function GFMe3DOverlays({
   blockTypeScale = {},
   ideumTouchButtonByComponentId,
   onIdeumControlButtonClick,
+  simulationData = [],
+  ensembleMemberSimulationData = null,
+  ensembleColumnGroups = [],
+  simulationColumns = [],
+  simulationTime = 0,
 }) {
   const fontPxDelta = useCollapsedComponentFontPxDelta();
   const fsTitle = adjSvgFontPx(GFME3D_TITLE_BASE_FONT, fontPxDelta);
@@ -78,6 +84,7 @@ export default function GFMe3DOverlays({
             titleFontPx: fsTitle * zoom,
             subtitleFontPx: fsSub * zoom,
             titleMarginPx: GFME3D_TITLE_MARGIN * zoom,
+            connectionReadout: component.connectionReadout || null,
           };
         });
       setSlots(next);
@@ -155,6 +162,17 @@ export default function GFMe3DOverlays({
         </div>
         );
       })}
+      {slots.map((slot) => (
+        <OverlayConnectionReadout
+          key={`readout-${slot.id}`}
+          slot={slot}
+          simulationData={simulationData}
+          ensembleMemberSimulationData={ensembleMemberSimulationData}
+          ensembleColumnGroups={ensembleColumnGroups}
+          simulationColumns={simulationColumns}
+          simulationTime={simulationTime}
+        />
+      ))}
     </div>
   );
 }
