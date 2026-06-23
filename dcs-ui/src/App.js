@@ -155,6 +155,7 @@ import './styles/App.css';
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
 const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
+const CANVAS_ZOOM_STEP = 0.01;
 
 /** Verbose trace for deep links / session restore / copy-link debugging — filter console by `[DCS:` */
 function dcsSimDbg(phase, payload) {
@@ -6778,8 +6779,8 @@ function App() {
           onStartSimulation={handleStartSimulation}
           onStopSimulation={handleStopSimulation}
           zoom={zoom}
-          onZoomIn={() => setZoom((prev) => Math.min(prev + 0.1, CANVAS_ZOOM_MAX))}
-          onZoomOut={() => setZoom((prev) => Math.max(prev - 0.1, CANVAS_ZOOM_MIN))}
+          onZoomIn={() => setZoom((prev) => Math.min(prev + CANVAS_ZOOM_STEP, CANVAS_ZOOM_MAX))}
+          onZoomOut={() => setZoom((prev) => Math.max(prev - CANVAS_ZOOM_STEP, CANVAS_ZOOM_MIN))}
           onResetView={() => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
@@ -6861,8 +6862,8 @@ function App() {
               ensembleColumnGroups={ensembleColumnGroups}
               onConfigureConnectionReadout={(comp) => setConnectionReadoutContext(comp)}
               zoom={zoom}
-              onZoomIn={() => setZoom((prev) => Math.min(prev + 0.1, CANVAS_ZOOM_MAX))}
-              onZoomOut={() => setZoom((prev) => Math.max(prev - 0.1, CANVAS_ZOOM_MIN))}
+              onZoomIn={() => setZoom((prev) => Math.min(prev + CANVAS_ZOOM_STEP, CANVAS_ZOOM_MAX))}
+              onZoomOut={() => setZoom((prev) => Math.max(prev - CANVAS_ZOOM_STEP, CANVAS_ZOOM_MIN))}
               pan={pan}
               onPan={setPan}
               canvasZoomMin={CANVAS_ZOOM_MIN}
