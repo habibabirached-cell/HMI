@@ -496,8 +496,8 @@
             "decimals": 2
           },
           {
-            "ensembleSimId": "_Load_1",
-            "column": "f_Load",
+            "ensembleSimId": "_Load",
+            "column": "f_Load_2",
             "unit": "Hz",
             "decimals": 2
           }
@@ -554,9 +554,9 @@
             "decimals": 2
           },
           {
-            "ensembleSimId": "_Load_2",
-            "column": "",
-            "unit": "",
+            "ensembleSimId": "_Load",
+            "column": "f_Load_3",
+            "unit": "Hz",
             "decimals": 2
           }
         ]
@@ -731,8 +731,8 @@
             "decimals": 2
           },
           {
-            "ensembleSimId": "bs_Load_1",
-            "column": "f_Load",
+            "ensembleSimId": "b_Load",
+            "column": "f_Load_2",
             "unit": "Hz",
             "decimals": 2
           }
@@ -789,9 +789,9 @@
             "decimals": 2
           },
           {
-            "ensembleSimId": "bs_Load_4",
-            "column": "",
-            "unit": "",
+            "ensembleSimId": "bs_Load",
+            "column": "f_Load_3",
+            "unit": "Hz",
             "decimals": 2
           }
         ]
@@ -18317,19 +18317,19 @@
     }
   ],
   "systemState": {
-    "simulationRunning": false,
-    "zoom": 0.5609231635375452,
+    "simulationRunning": true,
+    "zoom": 0.5009231635375452,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
     },
     "panTop": {
-      "x": 257.73816038766967,
-      "y": 211.44525498499252
+      "x": 137.73816038766967,
+      "y": 187.44525498499252
     },
     "panBottom": {
-      "x": 320.8231019594542,
-      "y": 206.72167230443668
+      "x": 176.82310195945422,
+      "y": 230.72167230443668
     },
     "quadBottomRowShare": 53.5,
     "mode": "design",
@@ -18353,12 +18353,12 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1782248464378-0": 1,
-    "sim-chart-1782248464378-1": 1,
-    "sim-chart-1782248464378-2": 1,
-    "sim-chart-1782248464378-3": 1,
-    "sim-chart-1782248464378-4": 1,
-    "sim-chart-1782248464378-5": 1
+    "sim-chart-1782251781608-0": 1,
+    "sim-chart-1782251781608-1": 1,
+    "sim-chart-1782251781608-2": 1,
+    "sim-chart-1782251781608-3": 1,
+    "sim-chart-1782251781608-4": 1,
+    "sim-chart-1782251781608-5": 1
   },
   "playbackTimeRange": {
     "t1": 20.0,
@@ -18426,7 +18426,7 @@
     {
       "id": "qs-1780124031952-rednbd",
       "label": "Reset",
-      "icon": "↺",
+      "icon": "\u21ba",
       "color": "#47413e",
       "presetName": "Reset",
       "targetType": "ensemble",
