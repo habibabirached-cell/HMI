@@ -164,16 +164,19 @@ export const QUICK_SCENARIO_CONTROLS_PRESETS = new Set(['TurnOffAllPower', 'Rese
 export const QUICK_SCENARIO_RESET_PRESETS = new Set(['Reset', 'TurnOffAllPower']);
 
 /** Named presets that only adjust canvas view for now (no simulation config yet). */
-export const QUICK_SCENARIO_PLACEHOLDER_PRESETS = new Set([
-  'withBessAlone',
-  'withStatcomAlone',
-]);
+export const QUICK_SCENARIO_PLACEHOLDER_PRESETS = new Set([]);
 
 /**
  * First click = canvas design only (section visibility + collapse); second click = charts + simulation.
- * Used for statcom05 “No Bess No Statcom”.
+ * noBessNoStatcom: upper baseline only, then plots.
+ * Augmented presets: reveal lower stack only (upper unchanged), then plots.
  */
-export const QUICK_SCENARIO_DESIGN_FIRST_PRESETS = new Set(['noBessNoStatcom']);
+export const QUICK_SCENARIO_DESIGN_FIRST_PRESETS = new Set([
+  'noBessNoStatcom',
+  'withBessandStatCom',
+  'withBessAlone',
+  'withStatcomAlone',
+]);
 
 export function isQuickScenarioControlsShortcut(shortcut) {
   return (
