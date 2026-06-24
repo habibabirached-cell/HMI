@@ -150,9 +150,9 @@ class RtdsLiveMeterReader:
                         {
                             "type": "sample",
                             "t": round(elapsed, 3),
-                            "W": round(w_val, 4),
-                            "Tm": round(tm_val, 4),
-                            "Te": round(te_val, 4),
+                            "W": w_val,
+                            "Tm": tm_val,
+                            "Te": te_val,
                         }
                     )
                     time.sleep(POLL_INTERVAL_S)

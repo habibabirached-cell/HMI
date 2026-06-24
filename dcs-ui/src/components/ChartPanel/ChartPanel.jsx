@@ -21,6 +21,7 @@ import {
   layoutDataForEnsembleCrossChart,
 } from '../../utils/ensembleCrossMemberChart';
 import { cellFloat, findColumnKey } from '../../utils/csvRowAccess';
+import { LIVE_RTDS_Y_TICK_FORMAT, LIVE_RTDS_CHART_MARGIN_LEFT } from '../../utils/liveRtdsCharts';
 import {
   buildScatterMarkerStyle,
   buildTraceLineStyle,
@@ -2693,6 +2694,9 @@ const ChartPanel = ({
       
       return withDangerY({
         ...baseLayout,
+        ...(chart.liveRtdsChannel
+          ? { margin: { ...baseLayout.margin, l: LIVE_RTDS_CHART_MARGIN_LEFT } }
+          : {}),
         ...(chartHasMultiTraceLegend(chart)
           ? { showlegend: true, legend: buildInPlotLegendLayout() }
           : {}),
@@ -2745,6 +2749,9 @@ const ChartPanel = ({
           zeroline: true,
           zerolinecolor: lineRgba,
           zerolinewidth: 2,
+          ...(chart.liveRtdsChannel
+            ? { tickformat: LIVE_RTDS_Y_TICK_FORMAT, automargin: true }
+            : {}),
           ...yRangeProps,
           ...yLockProps
         },
