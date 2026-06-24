@@ -122,6 +122,7 @@ import {
   appendLiveRtdsPoint,
   buildLiveRtdsOpenCharts,
   emptyLiveRtdsSeries,
+  LIVE_RTDS_COLOR,
   LIVE_RTDS_PRESET,
 } from './utils/liveRtdsCharts';
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
@@ -3341,7 +3342,7 @@ function App() {
         id: 'live-rtds',
         label: 'Live RTDS',
         icon: '📡',
-        color: '#e65100',
+        color: LIVE_RTDS_COLOR,
         presetName: LIVE_RTDS_PRESET,
         targetType: 'ensemble',
         ensembleId: 'all',
@@ -3381,6 +3382,10 @@ function App() {
       await handleLiveRtds();
       return;
     }
+
+    stopLiveRtdsStream();
+    handleWorkspaceLayoutPresetChange('conf3');
+
     const isPlaceholder =
       isQuickScenarioPlaceholderPreset(shortcut.presetName) &&
       !namedSimulationConfigs.includes(shortcut.presetName);
@@ -3415,7 +3420,6 @@ function App() {
     });
 
     if (isQuickScenarioResetPreset(shortcut.presetName)) {
-      stopLiveRtdsStream();
       handleStopSimulation();
       setOpenCharts([]);
       setChartStacks([]);

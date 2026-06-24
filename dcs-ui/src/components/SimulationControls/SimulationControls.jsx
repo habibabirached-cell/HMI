@@ -4,6 +4,7 @@ import EnsembleEditorDialog from '../EnsembleEditorDialog/EnsembleEditorDialog';
 import QuickScenarioContextMenu from './QuickScenarioContextMenu';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
 import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut, isQuickScenarioResetPreset } from '../../data/quickScenarioUi';
+import { LIVE_RTDS_PRESET } from '../../utils/liveRtdsCharts';
 import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
 
 function ExpansionToggleSwitch({ label, compact, onChange, titleCompact, titleExpanded }) {
@@ -42,7 +43,11 @@ function QuickScenarioShortcutRow({
       <button
         type="button"
         className={`control-btn quick-scenario-shortcut${
-          isActive ? ' quick-scenario-shortcut--active' : ''
+          isActive
+            ? shortcut.presetName === LIVE_RTDS_PRESET
+              ? ' quick-scenario-shortcut--active-green'
+              : ' quick-scenario-shortcut--active'
+            : ''
         }`}
         style={{ background: shortcut.color }}
         onClick={() => onQuickScenarioShortcutClick?.(shortcut)}

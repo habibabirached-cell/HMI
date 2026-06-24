@@ -626,6 +626,26 @@
   animation: quickScenarioOrangeGlow 2s ease-in-out infinite alternate;
 }
 
+.quick-scenario-shortcut--active-green {
+  animation: quickScenarioGreenGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes quickScenarioGreenGlow {
+  0% {
+    box-shadow:
+      0 0 6px rgba(76, 175, 80, 0.75),
+      0 0 12px rgba(76, 175, 80, 0.45),
+      inset 0 0 4px rgba(76, 175, 80, 0.2);
+  }
+  100% {
+    box-shadow:
+      0 0 10px rgba(76, 175, 80, 1),
+      0 0 20px rgba(76, 175, 80, 0.7),
+      0 0 32px rgba(76, 175, 80, 0.4),
+      inset 0 0 6px rgba(76, 175, 80, 0.35);
+  }
+}
+
 @keyframes quickScenarioOrangeGlow {
   0% {
     box-shadow:

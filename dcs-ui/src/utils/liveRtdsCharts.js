@@ -2,6 +2,7 @@
 export const LIVE_RTDS_MAX_POINTS = 3000;
 
 export const LIVE_RTDS_PRESET = 'LiveRtds';
+export const LIVE_RTDS_COLOR = '#2e7d32';
 
 export function appendLiveRtdsPoint(series, t, v) {
   if (!Number.isFinite(v)) return series;
