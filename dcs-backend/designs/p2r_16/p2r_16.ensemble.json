@@ -747,7 +747,7 @@
             "x_column": "_LM2500_1 — t",
             "y_columns": [
               "_LM2500_1 — Tm_shaft_gt_1",
-              "s_LM2500_1 — Tm_shaft_gt_1"
+              "b_LM2500_1 — Tm_shaft_gt_1"
             ],
             "title": "Shaft Torque Comparison : LM2500 #1",
             "ensemble_cross_member": true,
@@ -756,10 +756,10 @@
             "y_label": "Torque, pu",
             "legend_labels": {
               "_LM2500_1 — Tm_shaft_gt_1": "Baseline",
-              "s_LM2500_1 — Tm_shaft_gt_1": "Augmented"
+              "b_LM2500_1 — Tm_shaft_gt_1": "Augmented"
             },
             "legend_position": {
-              "x": 0.24999999999999936,
+              "x": 0.22999999999999937,
               "y": 0.95,
               "xanchor": "right",
               "yanchor": "top"
@@ -768,7 +768,7 @@
               "_LM2500_1 — Tm_shaft_gt_1": {
                 "color": "#3296fb"
               },
-              "s_LM2500_1 — Tm_shaft_gt_1": {
+              "b_LM2500_1 — Tm_shaft_gt_1": {
                 "color": "#28d23c"
               }
             },
@@ -791,7 +791,7 @@
             "x_column": "Csv_bs — Frequency",
             "y_columns": [
               "Csv_gt — Amplitude",
-              "Csv_stat — Amplitude"
+              "Csv_bess — Amplitude"
             ],
             "title": "Shaft Torque Frequency Spectrum Comparison : LM2500 #1",
             "ensemble_cross_member": true,
@@ -800,11 +800,11 @@
             "y_label": "Amplitude, % of Maximum Torque",
             "legend_labels": {
               "Csv_gt — Amplitude": "Baseline",
-              "Csv_stat — Amplitude": "Augmented"
+              "Csv_bess — Amplitude": "Augmented"
             },
             "legend_position": {
               "x": 0.24999999999999936,
-              "y": 0.9299999999999999,
+              "y": 0.9099999999999999,
               "xanchor": "right",
               "yanchor": "top"
             },
@@ -813,7 +813,7 @@
                 "color": "#3264fa",
                 "rigid": true
               },
-              "Csv_stat — Amplitude": {
+              "Csv_bess — Amplitude": {
                 "color": "#64c864"
               }
             },
@@ -824,14 +824,14 @@
             "component_id": "comp-upper-left-gen-bank",
             "chart_type": "2d",
             "x_column": "_LM2500_1 — t",
-            "y_column": "s_LM2500_1 — Tm_shaft_gt_1",
+            "y_column": "b_LM2500_1 — Tm_shaft_gt_1",
             "title": "Shaft Torque : LM2500 #1",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Time, seconds",
             "y_label": "Torque, pu",
             "variable_styles": {
-              "s_LM2500_1 — Tm_shaft_gt_1": {
+              "b_LM2500_1 — Tm_shaft_gt_1": {
                 "color": "#73fa5a"
               }
             },
@@ -851,14 +851,14 @@
             "component_id": "comp-upper-left-gen-bank",
             "chart_type": "2d",
             "x_column": "Csv_bs — Frequency",
-            "y_column": "Csv_stat — Amplitude",
+            "y_column": "Csv_bess — Amplitude",
             "title": "Shaft Torque Frequency Spectrum: LM2500 #1",
             "ensemble_cross_member": true,
             "sample_step": 1,
             "x_label": "Frequency, Hz",
             "y_label": "Amplitude, % of Nominal Torque",
             "variable_styles": {
-              "Csv_stat — Amplitude": {
+              "Csv_bess — Amplitude": {
                 "color": "#64fa64",
                 "rigid": true
               }

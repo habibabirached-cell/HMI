@@ -4,9 +4,15 @@ export const LIVE_RTDS_MAX_POINTS = 3000;
 export const LIVE_RTDS_PRESET = 'LiveRtds';
 export const LIVE_RTDS_COLOR = '#2e7d32';
 
+export function roundLiveRtdsValue(v, decimals = 4) {
+  if (!Number.isFinite(v)) return v;
+  const factor = 10 ** decimals;
+  return Math.round(v * factor) / factor;
+}
+
 export function appendLiveRtdsPoint(series, t, v) {
   if (!Number.isFinite(v)) return series;
-  const next = [...(series || []), { t, v }];
+  const next = [...(series || []), { t, v: roundLiveRtdsValue(v) }];
   if (next.length <= LIVE_RTDS_MAX_POINTS) return next;
   return next.slice(-LIVE_RTDS_MAX_POINTS);
 }
