@@ -27,6 +27,7 @@ VALID_REMOTE_COMMANDS = frozenset({
     "startSimulation",
     "stopSimulation",
     "reset",
+    "liveRtds",
 })
 
 

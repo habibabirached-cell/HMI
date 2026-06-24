@@ -91,8 +91,12 @@ services:
       - no_proxy=${NO_PROXY}
       - DATABASE_URL=sqlite:///./datacenter.db
       - ENVIRONMENT=development
+      - RTDS_BRIDGE_URL=ws://host.docker.internal:8765
     ports:
       - "5000:5000"                        # Backend API port
+    extra_hosts:
+      # Required so the container can reach rtds_live_bridge.py on the Windows host (:8765)
+      - "host.docker.internal:host-gateway"
     networks:
       dcs_network:
         aliases:

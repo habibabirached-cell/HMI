@@ -18431,6 +18431,15 @@
       "presetName": "Reset",
       "targetType": "ensemble",
       "ensembleId": "all_"
+    },
+    {
+      "id": "qs-live-rtds",
+      "label": "Live RTDS",
+      "icon": "\ud83d\udce1",
+      "color": "#e65100",
+      "presetName": "LiveRtds",
+      "targetType": "ensemble",
+      "ensembleId": "all"
     }
   ],
   "hiddenDefaultQuickScenarios": [
@@ -18481,6 +18490,9 @@
         "presetName": "Reset",
         "targetType": "ensemble",
         "ensembleId": "all_"
+      },
+      "liveRtds": {
+        "label": "Live RTDS"
       }
     }
   }

@@ -331,6 +331,8 @@ const ChartPanel = ({
   onMoveChartDrawer,
   onSwapChartDrawers,
   playbackTimeRange = null,
+  /** Live RTDS meter samples: { active, W: [{t,v}], Tm, Te } */
+  liveRtdsSeries = null,
 }) => {
   const fontPxDelta = useUiFontPxDelta();
   const hasLabeledDrawers = dualChartDrawers || quadChartDrawers;
@@ -1413,6 +1415,10 @@ const ChartPanel = ({
   };
 
   const chartDataReadyToPlot = (chart) => {
+    if (chart.liveRtdsChannel) {
+      if (!liveRtdsSeries?.active) return false;
+      return (liveRtdsSeries[chart.liveRtdsChannel]?.length ?? 0) > 0;
+    }
     if (chart.ensembleCrossMember) {
       return crossMemberDataReady(chart, ensembleMemberSimulationData);
     }
@@ -1434,6 +1440,9 @@ const ChartPanel = ({
    */
   useEffect(() => {
     charts.forEach((chart) => {
+      if (chart.liveRtdsChannel) {
+        return;
+      }
       if (simulationMetadata?.isEnsemble && chart.ensembleCrossMember) {
         if (!crossMemberDataReady(chart, ensembleMemberSimulationData)) {
           void onEnsureEnsembleChartColumns?.(chart);
@@ -1919,6 +1928,22 @@ const ChartPanel = ({
    * Filters data based on simulation time if simulation is running
    */
   const generatePlotlyData = (chart, data) => {
+    if (chart.liveRtdsChannel && liveRtdsSeries?.active) {
+      const channel = chart.liveRtdsChannel;
+      const points = liveRtdsSeries[channel] || [];
+      if (!points.length) return [];
+      const lineColor = channel === 'W' ? '#005E60' : '#FF6B35';
+      return [
+        {
+          type: 'scatter',
+          mode: 'lines',
+          x: points.map((p) => p.t),
+          y: points.map((p) => p.v),
+          name: chart.title || channel,
+          line: { color: lineColor, width: 2 },
+        },
+      ];
+    }
     if (chart.ensembleCrossMember && simulationMetadata?.isEnsemble && ensembleMemberSimulationData) {
       const sampleStep = getSampleStep(chart.id);
       const base = {
@@ -3913,15 +3938,22 @@ const ChartPanel = ({
               </button>
 
               {/* Loading State (only when fetching CSV, not when using simulationData) */}
-              {!simulationData?.length && loadingCharts[chart.id] && (
+              {!simulationData?.length && !chart.liveRtdsChannel && loadingCharts[chart.id] && (
                 <div className="chart-panel-chart-loading">
                   <div className="chart-panel-spinner"></div>
                   <div>Loading chart data...</div>
                 </div>
               )}
 
+              {chart.liveRtdsChannel && liveRtdsSeries?.active && !chartDataReadyToPlot(chart) && (
+                <div className="chart-panel-chart-loading">
+                  <div className="chart-panel-spinner"></div>
+                  <div>Waiting for RTDS live data…</div>
+                </div>
+              )}
+
               {/* Error State (fetch failed when not using simulationData) */}
-              {!simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
+              {!chart.liveRtdsChannel && !simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
                 <div className="chart-panel-chart-error">
                   <div className="chart-panel-error-icon">⚠️</div>
                   <div>Failed to load chart data</div>
@@ -3959,7 +3991,7 @@ const ChartPanel = ({
               })()}
 
               {/* Empty State */}
-              {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && (
+              {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !(chart.liveRtdsChannel && liveRtdsSeries?.active) && (
                 <div className="chart-panel-chart-empty">
                   <div className="chart-panel-empty-icon">📊</div>
                   <div>No data available</div>
@@ -4047,7 +4079,7 @@ const ChartPanel = ({
                         <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
                       </svg>
                     </button>
-                    {!simulationData?.length && loadingCharts[chart.id] && (
+                    {!simulationData?.length && !chart.liveRtdsChannel && loadingCharts[chart.id] && (
                       <div className="chart-panel-chart-loading"><div className="chart-panel-spinner"></div><div>Loading chart data...</div></div>
                     )}
                     {!simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
@@ -4076,7 +4108,7 @@ const ChartPanel = ({
                         </>
                       );
                     })()}
-                    {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && (
+                    {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !(chart.liveRtdsChannel && liveRtdsSeries?.active) && (
                       <div className="chart-panel-chart-empty"><div className="chart-panel-empty-icon">📊</div><div>No data available</div></div>
                     )}
                   </div>

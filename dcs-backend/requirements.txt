@@ -18,7 +18,9 @@ fastapi==0.109.0
 
 # Uvicorn - ASGI server that runs FastAPI applications
 # This is what actually listens on port 5000 and handles HTTP requests
+# uvicorn[standard] includes websockets (RTDS bridge relay)
 uvicorn[standard]==0.27.0
+websockets>=12.0,<14
 
 # ----------------------------------------------------------------------------
 # DATABASE

@@ -118,6 +118,14 @@ import {
   resolvePlaybackLoopBounds,
 } from './utils/playbackTimeRange';
 import { applyPlaybackRangeToCharts, isTimeBasedChart } from './utils/publishPlaybackTimeRange';
+import {
+  appendLiveRtdsPoint,
+  buildLiveRtdsOpenCharts,
+  emptyLiveRtdsSeries,
+  LIVE_RTDS_PRESET,
+} from './utils/liveRtdsCharts';
+import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
+import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -571,9 +579,14 @@ function App() {
 
   useEffect(() => {
     if (!simulationRunning) {
-      setActiveQuickScenarioPlaying(null);
+      setActiveQuickScenarioPlaying((cur) =>
+        cur?.presetName === LIVE_RTDS_PRESET ? cur : null,
+      );
     }
   }, [simulationRunning]);
+
+  const [liveRtdsSeries, setLiveRtdsSeries] = useState(emptyLiveRtdsSeries);
+  const stopLiveRtdsRef = useRef(null);
 
   /** Last simulation time (seconds) from metadata / loaded CSV — drives playback loop when reached. */
   const playbackMaxTimeRef = useRef(null);
@@ -3258,8 +3271,116 @@ function App() {
     });
   }, []);
 
+  const stopLiveRtdsStream = useCallback(() => {
+    stopLiveRtdsRef.current?.();
+    stopLiveRtdsRef.current = null;
+    setLiveRtdsSeries(emptyLiveRtdsSeries());
+    void stopLiveRtdsApi().catch(() => {});
+  }, []);
+
+  const applyNoBessNoStatcomCanvas = useCallback(() => {
+    const presetName = 'noBessNoStatcom';
+    const sectionVisibility = resolveQuickScenarioDesignVisibility(presetName);
+    if (sectionVisibility) {
+      setDesignSectionVisibility(sectionVisibility);
+    }
+    const branchCollapsed = quickScenarioBranchCollapsed[presetName] ?? true;
+    const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
+    setCanvasComponents((prev) => {
+      let next = applyBranchCollapseToComponents(
+        prev,
+        visibilityForCollapse,
+        branchCollapsed,
+        presetName,
+      );
+      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
+        next = applyDesignExpansionToComponents(next, designExpansion);
+      }
+      return next;
+    });
+  }, [
+    quickScenarioBranchCollapsed,
+    designSectionVisibility,
+    designExpansion,
+    designApiPath,
+    currentConfigName,
+  ]);
+
+  const handleLiveRtds = useCallback(async () => {
+    if (!designApiPath) {
+      alert('Load a design first.');
+      return;
+    }
+
+    stopLiveRtdsStream();
+    handleStopSimulation();
+
+    applyNoBessNoStatcomCanvas();
+
+    const noBessShortcut = quickScenarioButtons.find((b) => b.presetName === 'noBessNoStatcom');
+    if (noBessShortcut?.targetType === 'ensemble' && noBessShortcut.ensembleId) {
+      const ensemble = resolveDesignEnsemble(designEnsembles, noBessShortcut.ensembleId);
+      if (ensemble && simulationMetadata?.ensembleId !== ensemble.id) {
+        await handleSelectEnsemble(ensemble);
+      }
+    }
+
+    handleWorkspaceLayoutPresetChange('conf4');
+
+    setOpenCharts([]);
+    setChartStacks([]);
+    setPerChartSampleStep({});
+    setActiveNamedSimulationConfig(null);
+    setQuickScenarioDesignPrimedPreset(null);
+
+    setOpenCharts(buildLiveRtdsOpenCharts());
+    setLiveRtdsSeries({ active: true, W: [], Tm: [], Te: [] });
+
+    const liveShortcut =
+      quickScenarioButtons.find((b) => b.presetName === LIVE_RTDS_PRESET) ?? {
+        id: 'live-rtds',
+        label: 'Live RTDS',
+        icon: '📡',
+        color: '#e65100',
+        presetName: LIVE_RTDS_PRESET,
+        targetType: 'ensemble',
+        ensembleId: 'all',
+      };
+    setActiveQuickScenarioPlaying(liveShortcut);
+
+    stopLiveRtdsRef.current = connectLiveRtds(
+      (sample) => {
+        setLiveRtdsSeries((prev) => ({
+          ...prev,
+          active: true,
+          W: appendLiveRtdsPoint(prev.W, sample.t, sample.W),
+          Tm: appendLiveRtdsPoint(prev.Tm, sample.t, sample.Tm),
+          Te: appendLiveRtdsPoint(prev.Te, sample.t, sample.Te),
+        }));
+      },
+      (message, debug) => {
+        showRtdsLiveError(message, debug);
+      },
+    );
+  }, [
+    designApiPath,
+    stopLiveRtdsStream,
+    applyNoBessNoStatcomCanvas,
+    quickScenarioButtons,
+    designEnsembles,
+    simulationMetadata?.ensembleId,
+    handleSelectEnsemble,
+    handleWorkspaceLayoutPresetChange,
+  ]);
+
+  useEffect(() => () => stopLiveRtdsStream(), [stopLiveRtdsStream]);
+
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
+    if (shortcut.presetName === LIVE_RTDS_PRESET) {
+      await handleLiveRtds();
+      return;
+    }
     const isPlaceholder =
       isQuickScenarioPlaceholderPreset(shortcut.presetName) &&
       !namedSimulationConfigs.includes(shortcut.presetName);
@@ -3294,6 +3415,7 @@ function App() {
     });
 
     if (isQuickScenarioResetPreset(shortcut.presetName)) {
+      stopLiveRtdsStream();
       handleStopSimulation();
       setOpenCharts([]);
       setChartStacks([]);
@@ -3366,6 +3488,10 @@ function App() {
     await handleIdeumControlButtonClick({ command: 'reset' });
   }, [handleIdeumControlButtonClick]);
 
+  const handleIdeum05LiveRtds = useCallback(async () => {
+    await handleIdeumControlButtonClick({ command: 'liveRtds' });
+  }, [handleIdeumControlButtonClick]);
+
   const handleRemoteClusterCommand = async (command) => {
     if (!command) return;
 
@@ -3391,6 +3517,10 @@ function App() {
           ensembleId: 'all_',
         };
       await handleQuickScenarioShortcutClick(resetShortcut);
+      return;
+    }
+    if (command === 'liveRtds') {
+      await handleLiveRtds();
       return;
     }
 
@@ -6909,6 +7039,7 @@ function App() {
               onIdeum05NavSelect={handleIdeum05NavSelect}
               onIdeum05NavBack={handleIdeum05NavBack}
               onIdeum05Reset={handleIdeum05Reset}
+              onIdeum05LiveRtds={handleIdeum05LiveRtds}
             />
           )}
         </div>
@@ -7057,6 +7188,7 @@ function App() {
           onMoveChartDrawer={handleMoveChartDrawer}
           onSwapChartDrawers={handleSwapChartDrawers}
           playbackTimeRange={playbackTimeRange}
+          liveRtdsSeries={liveRtdsSeries}
         />
       )}
 

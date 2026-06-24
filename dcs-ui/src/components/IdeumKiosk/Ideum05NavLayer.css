@@ -81,6 +81,33 @@
   box-shadow: 0 0 20px rgba(0, 212, 168, 0.35);
 }
 
+.ideum05-nav-live-rtds {
+  margin: 0;
+  padding: 24px 66px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 152, 0, 0.85);
+  background: rgba(13, 13, 13, 0.88);
+  color: #ffe0b2;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 0 14px rgba(255, 152, 0, 0.25);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.ideum05-nav-live-rtds:hover {
+  border-color: #ff9800;
+  background: rgba(230, 81, 0, 0.28);
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.45);
+}
+
 /* —— Active nav cards (default teal frame) —— */
 .ideum-component-btn--nav-card {
   border: 2px solid rgba(0, 212, 168, 0.75);

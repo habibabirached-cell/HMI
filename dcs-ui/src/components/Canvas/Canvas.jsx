@@ -12,6 +12,7 @@ import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
 import Ideum05BackButton from '../IdeumKiosk/Ideum05BackButton';
 import Ideum05ResetButton from '../IdeumKiosk/Ideum05ResetButton';
+import Ideum05LiveRtdsButton from '../IdeumKiosk/Ideum05LiveRtdsButton';
 import '../IdeumKiosk/Ideum05NavLayer.css';
 import { isIdeumComponent } from '../../utils/ideumComponent';
 import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
@@ -305,6 +306,7 @@ const Canvas = forwardRef(({
   onIdeum05NavSelect,
   onIdeum05NavBack,
   onIdeum05Reset,
+  onIdeum05LiveRtds,
   /** Ideum designs: lock mouse / trackpad / touch pan; arrow keys still pan. */
   disableCanvasPan = false,
   /** Ideum05: block wheel / pinch / gesture zoom; toolbar +/- still works; arrow keys still pan. */
@@ -550,6 +552,7 @@ const Canvas = forwardRef(({
                 <Ideum05BackButton onBack={onIdeum05NavBack} />
               ) : null}
               <Ideum05ResetButton onReset={onIdeum05Reset} />
+              <Ideum05LiveRtdsButton onLiveRtds={onIdeum05LiveRtds} />
             </div>
           )}
           <IdeumComponentLayer
@@ -579,6 +582,7 @@ const Canvas = forwardRef(({
       onIdeum05NavSelect,
       onIdeum05NavBack,
       onIdeum05Reset,
+      onIdeum05LiveRtds,
       onIdeumControlButtonClick,
       ideumExpansionMirror,
       onIdeumExpansionToggle,

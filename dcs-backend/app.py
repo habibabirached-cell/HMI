@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 import copy
 import json
+import asyncio
 import os
 import pickle
 import re
@@ -44,6 +45,7 @@ from cluster_peer import (
     cluster_manager,
     resolve_machine_role,
 )
+from rtds_live_service import rtds_live_service
 
 # Import database components
 from database import init_db, get_db
@@ -673,6 +675,45 @@ async def post_cluster_broadcast(body: dict):
         raise HTTPException(status_code=400, detail="Body must include message.type")
     delivered = await cluster_manager.broadcast(message)
     return {"ok": True, "deliveredToClients": delivered}
+
+
+@app.websocket("/ws/rtds-live")
+async def rtds_live_websocket(websocket: WebSocket):
+    """Stream live W / Tm / Te samples from RSCAD FX (Maingear RTDS host)."""
+    await rtds_live_service.connect(websocket)
+    loop = asyncio.get_event_loop()
+    try:
+        await websocket.send_text(json.dumps({"type": "rtds_status", "streaming": rtds_live_service.streaming}))
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            msg_type = msg.get("type")
+            if msg_type == "start":
+                rtds_live_service.start_streaming(loop)
+                await websocket.send_text(json.dumps({"type": "rtds_status", "streaming": True}))
+            elif msg_type == "stop":
+                rtds_live_service.stop_streaming()
+                await websocket.send_text(json.dumps({"type": "rtds_status", "streaming": False}))
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await rtds_live_service.disconnect(websocket)
+
+
+@app.post("/api/rtds-live/start")
+async def rtds_live_start():
+    loop = asyncio.get_event_loop()
+    rtds_live_service.start_streaming(loop)
+    return {"ok": True, "streaming": rtds_live_service.streaming}
+
+
+@app.post("/api/rtds-live/stop")
+async def rtds_live_stop():
+    rtds_live_service.stop_streaming()
+    return {"ok": True, "streaming": False}
 
 
 @app.websocket("/ws/cluster")
