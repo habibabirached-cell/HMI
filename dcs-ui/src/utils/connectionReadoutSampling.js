@@ -1,6 +1,7 @@
 import { pickTimeColumn } from './simulationLazyApi';
 import { sampleRowAtSimTime } from './ensembleTurbineMetrics';
 import { findColumnKey } from './csvRowAccess';
+import { formatFormulaParquetScenarioLabel } from './formulaParquetUi';
 
 export function effectiveSampleTime(simulationTime) {
   const t = Number(simulationTime);
@@ -88,6 +89,8 @@ const AUX_LOAD_NAME_NUM_RE = /Aux(?:iliary)?\s*Loads?\s*#(\d+)/i;
 /** UI label for ensemble tab dropdown: `Load_4` → "Load 4". */
 export function formatEnsembleMemberTabLabel(simId) {
   if (!simId) return '';
+  const parquetLabel = formatFormulaParquetScenarioLabel(simId);
+  if (parquetLabel) return parquetLabel;
   return String(simId).replace(/_/g, ' ');
 }
 

@@ -99,6 +99,7 @@ import {
   groupColumnsByEnsembleMember,
   ENSEMBLE_COLUMN_SEP,
 } from './utils/simulationLazyApi';
+import { FORMULA_PARQUET_DISPLAY_NAME } from './utils/formulaParquetUi';
 import {
   CHART_PANEL_MIN_HEIGHT,
   CHART_PANEL_MIN_SIDE_WIDTH,
@@ -287,6 +288,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
                 ...(a.danger_y_threshold != null &&
                 Number.isFinite(Number(a.danger_y_threshold))
                   ? { dangerYThreshold: Number(a.danger_y_threshold) }
+                  : {}),
+                ...(a.x_reference != null && Number.isFinite(Number(a.x_reference))
+                  ? { xReference: Number(a.x_reference) }
                   : {}),
                 ...(xL
                   ? {
@@ -604,8 +608,8 @@ function App() {
   const [currentConfigName, setCurrentConfigName] = useState(null); // Track current config name for "Save"
   const [isSaving, setIsSaving] = useState(false); // Saving spinner state
   const [isUploading, setIsUploading] = useState(false); // Upload spinner state
-  /** Full-screen wait until derived formula is persisted (ensemble: Parquet + DB). */
-  const [derivedVariableCommitMessage, setDerivedVariableCommitMessage] = useState(null);
+  /** Full-screen wait while a formula is written to Parquet; dismisses when materialization finishes. */
+  const [derivedVariableCommitOverlay, setDerivedVariableCommitOverlay] = useState(null);
   const [csvStatus, setCsvStatus] = useState(null); // CSV status for current configuration
   const [availableSimulations, setAvailableSimulations] = useState([]); // Unique simulations from CSV
   const [simConfig, setSimConfig] = useState(null); // Simulation configuration JSON (from backend)
@@ -1564,6 +1568,7 @@ function App() {
         const primary = members[0];
         applyEnsembleChartPanelCp(cp, primary);
         await preloadEnsembleChartPanelColumnsRef.current?.(cp, primary);
+        await prefetchConnectionReadoutColumnsRef.current?.();
         setNamedSimulationConfigs(ensemble.named_configuration_keys || []);
 
         setSimulationLoadProgress({
@@ -4226,7 +4231,7 @@ function App() {
           base.variable_styles = c.variableStyles;
         }
         if (c.axisRange != null) {
-          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold } =
+          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, xReference } =
             c.axisRange;
           const rangeObj = {};
           if (xThreshold != null && !Number.isNaN(xThreshold)) {
@@ -4234,6 +4239,9 @@ function App() {
           }
           if (dangerYThreshold != null && !Number.isNaN(dangerYThreshold)) {
             rangeObj.danger_y_threshold = dangerYThreshold;
+          }
+          if (xReference != null && !Number.isNaN(xReference)) {
+            rangeObj.x_reference = xReference;
           }
           if (xLocked) {
             if (xMin != null && !Number.isNaN(xMin)) rangeObj.x_min = xMin;
@@ -4679,57 +4687,112 @@ function App() {
     );
   }, [ensureEnsembleMemberColumnsLoaded]);
 
-  /*
-   * Prefetch CSV columns for canvas connection readouts (sparkles) only while simulation is running.
-   * Selecting an ensemble stays metadata-only; bulk row fetch starts after Play so tab switches stay fast.
-   */
-  useEffect(() => {
-    if (!simulationMetadata?.isEnsemble || !designApiPath || !simulationRunning) return;
-    const memberSims = simulationMetadata.memberSimulations || [];
-    if (!memberSims.length) return;
-    const memberSet = new Set(memberSims);
+  /** Sparkle slots → memberSimId → column names (includes synthetic `formula` Parquet member). */
+  const collectConnectionReadoutLoadPlan = useCallback((components) => {
+    const members = simulationMetadataRef.current?.memberSimulations || [];
+    const validSimIds = new Set(members);
+    const formulaGroup = ensembleColumnGroupsRef.current?.find((x) => x.simId === 'formula');
+    if (formulaGroup?.columns?.length) validSimIds.add('formula');
+
     const bySid = new Map();
-    for (const comp of canvasComponentsRef.current || []) {
+    for (const comp of components || []) {
       const slots = comp?.connectionReadout?.slots;
       if (!Array.isArray(slots)) continue;
       for (const slot of slots) {
         const sid = slot?.ensembleSimId;
         const col = slot?.column && String(slot.column).trim();
-        if (!sid || !col || !memberSet.has(sid)) continue;
+        if (!sid || !col || !validSimIds.has(sid)) continue;
         if (!bySid.has(sid)) bySid.set(sid, new Set());
         bySid.get(sid).add(col);
       }
     }
-    if (bySid.size === 0) return;
+    return bySid;
+  }, []);
 
+  const prefetchConnectionReadoutColumns = useCallback(
+    async (components) => {
+      if (!designApiPath) return;
+      const meta = simulationMetadataRef.current;
+      const comps = components ?? canvasComponentsRef.current ?? [];
+
+      if (meta?.isEnsemble) {
+        const bySid = collectConnectionReadoutLoadPlan(comps);
+        if (bySid.size === 0) return;
+        for (const sid of bySid.keys()) {
+          const g = ensembleColumnGroupsRef.current.find((x) => x.simId === sid);
+          const csvCols = g?.columns || [];
+          const tc = pickTimeColumn(csvCols);
+          const need = new Set(bySid.get(sid));
+          if (tc) need.add(tc);
+          const cols = [...need];
+          if (!cols.length) continue;
+          try {
+            await ensureEnsembleMemberColumnsLoaded(sid, cols);
+          } catch {
+            /* ensureEnsembleMemberColumnsLoaded may have alerted */
+          }
+        }
+        return;
+      }
+
+      if (!meta?.id) return;
+      const singleCols = new Set();
+      for (const comp of comps) {
+        const slots = comp?.connectionReadout?.slots;
+        if (!Array.isArray(slots)) continue;
+        for (const slot of slots) {
+          const col = slot?.column && String(slot.column).trim();
+          if (col && !slot?.ensembleSimId) singleCols.add(col);
+        }
+      }
+      if (singleCols.size) {
+        try {
+          await ensureSimulationColumnsLoaded([...singleCols]);
+        } catch (e) {
+          console.warn('connection readout column prefetch failed', e);
+        }
+      }
+    },
+    [
+      collectConnectionReadoutLoadPlan,
+      designApiPath,
+      ensureEnsembleMemberColumnsLoaded,
+      ensureSimulationColumnsLoaded,
+    ],
+  );
+
+  const prefetchConnectionReadoutColumnsRef = useRef(async () => {});
+  useLayoutEffect(() => {
+    prefetchConnectionReadoutColumnsRef.current = prefetchConnectionReadoutColumns;
+  }, [prefetchConnectionReadoutColumns]);
+
+  /*
+   * Prefetch Parquet/CSV columns for canvas sparkles as soon as a scenario is loaded (not only on Play).
+   * Materialized formula columns live under ensembleSimId `formula`, which is not in member_simulations.
+   */
+  useEffect(() => {
+    if (!designApiPath || !simulationMetadata?.id) return;
     let cancelled = false;
     (async () => {
-      for (const sid of bySid.keys()) {
-        if (cancelled) return;
-        const g = ensembleColumnGroupsRef.current.find((x) => x.simId === sid);
-        const csvCols = g?.columns || [];
-        const tc = pickTimeColumn(csvCols);
-        const need = new Set(bySid.get(sid));
-        if (tc) need.add(tc);
-        const cols = [...need];
-        if (!cols.length) continue;
-        try {
-          await ensureEnsembleMemberColumnsLoaded(sid, cols);
-        } catch {
-          /* ensureEnsembleMemberColumnsLoaded may have alerted */
-        }
+      if (cancelled) return;
+      try {
+        await prefetchConnectionReadoutColumns(canvasComponents);
+      } catch {
+        /* prefetchConnectionReadoutColumns may have alerted */
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [
-    simulationMetadata?.isEnsemble,
-    simulationMetadata?.ensembleId,
-    simulationMetadata?.memberSimulations,
+    canvasComponents,
     designApiPath,
-    simulationRunning,
-    ensureEnsembleMemberColumnsLoaded,
+    ensembleColumnGroups,
+    prefetchConnectionReadoutColumns,
+    simulationMetadata?.ensembleId,
+    simulationMetadata?.id,
+    simulationMetadata?.isEnsemble,
+    simulationMetadata?.memberSimulations,
   ]);
 
   useLayoutEffect(() => {
@@ -5351,13 +5414,20 @@ function App() {
     }
 
     const isEns = !!meta.isEnsemble;
-    setDerivedVariableCommitMessage(
-      isEns
-        ? quick
-          ? 'Adding new derived column only (quick mode — other derived variables are not recomputed)…'
-          : 'Please wait until this derived variable is written to disk (Parquet) and to the database.'
-        : 'Please wait until this derived variable is saved to your scenario configuration.',
-    );
+    const overlayWorking = isEns
+      ? {
+          phase: 'working',
+          headline: `Writing ${FORMULA_PARQUET_DISPLAY_NAME}…`,
+          detail: quick
+            ? 'Adding this column to Parquet on disk. Please wait — do not close the tab.'
+            : 'Materializing formulas to Parquet on disk. Please wait — do not close the tab.',
+        }
+      : {
+          phase: 'working',
+          headline: 'Saving formula variable…',
+          detail: 'Writing to your scenario configuration. Please wait.',
+        };
+    setDerivedVariableCommitOverlay(overlayWorking);
 
     try {
       if (isEns) {
@@ -5400,6 +5470,14 @@ function App() {
         } else {
           setSimulationMetadata((prev) => ({ ...prev, derivedVariables: newDerived }));
         }
+
+        setDerivedVariableCommitOverlay({
+          phase: 'done',
+          headline: `${FORMULA_PARQUET_DISPLAY_NAME} is ready`,
+          detail:
+            'Etched in Parquet and solidified on disk — treated like any other variable from now on.',
+        });
+        await new Promise((resolve) => setTimeout(resolve, 1100));
         return;
       }
 
@@ -5422,11 +5500,17 @@ function App() {
       });
       setSimulationData(augmented);
       await persistChartsToSimJson(openCharts, { derived_variables: newDerived });
+      setDerivedVariableCommitOverlay({
+        phase: 'done',
+        headline: 'Formula variable saved',
+        detail: 'You can use this column in charts and sparkles.',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 900));
     } catch (e) {
       console.error('handleAddDerivedVariable', e);
       alert(e?.message || String(e));
     } finally {
-      setDerivedVariableCommitMessage(null);
+      setDerivedVariableCommitOverlay(null);
     }
   }, [currentConfigName, openCharts, persistChartsToSimJson, designApiPath]);
 
@@ -7222,19 +7306,25 @@ function App() {
         </div>
       )}
 
-      {/* Derived variable commit — blocks until ensemble Parquet + DB import complete */}
-      {derivedVariableCommitMessage && (
+      {/* Derived variable commit — blocks until Parquet materialization completes */}
+      {derivedVariableCommitOverlay && (
         <div
-          className="saving-overlay derived-variable-commit-overlay"
+          className={`saving-overlay derived-variable-commit-overlay${derivedVariableCommitOverlay.phase === 'done' ? ' derived-variable-commit-overlay--done' : ''}`}
           role="alertdialog"
-          aria-busy="true"
+          aria-busy={derivedVariableCommitOverlay.phase === 'working'}
           aria-live="polite"
         >
           <div className="saving-spinner-container">
-            <div className="saving-spinner" />
-            <div className="saving-text">{derivedVariableCommitMessage}</div>
+            {derivedVariableCommitOverlay.phase === 'working' ? (
+              <div className="saving-spinner" />
+            ) : (
+              <div className="derived-variable-commit-check" aria-hidden="true">
+                ✓
+              </div>
+            )}
+            <div className="saving-text">{derivedVariableCommitOverlay.headline}</div>
             <div className="saving-subtext derived-variable-commit-hint">
-              Wait until this finishes before building another formula that depends on this column — otherwise the prior variable may not exist on disk yet.
+              {derivedVariableCommitOverlay.detail}
             </div>
           </div>
         </div>

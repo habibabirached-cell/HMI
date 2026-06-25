@@ -7,6 +7,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './SimulationChartBuilder.css';
 import FormulaCalculator from '../FormulaCalculator/FormulaCalculator';
+import {
+  FORMULA_PARQUET_DISPLAY_NAME,
+  isFormulaParquetScenarioId,
+} from '../../utils/formulaParquetUi';
+import { formatEnsembleMemberTabLabel } from '../../utils/connectionReadoutSampling';
 import { qualifyEnsembleColumn } from '../../utils/simulationLazyApi';
 
 /** Excel-style column letter: 0->a, 1->b, ..., 26->aa, 27->ab, ... */
@@ -213,7 +218,7 @@ function SimulationChartBuilder({
           if (!items.some((it) => it.value === q)) items.push({ value: q, label: d.name });
         }
       }
-      const title = g.simId === 'formula' ? 'formula (existing CSV)' : g.simId;
+      const title = isFormulaParquetScenarioId(g.simId) ? FORMULA_PARQUET_DISPLAY_NAME : g.simId;
       return { title, simId: g.simId, items };
     });
   }, [useEnsembleColumnLayout, ensembleColumnGroups, primarySimForFormula, derivedVariables]);
@@ -353,7 +358,9 @@ function SimulationChartBuilder({
                 </p>
                 {ensembleColumnGroups.map((g) => (
                   <div key={g.simId} className="sim-chart-builder-ensemble-group">
-                    <div className="sim-chart-builder-ensemble-group-label">{g.simId}</div>
+                    <div className="sim-chart-builder-ensemble-group-label">
+                      {formatEnsembleMemberTabLabel(g.simId)}
+                    </div>
                     <div className="sim-chart-builder-ensemble-group-items">
                       {(g.columns || []).map((rawCol) => {
                         const qualified = qualifyEnsembleColumn(g.simId, rawCol);
@@ -404,7 +411,7 @@ function SimulationChartBuilder({
                 ))}
                 {derivedVariables?.length > 0 && primarySimForFormula && (
                   <div className="sim-chart-builder-ensemble-group sim-chart-builder-ensemble-group--formula">
-                    <div className="sim-chart-builder-ensemble-group-label" title="Evaluated in the browser from member columns (not the Formula scenario CSV)">
+                    <div className="sim-chart-builder-ensemble-group-label" title={`Live cross-member formulas (not ${FORMULA_PARQUET_DISPLAY_NAME})`}>
                       ƒ (live)
                     </div>
                     <div className="sim-chart-builder-ensemble-group-items">
@@ -535,7 +542,7 @@ function SimulationChartBuilder({
             <h4 className="sim-chart-builder-formula-pane-title">Formula variables</h4>
             <p className="sim-chart-builder-formula-pane-hint">
               {useEnsembleColumnLayout
-                ? 'Creates a column stored under the formula scenario (combined CSV). Optionally narrow the variable list to one member scenario.'
+                ? `Creates a column stored under ${FORMULA_PARQUET_DISPLAY_NAME} (Parquet on disk). Optionally narrow the variable list to one member scenario.`
                 : 'Creates a computed column in this scenario\u2019s CSV.'}
             </p>
             {useEnsembleColumnLayout && ensembleColumnGroups?.length > 0 && (
@@ -550,7 +557,7 @@ function SimulationChartBuilder({
                   <option value="">All scenarios</option>
                   {ensembleColumnGroups.map((g) => (
                     <option key={g.simId} value={g.simId}>
-                      {g.simId === 'formula' ? 'formula (existing CSV)' : g.simId}
+                      {isFormulaParquetScenarioId(g.simId) ? FORMULA_PARQUET_DISPLAY_NAME : g.simId}
                     </option>
                   ))}
                 </select>

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "columns": [
+    "t",
+    "_Power_LM_1234",
+    "_Power_LM_5678",
+    "_Load_12",
+    "_Load_34",
+    "bs_Power_LM_1234",
+    "bs_Power_LM_5678",
+    "bs_Load_12",
+    "bs_Load_34"
+  ],
+  "row_count": 3623,
+  "column_files": [
+    "c0000.parquet",
+    "c0001.parquet",
+    "c0002.parquet",
+    "c0003.parquet",
+    "c0004.parquet",
+    "c0005.parquet",
+    "c0006.parquet",
+    "c0007.parquet",
+    "c0008.parquet"
+  ]
+}

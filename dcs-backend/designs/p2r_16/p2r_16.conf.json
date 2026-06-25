@@ -421,8 +421,8 @@
         "swatchColor": "#cddc39",
         "slots": [
           {
-            "ensembleSimId": "_LM2500_1",
-            "column": "P_g1",
+            "ensembleSimId": "formula",
+            "column": "_Pgt1234",
             "unit": "MW",
             "decimals": 2
           },
@@ -18336,14 +18336,22 @@
     "uiFontPxShift": 5,
     "canvasFontPxShift": 5,
     "collapsedComponentFontPxShift": 24,
-    "splitPaneTitles": null,
+    "splitPaneTitles": {
+      "upper": {
+        "line1": "Baseline Configuration : ",
+        "line2": "LM2500 only"
+      },
+      "lower": null
+    },
     "designViewMode": "canvas",
-    "workspaceLayoutPreset": "conf4"
+    "workspaceLayoutPreset": "conf3"
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
-  "perChartSampleStep": {},
+  "perChartSampleStep": {
+    "open-1782337711003": 1
+  },
   "playbackTimeRange": {
     "t1": 20.0,
     "t2": 50.0

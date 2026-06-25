@@ -782,6 +782,24 @@ body {
   line-height: 1.45;
 }
 
+.saving-overlay.derived-variable-commit-overlay--done .saving-text {
+  color: #7dffb8;
+}
+
+.derived-variable-commit-check {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 212, 168, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(28px + var(--ui-font-px-shift, 0px));
+  color: var(--vernova-accent);
+  margin-bottom: 4px;
+  box-shadow: 0 0 24px rgba(0, 212, 168, 0.15);
+}
+
 /* Ideum touch-table layout: keep header; side panels hidden via React (not global CSS). */
 .app-container--ideum-mode .component-library,
 .app-container--ideum-mode .app-right-rail,

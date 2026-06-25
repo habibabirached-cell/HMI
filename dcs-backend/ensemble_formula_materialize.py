@@ -21,6 +21,8 @@ from simulation_parquet_bundle import read_bundle_dataframe, scenario_data_dir, 
 # Same as dcs-ui ENSEMBLE_COLUMN_SEP: space, EM DASH (U+2014), space
 ENSEMBLE_COLUMN_SEP = " \u2014 "
 
+FORMULA_PARQUET_DISPLAY_NAME = "FormulaTattooedInParquet"
+
 
 def _qualify_ensemble_column(simulation_id: str, column_name: str) -> str:
     sid = (simulation_id or "").strip()
@@ -121,6 +123,42 @@ def _load_ensemble_and_members(
     return target, members, dv
 
 
+def _members_referenced_in_formulas(formulas: list[str], members: list[str]) -> list[str]:
+    """Member sim ids explicitly referenced as `SimId — column` in one or more formulas."""
+    refs: set[str] = set()
+    members_sorted = sorted(members, key=len, reverse=True)
+    for fml in formulas:
+        if not fml:
+            continue
+        text = str(fml)
+        for sid in members_sorted:
+            if f"{sid}{ENSEMBLE_COLUMN_SEP}" in text:
+                refs.add(sid)
+    return [m for m in members if m in refs]
+
+
+def _resolve_materialize_members(members: list[str], formulas: list[str]) -> list[str]:
+    """Members whose Parquet rows define the formula timeline (exclude unrelated short Csv_* tabs)."""
+    refs = _members_referenced_in_formulas(formulas, members)
+    if refs:
+        return refs
+    return [members[0]] if members else []
+
+
+def _load_member_frames(
+    dir_path: str, member_ids: list[str]
+) -> dict[str, pd.DataFrame]:
+    per_member: dict[str, pd.DataFrame] = {}
+    for sid in member_ids:
+        bundle_root = scenario_data_dir(dir_path, sid)
+        if not os.path.isdir(bundle_root):
+            raise FileNotFoundError(
+                f"Member scenario data not found: {sid}.data/ (Parquet bundle required for materialize)"
+            )
+        per_member[sid] = read_bundle_dataframe(dir_path, sid)
+    return per_member
+
+
 def materialize_formula_scenario_for_ensemble(
     dir_path: str,
     _catalog_rel: str,
@@ -138,21 +176,6 @@ def materialize_formula_scenario_for_ensemble(
         return {"skipped": True, "reason": "no derived_variables in ensemble chart_panel"}
 
     safe_fid = re.sub(r"[^\w\-]", "", formula_sim_id) or "formula"
-    per_member: dict[str, pd.DataFrame] = {}
-    for sid in members:
-        bundle_root = scenario_data_dir(dir_path, sid)
-        if not os.path.isdir(bundle_root):
-            raise FileNotFoundError(
-                f"Member scenario data not found: {sid}.data/ (Parquet bundle required for materialize)"
-            )
-        per_member[sid] = read_bundle_dataframe(dir_path, sid)
-    n = min(len(df) for df in per_member.values())
-    if n <= 0:
-        raise ValueError("No data rows in member scenarios")
-
-    primary = members[0]
-    primary_df = per_member[primary]
-    time_col = _time_column_name(primary_df)
 
     items_valid: list[tuple[str, str]] = []
     for item in derived_variables:
@@ -167,13 +190,24 @@ def materialize_formula_scenario_for_ensemble(
     if not items_valid:
         return {"skipped": True, "reason": "no valid derived variable names"}
 
+    all_formulas = [fml for _, fml in items_valid]
+    mat_members = _resolve_materialize_members(members, all_formulas)
+    per_member = _load_member_frames(dir_path, mat_members)
+    n = min(len(df) for df in per_member.values())
+    if n <= 0:
+        raise ValueError("No data rows in referenced member scenarios")
+
+    primary = mat_members[0]
+    primary_df = per_member[primary]
+    time_col = _time_column_name(primary_df)
+
     primary_id = primary
     out_cols: dict[str, list] = {time_col: [primary_df.iloc[i][time_col] for i in range(n)]}
     for idx, (name, fml) in enumerate(items_valid):
         col_vals: list = []
         for i in range(n):
             ev: dict[str, float] = {}
-            for sid in members:
+            for sid in mat_members:
                 df = per_member[sid]
                 for col in df.columns:
                     key = _qualify_ensemble_column(sid, str(col))
@@ -219,12 +253,12 @@ def materialize_formula_scenario_for_ensemble(
             scfg = {}
     else:
         scfg = {
-            "display_name": "Formula",
+            "display_name": FORMULA_PARQUET_DISPLAY_NAME,
             "description": "Materialized ensemble formulas (precomputed from member CSVs).",
             "charts_to_display": [],
             "event_markers": {},
         }
-    scfg["display_name"] = scfg.get("display_name") or "Formula"
+    scfg["display_name"] = FORMULA_PARQUET_DISPLAY_NAME
     scfg["data_row_count"] = int(n)
     scfg["data_column_count"] = int(len(out_df.columns))
     scfg["description"] = (
@@ -274,27 +308,35 @@ def materialize_single_derived_variable_for_ensemble(
         )
 
     safe_fid = re.sub(r"[^\w\-]", "", formula_sim_id) or "formula"
-    per_member: dict[str, pd.DataFrame] = {}
-    for sid in members:
-        bundle_root = scenario_data_dir(dir_path, sid)
-        if not os.path.isdir(bundle_root):
-            raise FileNotFoundError(
-                f"Member scenario data not found: {sid}.data/ (Parquet bundle required for materialize)"
-            )
-        per_member[sid] = read_bundle_dataframe(dir_path, sid)
-    n = min(len(df) for df in per_member.values())
-    if n <= 0:
-        raise ValueError("No data rows in member scenarios")
-
-    primary = members[0]
-    primary_df = per_member[primary]
-    time_col = _time_column_name(primary_df)
-    primary_id = primary
 
     formula_bundle = scenario_data_dir(dir_path, safe_fid)
     if os.path.isdir(formula_bundle):
         existing_df = read_bundle_dataframe(dir_path, safe_fid)
-        n = min(n, len(existing_df))
+        mat_members_probe = _resolve_materialize_members(members, [fml])
+        per_member_probe = _load_member_frames(dir_path, mat_members_probe)
+        expected_n = min(len(df) for df in per_member_probe.values())
+        if len(existing_df) != expected_n:
+            return materialize_formula_scenario_for_ensemble(
+                dir_path,
+                _catalog_rel,
+                ensemble_id,
+                ens_path,
+                formula_sim_id=formula_sim_id,
+            )
+
+    mat_members = _resolve_materialize_members(members, [fml])
+    per_member = _load_member_frames(dir_path, mat_members)
+    n = min(len(df) for df in per_member.values())
+    if n <= 0:
+        raise ValueError("No data rows in referenced member scenarios")
+
+    primary = mat_members[0]
+    primary_df = per_member[primary]
+    time_col = _time_column_name(primary_df)
+    primary_id = primary
+
+    if os.path.isdir(formula_bundle):
+        existing_df = read_bundle_dataframe(dir_path, safe_fid)
     else:
         existing_df = pd.DataFrame({time_col: [primary_df.iloc[i][time_col] for i in range(n)]})
 
@@ -304,7 +346,7 @@ def materialize_single_derived_variable_for_ensemble(
     col_vals: list = []
     for i in range(n):
         ev: dict[str, float] = {}
-        for sid in members:
+        for sid in mat_members:
             df = per_member[sid]
             for col in df.columns:
                 key = _qualify_ensemble_column(sid, str(col))
@@ -342,12 +384,12 @@ def materialize_single_derived_variable_for_ensemble(
             scfg = {}
     else:
         scfg = {
-            "display_name": "Formula",
+            "display_name": FORMULA_PARQUET_DISPLAY_NAME,
             "description": "Materialized ensemble formulas (precomputed from member CSVs).",
             "charts_to_display": [],
             "event_markers": {},
         }
-    scfg["display_name"] = scfg.get("display_name") or "Formula"
+    scfg["display_name"] = FORMULA_PARQUET_DISPLAY_NAME
     scfg["data_row_count"] = int(n)
     scfg["data_column_count"] = int(len(out_df.columns))
     scfg["description"] = (

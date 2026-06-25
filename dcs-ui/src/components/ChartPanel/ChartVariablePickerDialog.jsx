@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import '../SimulationChartBuilder/SimulationChartBuilder.css';
 import './ChartVariablePickerDialog.css';
 import { qualifyEnsembleColumn } from '../../utils/simulationLazyApi';
+import { formatEnsembleMemberTabLabel } from '../../utils/connectionReadoutSampling';
 
 function matchesFilter(text, filter) {
   if (!filter) return true;
@@ -48,7 +49,12 @@ const ChartVariablePickerDialog = ({
   const showFormulaGroup = useMemo(() => {
     if (!derivedVariables?.length || !primarySimForFormula) return false;
     if (!filter) return true;
-    if (matchesFilter('ƒ (live)', filter) || matchesFilter('formula', filter) || matchesFilter('live', filter)) {
+    if (
+      matchesFilter('ƒ (live)', filter) ||
+      matchesFilter('formula', filter) ||
+      matchesFilter('tattooed', filter) ||
+      matchesFilter('live', filter)
+    ) {
       return true;
     }
     return derivedVariables.some((d) => matchesFilter(d.name, filter));
@@ -58,7 +64,10 @@ const ChartVariablePickerDialog = ({
     if (!derivedVariables?.length) return [];
     if (!filter) return derivedVariables;
     const formulaHeaderMatch =
-      matchesFilter('ƒ (live)', filter) || matchesFilter('formula', filter) || matchesFilter('live', filter);
+      matchesFilter('ƒ (live)', filter) ||
+      matchesFilter('formula', filter) ||
+      matchesFilter('tattooed', filter) ||
+      matchesFilter('live', filter);
     return derivedVariables.filter((d) => formulaHeaderMatch || matchesFilter(d.name, filter));
   }, [derivedVariables, filter]);
 
@@ -147,7 +156,9 @@ const ChartVariablePickerDialog = ({
               </p>
               {filteredEnsembleGroups.map((g) => (
                 <div key={g.simId} className="sim-chart-builder-ensemble-group">
-                  <div className="sim-chart-builder-ensemble-group-label">{g.simId}</div>
+                  <div className="sim-chart-builder-ensemble-group-label">
+                    {formatEnsembleMemberTabLabel(g.simId)}
+                  </div>
                   <div className="sim-chart-builder-ensemble-group-items">
                     {(g.columns || []).map((rawCol) => {
                       const qualified = qualifyEnsembleColumn(g.simId, rawCol);

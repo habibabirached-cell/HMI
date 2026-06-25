@@ -50,6 +50,7 @@ import {
   collectChartYKeys,
   getChartDangerYThreshold,
 } from '../../utils/chartDangerYThreshold';
+import { applyXReferenceLayout } from '../../utils/chartXReference';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
@@ -2388,10 +2389,13 @@ const ChartPanel = ({
   };
 
   const generatePlotlyLayout = (chart, data) => {
-    const withDangerY = (layout) =>
-      chartSupportsDangerYThreshold(chart)
-        ? applyDangerYThresholdLayout(layout, chart)
-        : layout;
+    const withDangerY = (layout) => {
+      let next = layout;
+      if (chartSupportsDangerYThreshold(chart)) {
+        next = applyDangerYThresholdLayout(next, chart);
+      }
+      return applyXReferenceLayout(next, chart);
+    };
 
     const o = clampChartPanelOpacity(panelOpacity);
     const rgba = (r, g, b, a = o) => `rgba(${r},${g},${b},${a})`;
