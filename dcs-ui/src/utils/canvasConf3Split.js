@@ -1,5 +1,9 @@
 /** conf3: helpers for split design canvas (UpperCanvas / BelowCanvas). */
 
+import {
+  CONNECTION_READOUT_GAP,
+  CONNECTION_READOUT_WIDTH,
+} from '../components/Canvas/ComponentConnectionReadout';
 import { buildDesignSectionMemberIdSets } from './designSectionVisibility';
 
 export const CANVAS_PANE_UPPER = 'upper';
@@ -88,8 +92,8 @@ export function filterComponentsForCanvasPane(components, canvasPane) {
   return components.filter((c) => resolveComponentCanvasPane(c) === canvasPane);
 }
 
-/** foreignObject readout width (218) + gap (8) beside equipment blocks */
-export const CANVAS_READOUT_EXTENT_PX = 226;
+/** foreignObject readout width + gap beside equipment blocks */
+export const CANVAS_READOUT_EXTENT_PX = CONNECTION_READOUT_WIDTH + CONNECTION_READOUT_GAP;
 
 /**
  * Center a pane's content in the viewport, including connection-readout overflow.

@@ -17,7 +17,7 @@
         "voltage": 13.8,
         "unit": "",
         "gasTurbineGroup": {
-          "collapsed": true,
+          "collapsed": false,
           "side": "left",
           "verticalBand": {
             "minY": 0,
@@ -18317,31 +18317,34 @@
     }
   ],
   "systemState": {
-    "simulationRunning": false,
-    "zoom": 0.49848336107413044,
+    "simulationRunning": true,
+    "zoom": 0.37848336107413033,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
     },
     "panTop": {
-      "x": 141.23394023304718,
-      "y": 203.7626806314953
+      "x": 233.23394420669,
+      "y": 190.26268212161136
     },
     "panBottom": {
-      "x": 176.82310195945422,
-      "y": 326.72167230443665
+      "x": 242.82310791991847,
+      "y": 304.7216834455372
     },
-    "quadBottomRowShare": 53.5,
+    "quadBottomRowShare": 54,
     "mode": "design",
     "uiFontPxShift": 5,
-    "canvasFontPxShift": 5,
+    "canvasFontPxShift": 20,
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": {
       "upper": {
         "line1": "Baseline Configuration : ",
         "line2": "LM2500 only"
       },
-      "lower": null
+      "lower": {
+        "line1": "Augmented Configuration : ",
+        "line2": "+ BESS and +STATCOM"
+      }
     },
     "designViewMode": "canvas",
     "workspaceLayoutPreset": "conf3"
@@ -18350,8 +18353,12 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1782401023204-0": 1,
-    "sim-chart-1782401023204-1": 1
+    "sim-chart-1784027250133-0": 1,
+    "sim-chart-1784027250133-1": 1,
+    "sim-chart-1784027250133-2": 1,
+    "sim-chart-1784027250133-3": 1,
+    "sim-chart-1784027250133-4": 1,
+    "sim-chart-1784027250133-5": 1
   },
   "playbackTimeRange": {
     "t1": 20.0,
@@ -18361,7 +18368,7 @@
     "ensembleId": "all",
     "designSectionVisibility": {
       "showUpper": true,
-      "showLower": false,
+      "showLower": true,
       "hideBranches": []
     },
     "quickScenarioBranchCollapsed": {

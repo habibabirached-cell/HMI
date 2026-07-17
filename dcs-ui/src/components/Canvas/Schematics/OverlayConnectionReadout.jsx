@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { buildConnectionReadoutLines } from '../../../utils/connectionReadoutSampling';
 import {
   ConnectionReadoutHtml,
+  CONNECTION_READOUT_GAP,
   CONNECTION_READOUT_HEIGHT,
   CONNECTION_READOUT_WIDTH,
   getConnectionReadoutSide,
@@ -45,8 +46,8 @@ export default function OverlayConnectionReadout({
   const readoutTop = slot.top + Math.max(0, slot.height / 2 - CONNECTION_READOUT_HEIGHT / 2);
   const readoutLeft =
     side === 'left'
-      ? slot.left - CONNECTION_READOUT_WIDTH - 8
-      : slot.left + slot.width + 8;
+      ? slot.left - CONNECTION_READOUT_WIDTH - CONNECTION_READOUT_GAP
+      : slot.left + slot.width + CONNECTION_READOUT_GAP;
 
   return (
     <div

@@ -23,8 +23,16 @@
     Optional URL to open. Defaults to a blank new tab.
 
 .PARAMETER Display
-    Use a preset for one of the four monitors (1=primary top-right, 2=top-left,
-    3=bottom-right, 4=bottom-left). Each is 1536x864.
+    Use a preset for one of the four monitors (1=primary, 2=top-left,
+    3=top-right, 4=bottom-left). Sizes/positions follow the current Windows
+    display arrangement (re-detect with -ListDisplays).
+
+.PARAMETER SpanAllDisplays
+    Span the full Windows virtual desktop (all monitors). Positions are read
+    at launch time so this survives display reordering in Settings.
+
+.PARAMETER ListDisplays
+    Print the current monitor layout and preset mapping, then exit.
 
 .PARAMETER App
     Open in Chrome app mode (no tabs/address bar). Use this for edge-to-edge
@@ -39,6 +47,12 @@
 
 .EXAMPLE
     .\open-chrome-window.bat -Display 3 -Url "http://localhost:3000"
+
+.EXAMPLE
+    .\open-chrome-window.bat -SpanAllDisplays -App -Url "http://localhost:3003"
+
+.EXAMPLE
+    .\open-chrome-window.bat -ListDisplays
 
 .EXAMPLE
     .\open-chrome-window.bat -X -1536 -Y 0 -Width 3072 -Height 1728 -App -Url "http://localhost:3003"
@@ -64,6 +78,12 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = "Display")]
     [ValidateRange(1, 4)]
     [int] $Display,
+
+    [Parameter(Mandatory = $true, ParameterSetName = "SpanAll")]
+    [switch] $SpanAllDisplays,
+
+    [Parameter(Mandatory = $true, ParameterSetName = "List")]
+    [switch] $ListDisplays,
 
     [string] $Url = "about:blank",
 
@@ -272,19 +292,214 @@ Use -App with Y=0 and Height=$($virtualBottom - $virtualTop) for a frameless win
     return $finalRect
 }
 
-$DisplayPresets = @{
-    1 = @{ X = 0;     Y = 0;   Width = 1536; Height = 864 }  # primary, top-right
-    2 = @{ X = -1536; Y = 0;   Width = 1536; Height = 864 }  # top-left
-    3 = @{ X = 0;     Y = 864; Width = 1536; Height = 864 }  # bottom-right
-    4 = @{ X = -1536; Y = 864; Width = 1536; Height = 864 }  # bottom-left
+function Get-MonitorLayout {
+    Add-Type -AssemblyName System.Windows.Forms
+    $screens = [System.Windows.Forms.Screen]::AllScreens
+    $monitors = foreach ($screen in $screens) {
+        $b = $screen.Bounds
+        [PSCustomObject]@{
+            Device  = $screen.DeviceName
+            Left    = $b.Left
+            Top     = $b.Top
+            Width   = $b.Width
+            Height  = $b.Height
+            Primary = $screen.Primary
+            CenterX = ($b.Left + $b.Right) / 2.0
+            CenterY = ($b.Top + $b.Bottom) / 2.0
+        }
+    }
+
+    if ($monitors.Count -eq 0) {
+        throw "No monitors detected."
+    }
+
+    $midX = ($monitors | Measure-Object -Property CenterX -Average).Average
+    $midY = ($monitors | Measure-Object -Property CenterY -Average).Average
+
+    foreach ($m in $monitors) {
+        if ($m.Primary) {
+            $role = "primary"
+        } elseif ($m.CenterX -lt $midX -and $m.CenterY -lt $midY) {
+            $role = "top-left"
+        } elseif ($m.CenterX -ge $midX -and $m.CenterY -lt $midY) {
+            $role = "top-right"
+        } elseif ($m.CenterX -lt $midX -and $m.CenterY -ge $midY) {
+            $role = "bottom-left"
+        } else {
+            $role = "bottom-right"
+        }
+        $m | Add-Member -NotePropertyName Role -NotePropertyValue $role -Force
+    }
+
+    $vs = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    return [PSCustomObject]@{
+        Monitors      = $monitors
+        VirtualLeft   = $vs.Left
+        VirtualTop    = $vs.Top
+        VirtualWidth  = $vs.Width
+        VirtualHeight = $vs.Height
+    }
+}
+
+function Get-NormalizedGridLayout {
+    param($Layout)
+
+    $monitors = @($Layout.Monitors)
+    if ($monitors.Count -ne 4) {
+        return [PSCustomObject]@{
+            Monitors       = $monitors
+            VirtualLeft    = $Layout.VirtualLeft
+            VirtualTop     = $Layout.VirtualTop
+            VirtualWidth   = $Layout.VirtualWidth
+            VirtualHeight  = $Layout.VirtualHeight
+            CellWidth      = $null
+            CellHeight     = $null
+            Normalized     = $false
+        }
+    }
+
+    $widths = @($monitors | ForEach-Object { [int]$_.Width } | Sort-Object)
+    $heights = @($monitors | ForEach-Object { [int]$_.Height } | Sort-Object)
+    $cellW = [int][Math]::Round(($widths[1] + $widths[2]) / 2.0)
+    $cellH = [int][Math]::Round(($heights[1] + $heights[2]) / 2.0)
+
+    $midX = ($monitors | Measure-Object -Property CenterX -Average).Average
+    $midY = ($monitors | Measure-Object -Property CenterY -Average).Average
+
+    $normalized = foreach ($m in $monitors) {
+        $col = if ($m.CenterX -lt $midX) { 0 } else { 1 }
+        $row = if ($m.CenterY -lt $midY) { 0 } else { 1 }
+        $snapLeft = if ($col -eq 0) { -$cellW } else { 0 }
+        $snapTop = if ($row -eq 0) { -$cellH } else { 0 }
+
+        if ($m.Primary) {
+            $role = "primary"
+        } elseif ($col -eq 0 -and $row -eq 0) {
+            $role = "top-left"
+        } elseif ($col -eq 1 -and $row -eq 0) {
+            $role = "top-right"
+        } elseif ($col -eq 0 -and $row -eq 1) {
+            $role = "bottom-left"
+        } else {
+            $role = "bottom-right"
+        }
+
+        [PSCustomObject]@{
+            Device  = $m.Device
+            Left    = $snapLeft
+            Top     = $snapTop
+            Width   = $cellW
+            Height  = $cellH
+            Primary = $m.Primary
+            CenterX = $m.CenterX
+            CenterY = $m.CenterY
+            Role    = $role
+            RawLeft = [int]$m.Left
+            RawTop  = [int]$m.Top
+        }
+    }
+
+    return [PSCustomObject]@{
+        Monitors      = $normalized
+        VirtualLeft   = -$cellW
+        VirtualTop    = -$cellH
+        VirtualWidth  = 2 * $cellW
+        VirtualHeight = 2 * $cellH
+        CellWidth     = $cellW
+        CellHeight    = $cellH
+        Normalized    = $true
+    }
+}
+
+function Get-DisplayPresetsFromLayout {
+    param($Layout)
+
+    $roleToDisplay = @{
+        "primary"     = 1
+        "top-left"    = 2
+        "top-right"   = 3
+        "bottom-left" = 4
+    }
+
+    $presets = @{}
+    foreach ($m in $Layout.Monitors) {
+        $displayId = $roleToDisplay[$m.Role]
+        if ($null -eq $displayId) { continue }
+        if ($presets.ContainsKey($displayId)) { continue }
+        $presets[$displayId] = @{
+            X      = [int]$m.Left
+            Y      = [int]$m.Top
+            Width  = [int]$m.Width
+            Height = [int]$m.Height
+            Role   = $m.Role
+            Device = $m.Device
+        }
+    }
+
+    if (-not $presets.ContainsKey(1)) {
+        $primary = $Layout.Monitors | Where-Object { $_.Primary } | Select-Object -First 1
+        if ($primary) {
+            $presets[1] = @{
+                X = [int]$primary.Left; Y = [int]$primary.Top
+                Width = [int]$primary.Width; Height = [int]$primary.Height
+                Role = "primary"; Device = $primary.Device
+            }
+        }
+    }
+
+    return $presets
+}
+
+if ($ListDisplays) {
+    $layout = Get-MonitorLayout
+    $grid = Get-NormalizedGridLayout -Layout $layout
+    $presets = Get-DisplayPresetsFromLayout -Layout $grid
+    Write-Host "Raw virtual desktop: ($($layout.VirtualLeft), $($layout.VirtualTop)) $($layout.VirtualWidth)x$($layout.VirtualHeight)"
+    if ($grid.Normalized) {
+        Write-Host "Normalized 2x2 grid: ($($grid.VirtualLeft), $($grid.VirtualTop)) $($grid.VirtualWidth)x$($grid.VirtualHeight)  (cell $($grid.CellWidth)x$($grid.CellHeight))"
+    }
+    Write-Host ""
+    Write-Host "Monitors:"
+    foreach ($m in ($grid.Monitors | Sort-Object Top, Left)) {
+        $primary = if ($m.Primary) { " [PRIMARY]" } else { "" }
+        $raw = if ($null -ne $m.RawLeft) { "  raw=($($m.RawLeft), $($m.RawTop))" } else { "" }
+        Write-Host "  $($m.Device)$primary role=$($m.Role) snap=($($m.Left), $($m.Top)) $($m.Width)x$($m.Height)$raw"
+    }
+    Write-Host ""
+    Write-Host "Display presets (-Display N):"
+    foreach ($id in @(1, 2, 3, 4)) {
+        if (-not $presets.ContainsKey($id)) { continue }
+        $p = $presets[$id]
+        Write-Host "  $id ($($p.Role)): -X $($p.X) -Y $($p.Y) -Width $($p.Width) -Height $($p.Height)"
+    }
+    Write-Host ""
+    Write-Host "Span all displays (2x2 abutting):"
+    Write-Host "  -SpanAllDisplays -App -Url `"http://localhost:3003`""
+    Write-Host "  => -X $($grid.VirtualLeft) -Y $($grid.VirtualTop) -Width $($grid.VirtualWidth) -Height $($grid.VirtualHeight)"
+    exit 0
+}
+
+$layout = Get-MonitorLayout
+$grid = Get-NormalizedGridLayout -Layout $layout
+$DisplayPresets = Get-DisplayPresetsFromLayout -Layout $grid
+
+if ($PSCmdlet.ParameterSetName -eq "SpanAll") {
+    $X = $grid.VirtualLeft
+    $Y = $grid.VirtualTop
+    $Width = $grid.VirtualWidth
+    $Height = $grid.VirtualHeight
 }
 
 if ($PSCmdlet.ParameterSetName -eq "Display") {
+    if (-not $DisplayPresets.ContainsKey($Display)) {
+        throw "Display preset $Display is not available for the current monitor layout."
+    }
     $preset = $DisplayPresets[$Display]
     $X = $preset.X
     $Y = $preset.Y
     $Width = $preset.Width
     $Height = $preset.Height
+    $displayRole = $preset.Role
 }
 
 $chrome = Resolve-ChromePath
@@ -303,7 +518,9 @@ $hwnd = Wait-ForNewChromeWindow -ExistingHandles $existingWindows
 $finalRect = Set-ChromeWindowBounds -Handle $hwnd -X $X -Y $Y -Width $Width -Height $Height
 
 if ($PSCmdlet.ParameterSetName -eq "Display") {
-    Write-Host "Chrome opened on display $Display at ($X, $Y) size ${Width}x${Height}"
+    Write-Host "Chrome opened on display $Display ($displayRole) at ($X, $Y) size ${Width}x${Height}"
+} elseif ($PSCmdlet.ParameterSetName -eq "SpanAll") {
+    Write-Host "Chrome opened spanning all displays at ($X, $Y) size ${Width}x${Height}"
 } else {
     Write-Host "Chrome opened at ($X, $Y) size ${Width}x${Height}"
 }

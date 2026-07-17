@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import { buildConnectionReadoutLines } from '../../utils/connectionReadoutSampling';
 import './ComponentConnectionReadout.css';
 
-export const CONNECTION_READOUT_WIDTH = 218;
-export const CONNECTION_READOUT_HEIGHT = 54;
+export const CONNECTION_READOUT_SCALE = 0.7;
+export const CONNECTION_READOUT_WIDTH = Math.round(218 * CONNECTION_READOUT_SCALE);
+export const CONNECTION_READOUT_HEIGHT = Math.round(54 * CONNECTION_READOUT_SCALE);
+export const CONNECTION_READOUT_GAP = 8;
 const FO_WIDTH = CONNECTION_READOUT_WIDTH;
 const FO_HEIGHT = CONNECTION_READOUT_HEIGHT;
-const READOUT_GAP = 8;
+const READOUT_GAP = CONNECTION_READOUT_GAP;
 
 function readoutHasAnySlot(connectionReadout) {
   return (connectionReadout?.slots || []).some((s) => s && String(s.column || '').trim() !== '');
