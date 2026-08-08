@@ -44,6 +44,19 @@ export function getIdeumTitle(component) {
   return component?.name || 'Ideum button';
 }
 
+/** Static PNG/JPEG preview inside an Ideum button (no WebGL). */
+export function getIdeumPreviewImageUrl(component) {
+  const raw =
+    component?.visualOverrides?.previewImageUrl ?? component?.properties?.previewImageUrl;
+  if (!raw || typeof raw !== 'string') return null;
+  const url = raw.trim();
+  if (!url) return null;
+  if (url.startsWith('/')) {
+    return `${process.env.PUBLIC_URL || ''}${url}`;
+  }
+  return url;
+}
+
 export function ideumButtonPayload(component) {
   const command = getIdeumCommand(component);
   if (!command) return null;

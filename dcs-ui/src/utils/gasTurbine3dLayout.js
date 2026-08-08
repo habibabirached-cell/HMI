@@ -40,6 +40,30 @@ export function getGasTurbine3DArtRegion(blockWidth, blockHeight, titleFontPx, m
   };
 }
 
-export function getGasTurbine3DModelUrl() {
+export function getGasTurbine3DModelUrl(visualConfigOrComponent) {
+  const raw =
+    visualConfigOrComponent?.model3dUrl ??
+    visualConfigOrComponent?.visualOverrides?.model3dUrl ??
+    visualConfigOrComponent?.properties?.model3dUrl;
+  if (raw && typeof raw === 'string') {
+    const url = raw.trim();
+    if (url.startsWith('/')) {
+      return `${process.env.PUBLIC_URL || ''}${url}`;
+    }
+    return url;
+  }
   return `${process.env.PUBLIC_URL || ''}/models/gasT3.glb`;
+}
+
+/** Ideum touch-table turbine button — optional per-component GLB override. */
+export function getIdeumTurbineModelUrl(component) {
+  return getGasTurbine3DModelUrl(component);
+}
+
+/** Y-axis turntable only (no shaft roll) — for SynCom-style previews. */
+export function getIdeumTurbineTurntableOnly(component) {
+  const flag =
+    component?.visualOverrides?.model3dTurntableOnly ??
+    component?.properties?.model3dTurntableOnly;
+  return flag === true || flag === 'true' || flag === 1;
 }

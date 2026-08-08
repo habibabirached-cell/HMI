@@ -4,12 +4,13 @@ import Bess3DViewer from '../Canvas/Schematics/Bess3DViewer';
 import GFMe3DViewer from '../Canvas/Schematics/GFMe3DViewer';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { getScaledCanvasBlockDimensions } from '../Canvas/shapes/canvasBlockUtils';
-import { getGasTurbine3DModelUrl } from '../../utils/gasTurbine3dLayout';
+import { getIdeumTurbineModelUrl, getIdeumTurbineTurntableOnly } from '../../utils/gasTurbine3dLayout';
 import { getBess3DModelUrl } from '../../utils/bess3dLayout';
 import { getGFMe3DModelUrl } from '../../utils/gfme3dLayout';
 import {
   getIdeumComponents,
   getIdeumTitle,
+  getIdeumPreviewImageUrl,
   getIdeumButtonStyleClass,
   ideumButtonPayload,
   isIdeumBessButton,
@@ -75,6 +76,7 @@ function layoutIdeumSlot(component, blockTypeScale, pan, zoom) {
     title: getIdeumTitle(component),
     titleFontPx: Math.max(14, Math.round(20 * zoom)),
     styleClass: getIdeumButtonStyleClass(component),
+    previewImageUrl: getIdeumPreviewImageUrl(component),
     isGrouped: isIdeumBessGfmeButton(component),
     isTurbine: isIdeumTurbineButton(component),
     isBessOnly: isIdeumBessButton(component),
@@ -267,12 +269,24 @@ export default function IdeumComponentLayer({
               className="ideum-component-btn__preview"
               style={{ padding: INNER_PAD_PX * zoom }}
             >
+              {slot.previewImageUrl ? (
+                <div className="ideum-component-btn__preview-single">
+                  <img
+                    className="ideum-component-btn__preview-image"
+                    src={slot.previewImageUrl}
+                    alt=""
+                    draggable={false}
+                  />
+                </div>
+              ) : (
+                <>
               {slot.isTurbine && (
                 <div className="ideum-component-btn__preview-single">
                   <GasTurbine3DViewer
                     width={slot.pixelWidth - INNER_PAD_PX * 2}
                     height={previewH}
-                    modelUrl={getGasTurbine3DModelUrl()}
+                    modelUrl={getIdeumTurbineModelUrl(slot.component)}
+                    turntableOnly={getIdeumTurbineTurntableOnly(slot.component)}
                   />
                 </div>
               )}
@@ -311,6 +325,8 @@ export default function IdeumComponentLayer({
                     />
                   </div>
                 </div>
+              )}
+                </>
               )}
             </div>
           </button>

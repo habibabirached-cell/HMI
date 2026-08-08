@@ -41,7 +41,7 @@ const COLOR_CYCLE_TURNS = 1;
 /**
  * WebGL preview of gasT3.glb — rendered in an HTML overlay (GasTurbine3DOverlays).
  */
-export default function GasTurbine3DViewer({ width, height, modelUrl }) {
+export default function GasTurbine3DViewer({ width, height, modelUrl, turntableOnly = false }) {
   const hostRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
 
@@ -133,15 +133,17 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
           frameId = requestAnimationFrame(animate);
           if (turntable && modelRoot && shaftAxis) {
             turntable.rotation.y += TURNTABLE_YAW;
-            modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
-            shaftSpinAngle += SHAFT_SPIN;
+            if (!turntableOnly) {
+              modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
+              shaftSpinAngle += SHAFT_SPIN;
 
-            // Smooth blue/green accent each shaft revolution (cosine ease).
-            const mix = 0.5 - 0.5 * Math.cos(shaftSpinAngle / COLOR_CYCLE_TURNS);
-            accentColor.copy(blueColor).lerp(greenColor, mix);
-            fillLight.color.copy(accentColor);
-            accentSpecular.color.copy(accentColor);
-            rimLight.color.copy(accentColor);
+              // Smooth blue/green accent each shaft revolution (cosine ease).
+              const mix = 0.5 - 0.5 * Math.cos(shaftSpinAngle / COLOR_CYCLE_TURNS);
+              accentColor.copy(blueColor).lerp(greenColor, mix);
+              fillLight.color.copy(accentColor);
+              accentSpecular.color.copy(accentColor);
+              rimLight.color.copy(accentColor);
+            }
           }
           renderer.render(scene, camera);
         };
@@ -174,7 +176,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl }) {
         });
       }
     };
-  }, [width, height, modelUrl]);
+  }, [width, height, modelUrl, turntableOnly]);
 
   return (
     <div
