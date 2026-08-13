@@ -157,7 +157,7 @@ const SCREENS = {
       modelFitScale: 0.78,
       modelYOffset: 0.54,
       cameraPitchLift: 0.42,
-      navDisabled: true,
+      navDrillTarget: 'controls',
     },
     {
       id: 'ref-500',

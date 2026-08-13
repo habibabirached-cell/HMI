@@ -46,6 +46,7 @@ from cluster_peer import (
     resolve_machine_role,
 )
 from rtds_live_service import rtds_live_service
+from configurator.router import router as configurator_router
 
 # Import database components
 from database import init_db, get_db
@@ -572,6 +573,8 @@ app = FastAPI(
     description="Backend API for saving/loading power system configurations",
     version="1.0.0"
 )
+
+app.include_router(configurator_router)
 
 # ============================================================================
 # ENABLE CORS (Cross-Origin Resource Sharing)

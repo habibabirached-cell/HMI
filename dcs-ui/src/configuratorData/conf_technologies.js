@@ -1,0 +1,95 @@
+/** Technology definitions for the Data Center Configurator prototype. */
+
+export const CONFIGURATOR_TECHNOLOGIES = [
+  {
+    id: 'heavyDutyGT',
+    label: 'Heavy-Duty Gas Turbine',
+    shortLabel: 'Heavy Duty GT',
+    category: 'dispatchable',
+    icon: 'turbine',
+    defaultLcoe: 72,
+    defaultCf: 0.88,
+    carbonLbPerMWh: 850,
+    cfeClass: 'Fossil',
+  },
+  {
+    id: 'aeroderivativeGT',
+    label: 'Aeroderivative Gas Turbine',
+    shortLabel: 'Aero GT',
+    category: 'dispatchable',
+    icon: 'aero',
+    defaultLcoe: 95,
+    defaultCf: 0.24,
+    carbonLbPerMWh: 820,
+    cfeClass: 'Fossil',
+  },
+  {
+    id: 'solar',
+    label: 'Solar',
+    shortLabel: 'Solar',
+    category: 'renewable',
+    icon: 'solar',
+    defaultLcoe: 38,
+    defaultCf: 0.27,
+    carbonLbPerMWh: 0,
+    cfeClass: 'Carbon-Free',
+  },
+  {
+    id: 'wind',
+    label: 'Wind',
+    shortLabel: 'Wind',
+    category: 'renewable',
+    icon: 'wind',
+    defaultLcoe: 42,
+    defaultCf: 0.39,
+    carbonLbPerMWh: 0,
+    cfeClass: 'Carbon-Free',
+  },
+  {
+    id: 'battery',
+    label: 'Battery Energy Storage',
+    shortLabel: 'Battery',
+    category: 'storage',
+    icon: 'battery',
+    defaultLcoe: 110,
+    defaultCf: null,
+    utilizationMetric: 'cyclesPerDay',
+    carbonLbPerMWh: 12,
+    cfeClass: 'Storage',
+    defaultDurationH: 4,
+  },
+  {
+    id: 'fuelCell',
+    label: 'Fuel Cell',
+    shortLabel: 'Fuel Cell',
+    category: 'dispatchable',
+    icon: 'fuelcell',
+    defaultLcoe: 105,
+    defaultCf: 0.72,
+    carbonLbPerMWh: 420,
+    cfeClass: 'Low-Carbon',
+  },
+  {
+    id: 'recipEngine',
+    label: 'Reciprocating Engine',
+    shortLabel: 'Recip Engine',
+    category: 'dispatchable',
+    icon: 'recip',
+    defaultLcoe: 88,
+    defaultCf: 0.35,
+    carbonLbPerMWh: 780,
+    cfeClass: 'Fossil',
+  },
+];
+
+export const DEFAULT_TECHNOLOGY_IDS = [
+  'heavyDutyGT',
+  'aeroderivativeGT',
+  'solar',
+  'wind',
+  'battery',
+];
+
+export function getTechnologyById(id) {
+  return CONFIGURATOR_TECHNOLOGIES.find((t) => t.id === id);
+}

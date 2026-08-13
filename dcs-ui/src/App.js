@@ -128,6 +128,7 @@ import {
 } from './utils/liveRtdsCharts';
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
+import DataCenterConfigurator from './configurator/DataCenterConfigurator';
 import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -806,6 +807,10 @@ function App() {
   }));
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
+  const [configuratorOpen, setConfiguratorOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('view') === 'configurator';
+  });
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -864,6 +869,7 @@ function App() {
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const ideum05ShowControls = !isIdeum05 || isIdeum05ControlsScreen(ideum05NavScreen);
+  const showConfigurator = configuratorOpen || (isIdeum05 && ideum05NavScreen === 'controls');
 
   const splitPaneTitles = useMemo(() => {
     if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
@@ -6971,6 +6977,14 @@ function App() {
             </div>
           )}
           <div className="view-mode-toggle">
+            <button
+              type="button"
+              className={`btn-mode-toggle${showConfigurator ? ' active' : ''}`}
+              onClick={() => setConfiguratorOpen((v) => !v)}
+              title="Open Data Center Configurator"
+            >
+              Data Center Configurator
+            </button>
             <span className={`view-badge view-${viewMode}`}>
               {viewMode === 'designer' ? '🔧 DESIGNER' : '👤 CUSTOMER'}
             </span>
@@ -7026,6 +7040,18 @@ function App() {
         />
       </header>
 
+      {showConfigurator ? (
+        <div className="app-main app-main--configurator">
+          <DataCenterConfigurator
+            onClose={() => {
+              setConfiguratorOpen(false);
+              if (isIdeum05 && ideum05NavScreen === 'controls') {
+                setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+              }
+            }}
+          />
+        </div>
+      ) : (
       <div className="app-main">
         {viewMode === 'designer' && !ideumKioskMode && (
           <ComponentLibrary
@@ -7134,6 +7160,7 @@ function App() {
 
         {!ideumKioskMode && controlsDockRight && controlsRail}
       </div>
+      )}
 
       {/* Save/Load Dialog */}
       {showDialog && (
@@ -7196,7 +7223,7 @@ function App() {
       )}
 
       {/* Chart Panel */}
-      {openCharts.length > 0 && ideum05ShowControls && (
+      {openCharts.length > 0 && ideum05ShowControls && !showConfigurator && (
         <ChartPanel
           charts={openCharts}
           chartStacks={chartStacks}
