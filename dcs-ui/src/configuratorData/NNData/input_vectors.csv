@@ -1,0 +1,5 @@
+record_id,region,solver_iteration,peak_load_mw,renewable_energy_target_pct,system_reliability_target_pct,system_eue_target_mwh,renewable_energy_reference_mwh,load_factor_pct,load_profile_id,solar_profile_id,wind_profile_id,solar_resource_class,wind_resource_class,ccgt_units_allowed,ccgt_capacity_mw_per_unit,industrial_ct_max_units,ct_16mw_max_units,ic_max_units,battery_duration_hr,ccgt_eford,industrial_ct_eford,ct_16mw_eford,ic_eford,aeroderivative_gt_eford,recip_engine_eford,fuel_cell_eford
+rekha-tx-70re-iter4,TX,70RE_Iter4,1350,70,99.69,35927.4,11589476.8,98,8760_load_shape_standard,8760_solar_tx_high_pv,8760_wind_tx_high_wd,high_pv,high_wd,1,573,4,6,0,4,,,,,,,
+rekha-pa-70re-iter1,PA,70RE_Iter1,1350,70,99.69,35927.4,11589476.8,98,8760_load_shape_standard,8760_solar_pa_low_pv,8760_wind_pa_low_wd,low_pv,low_wd,1,573,4,6,1,4,,,,,,,
+rekha-az-70re-iter1,AZ,70RE_Iter1,1350,70,99.69,35927.4,11589476.8,98,8760_load_shape_standard,8760_solar_az_high_pv,,high_pv,none,1,573,4,6,1,4,,,,,,,
+rekha-id-70re-iter1,ID,70RE_Iter1,1350,70,99.69,35927.4,11589476.8,98,8760_load_shape_standard,8760_solar_id_low_pv,8760_wind_id_high_wd,low_pv,high_wd,1,573,4,6,1,4,,,,,,,

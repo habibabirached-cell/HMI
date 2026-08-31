@@ -1,5 +1,7 @@
 /** Human-friendly formatting for configurator values. */
 
+import { GRID_CONNECTION_MODES } from '../../configuratorData/conf_constants';
+
 export function formatMW(mw) {
   const n = Number(mw);
   if (!Number.isFinite(n)) return '—';
@@ -31,22 +33,21 @@ export function formatCarbonIntensity(value) {
   return `${Math.round(n).toLocaleString()} lb CO₂/MWh`;
 }
 
-export function formatReliabilityLabel(value) {
-  const n = Number(value);
-  if (n >= 99.999) return 'Five Nines';
-  if (n >= 99.99) return 'Four Nines';
-  if (n >= 99.9) return 'Three Nines';
-  return `${n.toFixed(2)}%`;
-}
-
 export function formatGWh(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';
   return `${n.toFixed(1)} GWh`;
 }
 
-export function formatInputSummary(inputs, stateLabel) {
+export function formatGridMode(mode) {
+  return mode === GRID_CONNECTION_MODES.ISLANDED ? 'Islanded' : 'Grid-Connected';
+}
+
+export function formatInputSummary(inputs) {
   const load = formatMW(inputs.loadMW);
   const techCount = inputs.technologies?.length ?? 0;
-  return `${load} • ${stateLabel || '—'} • ${formatPercent(inputs.reliabilityTarget, 2)} Reliability • ${Math.round(inputs.cfeTarget)}% CFE • ${techCount} Technologies`;
+  const grid = formatGridMode(inputs.gridConnectionMode);
+  const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
+  const cfeLabel = minCfe > 0 ? `≥${Math.round(minCfe)}% min CFE` : 'No min CFE';
+  return `${load} • ${grid} • ${formatPercent(inputs.reliabilityTarget, inputs.reliabilityTarget >= 99.99 ? 3 : 2)} Reliability • ${cfeLabel} • ${techCount} options`;
 }

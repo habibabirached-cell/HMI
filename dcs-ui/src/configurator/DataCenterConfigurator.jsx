@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ConfInputPanel from './components/conf_InputPanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
 import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
-import { getResourceProfile, getStateById } from '../configuratorData/conf_locations';
+import { UI_MODES } from '../configuratorData/conf_constants';
 import {
   generateConfiguratorResult,
   GENERATION_STATUS_MESSAGES,
@@ -12,21 +12,20 @@ import './conf_DataCenterConfigurator.css';
 
 export default function DataCenterConfigurator({ onClose }) {
   const [inputs, setInputs] = useState({ ...CONFIGURATOR_DEFAULT_INPUTS });
+  const [uiMode, setUiMode] = useState(UI_MODES.BASIC);
   const [result, setResult] = useState(null);
   const [lastRunInputs, setLastRunInputs] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState(null);
+  const [errorDetails, setErrorDetails] = useState([]);
+  const [resultsView, setResultsView] = useState(null);
 
-  const resourceIndicators = useMemo(
-    () => getResourceProfile(inputs.stateId),
-    [inputs.stateId],
-  );
-  const stateLabel = getStateById(inputs.stateId)?.label;
   const isStale = result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
 
   const handleGenerate = useCallback(async () => {
     setError(null);
+    setErrorDetails([]);
     setIsGenerating(true);
     let step = 0;
     const interval = window.setInterval(() => {
@@ -37,13 +36,16 @@ export default function DataCenterConfigurator({ onClose }) {
     await new Promise((r) => setTimeout(r, 1400));
 
     try {
-      const next = await generateConfiguratorResult(inputs);
+      const payload = { ...inputs, uiMode };
+      const next = await generateConfiguratorResult(payload);
       if (!next.ok) {
         setError(next.error || 'Configuration could not be generated.');
+        setErrorDetails(next.details || []);
         setResult(null);
       } else {
         setResult(next);
-        setLastRunInputs({ ...inputs, technologies: [...inputs.technologies] });
+        setLastRunInputs({ ...payload, technologies: [...payload.technologies] });
+        setResultsView('architecture');
       }
     } catch (e) {
       setError(e.message || 'Unexpected error.');
@@ -52,19 +54,27 @@ export default function DataCenterConfigurator({ onClose }) {
       setIsGenerating(false);
       setStatusMessage('');
     }
-  }, [inputs]);
+  }, [inputs, uiMode]);
 
   const handleReset = () => {
     setInputs({ ...CONFIGURATOR_DEFAULT_INPUTS });
+    setUiMode(UI_MODES.BASIC);
     setResult(null);
     setLastRunInputs(null);
     setError(null);
+    setErrorDetails([]);
+    setResultsView(null);
+  };
+
+  const handleSelectTradeViz = (vizId) => {
+    setResultsView(vizId);
   };
 
   const handleLoadPreset = (presetInputs) => {
     setInputs({
+      ...CONFIGURATOR_DEFAULT_INPUTS,
       ...presetInputs,
-      technologies: [...presetInputs.technologies],
+      technologies: [...(presetInputs.technologies || CONFIGURATOR_DEFAULT_INPUTS.technologies)],
     });
   };
 
@@ -75,11 +85,11 @@ export default function DataCenterConfigurator({ onClose }) {
           <span className="conf-page-eyebrow">Energy System Configuration</span>
           <h1>Data Center Configurator</h1>
           <p>
-            Explore a potential generation architecture based on reliability, carbon-free energy,
-            geography, and data-center demand.
+            Given your load, reliability requirement, minimum carbon-free energy, grid connection,
+            and technology options — GE Vernova recommends a least-cost onsite architecture.
           </p>
           <div className="conf-badges">
-            <span className="conf-badge conf-badge--mode">Simulation Mode</span>
+            <span className="conf-badge conf-badge--mode">Basic Mode · Least Cost</span>
             <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
           </div>
         </div>
@@ -90,7 +100,18 @@ export default function DataCenterConfigurator({ onClose }) {
         )}
       </header>
 
-      {error && <div className="conf-error-banner" role="alert">{error}</div>}
+      {error && (
+        <div className="conf-error-banner" role="alert">
+          <strong>{error}</strong>
+          {errorDetails.length > 0 && (
+            <ul className="conf-error-details">
+              {errorDetails.map((d) => (
+                <li key={d}>{d}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="conf-layout">
         <ConfInputPanel
@@ -101,14 +122,17 @@ export default function DataCenterConfigurator({ onClose }) {
           onLoadPreset={handleLoadPreset}
           isGenerating={isGenerating}
           isStale={isStale}
-          resourceIndicators={resourceIndicators}
-          stateLabel={stateLabel}
+          uiMode={uiMode}
+          onUiModeChange={setUiMode}
+          activeTradeVizId={resultsView !== 'architecture' ? resultsView : null}
+          onSelectTradeViz={handleSelectTradeViz}
         />
         <ConfResultsPanel
           result={result}
           inputs={inputs}
           isGenerating={isGenerating}
           statusMessage={statusMessage}
+          resultsView={resultsView}
         />
       </div>
     </div>

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gevernova.com/dcs/configurator/training-record.schema.json",
+  "title": "ConfiguratorTrainingRecord",
+  "description": "Input/output pair for MAPS/capacity-expansion training data or validated optimization runs.",
+  "type": "object",
+  "required": ["recordId", "inputs", "outputs", "provenance"],
+  "properties": {
+    "recordId": { "type": "string" },
+    "provenance": {
+      "type": "object",
+      "required": ["source", "generatedAt"],
+      "properties": {
+        "source": { "type": "string", "description": "e.g. MAPS, capacity-expansion, synthetic" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["loadMW", "reliabilityTarget", "minCfePercent", "gridConnectionMode", "technologies"],
+      "properties": {
+        "loadMW": { "type": "number" },
+        "reliabilityTarget": { "type": "number" },
+        "minCfePercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "gridConnectionMode": { "enum": ["grid-connected", "islanded"] },
+        "technologies": { "type": "array", "items": { "type": "string" } },
+        "stateId": { "type": "string" },
+        "cityId": { "type": "string" },
+        "optimizationObjective": { "type": "string" },
+        "technologyMinPercent": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "required": ["supplyMix", "achievedReliability", "achievedCfePercent", "lcoe", "totalInstalledMW"],
+      "properties": {
+        "supplyMix": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["technologyId", "installedMW", "energySharePercent"],
+            "properties": {
+              "technologyId": { "type": "string" },
+              "equipmentModelId": { "type": "string" },
+              "installedMW": { "type": "number" },
+              "batteryMWh": { "type": "number" },
+              "energySharePercent": { "type": "number" },
+              "lcoe": { "type": "number" }
+            }
+          }
+        },
+        "achievedReliability": { "type": "number" },
+        "achievedCfePercent": { "type": "number" },
+        "lcoe": { "type": "number" },
+        "carbonIntensityLbPerMWh": { "type": "number" },
+        "totalInstalledMW": { "type": "number" },
+        "annualGenerationGWh": { "type": "number" }
+      }
+    }
+  }
+}

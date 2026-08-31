@@ -38,8 +38,11 @@ function polar(cx, cy, r, angleDeg) {
 export default function ConfSupplyMixChart({ mix }) {
   if (!mix?.length) return null;
   return (
-    <section className="conf-result-section">
-      <h3>Optimal Supply Mix</h3>
+    <section className="conf-result-section" data-screen-region="supply-mix">
+      <h3>Optimal Energy Supply Mix</h3>
+      <p className="conf-field__helper conf-optimizer-note">
+        Capacities and percentages below are calculated by the least-cost optimizer — technologies with 0 MW were considered but not selected.
+      </p>
       <div className="conf-supply-mix">
         <div className="conf-supply-mix__chart">
           <DonutChart mix={mix} />

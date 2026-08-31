@@ -1,0 +1,286 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Paired input/output training records aligned to Rekha consultant study format.",
+  "records": [
+    {
+      "recordId": "rekha-tx-70re-iter4",
+      "provenance": {
+        "source": "rekha-consultant-study",
+        "generatedAt": "2026-06-10T00:00:00Z",
+        "notes": "Example row from TX (High PV, High WD) 70RE_Iter4 spreadsheet export."
+      },
+      "inputs": {
+        "region": "TX",
+        "solverIteration": "70RE_Iter4",
+        "systemParameters": {
+          "peakLoadMW": 1350,
+          "renewableEnergyTargetPct": 70,
+          "systemReliabilityTargetPct": 99.69,
+          "systemEueTargetMWh": 35927.4,
+          "renewableEnergyReferenceMWh": 11589476.8,
+          "loadFactorPct": 98
+        },
+        "timeSeries": {
+          "loadProfileId": "8760_load_shape_standard",
+          "solarProfileId": "8760_solar_tx_high_pv",
+          "windProfileId": "8760_wind_tx_high_wd"
+        },
+        "technologyConstraints": {
+          "combinedCycleGT": { "maxUnits": 1, "capacityMWPerUnit": 573 },
+          "industrialCT": { "maxUnits": 4 },
+          "ct16MW": { "maxUnits": 6 },
+          "ic": { "maxUnits": 0 },
+          "battery4hr": { "allowed": true }
+        },
+        "thermalAssumptions": {
+          "combinedCycleGT": { "eford": null },
+          "industrialCT": { "eford": null },
+          "ct35MW": { "eford": null },
+          "ct16MW": { "eford": null },
+          "aeroderivativeGT": { "eford": null },
+          "reciprocatingEngine": { "eford": null },
+          "fuelCell": { "eford": null }
+        }
+      },
+      "outputs": {
+        "baseCase": {
+          "totalSystemEueMWh": 2009.1,
+          "systemReliabilityPct": 99.98,
+          "loleDaysPerYear": 0.811,
+          "lolhHoursPerYear": 4.756,
+          "lolpPct": 0.05
+        },
+        "solver": {
+          "perfectCapacityAdjNeededMW": 175,
+          "systemEueAfterAdjMWh": 271.05,
+          "systemReliabilityAfterAdjPct": 100.0
+        },
+        "marginalElccPct1MW": {
+          "solar": null,
+          "wind": null,
+          "battery4hr": null,
+          "gt5PctEfor": null
+        },
+        "resourceMix": {
+          "combinedCycleGT": { "units": 1, "capacityMW": 573 },
+          "industrialCT": { "units": 3, "capacityMW": 717 },
+          "ct16MW": { "units": 6, "capacityMW": 96 },
+          "ic": { "units": 0, "capacityMW": 0 },
+          "wind": { "capacityMW": 955.81 },
+          "solar": { "capacityMW": 2701.69 },
+          "battery4hr": { "capacityMW": 1847.98, "storageMWh": 7391.92 }
+        }
+      }
+    },
+    {
+      "recordId": "rekha-pa-70re-iter1",
+      "provenance": {
+        "source": "rekha-consultant-study",
+        "generatedAt": "2026-06-10T00:00:00Z",
+        "notes": "Example row from PA (Low PV, Low WD) 70RE_Iter1 spreadsheet export."
+      },
+      "inputs": {
+        "region": "PA",
+        "solverIteration": "70RE_Iter1",
+        "systemParameters": {
+          "peakLoadMW": 1350,
+          "renewableEnergyTargetPct": 70,
+          "systemReliabilityTargetPct": 99.69,
+          "systemEueTargetMWh": 35927.4,
+          "renewableEnergyReferenceMWh": 11589476.8,
+          "loadFactorPct": 98
+        },
+        "timeSeries": {
+          "loadProfileId": "8760_load_shape_standard",
+          "solarProfileId": "8760_solar_pa_low_pv",
+          "windProfileId": "8760_wind_pa_low_wd"
+        },
+        "technologyConstraints": {
+          "combinedCycleGT": { "maxUnits": 1, "capacityMWPerUnit": 573 },
+          "industrialCT": { "maxUnits": 4 },
+          "ct16MW": { "maxUnits": 6 },
+          "ic": { "maxUnits": 1 },
+          "battery4hr": { "allowed": true }
+        },
+        "thermalAssumptions": {
+          "combinedCycleGT": { "eford": null },
+          "industrialCT": { "eford": null },
+          "ct35MW": { "eford": null },
+          "ct16MW": { "eford": null },
+          "aeroderivativeGT": { "eford": null },
+          "reciprocatingEngine": { "eford": null },
+          "fuelCell": { "eford": null }
+        }
+      },
+      "outputs": {
+        "baseCase": {
+          "totalSystemEueMWh": 5243.8,
+          "systemReliabilityPct": 99.95,
+          "loleDaysPerYear": 2.101,
+          "lolhHoursPerYear": 12.348,
+          "lolpPct": 0.14
+        },
+        "solver": {
+          "perfectCapacityAdjNeededMW": 275,
+          "systemEueAfterAdjMWh": 409.6,
+          "systemReliabilityAfterAdjPct": 100.0
+        },
+        "marginalElccPct1MW": {
+          "solar": null,
+          "wind": null,
+          "battery4hr": null,
+          "gt5PctEfor": null
+        },
+        "resourceMix": {
+          "combinedCycleGT": { "units": 1, "capacityMW": 573 },
+          "industrialCT": { "units": 4, "capacityMW": 956 },
+          "ct16MW": { "units": 0, "capacityMW": 0 },
+          "ic": { "units": 0, "capacityMW": 0 },
+          "wind": { "capacityMW": 471.92 },
+          "solar": { "capacityMW": 3236.32 },
+          "battery4hr": { "capacityMW": 1342.72, "storageMWh": 5370.88 }
+        }
+      }
+    },
+    {
+      "recordId": "rekha-az-70re-iter1",
+      "provenance": {
+        "source": "rekha-consultant-study",
+        "generatedAt": "2026-06-10T00:00:00Z",
+        "notes": "Example row from AZ (High PV, Low WD) 70RE_Iter1 spreadsheet export."
+      },
+      "inputs": {
+        "region": "AZ",
+        "solverIteration": "70RE_Iter1",
+        "systemParameters": {
+          "peakLoadMW": 1350,
+          "renewableEnergyTargetPct": 70,
+          "systemReliabilityTargetPct": 99.69,
+          "systemEueTargetMWh": 35927.4,
+          "renewableEnergyReferenceMWh": 11589476.8,
+          "loadFactorPct": 98
+        },
+        "timeSeries": {
+          "loadProfileId": "8760_load_shape_standard",
+          "solarProfileId": "8760_solar_az_high_pv",
+          "windProfileId": null
+        },
+        "technologyConstraints": {
+          "combinedCycleGT": { "maxUnits": 1, "capacityMWPerUnit": 573 },
+          "industrialCT": { "maxUnits": 4 },
+          "ct16MW": { "maxUnits": 6 },
+          "ic": { "maxUnits": 1 },
+          "battery4hr": { "allowed": true }
+        },
+        "thermalAssumptions": {
+          "combinedCycleGT": { "eford": null },
+          "industrialCT": { "eford": null },
+          "ct35MW": { "eford": null },
+          "ct16MW": { "eford": null },
+          "aeroderivativeGT": { "eford": null },
+          "reciprocatingEngine": { "eford": null },
+          "fuelCell": { "eford": null }
+        }
+      },
+      "outputs": {
+        "baseCase": {
+          "totalSystemEueMWh": 8576.7,
+          "systemReliabilityPct": 99.92,
+          "loleDaysPerYear": 3.435,
+          "lolhHoursPerYear": 20.172,
+          "lolpPct": 0.23
+        },
+        "solver": {
+          "perfectCapacityAdjNeededMW": 337.5,
+          "systemEueAfterAdjMWh": 373.42,
+          "systemReliabilityAfterAdjPct": 100.0
+        },
+        "marginalElccPct1MW": {
+          "solar": null,
+          "wind": null,
+          "battery4hr": null,
+          "gt5PctEfor": null
+        },
+        "resourceMix": {
+          "combinedCycleGT": { "units": 1, "capacityMW": 573 },
+          "industrialCT": { "units": 4, "capacityMW": 956 },
+          "ct16MW": { "units": 2, "capacityMW": 32 },
+          "ic": { "units": 1, "capacityMW": 10 },
+          "wind": { "capacityMW": 0 },
+          "solar": { "capacityMW": 2812.39 },
+          "battery4hr": { "capacityMW": 1232.45, "storageMWh": 4929.8 }
+        }
+      }
+    },
+    {
+      "recordId": "rekha-id-70re-iter1",
+      "provenance": {
+        "source": "rekha-consultant-study",
+        "generatedAt": "2026-06-10T00:00:00Z",
+        "notes": "Example row from ID (Low PV, High WD) 70RE_Iter1 spreadsheet export."
+      },
+      "inputs": {
+        "region": "ID",
+        "solverIteration": "70RE_Iter1",
+        "systemParameters": {
+          "peakLoadMW": 1350,
+          "renewableEnergyTargetPct": 70,
+          "systemReliabilityTargetPct": 99.69,
+          "systemEueTargetMWh": 35927.4,
+          "renewableEnergyReferenceMWh": 11589476.8,
+          "loadFactorPct": 98
+        },
+        "timeSeries": {
+          "loadProfileId": "8760_load_shape_standard",
+          "solarProfileId": "8760_solar_id_low_pv",
+          "windProfileId": "8760_wind_id_high_wd"
+        },
+        "technologyConstraints": {
+          "combinedCycleGT": { "maxUnits": 1, "capacityMWPerUnit": 573 },
+          "industrialCT": { "maxUnits": 4 },
+          "ct16MW": { "maxUnits": 6 },
+          "ic": { "maxUnits": 1 },
+          "battery4hr": { "allowed": true }
+        },
+        "thermalAssumptions": {
+          "combinedCycleGT": { "eford": null },
+          "industrialCT": { "eford": null },
+          "ct35MW": { "eford": null },
+          "ct16MW": { "eford": null },
+          "aeroderivativeGT": { "eford": null },
+          "reciprocatingEngine": { "eford": null },
+          "fuelCell": { "eford": null }
+        }
+      },
+      "outputs": {
+        "baseCase": {
+          "totalSystemEueMWh": 11046.7,
+          "systemReliabilityPct": 99.9,
+          "loleDaysPerYear": 4.428,
+          "lolhHoursPerYear": 27.528,
+          "lolpPct": 0.31
+        },
+        "solver": {
+          "perfectCapacityAdjNeededMW": 325,
+          "systemEueAfterAdjMWh": 399.33,
+          "systemReliabilityAfterAdjPct": 100.0
+        },
+        "marginalElccPct1MW": {
+          "solar": null,
+          "wind": null,
+          "battery4hr": null,
+          "gt5PctEfor": null
+        },
+        "resourceMix": {
+          "combinedCycleGT": { "units": 1, "capacityMW": 573 },
+          "industrialCT": { "units": 3, "capacityMW": 717 },
+          "ct16MW": { "units": 3, "capacityMW": 48 },
+          "ic": { "units": 0, "capacityMW": 0 },
+          "wind": { "capacityMW": 1188.4 },
+          "solar": { "capacityMW": 2813.67 },
+          "battery4hr": { "capacityMW": 1508.06, "storageMWh": 6032.24 }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "recordId": "sample-hyperscale-texas-001",
+  "provenance": {
+    "source": "synthetic",
+    "generatedAt": "2026-06-01T12:00:00Z",
+    "notes": "Schema validation sample — replace with MAPS/capacity-expansion exports."
+  },
+  "inputs": {
+    "loadMW": 1300,
+    "reliabilityTarget": 99.999,
+    "minCfePercent": 60,
+    "gridConnectionMode": "grid-connected",
+    "technologies": ["heavyDutyGT", "aeroderivativeGT", "solar", "wind", "battery"],
+    "stateId": "texas",
+    "cityId": "dallas_tx",
+    "optimizationObjective": "lowestCost"
+  },
+  "outputs": {
+    "summary": "Example training record output placeholder.",
+    "totalInstalledMW": 1850,
+    "achievedReliability": 99.9992,
+    "achievedCfePercent": 63,
+    "lcoe": 81,
+    "carbonIntensityLbPerMWh": 365,
+    "annualGenerationGWh": 8200,
+    "supplyMix": []
+  }
+}

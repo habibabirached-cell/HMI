@@ -1,0 +1,5 @@
+record_id,region,base_total_system_eue_mwh,base_system_reliability_pct,base_lole_days_per_year,base_lolh_hours_per_year,base_lolp_pct,perfect_capacity_adj_needed_mw,adj_system_eue_mwh,adj_system_reliability_pct,ccgt_units,ccgt_capacity_mw,industrial_ct_units,industrial_ct_capacity_mw,ct_16mw_units,ct_16mw_capacity_mw,ic_units,ic_capacity_mw,wind_capacity_mw,solar_capacity_mw,battery_capacity_mw,battery_storage_mwh,marginal_elcc_solar_pct,marginal_elcc_wind_pct,marginal_elcc_battery_4hr_pct,marginal_elcc_gt_5pct_efor_pct
+rekha-tx-70re-iter4,TX,2009.1,99.98,0.811,4.756,0.05,175,271.05,100,1,573,3,717,6,96,0,0,955.81,2701.69,1847.98,7391.92,,,,
+rekha-pa-70re-iter1,PA,5243.8,99.95,2.101,12.348,0.14,275,409.6,100,1,573,4,956,0,0,0,0,471.92,3236.32,1342.72,5370.88,,,,
+rekha-az-70re-iter1,AZ,8576.7,99.92,3.435,20.172,0.23,337.5,373.42,100,1,573,4,956,2,32,1,10,0,2812.39,1232.45,4929.8,,,,
+rekha-id-70re-iter1,ID,11046.7,99.9,4.428,27.528,0.31,325,399.33,100,1,573,3,717,3,48,0,0,1188.4,2813.67,1508.06,6032.24,,,,

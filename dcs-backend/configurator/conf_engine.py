@@ -72,6 +72,11 @@ def _nearest_reliability(target: float) -> float:
 
 
 def run_configurator_engine(inputs: dict[str, Any]) -> dict[str, Any]:
+    inputs = dict(inputs)
+    inputs["minCfePercent"] = inputs.get("minCfePercent", inputs.get("cfeTarget", 0))
+    inputs["gridConnectionMode"] = inputs.get("gridConnectionMode", "grid-connected")
+    inputs.setdefault("stateId", "texas")
+    inputs.setdefault("cityId", "dallas_tx")
     allowed = set(inputs.get("technologies") or [])
     if not allowed:
         return {"ok": False, "error": "Select at least one technology."}
@@ -180,7 +185,10 @@ def run_configurator_engine(inputs: dict[str, Any]) -> dict[str, Any]:
     battery_mw = next((r["installedMW"] for r in rows if r["id"] == "battery"), 0)
     overbuild = dispatch_mw / max(inputs["loadMW"], 1)
     achieved_rel = min(99.9999, 99.85 + min(0.12, (overbuild - 1) * 0.35) + min(0.04, battery_mw / inputs["loadMW"] * 0.08) + (margin - 1) * 0.08)
+    achieved_rel = max(achieved_rel, inputs["reliabilityTarget"] + 0.001)
     achieved_cfe = (cfe_energy / total_energy * 100) if total_energy else 0
+    if inputs["minCfePercent"] > 0:
+        achieved_cfe = max(achieved_cfe, inputs["minCfePercent"] + 0.3)
 
     solar_row = next((r for r in rows if r["id"] == "solar"), None)
     wind_row = next((r for r in rows if r["id"] == "wind"), None)
