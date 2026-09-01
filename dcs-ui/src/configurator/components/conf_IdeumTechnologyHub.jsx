@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Bess3DViewer from '../../components/Canvas/Schematics/Bess3DViewer';
 import GasTurbine3DViewer from '../../components/Canvas/Schematics/GasTurbine3DViewer';
+import WindTurbine3DViewer from '../../components/Canvas/Schematics/WindTurbine3DViewer';
 import Ideum05Nav3DViewer from '../../components/IdeumKiosk/Ideum05Nav3DViewer';
 import { CONFIGURATOR_TECHNOLOGIES } from '../../configuratorData/conf_technologies';
 import { getBess3DModelUrl } from '../../utils/bess3dLayout';
@@ -18,6 +19,10 @@ const HUB_MODEL_URLS = {
   battery: getBess3DModelUrl(),
   aeroderivativeGT: getGasTurbine3DModelUrl(),
   heavyDutyGT: `${process.env.PUBLIC_URL || ''}/models/7HA.glb`,
+  wind: `${process.env.PUBLIC_URL || ''}/models/windTurbineField.glb`,
+  solar: `${process.env.PUBLIC_URL || ''}/models/solar/model.gltf`,
+  fuelCell: `${process.env.PUBLIC_URL || ''}/models/FuelCell/model.gltf`,
+  recipEngine: `${process.env.PUBLIC_URL || ''}/models/recipEngine/model.gltf`,
 };
 
 /** Hub card metadata — model3d for in-card WebGL previews where available. */
@@ -45,21 +50,30 @@ const IDEUM_HUB_TECH_META = {
     slot: 'right-top',
     category: 'Renewables',
     modelName: 'Solar PV',
+    model3d: 'turbine',
+    model3dUrl: HUB_MODEL_URLS.solar,
   },
   wind: {
     slot: 'right-mid',
     category: 'Renewables',
     modelName: 'Onshore Wind',
+    model3d: 'wind',
+    model3dUrl: HUB_MODEL_URLS.wind,
   },
   fuelCell: {
     slot: 'right-bottom',
     category: 'Fuel Cell',
     modelName: 'Solid-oxide FC',
+    model3d: 'turbine',
+    model3dUrl: HUB_MODEL_URLS.fuelCell,
+    model3dFitScale: 0.594,
   },
   recipEngine: {
     slot: 'bottom',
     category: 'Reciprocating Engine',
     modelName: 'Genset',
+    model3d: 'turbine',
+    model3dUrl: HUB_MODEL_URLS.recipEngine,
   },
 };
 
@@ -134,6 +148,14 @@ function TechCard3DPreview({ tech, meta }) {
           height={size.h}
           modelUrl={meta.model3dUrl || HUB_MODEL_URLS.aeroderivativeGT}
           turntableOnly
+          fitScale={meta.model3dFitScale}
+        />
+      )}
+      {ready && meta.model3d === 'wind' && (
+        <WindTurbine3DViewer
+          width={size.w}
+          height={size.h}
+          modelUrl={meta.model3dUrl || HUB_MODEL_URLS.wind}
         />
       )}
       {!meta.model3d && <TechPlaceholderArt icon={tech.icon} />}

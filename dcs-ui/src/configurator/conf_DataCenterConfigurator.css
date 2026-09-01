@@ -240,7 +240,7 @@
     "lm  left  ctr   right rm"
     ".   .     .     .     ."
     ".   .     .     .     .";
-  grid-template-columns: minmax(118px, 1fr) minmax(92px, 106px) minmax(150px, 1.15fr) minmax(92px, 106px) minmax(118px, 1fr);
+  grid-template-columns: minmax(118px, 1fr) minmax(100px, 118px) minmax(150px, 1.15fr) minmax(100px, 118px) minmax(118px, 1fr);
   grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 8px 10px;
   min-height: 0;
@@ -304,13 +304,13 @@
 .conf-ideum-corridor--left {
   padding: 10px 5px 10px 3px;
   width: 100%;
-  max-width: 100px;
+  max-width: 114px;
   justify-self: center;
 }
 
 .conf-ideum-corridor--right {
   width: 100%;
-  max-width: 100px;
+  max-width: 114px;
   justify-self: center;
   padding: 10px 3px 10px 5px;
   box-sizing: border-box;
@@ -331,24 +331,24 @@
 }
 
 .conf-ideum-corridor-slider-controls--right {
-  grid-template-columns: 76px 10px;
+  grid-template-columns: 88px 10px;
 }
 
 .conf-ideum-corridor-slider-controls--left {
-  grid-template-columns: 10px 76px;
+  grid-template-columns: 10px 88px;
 }
 
 .conf-ideum-corridor-value {
   flex: 0 0 auto;
   width: 100%;
   text-align: center;
-  font-size: clamp(10px, 0.95vw, 13px);
+  font-size: clamp(11px, 1.05vw, 14px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--conf-evergreen);
   line-height: 1.15;
   letter-spacing: -0.03em;
-  padding: 5px 4px;
+  padding: 6px 5px;
   border-radius: 7px;
   border: 1.5px solid rgba(0, 94, 96, 0.2);
   background: linear-gradient(180deg, rgba(0, 94, 96, 0.07) 0%, rgba(0, 94, 96, 0.03) 100%);
@@ -428,21 +428,18 @@
   flex: 0 0 auto;
 }
 
-.conf-ideum-corridor--right .conf-ideum-corridor-btn {
+.conf-ideum-corridor--right .conf-ideum-corridor-btn,
+.conf-ideum-corridor--right .conf-ideum-corridor-btn--sm {
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
   font-size: clamp(11px, 1.05vw, 14px);
   font-weight: 800;
-  padding: 8px 2px;
+  padding: 8px 3px;
   border-width: 2px;
   border-radius: 8px;
   line-height: 1.1;
-}
-
-.conf-ideum-corridor--right .conf-ideum-corridor-btn--sm {
-  font-size: clamp(11px, 1.05vw, 14px);
-  padding: 8px 2px;
+  letter-spacing: -0.02em;
 }
 
 .conf-ideum-corridor--left .conf-ideum-corridor-btn--active,
@@ -472,12 +469,12 @@
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
-  font-size: clamp(9px, 0.85vw, 11px);
-  padding: 6px 1px;
+  font-size: clamp(11px, 1.05vw, 14px);
+  padding: 8px 3px;
   border-width: 2px;
   border-radius: 8px;
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 /* Bottom tier cards live inside .conf-ideum-tech-hub__bottom-tier */

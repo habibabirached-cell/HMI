@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadThreeGltfRuntime } from '../../../utils/threeGltfRuntime';
 
-function frameObject(THREE, object, camera) {
+function frameObject(THREE, object, camera, fitScale = 0.54) {
   const box = new THREE.Box3().setFromObject(object);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
 
-  // Origin at model center so orbit + lookAt stay aligned with the viewport.
   object.position.sub(center);
   object.updateMatrixWorld(true);
 
   const maxDim = Math.max(size.x, size.y, size.z, 0.001);
   const fitDist = maxDim / (2 * Math.tan((camera.fov * Math.PI) / 360));
-  const dist = fitDist * 0.54;
+  const dist = 1.8; // fitDist * fitScale;
 
   camera.position.set(dist * 0.72, dist * 0.38, dist * 0.88);
   camera.lookAt(0, 0, 0);
@@ -41,13 +40,13 @@ const COLOR_CYCLE_TURNS = 1;
 /**
  * WebGL preview of gasT3.glb — rendered in an HTML overlay (GasTurbine3DOverlays).
  */
-export default function GasTurbine3DViewer({ width, height, modelUrl, turntableOnly = false }) {
+export default function GasTurbine3DViewer({ width, height, modelUrl, turntableOnly = false, fitScale = 0.54 }) {
   const hostRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host || (width < 8) || (height < 8) || !modelUrl) return undefined;
+    if (!host || width <= 7 || height <= 7 || !modelUrl) return undefined;
 
     setLoadError(null);
 
@@ -114,7 +113,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
             turntable = new THREE.Group();
             turntable.add(modelRoot);
             scene.add(turntable);
-            frameObject(THREE, turntable, camera);
+            frameObject(THREE, turntable, camera, fitScale);
           },
           undefined,
           (err) => {
@@ -137,7 +136,6 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
               modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
               shaftSpinAngle += SHAFT_SPIN;
 
-              // Smooth blue/green accent each shaft revolution (cosine ease).
               const mix = 0.5 - 0.5 * Math.cos(shaftSpinAngle / COLOR_CYCLE_TURNS);
               accentColor.copy(blueColor).lerp(greenColor, mix);
               fillLight.color.copy(accentColor);
@@ -176,7 +174,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
         });
       }
     };
-  }, [width, height, modelUrl, turntableOnly]);
+  }, [width, height, modelUrl, turntableOnly, fitScale]);
 
   return (
     <div
@@ -190,9 +188,9 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
         position: 'relative',
       }}
     >
-      {loadError && (
+      {loadError ? (
         <div className="gas-turbine-3d-viewer__error">{loadError}</div>
-      )}
+      ) : null}
     </div>
   );
 }
