@@ -175,8 +175,45 @@
 }
 
 .conf-page-header--ideum {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
   padding: 10px 16px 8px;
   min-height: 0;
+}
+
+.conf-page-header__ideum-start {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  min-width: 0;
+}
+
+.conf-page-header__titles--center {
+  justify-self: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.conf-page-header--ideum .conf-page-header__actions {
+  justify-self: end;
+}
+
+.conf-page-header--ideum-snapshot {
+  display: flex;
+  justify-content: center;
+}
+
+.conf-page-header--ideum-snapshot .conf-page-header__titles--center {
+  justify-self: center;
+}
+
+.conf-page-header--ideum .ideum05-nav-back {
+  position: static;
+  left: auto;
+  top: auto;
+  flex-shrink: 0;
 }
 
 .conf-page-header--ideum h1 {
@@ -196,7 +233,7 @@
 .conf-ideum-grid {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 6px;
   height: 100%;
   min-height: 0;
@@ -214,14 +251,21 @@
   flex-direction: column;
 }
 
-.conf-ideum-block--preset { grid-column: 1; grid-row: 2; }
-.conf-ideum-block--preview { grid-column: 1; grid-row: 3; }
+.conf-ideum-block--preview { grid-column: 1; grid-row: 2; }
 .conf-ideum-block--actions {
   grid-column: 1;
-  grid-row: 4;
+  grid-row: 3;
   display: flex;
   gap: 12px;
   align-items: stretch;
+}
+
+.conf-ideum-select--actions {
+  flex: 0 1 240px;
+  width: auto;
+  min-width: 0;
+  font-size: clamp(14px, 1.4vw, 18px);
+  padding: 12px 14px;
 }
 
 /* Ideum technology hub — donut: tech ring + corridor + 3D center */
@@ -240,7 +284,7 @@
     "lm  left  ctr   right rm"
     ".   .     .     .     ."
     ".   .     .     .     .";
-  grid-template-columns: minmax(118px, 1fr) minmax(100px, 118px) minmax(150px, 1.15fr) minmax(100px, 118px) minmax(118px, 1fr);
+  grid-template-columns: minmax(118px, 1fr) minmax(108px, 148px) minmax(150px, 1.15fr) minmax(108px, 148px) minmax(118px, 1fr);
   grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 8px 10px;
   min-height: 0;
@@ -301,19 +345,238 @@
   min-height: 0;
 }
 
+.conf-ideum-corridor--left .conf-ideum-corridor-rail,
+.conf-ideum-corridor--right .conf-ideum-corridor-rail {
+  flex: 1;
+  min-height: 0;
+}
+
 .conf-ideum-corridor--left {
-  padding: 10px 5px 10px 3px;
+  padding: 8px 5px 10px 3px;
   width: 100%;
-  max-width: 114px;
+  max-width: 148px;
   justify-self: center;
+  overflow: visible;
 }
 
 .conf-ideum-corridor--right {
   width: 100%;
-  max-width: 114px;
+  max-width: 148px;
   justify-self: center;
-  padding: 10px 3px 10px 5px;
+  padding: 8px 3px 10px 5px;
   box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Corridor rail — diagonal title, arrow value, bottom-up presets */
+.conf-ideum-corridor-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.conf-ideum-corridor-label-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 14px;
+  padding: 2px 1px 6px;
+  flex-shrink: 0;
+  overflow: hidden;
+  z-index: 2;
+  container-type: inline-size;
+}
+
+.conf-ideum-title-3d {
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: #007578;
+  text-shadow:
+    1px 1px 0 rgba(0, 68, 70, 0.95),
+    2px 2px 0 rgba(0, 58, 60, 0.9),
+    3px 3px 0 rgba(0, 48, 50, 0.84),
+    4px 4px 0 rgba(0, 38, 40, 0.74),
+    5px 6px 14px rgba(0, 42, 44, 0.48);
+  -webkit-text-stroke: 0.45px rgba(0, 38, 40, 0.5);
+}
+
+.conf-ideum-corridor-label--diagonal {
+  position: static;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: clamp(21px, 8.5cqi, 13px);
+  text-align: center;
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.conf-ideum-corridor-rail--right .conf-ideum-corridor-label--diagonal {
+  text-align: center;
+}
+
+.conf-ideum-corridor-body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  min-height: 0;
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.conf-ideum-corridor-body:focus-visible {
+  outline: 2px solid rgba(0, 94, 96, 0.45);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.conf-ideum-corridor-body--left {
+  flex-direction: row;
+}
+
+.conf-ideum-corridor-body--right {
+  flex-direction: row-reverse;
+}
+
+.conf-ideum-corridor-track-col {
+  position: relative;
+  flex: 0 0 40px;
+  min-height: 0;
+  align-self: stretch;
+  pointer-events: none;
+}
+
+.conf-ideum-corridor-track-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(0, 94, 96, 0.14) 0%, rgba(0, 94, 96, 0.06) 100%);
+  box-shadow: inset 0 1px 3px rgba(15, 35, 52, 0.14);
+  pointer-events: none;
+}
+
+.conf-ideum-corridor-arrow {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(50%);
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.conf-ideum-corridor-arrow--left {
+  flex-direction: row;
+}
+
+.conf-ideum-corridor-arrow--right {
+  flex-direction: row-reverse;
+}
+
+.conf-ideum-corridor-arrow__value {
+  font-size: clamp(16px, 1.6vw, 20px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--conf-evergreen);
+  white-space: nowrap;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 4px rgba(0, 94, 96, 0.18);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.conf-ideum-corridor-arrow__head {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.45))
+    drop-shadow(0 2px 4px rgba(0, 94, 96, 0.35));
+}
+
+.conf-ideum-corridor-arrow--left .conf-ideum-corridor-arrow__head {
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 22px solid var(--conf-evergreen);
+}
+
+.conf-ideum-corridor-arrow--right .conf-ideum-corridor-arrow__head {
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-right: 22px solid var(--conf-evergreen);
+}
+
+.conf-ideum-corridor-stack--bottom-up {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.conf-ideum-corridor-btn__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(88, 220, 200, 0.62) 0%,
+    rgba(0, 120, 118, 0.78) 45%,
+    rgba(0, 78, 80, 0.92) 100%
+  );
+  transition: height 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.conf-ideum-corridor-btn__fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  animation: conf-ideum-water-shimmer 2.2s ease-in-out infinite;
+}
+
+.conf-ideum-corridor-btn--filling .conf-ideum-corridor-btn__value {
+  color: #fff;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.35),
+    0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@keyframes conf-ideum-water-shimmer {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 0.9; transform: translateY(2px); }
+}
+
+.conf-ideum-corridor-value {
+  display: none;
 }
 
 .conf-ideum-corridor-slider-controls {
@@ -331,11 +594,11 @@
 }
 
 .conf-ideum-corridor-slider-controls--right {
-  grid-template-columns: 88px 10px;
+  grid-template-columns: 92px 34px;
 }
 
 .conf-ideum-corridor-slider-controls--left {
-  grid-template-columns: 10px 88px;
+  grid-template-columns: 34px 92px;
 }
 
 .conf-ideum-corridor-value {
@@ -388,7 +651,7 @@
 }
 
 .conf-ideum-corridor-slider--vertical {
-  width: 10px;
+  width: 34px;
   height: 100%;
   align-self: stretch;
   min-height: 0;
@@ -397,10 +660,81 @@
   writing-mode: vertical-lr;
   direction: rtl;
   accent-color: var(--conf-evergreen);
-  -webkit-appearance: slider-vertical;
-  appearance: slider-vertical;
   cursor: pointer;
   background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.conf-ideum-corridor-slider--vertical::-webkit-slider-runnable-track {
+  width: 12px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 94, 96, 0.14) 0%,
+    rgba(0, 94, 96, 0.08) 100%
+  );
+  box-shadow: inset 0 1px 2px rgba(15, 35, 52, 0.12);
+}
+
+.conf-ideum-corridor-slider--vertical::-moz-range-track {
+  width: 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 94, 96, 0.12);
+  box-shadow: inset 0 1px 2px rgba(15, 35, 52, 0.12);
+}
+
+.conf-ideum-corridor-slider--vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 22px;
+  margin-left: -7px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.conf-ideum-corridor-slider-controls--left .conf-ideum-corridor-slider--vertical::-webkit-slider-thumb {
+  background: var(--conf-evergreen);
+  clip-path: polygon(0 22%, 58% 22%, 58% 0, 100% 50%, 58% 100%, 58% 78%, 0 78%);
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.22))
+    drop-shadow(0 3px 6px rgba(0, 94, 96, 0.35));
+}
+
+.conf-ideum-corridor-slider-controls--right .conf-ideum-corridor-slider--vertical::-webkit-slider-thumb {
+  background: var(--conf-evergreen);
+  clip-path: polygon(100% 22%, 42% 22%, 42% 0, 0 50%, 42% 100%, 42% 78%, 100% 78%);
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(-2px 2px 2px rgba(0, 0, 0, 0.22))
+    drop-shadow(0 3px 6px rgba(0, 94, 96, 0.35));
+}
+
+.conf-ideum-corridor-slider--vertical::-moz-range-thumb {
+  width: 26px;
+  height: 22px;
+  border: none;
+  border-radius: 0;
+  background: var(--conf-evergreen);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.18),
+    0 4px 10px rgba(0, 94, 96, 0.35);
+  cursor: pointer;
+}
+
+.conf-ideum-corridor-slider-controls--left .conf-ideum-corridor-slider--vertical::-moz-range-thumb {
+  clip-path: polygon(0 22%, 58% 22%, 58% 0, 100% 50%, 58% 100%, 58% 78%, 0 78%);
+}
+
+.conf-ideum-corridor-slider-controls--right .conf-ideum-corridor-slider--vertical::-moz-range-thumb {
+  clip-path: polygon(100% 22%, 42% 22%, 42% 0, 0 50%, 42% 100%, 42% 78%, 100% 78%);
 }
 
 .conf-ideum-corridor-slider-controls--right .conf-ideum-corridor-slider--vertical {
@@ -415,8 +749,9 @@
   justify-self: start;
 }
 
-.conf-ideum-corridor--left .conf-ideum-corridor-label,
-.conf-ideum-corridor--right .conf-ideum-corridor-label {
+/* Legacy vertical labels — not used by IdeumCorridorRail diagonal titles */
+.conf-ideum-corridor--left .conf-ideum-corridor-label:not(.conf-ideum-corridor-label--diagonal),
+.conf-ideum-corridor--right .conf-ideum-corridor-label:not(.conf-ideum-corridor-label--diagonal) {
   font-size: clamp(10px, 1vw, 13px);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -433,20 +768,31 @@
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
-  font-size: clamp(11px, 1.05vw, 14px);
-  font-weight: 800;
-  padding: 8px 3px;
-  border-width: 2px;
-  border-radius: 8px;
-  line-height: 1.1;
+  padding: 8px 4px;
+  border: 2px solid rgba(0, 0, 0, 0.88);
+  border-radius: 10px;
+  line-height: 1;
   letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #ffffff 0%, #edf1f4 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 0, 0, 0.16),
+    0 4px 8px rgba(15, 35, 52, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
 }
 
 .conf-ideum-corridor--left .conf-ideum-corridor-btn--active,
 .conf-ideum-corridor--right .conf-ideum-corridor-btn--active {
-  border-color: var(--conf-evergreen);
-  background: var(--conf-evergreen-light);
+  border-color: rgba(0, 0, 0, 0.88);
+  background: linear-gradient(180deg, #f4fbfb 0%, #dcefee 100%);
   color: var(--conf-evergreen);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 94, 96, 0.2),
+    0 5px 10px rgba(0, 94, 96, 0.14);
 }
 
 .conf-ideum-corridor--left .conf-ideum-corridor-stack {
@@ -469,12 +815,29 @@
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
-  font-size: clamp(11px, 1.05vw, 14px);
-  padding: 8px 3px;
-  border-width: 2px;
-  border-radius: 8px;
-  line-height: 1.1;
+  padding: 8px 4px;
+  border: 2px solid rgba(0, 0, 0, 0.88);
+  border-radius: 10px;
+  line-height: 1;
   letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #ffffff 0%, #edf1f4 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 0, 0, 0.16),
+    0 4px 8px rgba(15, 35, 52, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
+}
+
+.conf-ideum-corridor--left .conf-ideum-corridor-btn:active,
+.conf-ideum-corridor--right .conf-ideum-corridor-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 0 0 rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(15, 35, 52, 0.08);
 }
 
 /* Bottom tier cards live inside .conf-ideum-tech-hub__bottom-tier */
@@ -483,7 +846,7 @@
   height: 100%;
 }
 
-.conf-ideum-corridor-label {
+.conf-ideum-corridor-label:not(.conf-ideum-corridor-label--diagonal) {
   font-size: clamp(11px, 1.1vw, 14px);
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -522,27 +885,85 @@
 }
 
 .conf-ideum-corridor-btn {
-  border: 2px solid var(--conf-border);
-  border-radius: 8px;
-  background: #fff;
-  font-size: clamp(12px, 1.2vw, 16px);
-  font-weight: 800;
-  padding: 7px 8px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 0, 0, 0.88);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #edf1f4 100%);
+  padding: 8px 6px;
   cursor: pointer;
-  line-height: 1.1;
   text-align: center;
   min-width: 0;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 0, 0, 0.16),
+    0 4px 8px rgba(15, 35, 52, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
+}
+
+.conf-ideum-corridor-btn__value {
+  display: block;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #1b2430;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.98),
+    0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 2px 1px rgba(0, 0, 0, 0.1),
+    0 3px 5px rgba(0, 94, 96, 0.16);
+}
+
+.conf-ideum-corridor-btn--size-xl .conf-ideum-corridor-btn__value {
+  font-size: clamp(20px, 1.95vw, 26px);
+}
+
+.conf-ideum-corridor-btn--size-lg .conf-ideum-corridor-btn__value {
+  font-size: clamp(17px, 1.65vw, 22px);
+}
+
+.conf-ideum-corridor-btn--size-md .conf-ideum-corridor-btn__value {
+  font-size: clamp(15px, 1.45vw, 19px);
+}
+
+.conf-ideum-corridor-btn--size-sm .conf-ideum-corridor-btn__value {
+  font-size: clamp(13px, 1.25vw, 17px);
+}
+
+.conf-ideum-corridor-btn--size-xs .conf-ideum-corridor-btn__value {
+  font-size: clamp(11px, 1.05vw, 14px);
 }
 
 .conf-ideum-corridor-btn--sm {
-  font-size: clamp(11px, 1.05vw, 14px);
-  padding: 6px 6px;
+  padding: 8px 4px;
 }
 
 .conf-ideum-corridor-btn--active {
-  border-color: var(--conf-evergreen);
-  background: var(--conf-evergreen-light);
+  border-color: rgba(0, 0, 0, 0.88);
+  background: linear-gradient(180deg, #f4fbfb 0%, #dcefee 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 94, 96, 0.2),
+    0 5px 10px rgba(0, 94, 96, 0.14);
+}
+
+.conf-ideum-corridor-btn--active .conf-ideum-corridor-btn__value {
   color: var(--conf-evergreen);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95),
+    0 -1px 0 rgba(0, 94, 96, 0.18),
+    0 2px 2px rgba(0, 94, 96, 0.22),
+    0 4px 6px rgba(0, 94, 96, 0.2);
 }
 
 .conf-ideum-corridor-slider {
@@ -732,7 +1153,7 @@
 .conf-ideum-tech-card__body {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 3px;
+  gap: 8px;
   flex: 1;
   min-height: 0;
   align-items: stretch;
@@ -756,64 +1177,131 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 16px;
   width: max-content;
   max-width: 100%;
   min-width: 0;
   min-height: 0;
   flex-shrink: 0;
+  padding: 2px 0;
 }
 
 .conf-ideum-tech-pref {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 14px;
   width: max-content;
   max-width: 100%;
-  border: none;
-  background: transparent;
-  padding: 2px 0;
+  min-height: 58px;
+  padding: 14px 18px;
+  border: 1px solid rgba(15, 35, 52, 0.12);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #edf1f4 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(15, 35, 52, 0.1),
+    0 5px 10px rgba(15, 35, 52, 0.08);
   cursor: pointer;
   text-align: left;
-  min-height: 0;
+  touch-action: manipulation;
+  transition:
+    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease;
+}
+
+.conf-ideum-tech-pref:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 3px 0 rgba(15, 35, 52, 0.11),
+    0 8px 14px rgba(15, 35, 52, 0.11);
+}
+
+.conf-ideum-tech-pref:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 0 0 rgba(15, 35, 52, 0.08),
+    0 2px 4px rgba(15, 35, 52, 0.07);
 }
 
 .conf-ideum-tech-pref__box {
   flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--conf-border);
-  border-radius: 3px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(15, 35, 52, 0.18);
+  border-radius: 6px;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--conf-evergreen);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 3px rgba(15, 35, 52, 0.12);
+  transform-origin: center center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .conf-ideum-tech-pref__label {
-  font-size: clamp(10px, 1vw, 13px);
+  font-size: clamp(15px, 1.45vw, 19px);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.25;
   color: var(--conf-text);
   white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .conf-ideum-tech-pref--locked {
   cursor: default;
-  opacity: 0.95;
+  opacity: 0.96;
+  background: linear-gradient(180deg, #f8fafb 0%, #e9eef2 100%);
+}
+
+.conf-ideum-tech-pref--checked,
+.conf-ideum-tech-pref--locked {
+  border-color: rgba(0, 94, 96, 0.28);
+  background: linear-gradient(180deg, #f4fbfb 0%, #e4f3f3 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 0 rgba(0, 94, 96, 0.16),
+    0 5px 10px rgba(0, 94, 96, 0.12);
 }
 
 .conf-ideum-tech-pref--checked .conf-ideum-tech-pref__box,
 .conf-ideum-tech-pref--locked .conf-ideum-tech-pref__box {
   border-color: var(--conf-evergreen);
-  background: var(--conf-evergreen-light);
+  background: linear-gradient(180deg, #ffffff 0%, #d9f0f0 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 4px rgba(0, 94, 96, 0.22);
 }
 
 .conf-ideum-tech-pref--checked .conf-ideum-tech-pref__label {
   color: var(--conf-evergreen);
+}
+
+.conf-ideum-tech-pref--pop .conf-ideum-tech-pref__box {
+  animation: conf-ideum-pref-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes conf-ideum-pref-pop {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.55);
+  }
+  72% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .conf-ideum-tech-card__titles {
@@ -875,15 +1363,15 @@
   padding: 12px 14px 10px;
   border-bottom: 1px solid var(--conf-border);
   background: linear-gradient(180deg, #fff 0%, #f4f8f9 100%);
+  container-type: inline-size;
 }
 
 .conf-ideum-tech-hub__center-eyebrow {
   display: block;
-  font-size: clamp(13px, 1.3vw, 17px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--conf-evergreen);
+  font-size: clamp(14px, 7.5cqi, 24px);
+  text-align: center;
+  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .conf-ideum-hub-load-editor {
@@ -933,21 +1421,108 @@
 .conf-ideum-hub-load-slider {
   display: block;
   width: 100%;
-  margin: 8px 0 0;
+  height: 34px;
+  margin: 10px 0 0;
   accent-color: var(--conf-evergreen);
+  cursor: pointer;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.conf-ideum-hub-load-slider::-webkit-slider-runnable-track {
+  height: 12px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    rgba(0, 94, 96, 0.14) 0%,
+    rgba(0, 94, 96, 0.08) 100%
+  );
+  box-shadow: inset 0 1px 2px rgba(15, 35, 52, 0.12);
+}
+
+.conf-ideum-hub-load-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -8px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--conf-evergreen);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.18),
+    0 4px 10px rgba(0, 94, 96, 0.35);
+  cursor: pointer;
+}
+
+.conf-ideum-hub-load-slider::-moz-range-track {
+  height: 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 94, 96, 0.12);
+  box-shadow: inset 0 1px 2px rgba(15, 35, 52, 0.12);
+}
+
+.conf-ideum-hub-load-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--conf-evergreen);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.18),
+    0 4px 10px rgba(0, 94, 96, 0.35);
   cursor: pointer;
 }
 
 .conf-ideum-tech-hub__center-footer {
   flex: 1 1 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 10px;
   min-height: 56px;
   padding: 12px 14px;
   border-top: 1px solid var(--conf-border);
   background: linear-gradient(180deg, #f4f8f9 0%, #eef3f5 100%);
+}
+
+.conf-ideum-hub-site-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.conf-ideum-hub-site-bar__section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.conf-ideum-hub-site-bar__section--location {
+  flex: 1 1 auto;
+}
+
+.conf-ideum-hub-site-bar__divider {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 2px;
+  min-height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 94, 96, 0.06) 0%,
+    rgba(0, 94, 96, 0.34) 50%,
+    rgba(0, 94, 96, 0.06) 100%
+  );
+  box-shadow:
+    1px 0 0 rgba(255, 255, 255, 0.75),
+    -1px 0 0 rgba(0, 60, 62, 0.08);
 }
 
 .conf-ideum-hub-grid-label {
@@ -963,6 +1538,41 @@
   display: flex;
   flex-direction: row;
   gap: 8px;
+}
+
+.conf-ideum-hub-grid-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--conf-evergreen);
+  border-radius: 10px;
+  background: var(--conf-evergreen-light);
+  color: var(--conf-evergreen);
+  font-size: clamp(13px, 1.25vw, 17px);
+  font-weight: 800;
+  padding: 8px 14px;
+  line-height: 1.1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.conf-ideum-hub-location-select {
+  min-width: 108px;
+  font-size: clamp(13px, 1.25vw, 17px);
+  font-weight: 800;
+  padding: 8px 12px;
+  border: 2px solid var(--conf-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--conf-evergreen);
+  cursor: pointer;
+  line-height: 1.1;
+}
+
+.conf-ideum-hub-location-select:focus {
+  outline: none;
+  border-color: var(--conf-evergreen);
+  box-shadow: 0 0 0 2px rgba(0, 94, 96, 0.18);
 }
 
 .conf-ideum-hub-grid-btn {

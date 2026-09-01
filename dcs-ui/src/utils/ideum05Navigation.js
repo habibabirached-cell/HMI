@@ -39,7 +39,11 @@ export function getIdeum05NavScreen(stack) {
 }
 
 export function isIdeum05ControlsScreen(screenId) {
-  return screenId === 'controls';
+  return screenId === 'ref-200-mw';
+}
+
+export function isIdeum05ConfiguratorScreen(screenId) {
+  return screenId === 'configurator';
 }
 
 /** Root landing: two small cards left, featured card right (index maps to IDEUM05_NAV_CARD_LAYOUT). */
@@ -144,7 +148,7 @@ const SCREENS = {
       modelYOffset: 0.1,
       cameraPitchLift: 0.5,
       navFeatured: true,
-      navDrillTarget: 'controls',
+      navDrillTarget: 'ref-200-mw',
     },
     {
       id: 'controls',
@@ -152,12 +156,14 @@ const SCREENS = {
       preview: 'Interactive configuration',
       previewImageUrl: IDEUM05_NAV_IMAGE_URLS.dataCenterConfiguration,
       previewImageMatchGroup: IDEUM05_DATA_CENTERS_PREVIEW_MATCH_GROUP,
+      previewImageFill: true,
       previewImageHeightShare: IDEUM05_STACKED_PREVIEW_IMAGE_SHARE,
       modelUrl: IDEUM05_NAV_MODEL_URLS.outdoorDataCenter,
       modelFitScale: 0.78,
       modelYOffset: 0.54,
       cameraPitchLift: 0.42,
-      navDrillTarget: 'controls',
+      navTitleActive: true,
+      navDrillTarget: 'configurator',
     },
     {
       id: 'ref-500',
@@ -190,7 +196,7 @@ const DRILL_IDS = new Set([
   'data-centers',
   'island-microgrids',
   'industrial',
-  'controls',
+  'configurator',
 ]);
 
 export function getIdeum05NavCards(screenId) {

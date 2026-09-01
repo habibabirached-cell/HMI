@@ -195,6 +195,30 @@
   animation: ideum05-nav-title-shine 4.5s ease-in-out infinite;
 }
 
+/* Clickable nav cards (e.g. DC Configurator Ideum) */
+.ideum-component-btn__title--active {
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(0, 212, 168, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 168, 142, 0.98) 0%,
+    #007a72 22%,
+    #005e60 55%,
+    #004648 100%
+  );
+  border-bottom: 1px solid rgba(0, 212, 168, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32),
+    0 3px 12px rgba(0, 94, 96, 0.45);
+}
+
 @keyframes ideum05-nav-title-shine {
   0%,
   72%,
@@ -258,6 +282,11 @@
   background: #0a0e10;
 }
 
+.ideum05-nav-card__preview--fill {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
 .ideum05-nav-card__preview--stacked {
   flex-direction: column;
   align-items: stretch;
@@ -277,8 +306,13 @@
   line-height: 0;
 }
 
-.ideum05-nav-card__preview-image-strip .ideum05-nav-card__preview-image,
-.ideum05-nav-card__preview-image--stacked {
+.ideum05-nav-card__preview-image-strip--fill {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ideum05-nav-card__preview-image-strip .ideum05-nav-card__preview-image:not(.ideum05-nav-card__preview-image--fill-strip),
+.ideum05-nav-card__preview-image--stacked:not(.ideum05-nav-card__preview-image--fill-strip) {
   object-position: bottom center;
 }
 
@@ -312,6 +346,27 @@
   width: 100%;
   height: auto;
   max-height: 100%;
+}
+
+.ideum05-nav-card__preview-image--fill {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  object-position: center center;
+  border-radius: 0;
+}
+
+.ideum05-nav-card__preview-image--fill-strip {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: fill;
+  object-position: center center;
+  border-radius: 0;
+}
+
+.ideum05-nav-card__preview--image .ideum05-nav-card__preview-image--fill {
+  border-radius: 0;
 }
 
 .ideum05-nav-3d-viewer {

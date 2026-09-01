@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ConfIdeumTechnologyHub from './conf_IdeumTechnologyHub';
+import IdeumCorridorRail from './conf_IdeumCorridorRail';
 import { CONFIGURATOR_PRESET_SCENARIOS } from '../../configuratorData/conf_scenarios';
 import {
   RELIABILITY_LEVELS,
@@ -12,8 +13,6 @@ import {
 } from '../utils/conf_technologyPreferences';
 import { formatPercent } from '../utils/conf_formatters';
 
-const RELIABILITY_SLIDER_MIN = 990000;
-const RELIABILITY_SLIDER_MAX = 999999;
 const RELIABILITY_SLIDER_SCALE = 10000;
 
 function clampReliabilityTarget(value) {
@@ -22,21 +21,27 @@ function clampReliabilityTarget(value) {
   return Math.min(99.9999, Math.max(99, Math.round(n * RELIABILITY_SLIDER_SCALE) / RELIABILITY_SLIDER_SCALE));
 }
 
-function reliabilityTargetToSlider(value) {
-  return Math.round(clampReliabilityTarget(value) * RELIABILITY_SLIDER_SCALE);
-}
-
-function sliderToReliabilityTarget(value) {
-  return clampReliabilityTarget(Number(value) / RELIABILITY_SLIDER_SCALE);
-}
-
 function formatReliabilityDisplay(value) {
-  return formatPercent(clampReliabilityTarget(value), 3);
+  return formatPercent(clampReliabilityTarget(value), 4);
 }
 
 function reliabilityPresetActive(target, presetValue) {
   return Math.abs(clampReliabilityTarget(target) - presetValue) < 0.00005;
 }
+
+const RELIABILITY_PRESETS = RELIABILITY_LEVELS.map((level) => ({
+  value: level.value,
+  label: level.label,
+}));
+
+const CFE_PRESETS = MIN_CFE_PRESETS.map((pct) => ({
+  value: pct,
+  label: `${pct}%`,
+}));
+
+const IDEUM_LOCATION_OPTIONS = [
+  { id: 'texas', label: 'Texas', cityId: 'dallas_tx' },
+];
 
 const LOAD_MW_MIN = 50;
 const LOAD_MW_MAX = 2000;
@@ -126,9 +131,20 @@ export default function ConfIdeumInputPanel({
 }) {
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
   const reliabilityTarget = clampReliabilityTarget(inputs.reliabilityTarget ?? 99.99);
-  const reliabilitySliderValue = reliabilityTargetToSlider(reliabilityTarget);
-  const reliabilityDisplay = formatReliabilityDisplay(reliabilityTarget);
   const update = (patch) => onChange({ ...inputs, ...patch });
+
+  useEffect(() => {
+    if (inputs.gridConnectionMode !== GRID_CONNECTION_MODES.ISLANDED) {
+      update({ gridConnectionMode: GRID_CONNECTION_MODES.ISLANDED });
+    }
+  }, [inputs.gridConnectionMode]);
+
+  useEffect(() => {
+    const texas = IDEUM_LOCATION_OPTIONS[0];
+    if (inputs.stateId !== texas.id) {
+      update({ stateId: texas.id, cityId: texas.cityId });
+    }
+  }, [inputs.stateId]);
 
   const handlePreferencesChange = (technologyPreferences) => {
     update({
@@ -145,92 +161,66 @@ export default function ConfIdeumInputPanel({
   );
 
   const gridEditor = (
-    <>
-      <span className="conf-ideum-hub-grid-label">Grid</span>
-      <div className="conf-ideum-hub-grid-segment">
-        <button
-          type="button"
-          className={`conf-ideum-hub-grid-btn${inputs.gridConnectionMode === GRID_CONNECTION_MODES.GRID_CONNECTED ? ' conf-ideum-hub-grid-btn--active' : ''}`}
-          onClick={() => update({ gridConnectionMode: GRID_CONNECTION_MODES.GRID_CONNECTED })}
-        >
-          Connected
-        </button>
-        <button
-          type="button"
-          className={`conf-ideum-hub-grid-btn${inputs.gridConnectionMode === GRID_CONNECTION_MODES.ISLANDED ? ' conf-ideum-hub-grid-btn--active' : ''}`}
-          onClick={() => update({ gridConnectionMode: GRID_CONNECTION_MODES.ISLANDED })}
-        >
-          Islanded
-        </button>
+    <div className="conf-ideum-hub-site-bar">
+      <div className="conf-ideum-hub-site-bar__section conf-ideum-hub-site-bar__section--grid">
+        <span className="conf-ideum-hub-grid-label">Grid</span>
+        <span className="conf-ideum-hub-grid-badge" aria-current="true">Islanded</span>
       </div>
-    </>
+
+      <div className="conf-ideum-hub-site-bar__divider" aria-hidden="true" />
+
+      <div className="conf-ideum-hub-site-bar__section conf-ideum-hub-site-bar__section--location">
+        <label className="conf-ideum-hub-grid-label" htmlFor="conf-ideum-location">Location</label>
+        <select
+          id="conf-ideum-location"
+          className="conf-ideum-hub-location-select"
+          value={inputs.stateId || 'texas'}
+          onChange={(e) => {
+            const option = IDEUM_LOCATION_OPTIONS.find((entry) => entry.id === e.target.value);
+            update({
+              stateId: e.target.value,
+              cityId: option?.cityId ?? inputs.cityId,
+            });
+          }}
+        >
+          {IDEUM_LOCATION_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+    </div>
   );
 
   const corridor = {
     left: (
-      <>
-        <span className="conf-ideum-corridor-label">Reliability</span>
-        <div className="conf-ideum-corridor-slider-controls conf-ideum-corridor-slider-controls--left">
-          <input
-            type="range"
-            className="conf-ideum-corridor-slider conf-ideum-corridor-slider--vertical"
-            min={RELIABILITY_SLIDER_MIN}
-            max={RELIABILITY_SLIDER_MAX}
-            step={1}
-            value={reliabilitySliderValue}
-            onChange={(e) => update({ reliabilityTarget: sliderToReliabilityTarget(e.target.value) })}
-            aria-label="Reliability fine adjust"
-            aria-valuetext={reliabilityDisplay}
-          />
-          <div className="conf-ideum-corridor-value" aria-live="polite">
-            {reliabilityDisplay}
-          </div>
-          <div className="conf-ideum-corridor-stack">
-            {RELIABILITY_LEVELS.map((level) => (
-              <button
-                key={level.value}
-                type="button"
-                className={`conf-ideum-corridor-btn${reliabilityPresetActive(reliabilityTarget, level.value) ? ' conf-ideum-corridor-btn--active' : ''}`}
-                onClick={() => update({ reliabilityTarget: level.value })}
-              >
-                {level.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </>
+      <IdeumCorridorRail
+        side="left"
+        label="Reliability"
+        min={99}
+        max={99.9999}
+        step={0.0001}
+        value={reliabilityTarget}
+        onChange={(reliabilityTarget) => update({ reliabilityTarget: clampReliabilityTarget(reliabilityTarget) })}
+        presets={RELIABILITY_PRESETS}
+        formatDisplay={formatReliabilityDisplay}
+        isPresetActive={(presetValue) => reliabilityPresetActive(reliabilityTarget, presetValue)}
+        ariaLabel="Reliability fine adjust"
+      />
     ),
     right: (
-      <>
-        <span className="conf-ideum-corridor-label">Min CFE</span>
-        <div className="conf-ideum-corridor-slider-controls conf-ideum-corridor-slider-controls--right">
-          <div className="conf-ideum-corridor-value" aria-live="polite">
-            {Math.round(minCfe)}%
-          </div>
-          <div className="conf-ideum-corridor-stack">
-            {MIN_CFE_PRESETS.map((pct) => (
-              <button
-                key={pct}
-                type="button"
-                className={`conf-ideum-corridor-btn conf-ideum-corridor-btn--sm${minCfe === pct ? ' conf-ideum-corridor-btn--active' : ''}`}
-                onClick={() => update({ minCfePercent: pct, cfeTarget: pct })}
-              >
-                {pct}%
-              </button>
-            ))}
-          </div>
-          <input
-            type="range"
-            className="conf-ideum-corridor-slider conf-ideum-corridor-slider--vertical"
-            min={0}
-            max={100}
-            step={1}
-            value={minCfe}
-            onChange={(e) => update({ minCfePercent: Number(e.target.value), cfeTarget: Number(e.target.value) })}
-            aria-label="Min CFE fine adjust"
-          />
-        </div>
-      </>
+      <IdeumCorridorRail
+        side="right"
+        label="Min CFE"
+        min={0}
+        max={100}
+        step={1}
+        value={minCfe}
+        onChange={(next) => update({ minCfePercent: next, cfeTarget: next })}
+        presets={CFE_PRESETS}
+        formatDisplay={(v) => `${Math.round(v)}%`}
+        isPresetActive={(presetValue) => Math.round(minCfe) === presetValue}
+        ariaLabel="Min CFE fine adjust"
+      />
     ),
   };
 
@@ -238,7 +228,6 @@ export default function ConfIdeumInputPanel({
     <aside className="conf-input-panel conf-input-panel--ideum" data-screen-region="inputs">
       <div className="conf-ideum-grid">
         <section className="conf-ideum-block conf-ideum-block--tech">
-          <span className="conf-ideum-label">Technologies</span>
           <ConfIdeumTechnologyHub
             technologyPreferences={inputs.technologyPreferences || createDefaultTechnologyPreferences()}
             onPreferencesChange={handlePreferencesChange}
@@ -248,11 +237,13 @@ export default function ConfIdeumInputPanel({
           />
         </section>
 
-        <section className="conf-ideum-block conf-ideum-block--preset">
-          <label className="conf-ideum-label" htmlFor="conf-ideum-preset">Example Scenario</label>
+        {previewSlot}
+
+        <footer className="conf-ideum-block conf-ideum-block--actions">
           <select
             id="conf-ideum-preset"
-            className="conf-ideum-select"
+            className="conf-ideum-select conf-ideum-select--actions"
+            aria-label="Example scenario"
             defaultValue=""
             onChange={(e) => {
               const preset = CONFIGURATOR_PRESET_SCENARIOS.find((p) => p.id === e.target.value);
@@ -265,11 +256,6 @@ export default function ConfIdeumInputPanel({
               <option key={p.id} value={p.id}>{p.label}</option>
             ))}
           </select>
-        </section>
-
-        {previewSlot}
-
-        <footer className="conf-ideum-block conf-ideum-block--actions">
           <button
             type="button"
             className="conf-ideum-configure-btn"

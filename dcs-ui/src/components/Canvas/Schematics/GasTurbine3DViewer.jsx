@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadThreeGltfRuntime } from '../../../utils/threeGltfRuntime';
 
-function frameObject(THREE, object, camera, fitScale = 0.54) {
+function frameObject(THREE, object, camera, cameraDist = 1.8) {
   const box = new THREE.Box3().setFromObject(object);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
@@ -10,8 +10,7 @@ function frameObject(THREE, object, camera, fitScale = 0.54) {
   object.updateMatrixWorld(true);
 
   const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-  const fitDist = maxDim / (2 * Math.tan((camera.fov * Math.PI) / 360));
-  const dist = 1.8; // fitDist * fitScale;
+  const dist = cameraDist;
 
   camera.position.set(dist * 0.72, dist * 0.38, dist * 0.88);
   camera.lookAt(0, 0, 0);
@@ -40,7 +39,13 @@ const COLOR_CYCLE_TURNS = 1;
 /**
  * WebGL preview of gasT3.glb — rendered in an HTML overlay (GasTurbine3DOverlays).
  */
-export default function GasTurbine3DViewer({ width, height, modelUrl, turntableOnly = false, fitScale = 0.54 }) {
+export default function GasTurbine3DViewer({
+  width,
+  height,
+  modelUrl,
+  turntableOnly = false,
+  cameraDist = 1.8,
+}) {
   const hostRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
 
@@ -113,7 +118,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
             turntable = new THREE.Group();
             turntable.add(modelRoot);
             scene.add(turntable);
-            frameObject(THREE, turntable, camera, fitScale);
+            frameObject(THREE, turntable, camera, cameraDist);
           },
           undefined,
           (err) => {
@@ -174,7 +179,7 @@ export default function GasTurbine3DViewer({ width, height, modelUrl, turntableO
         });
       }
     };
-  }, [width, height, modelUrl, turntableOnly, fitScale]);
+  }, [width, height, modelUrl, turntableOnly, cameraDist]);
 
   return (
     <div

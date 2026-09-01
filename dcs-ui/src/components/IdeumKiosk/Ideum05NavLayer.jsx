@@ -55,7 +55,17 @@ function previewImageStripHeight(slot, zoom, area, matchedImageSizes) {
   if (!slot.card.previewImageUrl || !slot.card.modelUrl) return area.height;
 
   const matched = matchedImageSizes?.get(slot.id);
-  if (matched?.height) return matched.height;
+  if (matched?.height) {
+    return Math.min(matched.height, area.height - STACKED_MIN_MODEL_PX);
+  }
+
+  if (slot.card.previewImageFill) {
+    const share = slot.card.previewImageHeightShare ?? 0.72;
+    return Math.max(
+      48,
+      Math.min(Math.round(area.height * share), area.height - STACKED_MIN_MODEL_PX),
+    );
+  }
 
   const aspect = previewImageAspect(slot.card);
   if (aspect) {
@@ -230,7 +240,9 @@ export default function Ideum05NavLayer({
             <span
               className={`ideum-component-btn__title${
                 featured ? ' ideum-component-btn__title--featured' : ''
-              }${disabled ? ' ideum-component-btn__title--disabled' : ''}`}
+              }${slot.card.navTitleActive ? ' ideum-component-btn__title--active' : ''}${
+                disabled ? ' ideum-component-btn__title--disabled' : ''
+              }`}
               style={{ fontSize: slot.titleFontPx, height: TITLE_BAR_PX * zoom }}
             >
               {slot.card.label}
@@ -244,18 +256,22 @@ export default function Ideum05NavLayer({
                     : slot.card.previewImageUrl
                       ? ' ideum05-nav-card__preview--image'
                       : ''
-              }`}
+              }${slot.card.previewImageFill && !stacked ? ' ideum05-nav-card__preview--fill' : ''}`}
               style={{ padding: stacked ? 0 : INNER_PAD_PX * zoom, minHeight: previewH }}
             >
               {stacked ? (
                 <>
                   <div
-                    className="ideum05-nav-card__preview-image-strip"
+                    className={`ideum05-nav-card__preview-image-strip${
+                      slot.card.previewImageFill ? ' ideum05-nav-card__preview-image-strip--fill' : ''
+                    }`}
                     style={{ height: imageStripH, minHeight: imageStripH, maxHeight: imageStripH }}
                   >
                     <img
                       className={`ideum05-nav-card__preview-image ideum05-nav-card__preview-image--stacked${
-                        matchedImageSizes.has(slot.id)
+                        slot.card.previewImageFill ? ' ideum05-nav-card__preview-image--fill-strip' : ''
+                      }${
+                        !slot.card.previewImageFill && matchedImageSizes.has(slot.id)
                           ? ' ideum05-nav-card__preview-image--matched'
                           : ''
                       }`}
@@ -263,7 +279,7 @@ export default function Ideum05NavLayer({
                       alt={slot.card.label}
                       draggable={false}
                       style={
-                        matchedImageSizes.has(slot.id)
+                        !slot.card.previewImageFill && matchedImageSizes.has(slot.id)
                           ? matchedImageSizes.get(slot.id)
                           : undefined
                       }
@@ -295,6 +311,8 @@ export default function Ideum05NavLayer({
               ) : slot.card.previewImageUrl ? (
                 <img
                   className={`ideum05-nav-card__preview-image${
+                    slot.card.previewImageFill ? ' ideum05-nav-card__preview-image--fill' : ''
+                  }${
                     matchedImageSizes.has(slot.id)
                       ? ' ideum05-nav-card__preview-image--matched'
                       : ''

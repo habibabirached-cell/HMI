@@ -24,7 +24,12 @@ import {
 } from './utils/conf_technologyPreferences';
 import { fetchMachineRole } from '../utils/clusterPeer';
 import { API_BASE_URL } from '../apiConfig';
+import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
+import '../components/IdeumKiosk/Ideum05NavLayer.css';
 import './conf_DataCenterConfigurator.css';
+
+/** Set false to restore back, fullscreen, and close buttons in Ideum header. */
+const IDEUM_HIDE_HEADER_CHROME = false;
 
 const MODE_META = {
   full: {
@@ -262,41 +267,76 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
 
   return (
     <div className={`conf-page conf-page--${mode}`}>
-      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}`}>
-        <div className="conf-page-header__titles">
-          {!isIdeumMode && (
-            <span className="conf-page-eyebrow">Energy System Configuration</span>
-          )}
-          <h1>{meta.title}</h1>
-          {!isIdeumMode && meta.subtitle && <p>{meta.subtitle}</p>}
-          {!isIdeumMode && (
-            <div className="conf-badges">
-              <span className="conf-badge conf-badge--mode">{meta.badge}</span>
-              <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
+      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
+        {isIdeumMode ? (
+          <>
+            {!IDEUM_HIDE_HEADER_CHROME && (
+              <div className="conf-page-header__ideum-start">
+                {onClose && <Ideum05BackButton onBack={onClose} />}
+              </div>
+            )}
+            <div className="conf-page-header__titles conf-page-header__titles--center">
+              <h1>{meta.title}</h1>
             </div>
-          )}
-        </div>
-        {onClose && (
-          <div className="conf-page-header__actions">
-            <button
-              type="button"
-              className="conf-fullscreen-btn"
-              onClick={handleToggleFullscreen}
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
-            >
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                {isFullscreen ? (
-                  <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
-                ) : (
-                  <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
-                )}
-              </svg>
-            </button>
-            <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
-              ✕
-            </button>
-          </div>
+            {!IDEUM_HIDE_HEADER_CHROME && (onClose ? (
+              <div className="conf-page-header__actions">
+                <button
+                  type="button"
+                  className="conf-fullscreen-btn"
+                  onClick={handleToggleFullscreen}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    {isFullscreen ? (
+                      <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
+                    ) : (
+                      <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                    )}
+                  </svg>
+                </button>
+                <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="conf-page-header__actions" aria-hidden="true" />
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="conf-page-header__titles">
+              <span className="conf-page-eyebrow">Energy System Configuration</span>
+              <h1>{meta.title}</h1>
+              {meta.subtitle && <p>{meta.subtitle}</p>}
+              <div className="conf-badges">
+                <span className="conf-badge conf-badge--mode">{meta.badge}</span>
+                <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
+              </div>
+            </div>
+            {onClose && (
+              <div className="conf-page-header__actions">
+                <button
+                  type="button"
+                  className="conf-fullscreen-btn"
+                  onClick={handleToggleFullscreen}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    {isFullscreen ? (
+                      <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
+                    ) : (
+                      <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                    )}
+                  </svg>
+                </button>
+                <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
+                  ✕
+                </button>
+              </div>
+            )}
+          </>
         )}
       </header>
 

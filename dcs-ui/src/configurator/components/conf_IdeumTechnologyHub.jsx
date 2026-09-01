@@ -14,6 +14,7 @@ import {
   setTechnologyPreference,
   TECH_PREFERENCE,
 } from '../utils/conf_technologyPreferences';
+import { playIdeumPrefClick } from '../utils/conf_ideumPrefFeedback';
 
 const HUB_MODEL_URLS = {
   battery: getBess3DModelUrl(),
@@ -66,7 +67,6 @@ const IDEUM_HUB_TECH_META = {
     modelName: 'Solid-oxide FC',
     model3d: 'turbine',
     model3dUrl: HUB_MODEL_URLS.fuelCell,
-    model3dFitScale: 0.594,
   },
   recipEngine: {
     slot: 'bottom',
@@ -74,13 +74,14 @@ const IDEUM_HUB_TECH_META = {
     modelName: 'Genset',
     model3d: 'turbine',
     model3dUrl: HUB_MODEL_URLS.recipEngine,
+    model3dCameraDist: 1.0,
   },
 };
 
 const PREF_ROWS = [
   { key: TECH_PREFERENCE.MUST, label: 'Must have' },
   { key: TECH_PREFERENCE.SHOULD, label: 'Should have' },
-  { key: TECH_PREFERENCE.IF_NECESSARY, label: 'Have if necessary', locked: true },
+  { key: TECH_PREFERENCE.IF_NECESSARY, label: 'If necessary', locked: true },
 ];
 
 const SLOT_GRID_AREAS = {
@@ -148,7 +149,7 @@ function TechCard3DPreview({ tech, meta }) {
           height={size.h}
           modelUrl={meta.model3dUrl || HUB_MODEL_URLS.aeroderivativeGT}
           turntableOnly
-          fitScale={meta.model3dFitScale}
+          cameraDist={meta.model3dCameraDist}
         />
       )}
       {ready && meta.model3d === 'wind' && (
@@ -172,6 +173,22 @@ function HubTechCard({
   cardRef,
   onPreferenceClick,
 }) {
+  const [popKey, setPopKey] = useState(null);
+  const popTimerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (popTimerRef.current) window.clearTimeout(popTimerRef.current);
+  }, []);
+
+  const handlePrefClick = useCallback((rowKey, isLocked) => {
+    if (isLocked) return;
+    playIdeumPrefClick();
+    setPopKey(rowKey);
+    if (popTimerRef.current) window.clearTimeout(popTimerRef.current);
+    popTimerRef.current = window.setTimeout(() => setPopKey(null), 360);
+    onPreferenceClick(tech.id, rowKey);
+  }, [onPreferenceClick, tech.id]);
+
   const gridArea = BOTTOM_TIER_SLOTS.has(meta.slot)
     ? undefined
     : SLOT_GRID_AREAS[meta.slot];
@@ -201,10 +218,10 @@ function HubTechCard({
               <button
                 key={row.key}
                 type="button"
-                className={`conf-ideum-tech-pref${checked ? ' conf-ideum-tech-pref--checked' : ''}${isLocked ? ' conf-ideum-tech-pref--locked' : ''}`}
+                className={`conf-ideum-tech-pref${checked ? ' conf-ideum-tech-pref--checked' : ''}${isLocked ? ' conf-ideum-tech-pref--locked' : ''}${popKey === row.key ? ' conf-ideum-tech-pref--pop' : ''}`}
                 aria-pressed={checked}
                 disabled={isLocked}
-                onClick={() => onPreferenceClick(tech.id, row.key)}
+                onClick={() => handlePrefClick(row.key, isLocked)}
               >
                 <span className="conf-ideum-tech-pref__box" aria-hidden="true">
                   {checked ? '✓' : ''}
@@ -250,7 +267,7 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
       data-integrated-count={elevatedCount}
     >
       <div className="conf-ideum-tech-hub__center-label">
-        <span className="conf-ideum-tech-hub__center-eyebrow">Data Center Load</span>
+        <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d">Data Center Load</span>
         {loadEditor || <strong>Critical IT Infrastructure</strong>}
       </div>
       <div

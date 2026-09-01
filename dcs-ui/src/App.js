@@ -73,6 +73,7 @@ import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
   isIdeum05ControlsScreen,
+  isIdeum05ConfiguratorScreen,
   isIdeum05DesignName,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
@@ -877,9 +878,9 @@ function App() {
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const ideum05ShowControls = !isIdeum05 || isIdeum05ControlsScreen(ideum05NavScreen);
-  const showConfigurator = configuratorOpen || (isIdeum05 && ideum05NavScreen === 'controls');
+  const showConfigurator = configuratorOpen || (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen));
   const effectiveConfiguratorMode =
-    isIdeum05 && ideum05NavScreen === 'controls' && configuratorMode === 'full'
+    isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen) && configuratorMode === 'full'
       ? 'ideum'
       : configuratorMode;
 
@@ -7059,7 +7060,7 @@ function App() {
             mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);
-              if (isIdeum05 && ideum05NavScreen === 'controls') {
+              if (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen)) {
                 setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
               }
             }}
