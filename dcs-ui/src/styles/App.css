@@ -290,6 +290,17 @@ body {
   display: block;
   overflow: hidden;
   background: #f6f8f9;
+  height: 100%;
+  min-height: 0;
+}
+
+.app-container--configurator-ideum {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-container--configurator-ideum .app-main--configurator {
+  height: 100vh;
 }
 
 /* Design view wrapper: canvas / image / split modes */

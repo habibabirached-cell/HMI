@@ -24,6 +24,9 @@ export default function ConfInputPanel({
   onUiModeChange,
   activeTradeVizId,
   onSelectTradeViz,
+  generateLabel,
+  hideTradeViz = false,
+  fullWidth = false,
 }) {
   const [showSiteContext, setShowSiteContext] = useState(false);
   const cities = getCitiesForState(inputs.stateId);
@@ -40,7 +43,7 @@ export default function ConfInputPanel({
   };
 
   return (
-    <aside className="conf-input-panel" data-screen-region="inputs">
+    <aside className={`conf-input-panel${fullWidth ? ' conf-input-panel--full' : ''}`} data-screen-region="inputs">
       <div className="conf-input-panel__header">
         <h2>Configuration Requirements</h2>
         <div className="conf-mode-row">
@@ -261,14 +264,16 @@ export default function ConfInputPanel({
         onClick={onGenerate}
         disabled={isGenerating || !inputs.technologies?.length}
       >
-        {isGenerating ? 'Generating…' : 'GENERATE ARCHITECTURE'}
+        {isGenerating ? 'Generating…' : (generateLabel || 'GENERATE ARCHITECTURE')}
       </button>
 
-      <ConfTradeSpaceVizButtons
-        activeVizId={activeTradeVizId}
-        onSelectViz={onSelectTradeViz}
-        disabled={isGenerating}
-      />
+      {!hideTradeViz && (
+        <ConfTradeSpaceVizButtons
+          activeVizId={activeTradeVizId}
+          onSelectViz={onSelectTradeViz}
+          disabled={isGenerating}
+        />
+      )}
 
       <button type="button" className="conf-secondary-btn" onClick={onReset}>
         Reset

@@ -500,6 +500,25 @@
   border-style: dashed;
 }
 
+.config-item--launcher {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  background: #fff;
+}
+
+.config-item--launcher:hover {
+  border-color: #005E60;
+  background: rgba(0, 94, 96, 0.04);
+}
+
+.config-item--launcher:focus-visible {
+  outline: 2px solid #005E60;
+  outline-offset: 2px;
+}
+
 .config-description {
   margin: 8px 0;
   color: #666;

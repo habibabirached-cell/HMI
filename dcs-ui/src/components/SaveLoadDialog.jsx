@@ -25,6 +25,7 @@ function SaveLoadDialog({
   onClose,
   onSave,
   onLoad,
+  onOpenConfigurator,
   currentConfiguration,
   /** If set, called at save click (and for preview) so payload always matches latest canvas state. */
   getCurrentConfiguration,
@@ -571,6 +572,49 @@ function SaveLoadDialog({
                     ? 'Listing saved rows from SQLite. Loading uses the database snapshot.'
                     : 'Designs on disk (designs/). Archived designs appear under the Archived section. Delete removes the folder and the matching database row.'}
               </p>
+              {mode === 'load' && typeof onOpenConfigurator === 'function' && (
+                <div className="catalog-section">
+                  <h4 className="catalog-section-title">Configurator</h4>
+                  <div className="config-list">
+                    <button
+                      type="button"
+                      className="config-item config-item--launcher"
+                      onClick={() => onOpenConfigurator('full')}
+                    >
+                      <div className="config-item-header">
+                        <h3>DC Configurator 4 Screens</h3>
+                      </div>
+                      <p className="config-description">
+                        Inputs and results together on one workstation (demo / single-screen).
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className="config-item config-item--launcher"
+                      onClick={() => onOpenConfigurator('ideum')}
+                    >
+                      <div className="config-item-header">
+                        <h3>DC Configurator Ideum</h3>
+                      </div>
+                      <p className="config-description">
+                        Touch-table inputs only — sends configuration to Maingear over Ethernet.
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className="config-item config-item--launcher"
+                      onClick={() => onOpenConfigurator('wall')}
+                    >
+                      <div className="config-item-header">
+                        <h3>DC Configurator Wall Display</h3>
+                      </div>
+                      <p className="config-description">
+                        Wall output only — run on Maingear; updates when Ideum presses Configure.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              )}
               {mode === 'load' && useDatabaseList ? (
                 loading && !configurations.length ? (
                   <div className="loading">Loading…</div>

@@ -163,6 +163,15 @@ import {
 } from './contexts/FontScaleContext';
 import './styles/App.css';
 
+function resolveConfiguratorFromUrl() {
+  if (typeof window === 'undefined') return { open: false, mode: 'full' };
+  const view = new URLSearchParams(window.location.search).get('view');
+  if (view === 'configurator-ideum') return { open: true, mode: 'ideum' };
+  if (view === 'configurator-wall') return { open: true, mode: 'wall' };
+  if (view === 'configurator') return { open: true, mode: 'full' };
+  return { open: false, mode: 'full' };
+}
+
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
 const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
@@ -807,10 +816,9 @@ function App() {
   }));
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
-  const [configuratorOpen, setConfiguratorOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('view') === 'configurator';
-  });
+  const initialConfigurator = resolveConfiguratorFromUrl();
+  const [configuratorOpen, setConfiguratorOpen] = useState(initialConfigurator.open);
+  const [configuratorMode, setConfiguratorMode] = useState(initialConfigurator.mode);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -870,6 +878,10 @@ function App() {
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const ideum05ShowControls = !isIdeum05 || isIdeum05ControlsScreen(ideum05NavScreen);
   const showConfigurator = configuratorOpen || (isIdeum05 && ideum05NavScreen === 'controls');
+  const effectiveConfiguratorMode =
+    isIdeum05 && ideum05NavScreen === 'controls' && configuratorMode === 'full'
+      ? 'ideum'
+      : configuratorMode;
 
   const splitPaneTitles = useMemo(() => {
     if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
@@ -4075,6 +4087,13 @@ function App() {
     setShowDialog(true);
   };
 
+  const handleOpenConfigurator = (mode = 'full') => {
+    setShowDialog(false);
+    setDialogMode(null);
+    setConfiguratorMode(mode);
+    setConfiguratorOpen(true);
+  };
+
   const handleOpenCloneGraphsDialog = () => {
     if (!designApiPath || !csvStatus?.use_design_dir) {
       alert('Load a design from disk first.');
@@ -6937,7 +6956,8 @@ function App() {
       setCanvasFontPxShift={setCanvasFontPxShift}
       setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
     >
-    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}`}>
+    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}${showConfigurator && effectiveConfiguratorMode === 'ideum' ? ' app-container--configurator-ideum' : ''}`}>
+      {!(showConfigurator && effectiveConfiguratorMode === 'ideum') && (
       <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 
@@ -6977,14 +6997,6 @@ function App() {
             </div>
           )}
           <div className="view-mode-toggle">
-            <button
-              type="button"
-              className={`btn-mode-toggle${showConfigurator ? ' active' : ''}`}
-              onClick={() => setConfiguratorOpen((v) => !v)}
-              title="Open Data Center Configurator"
-            >
-              Data Center Configurator
-            </button>
             <span className={`view-badge view-${viewMode}`}>
               {viewMode === 'designer' ? '🔧 DESIGNER' : '👤 CUSTOMER'}
             </span>
@@ -7039,10 +7051,12 @@ function App() {
           canCopyScenarioLink={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
         />
       </header>
+      )}
 
       {showConfigurator ? (
         <div className="app-main app-main--configurator">
           <DataCenterConfigurator
+            mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);
               if (isIdeum05 && ideum05NavScreen === 'controls') {
@@ -7169,6 +7183,7 @@ function App() {
           onClose={handleCloseDialog}
           onSave={handleConfigurationSaved}
           onLoad={handleConfigurationLoaded}
+          onOpenConfigurator={handleOpenConfigurator}
           onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
           destinationDesignDir={designApiPath}
           getCurrentConfiguration={getCurrentConfiguration}

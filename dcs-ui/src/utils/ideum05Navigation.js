@@ -148,7 +148,7 @@ const SCREENS = {
     },
     {
       id: 'controls',
-      label: 'Data Center Configurator',
+      label: 'DC Configurator Ideum',
       preview: 'Interactive configuration',
       previewImageUrl: IDEUM05_NAV_IMAGE_URLS.dataCenterConfiguration,
       previewImageMatchGroup: IDEUM05_DATA_CENTERS_PREVIEW_MATCH_GROUP,

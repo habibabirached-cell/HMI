@@ -1,16 +1,56 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ConfInputPanel from './components/conf_InputPanel';
+import ConfIdeumInputPanel from './components/conf_IdeumInputPanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
+import ConfIdeumPreviewSummary from './components/conf_IdeumPreviewSummary';
 import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
 import { UI_MODES } from '../configuratorData/conf_constants';
 import {
   generateConfiguratorResult,
   GENERATION_STATUS_MESSAGES,
 } from './utils/conf_configuratorApi';
+import {
+  connectConfiguratorClusterUpdates,
+  fetchConfiguratorClusterSession,
+  sessionToWallState,
+  submitConfiguratorToMaingear,
+} from './utils/conf_configuratorCluster';
 import { inputsEqual } from './utils/conf_configuratorEngine';
+import { validateConfiguratorInputs } from './utils/conf_validateInputs';
+import {
+  createDefaultTechnologyPreferences,
+  normalizeTechnologyPreferences,
+  technologyIdsFromPreferences,
+} from './utils/conf_technologyPreferences';
+import { fetchMachineRole } from '../utils/clusterPeer';
+import { API_BASE_URL } from '../apiConfig';
 import './conf_DataCenterConfigurator.css';
 
-export default function DataCenterConfigurator({ onClose }) {
+const MODE_META = {
+  full: {
+    title: 'Data Center Configurator',
+    subtitle:
+      'Given your load, reliability requirement, minimum carbon-free energy, grid connection, and technology options — GE Vernova recommends a least-cost onsite architecture.',
+    badge: 'Basic Mode · Least Cost',
+  },
+  ideum: {
+    title: 'Data Center Configurator',
+    subtitle: '',
+    badge: '',
+  },
+  wall: {
+    title: 'Data Center Configurator · Wall Display',
+    subtitle:
+      'Recommended architecture and metrics driven by the Ideum touch table (Maingear 4-screen wall).',
+    badge: 'Wall Output · Cluster',
+  },
+};
+
+export default function DataCenterConfigurator({ mode = 'full', onClose }) {
+  const meta = MODE_META[mode] || MODE_META.full;
+  const isIdeumMode = mode === 'ideum';
+  const isWallMode = mode === 'wall';
+
   const [inputs, setInputs] = useState({ ...CONFIGURATOR_DEFAULT_INPUTS });
   const [uiMode, setUiMode] = useState(UI_MODES.BASIC);
   const [result, setResult] = useState(null);
@@ -20,12 +60,143 @@ export default function DataCenterConfigurator({ onClose }) {
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState([]);
   const [resultsView, setResultsView] = useState(null);
+  const [clusterSentAt, setClusterSentAt] = useState(null);
+  const [ideumPreviewResult, setIdeumPreviewResult] = useState(null);
+  const [wallSession, setWallSession] = useState(null);
+  const [peerBackendUrl, setPeerBackendUrl] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const isStale = result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
+  const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncFullscreen);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreen);
+      document.removeEventListener('webkitfullscreenchange', syncFullscreen);
+    };
+  }, []);
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      }
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isIdeumMode) return undefined;
+    let cancelled = false;
+    fetchMachineRole()
+      .then((role) => {
+        if (!cancelled) {
+          setPeerBackendUrl(role.peerBackendUrl || null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPeerBackendUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isIdeumMode]);
+
+  const applyWallSession = useCallback((session) => {
+    setWallSession(session);
+    const wall = sessionToWallState(session);
+    setError(wall.error);
+    setErrorDetails(wall.errorDetails || []);
+    if (wall.result) {
+      setResult(wall.result);
+      setLastRunInputs(wall.inputs ? { ...wall.inputs, technologies: [...(wall.inputs.technologies || [])] } : null);
+      setResultsView('architecture');
+    } else if (wall.status === 'idle') {
+      setResult(null);
+      setResultsView(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isWallMode) return undefined;
+
+    let cancelled = false;
+    fetchConfiguratorClusterSession()
+      .then((session) => {
+        if (!cancelled) applyWallSession(session);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message);
+      });
+
+    const disconnect = connectConfiguratorClusterUpdates((session) => {
+      applyWallSession(session);
+    });
+
+    return () => {
+      cancelled = true;
+      disconnect();
+    };
+  }, [isWallMode, applyWallSession]);
 
   const handleGenerate = useCallback(async () => {
     setError(null);
     setErrorDetails([]);
+    setClusterSentAt(null);
+    setIdeumPreviewResult(null);
+
+    const validation = validateConfiguratorInputs({ ...inputs, uiMode });
+    if (!validation.ok) {
+      setError(validation.error);
+      setErrorDetails(validation.details || []);
+      return;
+    }
+
+    if (isIdeumMode) {
+      setIsGenerating(true);
+      setStatusMessage('Sending to Maingear wall display…');
+      try {
+        const backendUrl =
+          peerBackendUrl
+          || process.env.REACT_APP_MAINGEAR_BACKEND_URL
+          || API_BASE_URL
+          || (typeof window !== 'undefined' ? `http://${window.location.hostname}:5000` : null);
+        if (!backendUrl) {
+          throw new Error(
+            'Maingear backend URL is not configured. Run set-ideum-ethernet-ip.bat or set REACT_APP_MAINGEAR_BACKEND_URL.',
+          );
+        }
+        const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
+        if (session.status === 'error' || !session.result?.ok) {
+          setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
+          setErrorDetails(session.errorDetails || session.result?.details || []);
+          return;
+        }
+        setIdeumPreviewResult(session.result);
+        setClusterSentAt(new Date());
+        setStatusMessage('');
+      } catch (e) {
+        setError(e.message || 'Could not send configuration to wall display.');
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
     setIsGenerating(true);
     let step = 0;
     const interval = window.setInterval(() => {
@@ -54,9 +225,10 @@ export default function DataCenterConfigurator({ onClose }) {
       setIsGenerating(false);
       setStatusMessage('');
     }
-  }, [inputs, uiMode]);
+  }, [inputs, uiMode, isIdeumMode, peerBackendUrl]);
 
   const handleReset = () => {
+    if (isWallMode) return;
     setInputs({ ...CONFIGURATOR_DEFAULT_INPUTS });
     setUiMode(UI_MODES.BASIC);
     setResult(null);
@@ -64,39 +236,67 @@ export default function DataCenterConfigurator({ onClose }) {
     setError(null);
     setErrorDetails([]);
     setResultsView(null);
+    setClusterSentAt(null);
+    setIdeumPreviewResult(null);
   };
 
-  const handleSelectTradeViz = (vizId) => {
-    setResultsView(vizId);
+  const handleSelectOutputView = (view) => {
+    setResultsView(view);
   };
 
   const handleLoadPreset = (presetInputs) => {
+    const technologyPreferences = normalizeTechnologyPreferences(
+      presetInputs.technologyPreferences || createDefaultTechnologyPreferences(),
+    );
     setInputs({
       ...CONFIGURATOR_DEFAULT_INPUTS,
       ...presetInputs,
-      technologies: [...(presetInputs.technologies || CONFIGURATOR_DEFAULT_INPUTS.technologies)],
+      technologyPreferences,
+      technologies: technologyIdsFromPreferences(technologyPreferences),
     });
   };
 
+  const wall = sessionToWallState(wallSession);
+  const wallGenerating = isWallMode && wall.isGenerating;
+  const wallStatusMessage = wallGenerating ? 'Generating architecture on Maingear…' : statusMessage;
+
   return (
-    <div className="conf-page">
-      <header className="conf-page-header">
+    <div className={`conf-page conf-page--${mode}`}>
+      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}`}>
         <div className="conf-page-header__titles">
-          <span className="conf-page-eyebrow">Energy System Configuration</span>
-          <h1>Data Center Configurator</h1>
-          <p>
-            Given your load, reliability requirement, minimum carbon-free energy, grid connection,
-            and technology options — GE Vernova recommends a least-cost onsite architecture.
-          </p>
-          <div className="conf-badges">
-            <span className="conf-badge conf-badge--mode">Basic Mode · Least Cost</span>
-            <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
-          </div>
+          {!isIdeumMode && (
+            <span className="conf-page-eyebrow">Energy System Configuration</span>
+          )}
+          <h1>{meta.title}</h1>
+          {!isIdeumMode && meta.subtitle && <p>{meta.subtitle}</p>}
+          {!isIdeumMode && (
+            <div className="conf-badges">
+              <span className="conf-badge conf-badge--mode">{meta.badge}</span>
+              <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
+            </div>
+          )}
         </div>
         {onClose && (
-          <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
-            ✕
-          </button>
+          <div className="conf-page-header__actions">
+            <button
+              type="button"
+              className="conf-fullscreen-btn"
+              onClick={handleToggleFullscreen}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                {isFullscreen ? (
+                  <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
+                ) : (
+                  <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                )}
+              </svg>
+            </button>
+            <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
+              ✕
+            </button>
+          </div>
         )}
       </header>
 
@@ -113,27 +313,51 @@ export default function DataCenterConfigurator({ onClose }) {
         </div>
       )}
 
-      <div className="conf-layout">
-        <ConfInputPanel
-          inputs={inputs}
-          onChange={setInputs}
-          onGenerate={handleGenerate}
-          onReset={handleReset}
-          onLoadPreset={handleLoadPreset}
-          isGenerating={isGenerating}
-          isStale={isStale}
-          uiMode={uiMode}
-          onUiModeChange={setUiMode}
-          activeTradeVizId={resultsView !== 'architecture' ? resultsView : null}
-          onSelectTradeViz={handleSelectTradeViz}
-        />
-        <ConfResultsPanel
-          result={result}
-          inputs={inputs}
-          isGenerating={isGenerating}
-          statusMessage={statusMessage}
-          resultsView={resultsView}
-        />
+      <div className={`conf-layout conf-layout--${mode}`}>
+        {!isWallMode && isIdeumMode && (
+          <ConfIdeumInputPanel
+            inputs={inputs}
+            onChange={setInputs}
+            onGenerate={handleGenerate}
+            onReset={handleReset}
+            onLoadPreset={handleLoadPreset}
+            isGenerating={isGenerating}
+            generateLabel="CONFIGURE"
+            previewSlot={
+              ideumPreviewResult && !error ? (
+                <ConfIdeumPreviewSummary result={ideumPreviewResult} />
+              ) : null
+            }
+          />
+        )}
+        {!isWallMode && !isIdeumMode && (
+          <ConfInputPanel
+            inputs={inputs}
+            onChange={setInputs}
+            onGenerate={handleGenerate}
+            onReset={handleReset}
+            onLoadPreset={handleLoadPreset}
+            isGenerating={isGenerating}
+            isStale={isStale}
+            uiMode={uiMode}
+            onUiModeChange={setUiMode}
+            activeTradeVizId={resultsView !== 'architecture' ? resultsView : null}
+            onSelectTradeViz={handleSelectOutputView}
+          />
+        )}
+        {!isIdeumMode && (
+          <ConfResultsPanel
+            result={result}
+            inputs={wall.inputs || inputs}
+            isGenerating={isGenerating || wallGenerating}
+            statusMessage={wallStatusMessage}
+            resultsView={resultsView}
+            wallDisplayMode={isWallMode}
+            wallSessionStatus={wall.status}
+            showOutputNav={isWallMode}
+            onSelectOutputView={handleSelectOutputView}
+          />
+        )}
       </div>
     </div>
   );

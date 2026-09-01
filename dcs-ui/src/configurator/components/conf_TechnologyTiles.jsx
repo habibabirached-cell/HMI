@@ -111,12 +111,16 @@ function TechSection({ title, helper, technologies, selectedIds, onChange }) {
   );
 }
 
-export default function ConfTechnologyTiles({ selectedIds, onChange }) {
+export default function ConfTechnologyTiles({ selectedIds, onChange, ideumMode = false }) {
   const selectAll = () => onChange(CONFIGURATOR_TECHNOLOGIES.map((t) => t.id));
   const clearGen = () => {
     const storage = getStorageTechnologies().filter((t) => selectedIds.includes(t.id)).map((t) => t.id);
     if (storage.length) onChange(storage);
   };
+
+  if (ideumMode) {
+    return null;
+  }
 
   return (
     <div className="conf-tech-tiles">

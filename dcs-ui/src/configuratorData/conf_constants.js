@@ -5,6 +5,7 @@ export const RELIABILITY_LEVELS = [
   { value: 99.9, label: '99.9%', sub: 'Three Nines' },
   { value: 99.99, label: '99.99%', sub: 'Four Nines' },
   { value: 99.999, label: '99.999%', sub: 'Five Nines' },
+  { value: 99.9999, label: '99.9999%', sub: 'Six Nines' },
 ];
 
 export const MIN_CFE_PRESETS = [0, 50, 75, 80, 100];

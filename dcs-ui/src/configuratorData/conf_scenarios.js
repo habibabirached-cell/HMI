@@ -1,5 +1,12 @@
 /** Example preset scenarios for live demonstrations. */
 
+import {
+  createDefaultTechnologyPreferences,
+  technologyIdsFromPreferences,
+} from '../configurator/utils/conf_technologyPreferences';
+
+const DEFAULT_TECH_PREFS = createDefaultTechnologyPreferences();
+
 export const CONFIGURATOR_PRESET_SCENARIOS = [
   {
     id: 'hyperscale-texas',
@@ -170,5 +177,6 @@ export const CONFIGURATOR_DEFAULT_INPUTS = {
   uiMode: 'basic',
   optimizationObjective: 'lowestCost',
   technologyMinPercent: {},
-  technologies: ['heavyDutyGT', 'aeroderivativeGT', 'solar', 'wind', 'battery'],
+  technologyPreferences: DEFAULT_TECH_PREFS,
+  technologies: technologyIdsFromPreferences(DEFAULT_TECH_PREFS),
 };

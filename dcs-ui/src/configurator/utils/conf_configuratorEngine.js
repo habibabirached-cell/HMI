@@ -14,6 +14,7 @@ const RELIABILITY_OVERBUILD = {
   99.9: 1.1,
   99.99: 1.18,
   99.999: 1.28,
+  99.9999: 1.34,
 };
 
 const GENERATION_IDS = [
@@ -45,7 +46,7 @@ function seededJitter(seed, index, amplitude = 0.04) {
 }
 
 function snapReliabilityLevel(target) {
-  const levels = [99, 99.9, 99.99, 99.999];
+  const levels = [99, 99.9, 99.99, 99.999, 99.9999];
   return levels.reduce((best, k) => (Math.abs(k - target) < Math.abs(best - target) ? k : best), 99.99);
 }
 
