@@ -49,6 +49,7 @@ async def submit_configurator_cluster(
             }
         )
 
+    await broadcast({"type": "configurator_open_wall", "source": source or "ideum"})
     await broadcast({"type": "configurator_update", "session": await get_configurator_session()})
 
     try:

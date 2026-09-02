@@ -173,6 +173,26 @@ function resolveConfiguratorFromUrl() {
   return { open: false, mode: 'full' };
 }
 
+/** Drop ?view=configurator* from the URL so Load Design returns to the main app on refresh. */
+function clearConfiguratorViewFromUrl() {
+  if (typeof window === 'undefined') return;
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  if (view !== 'configurator-wall' && view !== 'configurator-ideum' && view !== 'configurator') {
+    return;
+  }
+  params.delete('view');
+  const qs = params.toString();
+  const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
+  window.history.replaceState(null, '', next);
+}
+
+function isP2R18Design(loadedConfig) {
+  const name = String(loadedConfig?.name || '').toLowerCase();
+  const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
+  return name === 'p2r_18' || rel === 'p2r_18' || rel.endsWith('/p2r_18');
+}
+
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
 const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
@@ -4088,12 +4108,12 @@ function App() {
     setShowDialog(true);
   };
 
-  const handleOpenConfigurator = (mode = 'full') => {
+  const handleOpenConfigurator = useCallback((mode = 'full') => {
     setShowDialog(false);
     setDialogMode(null);
     setConfiguratorMode(mode);
     setConfiguratorOpen(true);
-  };
+  }, []);
 
   const handleOpenCloneGraphsDialog = () => {
     if (!designApiPath || !csvStatus?.use_design_dir) {
@@ -6014,6 +6034,10 @@ function App() {
       availableSimIds: (loadedConfig.csv_status?.available_simulations || []).map((s) => s.id),
     });
 
+    // Leave wall / configurator overlay when loading a design (e.g. P2R_18 from toolbar Load).
+    setConfiguratorOpen(false);
+    clearConfiguratorViewFromUrl();
+
     console.log('✅ Loading configuration:', loadedConfig.name);
     console.log('🔍 Full loadedConfig:', loadedConfig); // DEBUG: See entire response
     console.log('🔍 csv_status:', loadedConfig.csv_status); // DEBUG: Check csv_status
@@ -6021,6 +6045,14 @@ function App() {
     
     // Save the configuration name for future quick saves
     setCurrentConfigName(loadedConfig.name);
+
+    if (isP2R18Design(loadedConfig)) {
+      // Same as pressing Hide on Simulation Controls — tuck property panel, keep scenario strip.
+      setRightRailCollapsed(false);
+      setRightRailGridPeek(true);
+    } else {
+      setRightRailGridPeek(false);
+    }
     
     // Store CSV status and fetch available simulations
     if (loadedConfig.csv_status) {
@@ -6473,9 +6505,18 @@ function App() {
     handleRemoteClusterCommandRef.current = handleRemoteClusterCommand;
   });
 
+  const handleOpenConfiguratorRef = useRef(handleOpenConfigurator);
+  useEffect(() => {
+    handleOpenConfiguratorRef.current = handleOpenConfigurator;
+  });
+
   useEffect(() => {
     if (!machineRole?.isMaingear) return undefined;
     return connectClusterWebSocket((msg) => {
+      if (msg?.type === 'configurator_open_wall') {
+        handleOpenConfiguratorRef.current('wall');
+        return;
+      }
       if (msg?.type === 'remote_command' && msg.command) {
         handleRemoteClusterCommandRef.current(msg.command);
       }
@@ -7060,6 +7101,7 @@ function App() {
             mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);
+              clearConfiguratorViewFromUrl();
               if (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen)) {
                 setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
               }

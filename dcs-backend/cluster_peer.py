@@ -89,7 +89,7 @@ def resolve_machine_role() -> dict[str, Any]:
     if not peer_ip:
         peer_ip = IDEUM_ETHERNET_IP if role == "maingear" else MAINGEAR_ETHERNET_IP
 
-    peer_backend = (cfg.get("peerBackendUrl") or "").strip()
+    peer_backend = (cfg.get("peerBackendUrl") or os.environ.get("CLUSTER_PEER_BACKEND_URL") or "").strip()
     if not peer_backend:
         peer_backend = f"http://{MAINGEAR_ETHERNET_IP}:5000"
 

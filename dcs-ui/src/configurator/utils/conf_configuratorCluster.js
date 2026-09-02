@@ -38,8 +38,9 @@ export function resolveMaingearBackendUrl(role) {
     return envUrl || API_BASE_URL || '';
   }
 
-  if (role?.isIdeum && peerUrl) {
-    return peerUrl;
+  if (role?.isIdeum || role?.role === 'unknown') {
+    // Physical Ideum: POST same-origin; backend forwards to Maingear peerBackendUrl.
+    return envUrl || API_BASE_URL || '';
   }
 
   return envUrl || API_BASE_URL || `http://${hostname}:5000`;
@@ -106,7 +107,11 @@ export function sessionToWallState(session, options = {}) {
 
   const status = session.status || 'idle';
   const updatedAt = session.updatedAt;
-  const isFresh = !onlyAfter || !updatedAt || updatedAt >= onlyAfter;
+  const isFresh =
+    !onlyAfter ||
+    !updatedAt ||
+    updatedAt >= onlyAfter ||
+    status === 'generating';
 
   const hasReadyResult = status === 'ready' && session.result?.ok && isFresh;
 

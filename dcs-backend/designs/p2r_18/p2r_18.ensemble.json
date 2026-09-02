@@ -844,10 +844,10 @@
                 "color": "#64c864"
               }
             },
-            "ui_drawer": "chart4",
             "axis_range": {
               "x_reference": 21
-            }
+            },
+            "ui_drawer": "chart4"
           },
           {
             "type": "single",
@@ -894,10 +894,10 @@
               }
             },
             "axis_range": {
+              "x_reference": 21,
               "y_min": 0,
               "y_max": 30,
-              "y_locked": true,
-              "x_reference": 21
+              "y_locked": true
             },
             "ui_drawer": "chart3"
           }
