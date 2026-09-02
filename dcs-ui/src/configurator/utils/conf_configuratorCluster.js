@@ -18,7 +18,7 @@ function normalizePayload(inputs) {
 /**
  * Resolve where Ideum should POST cluster/submit.
  * Local dev (two browser tabs on one laptop) uses the same backend as the wall tab.
- * Physical Ideum touch table uses peerBackendUrl over dedicated Ethernet.
+ * Physical Ideum touch table posts directly to peerBackendUrl (same as remote commands).
  *
  * @param {object | null} role from GET /api/cluster/machine-role
  * @returns {string} base URL, or '' for same-origin / CRA dev-server proxy
@@ -38,9 +38,9 @@ export function resolveMaingearBackendUrl(role) {
     return envUrl || API_BASE_URL || '';
   }
 
-  if (role?.isIdeum || role?.role === 'unknown') {
-    // Physical Ideum: POST same-origin; backend forwards to Maingear peerBackendUrl.
-    return envUrl || API_BASE_URL || '';
+  if (role?.isIdeum) {
+    // Direct Ethernet POST — mirrors sendRemoteCommandToMaingear (Add 8 turbine, etc.).
+    return peerUrl || envUrl || API_BASE_URL || '';
   }
 
   return envUrl || API_BASE_URL || `http://${hostname}:5000`;

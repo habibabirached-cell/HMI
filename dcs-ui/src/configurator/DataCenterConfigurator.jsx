@@ -14,7 +14,6 @@ import {
 import {
   connectConfiguratorClusterUpdates,
   fetchConfiguratorClusterSession,
-  resolveMaingearBackendUrl,
   sessionToWallState,
   submitConfiguratorToMaingear,
 } from './utils/conf_configuratorCluster';
@@ -159,14 +158,28 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
       setIsGenerating(true);
       setStatusMessage('Sending to Maingear wall display…');
       try {
-        let role = null;
+        let role;
         try {
           role = await fetchMachineRole();
-        } catch (_) {
-          /* local dev may still submit via localhost / proxy */
+        } catch (e) {
+          setError(e.message || 'Could not determine machine role.');
+          return;
         }
-        const backendUrl = resolveMaingearBackendUrl(role);
-        const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
+        if (role.isMaingear) {
+          setError(
+            'You are on the Maingear. Configure sends inputs from the Ideum touch table to the Maingear wall display.',
+          );
+          return;
+        }
+        if (!role.isIdeum) {
+          setError(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+          return;
+        }
+        if (!role.peerBackendUrl) {
+          setError('peerBackendUrl is not configured in cluster.local.json.');
+          return;
+        }
+        const session = await submitConfiguratorToMaingear(role.peerBackendUrl, { ...inputs, uiMode });
         if (session.status === 'error' || !session.result?.ok) {
           setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
           setErrorDetails(session.errorDetails || session.result?.details || []);

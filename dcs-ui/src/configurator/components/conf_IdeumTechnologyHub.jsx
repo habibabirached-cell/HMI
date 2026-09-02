@@ -14,7 +14,6 @@ import {
   setTechnologyPreference,
   TECH_PREFERENCE,
 } from '../utils/conf_technologyPreferences';
-import { playIdeumPrefClick } from '../utils/conf_ideumPrefFeedback';
 
 const HUB_MODEL_URLS = {
   battery: getBess3DModelUrl(),
@@ -184,7 +183,6 @@ function HubTechCard({
 
   const handlePrefClick = useCallback((rowKey, isLocked) => {
     if (isLocked) return;
-    playIdeumPrefClick();
     setPopKey(rowKey);
     if (popTimerRef.current) window.clearTimeout(popTimerRef.current);
     popTimerRef.current = window.setTimeout(() => setPopKey(null), 360);

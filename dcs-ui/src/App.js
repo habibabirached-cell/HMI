@@ -68,6 +68,7 @@ import {
   fetchMachineRole,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
+import { installIdeumClickSound } from './utils/ideumClickSound';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
@@ -903,6 +904,16 @@ function App() {
     isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen) && configuratorMode === 'full'
       ? 'ideum'
       : configuratorMode;
+
+  const isIdeumTouchUi =
+    Boolean(machineRole?.isIdeum) ||
+    ideumKioskMode ||
+    (showConfigurator && effectiveConfiguratorMode === 'ideum');
+
+  useEffect(() => {
+    if (!isIdeumTouchUi) return undefined;
+    return installIdeumClickSound();
+  }, [isIdeumTouchUi]);
 
   const splitPaneTitles = useMemo(() => {
     if (!quadChartDrawers || !designUsesSplitPaneTitles(canvasComponents)) {
