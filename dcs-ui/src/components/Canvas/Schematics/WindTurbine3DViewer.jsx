@@ -126,7 +126,7 @@ export default function WindTurbine3DViewer({ width, height, modelUrl }) {
           },
         );
 
-        const TURNTABLE_YAW = 0.0014;
+        const TURNTABLE_YAW = 0.004;
 
         const animate = () => {
           frameId = requestAnimationFrame(animate);

@@ -117,7 +117,7 @@ export default function Ideum05Nav3DViewer({
           },
         );
 
-        const TURNTABLE_YAW = 0.003;
+        const TURNTABLE_YAW = 0.004;
 
         const animate = () => {
           frameId = requestAnimationFrame(animate);

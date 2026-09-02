@@ -6,23 +6,53 @@ import { API_BASE_URL } from '../../apiConfig';
 import { connectClusterWebSocket } from '../../utils/clusterPeer';
 
 function normalizePayload(inputs) {
+  const cfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
   return {
     ...inputs,
-    minCfePercent: inputs.minCfePercent ?? inputs.cfeTarget ?? 0,
+    minCfePercent: cfe,
+    cfeTarget: cfe,
     gridConnectionMode: inputs.gridConnectionMode ?? 'grid-connected',
   };
 }
 
 /**
+ * Resolve where Ideum should POST cluster/submit.
+ * Local dev (two browser tabs on one laptop) uses the same backend as the wall tab.
+ * Physical Ideum touch table uses peerBackendUrl over dedicated Ethernet.
+ *
+ * @param {object | null} role from GET /api/cluster/machine-role
+ * @returns {string} base URL, or '' for same-origin / CRA dev-server proxy
+ */
+export function resolveMaingearBackendUrl(role) {
+  const peerUrl = (role?.peerBackendUrl || '').replace(/\/$/, '');
+  const envUrl = (process.env.REACT_APP_MAINGEAR_BACKEND_URL || '').replace(/\/$/, '');
+
+  if (typeof window === 'undefined') {
+    return envUrl || peerUrl || API_BASE_URL || 'http://127.0.0.1:5000';
+  }
+
+  const hostname = window.location.hostname;
+  const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (isLocalDev) {
+    return envUrl || API_BASE_URL || '';
+  }
+
+  if (role?.isIdeum && peerUrl) {
+    return peerUrl;
+  }
+
+  return envUrl || API_BASE_URL || `http://${hostname}:5000`;
+}
+
+/**
  * Ideum → Maingear: submit inputs; Maingear runs optimizer and pushes results to wall UI.
- * @param {string} maingearBackendUrl e.g. http://192.168.50.1:5000
+ * @param {string} maingearBackendUrl e.g. http://192.168.50.1:5000, or '' for relative /api
  */
 export async function submitConfiguratorToMaingear(maingearBackendUrl, inputs) {
-  const base = (maingearBackendUrl || '').replace(/\/$/, '');
-  if (!base) {
-    throw new Error('Maingear backend URL is not configured.');
-  }
-  const res = await fetch(`${base}/api/configurator/cluster/submit`, {
+  const base = (maingearBackendUrl ?? '').replace(/\/$/, '');
+  const url = base ? `${base}/api/configurator/cluster/submit` : '/api/configurator/cluster/submit';
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...normalizePayload(inputs), source: 'ideum' }),
@@ -56,7 +86,13 @@ export function connectConfiguratorClusterUpdates(onSession) {
   });
 }
 
-export function sessionToWallState(session) {
+/**
+ * Map backend session → wall UI state.
+ * @param {object} [options.onlyAfter] ISO timestamp — ignore stale results from before wall opened
+ */
+export function sessionToWallState(session, options = {}) {
+  const { onlyAfter } = options;
+
   if (!session) {
     return {
       status: 'idle',
@@ -67,15 +103,27 @@ export function sessionToWallState(session) {
       isGenerating: false,
     };
   }
+
   const status = session.status || 'idle';
+  const updatedAt = session.updatedAt;
+  const isFresh = !onlyAfter || !updatedAt || updatedAt >= onlyAfter;
+
+  const hasReadyResult = status === 'ready' && session.result?.ok && isFresh;
+
   return {
     status,
     sessionId: session.sessionId,
-    updatedAt: session.updatedAt,
+    updatedAt,
     inputs: session.inputs || null,
-    result: session.result?.ok ? session.result : null,
-    error: session.error || (session.result && !session.result.ok ? session.result.error : null),
-    errorDetails: session.errorDetails || session.result?.details || [],
-    isGenerating: status === 'generating',
+    result: hasReadyResult ? session.result : null,
+    error:
+      isFresh && status === 'error'
+        ? session.error || (session.result && !session.result.ok ? session.result.error : null)
+        : null,
+    errorDetails:
+      isFresh && status === 'error'
+        ? session.errorDetails || session.result?.details || []
+        : [],
+    isGenerating: status === 'generating' && isFresh,
   };
 }

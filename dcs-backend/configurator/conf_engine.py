@@ -49,7 +49,8 @@ def _hash_inputs(inputs: dict[str, Any]) -> int:
             "stateId": inputs["stateId"],
             "cityId": inputs["cityId"],
             "reliabilityTarget": inputs["reliabilityTarget"],
-            "cfeTarget": inputs["cfeTarget"],
+            "cfeTarget": inputs.get("cfeTarget") if inputs.get("cfeTarget") is not None else inputs.get("minCfePercent", 0),
+            "minCfePercent": inputs.get("minCfePercent") if inputs.get("minCfePercent") is not None else inputs.get("cfeTarget", 0),
             "technologies": sorted(inputs.get("technologies") or []),
         },
         sort_keys=True,
@@ -73,7 +74,14 @@ def _nearest_reliability(target: float) -> float:
 
 def run_configurator_engine(inputs: dict[str, Any]) -> dict[str, Any]:
     inputs = dict(inputs)
-    inputs["minCfePercent"] = inputs.get("minCfePercent", inputs.get("cfeTarget", 0))
+    min_cfe = inputs.get("minCfePercent")
+    cfe_target = inputs.get("cfeTarget")
+    if cfe_target is None:
+        cfe_target = min_cfe if min_cfe is not None else 0
+    if min_cfe is None:
+        min_cfe = cfe_target
+    inputs["cfeTarget"] = cfe_target
+    inputs["minCfePercent"] = min_cfe
     inputs["gridConnectionMode"] = inputs.get("gridConnectionMode", "grid-connected")
     inputs.setdefault("stateId", "texas")
     inputs.setdefault("cityId", "dallas_tx")

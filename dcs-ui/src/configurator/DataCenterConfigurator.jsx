@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ConfInputPanel from './components/conf_InputPanel';
 import ConfIdeumInputPanel from './components/conf_IdeumInputPanel';
+import ConfWallQuadrantDisplay from './components/conf_WallQuadrantDisplay';
+import ConfIdeumPageTabs from './components/conf_IdeumPageTabs';
+import ConfTradeSpacePanel from './components/conf_TradeSpacePanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
-import ConfIdeumPreviewSummary from './components/conf_IdeumPreviewSummary';
 import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
 import { UI_MODES } from '../configuratorData/conf_constants';
 import {
@@ -12,6 +14,7 @@ import {
 import {
   connectConfiguratorClusterUpdates,
   fetchConfiguratorClusterSession,
+  resolveMaingearBackendUrl,
   sessionToWallState,
   submitConfiguratorToMaingear,
 } from './utils/conf_configuratorCluster';
@@ -23,7 +26,6 @@ import {
   technologyIdsFromPreferences,
 } from './utils/conf_technologyPreferences';
 import { fetchMachineRole } from '../utils/clusterPeer';
-import { API_BASE_URL } from '../apiConfig';
 import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
 import '../components/IdeumKiosk/Ideum05NavLayer.css';
 import './conf_DataCenterConfigurator.css';
@@ -65,11 +67,10 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState([]);
   const [resultsView, setResultsView] = useState(null);
-  const [clusterSentAt, setClusterSentAt] = useState(null);
-  const [ideumPreviewResult, setIdeumPreviewResult] = useState(null);
   const [wallSession, setWallSession] = useState(null);
-  const [peerBackendUrl, setPeerBackendUrl] = useState(null);
+  const [wallListeningSince] = useState(() => new Date().toISOString());
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [ideumTab, setIdeumTab] = useState('configure');
 
   const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
 
@@ -104,37 +105,22 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (!isIdeumMode) return undefined;
-    let cancelled = false;
-    fetchMachineRole()
-      .then((role) => {
-        if (!cancelled) {
-          setPeerBackendUrl(role.peerBackendUrl || null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setPeerBackendUrl(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isIdeumMode]);
-
   const applyWallSession = useCallback((session) => {
     setWallSession(session);
-    const wall = sessionToWallState(session);
+    const wall = sessionToWallState(session, { onlyAfter: wallListeningSince });
     setError(wall.error);
     setErrorDetails(wall.errorDetails || []);
     if (wall.result) {
       setResult(wall.result);
       setLastRunInputs(wall.inputs ? { ...wall.inputs, technologies: [...(wall.inputs.technologies || [])] } : null);
       setResultsView('architecture');
-    } else if (wall.status === 'idle') {
+    } else {
       setResult(null);
-      setResultsView(null);
+      if (!wall.isGenerating) {
+        setResultsView(null);
+      }
     }
-  }, []);
+  }, [wallListeningSince]);
 
   useEffect(() => {
     if (!isWallMode) return undefined;
@@ -161,8 +147,6 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
   const handleGenerate = useCallback(async () => {
     setError(null);
     setErrorDetails([]);
-    setClusterSentAt(null);
-    setIdeumPreviewResult(null);
 
     const validation = validateConfiguratorInputs({ ...inputs, uiMode });
     if (!validation.ok) {
@@ -175,25 +159,19 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
       setIsGenerating(true);
       setStatusMessage('Sending to Maingear wall display…');
       try {
-        const backendUrl =
-          peerBackendUrl
-          || process.env.REACT_APP_MAINGEAR_BACKEND_URL
-          || API_BASE_URL
-          || (typeof window !== 'undefined' ? `http://${window.location.hostname}:5000` : null);
-        if (!backendUrl) {
-          throw new Error(
-            'Maingear backend URL is not configured. Run set-ideum-ethernet-ip.bat or set REACT_APP_MAINGEAR_BACKEND_URL.',
-          );
+        let role = null;
+        try {
+          role = await fetchMachineRole();
+        } catch (_) {
+          /* local dev may still submit via localhost / proxy */
         }
+        const backendUrl = resolveMaingearBackendUrl(role);
         const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
         if (session.status === 'error' || !session.result?.ok) {
           setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
           setErrorDetails(session.errorDetails || session.result?.details || []);
           return;
         }
-        setIdeumPreviewResult(session.result);
-        setClusterSentAt(new Date());
-        setStatusMessage('');
       } catch (e) {
         setError(e.message || 'Could not send configuration to wall display.');
       } finally {
@@ -230,7 +208,7 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
       setIsGenerating(false);
       setStatusMessage('');
     }
-  }, [inputs, uiMode, isIdeumMode, peerBackendUrl]);
+  }, [inputs, uiMode, isIdeumMode]);
 
   const handleReset = () => {
     if (isWallMode) return;
@@ -241,8 +219,6 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
     setError(null);
     setErrorDetails([]);
     setResultsView(null);
-    setClusterSentAt(null);
-    setIdeumPreviewResult(null);
   };
 
   const handleSelectOutputView = (view) => {
@@ -261,20 +237,19 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
     });
   };
 
-  const wall = sessionToWallState(wallSession);
+  const wall = sessionToWallState(wallSession, { onlyAfter: wallListeningSince });
   const wallGenerating = isWallMode && wall.isGenerating;
   const wallStatusMessage = wallGenerating ? 'Generating architecture on Maingear…' : statusMessage;
 
   return (
     <div className={`conf-page conf-page--${mode}`}>
-      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
+      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isWallMode ? ' conf-page-header--wall' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
         {isIdeumMode ? (
           <>
-            {!IDEUM_HIDE_HEADER_CHROME && (
-              <div className="conf-page-header__ideum-start">
-                {onClose && <Ideum05BackButton onBack={onClose} />}
-              </div>
-            )}
+            <div className="conf-page-header__ideum-start">
+              {!IDEUM_HIDE_HEADER_CHROME && onClose && <Ideum05BackButton onBack={onClose} />}
+              <ConfIdeumPageTabs activeTab={ideumTab} onSelectTab={setIdeumTab} />
+            </div>
             <div className="conf-page-header__titles conf-page-header__titles--center">
               <h1>{meta.title}</h1>
             </div>
@@ -353,8 +328,8 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
         </div>
       )}
 
-      <div className={`conf-layout conf-layout--${mode}`}>
-        {!isWallMode && isIdeumMode && (
+      <div className={`conf-layout conf-layout--${mode}${isIdeumMode && ideumTab !== 'configure' ? ' conf-layout--ideum-trade' : ''}`}>
+        {!isWallMode && isIdeumMode && ideumTab === 'configure' && (
           <ConfIdeumInputPanel
             inputs={inputs}
             onChange={setInputs}
@@ -363,14 +338,12 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
             onLoadPreset={handleLoadPreset}
             isGenerating={isGenerating}
             generateLabel="CONFIGURE"
-            previewSlot={
-              ideumPreviewResult && !error ? (
-                <ConfIdeumPreviewSummary result={ideumPreviewResult} />
-              ) : null
-            }
           />
         )}
-        {!isWallMode && !isIdeumMode && (
+        {!isWallMode && isIdeumMode && ideumTab !== 'configure' && (
+          <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
+        )}
+        {!isIdeumMode && !isWallMode && (
           <ConfInputPanel
             inputs={inputs}
             onChange={setInputs}
@@ -385,16 +358,23 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
             onSelectTradeViz={handleSelectOutputView}
           />
         )}
-        {!isIdeumMode && (
-          <ConfResultsPanel
+        {isWallMode && (
+          <ConfWallQuadrantDisplay
             result={result}
             inputs={wall.inputs || inputs}
-            isGenerating={isGenerating || wallGenerating}
+            isGenerating={wallGenerating}
             statusMessage={wallStatusMessage}
-            resultsView={resultsView}
-            wallDisplayMode={isWallMode}
             wallSessionStatus={wall.status}
-            showOutputNav={isWallMode}
+          />
+        )}
+        {!isIdeumMode && !isWallMode && (
+          <ConfResultsPanel
+            result={result}
+            inputs={inputs}
+            isGenerating={isGenerating}
+            statusMessage={statusMessage}
+            resultsView={resultsView}
+            showOutputNav={false}
             onSelectOutputView={handleSelectOutputView}
           />
         )}

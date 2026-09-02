@@ -107,7 +107,7 @@ export default function ConfResultsPanel({
             <p>
               This wall display is loaded and listening. On the Ideum touch table, open{' '}
               <strong>DC Configurator Ideum</strong>, set requirements, and press{' '}
-              <strong>Configure → Wall Display</strong>.
+              <strong>CONFIGURE</strong>.
             </p>
             <p className="conf-empty-state__hint">
               Maingear will compute the architecture and show the full results here — SLD, KPIs,

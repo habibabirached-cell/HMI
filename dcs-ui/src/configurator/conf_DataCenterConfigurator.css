@@ -186,8 +186,10 @@
 .conf-page-header__ideum-start {
   display: flex;
   align-items: center;
+  gap: 12px;
   justify-self: start;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .conf-page-header__titles--center {
@@ -284,7 +286,7 @@
     "lm  left  ctr   right rm"
     ".   .     .     .     ."
     ".   .     .     .     .";
-  grid-template-columns: minmax(118px, 1fr) minmax(108px, 148px) minmax(150px, 1.15fr) minmax(108px, 148px) minmax(118px, 1fr);
+  grid-template-columns: minmax(118px, 1fr) minmax(135px, 185px) minmax(112px, 0.86fr) minmax(135px, 185px) minmax(118px, 1fr);
   grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 8px 10px;
   min-height: 0;
@@ -354,15 +356,15 @@
 .conf-ideum-corridor--left {
   padding: 8px 5px 10px 3px;
   width: 100%;
-  max-width: 148px;
-  justify-self: center;
+  max-width: 185px;
+  justify-self: end;
   overflow: visible;
 }
 
 .conf-ideum-corridor--right {
   width: 100%;
-  max-width: 148px;
-  justify-self: center;
+  max-width: 185px;
+  justify-self: start;
   padding: 8px 3px 10px 5px;
   box-sizing: border-box;
   overflow: visible;
@@ -411,7 +413,7 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  font-size: clamp(21px, 8.5cqi, 13px);
+  font-size: clamp(16px, 10.5cqi, 28px);
   text-align: center;
   writing-mode: horizontal-tb;
   transform: none;
@@ -450,7 +452,7 @@
 
 .conf-ideum-corridor-track-col {
   position: relative;
-  flex: 0 0 40px;
+  flex: 0 0 50px;
   min-height: 0;
   align-self: stretch;
   pointer-events: none;
@@ -462,7 +464,7 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 12px;
+  width: 15px;
   border-radius: 999px;
   background: linear-gradient(to top, rgba(0, 94, 96, 0.14) 0%, rgba(0, 94, 96, 0.06) 100%);
   box-shadow: inset 0 1px 3px rgba(15, 35, 52, 0.14);
@@ -488,13 +490,13 @@
 }
 
 .conf-ideum-corridor-arrow__value {
-  font-size: clamp(16px, 1.6vw, 20px);
+  font-size: clamp(20px, 2vw, 25px);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--conf-evergreen);
   white-space: nowrap;
-  padding: 3px 5px;
-  border-radius: 5px;
+  padding: 4px 6px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(0, 0, 0, 0.55);
   box-shadow:
@@ -514,15 +516,15 @@
 }
 
 .conf-ideum-corridor-arrow--left .conf-ideum-corridor-arrow__head {
-  border-top: 14px solid transparent;
-  border-bottom: 14px solid transparent;
-  border-left: 22px solid var(--conf-evergreen);
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-left: 28px solid var(--conf-evergreen);
 }
 
 .conf-ideum-corridor-arrow--right .conf-ideum-corridor-arrow__head {
-  border-top: 14px solid transparent;
-  border-bottom: 14px solid transparent;
-  border-right: 22px solid var(--conf-evergreen);
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-right: 28px solid var(--conf-evergreen);
 }
 
 .conf-ideum-corridor-stack--bottom-up {
@@ -768,7 +770,7 @@
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
-  padding: 8px 4px;
+  padding: 10px 6px;
   border: 2px solid rgba(0, 0, 0, 0.88);
   border-radius: 10px;
   line-height: 1;
@@ -815,7 +817,7 @@
   flex: 1 1 0;
   width: 100%;
   min-height: 0;
-  padding: 8px 4px;
+  padding: 10px 6px;
   border: 2px solid rgba(0, 0, 0, 0.88);
   border-radius: 10px;
   line-height: 1;
@@ -924,24 +926,28 @@
     0 3px 5px rgba(0, 94, 96, 0.16);
 }
 
+.conf-ideum-corridor-rail--left .conf-ideum-corridor-arrow__value {
+  font-size: clamp(18px, 1.85vw, 24px);
+}
+
 .conf-ideum-corridor-btn--size-xl .conf-ideum-corridor-btn__value {
-  font-size: clamp(20px, 1.95vw, 26px);
+  font-size: clamp(25px, 2.45vw, 33px);
 }
 
 .conf-ideum-corridor-btn--size-lg .conf-ideum-corridor-btn__value {
-  font-size: clamp(17px, 1.65vw, 22px);
+  font-size: clamp(21px, 2.06vw, 28px);
 }
 
 .conf-ideum-corridor-btn--size-md .conf-ideum-corridor-btn__value {
-  font-size: clamp(15px, 1.45vw, 19px);
+  font-size: clamp(19px, 1.81vw, 24px);
 }
 
 .conf-ideum-corridor-btn--size-sm .conf-ideum-corridor-btn__value {
-  font-size: clamp(13px, 1.25vw, 17px);
+  font-size: clamp(16px, 1.56vw, 21px);
 }
 
 .conf-ideum-corridor-btn--size-xs .conf-ideum-corridor-btn__value {
-  font-size: clamp(11px, 1.05vw, 14px);
+  font-size: clamp(14px, 1.31vw, 18px);
 }
 
 .conf-ideum-corridor-btn--sm {
@@ -3268,3 +3274,468 @@
 .conf-pc-axis__handle:hover {
   filter: brightness(1.08);
 }
+
+/* ── Wall display — 2×2 quadrants for 4× 75″ 4K projection ── */
+.conf-page--wall {
+  background: #0f1419;
+}
+
+.conf-page-header--wall {
+  padding: 10px 24px;
+  border-bottom: 3px solid var(--conf-evergreen);
+}
+
+.conf-page-header--wall .conf-page-eyebrow,
+.conf-page-header--wall p,
+.conf-page-header--wall .conf-badges,
+.conf-page-header--wall .conf-page-header__actions {
+  display: none;
+}
+
+.conf-page-header--wall h1 {
+  font-size: clamp(24px, 2.2vw, 36px);
+  margin: 0;
+}
+
+.conf-page--wall .conf-error-banner {
+  margin: 0;
+  border-radius: 0;
+  font-size: clamp(18px, 1.6vw, 24px);
+  padding: 14px 24px;
+}
+
+.conf-page--wall .conf-layout--wall {
+  padding: 0;
+  gap: 0;
+  background: #0f1419;
+}
+
+.conf-wall-display-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: #0f1419;
+}
+
+.conf-wall-display {
+  display: grid;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.conf-wall-bezel-divider {
+  position: absolute;
+  z-index: 30;
+  touch-action: none;
+  background: transparent;
+}
+
+.conf-wall-bezel-divider::after {
+  content: '';
+  position: absolute;
+  background: #0f1419;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.conf-wall-bezel-divider--vertical {
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+}
+
+.conf-wall-bezel-divider--vertical::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  transform: translateX(-50%);
+}
+
+.conf-wall-bezel-divider--horizontal {
+  left: 0;
+  right: 0;
+  height: 20px;
+  transform: translateY(-50%);
+  cursor: ns-resize;
+}
+
+.conf-wall-bezel-divider--horizontal::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  transform: translateY(-50%);
+}
+
+.conf-wall-bezel-joint {
+  position: absolute;
+  z-index: 31;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  background: rgba(15, 20, 25, 0.92);
+  transform: translate(-50%, -50%);
+  cursor: move;
+  touch-action: none;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.conf-wall-bezel-joint:hover,
+.conf-wall-bezel-divider:hover {
+  opacity: 1;
+}
+
+.conf-wall-bezel-joint:focus-visible,
+.conf-wall-bezel-divider:focus-visible {
+  outline: 2px solid rgba(0, 94, 96, 0.85);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+body.conf-wall-bezel-dragging {
+  user-select: none;
+}
+
+body.conf-wall-bezel-dragging-x {
+  cursor: ew-resize;
+}
+
+body.conf-wall-bezel-dragging-y {
+  cursor: ns-resize;
+}
+
+body.conf-wall-bezel-dragging-both {
+  cursor: move;
+}
+
+.conf-wall-overlay-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 0;
+  height: 100%;
+  padding: clamp(32px, 4vw, 64px);
+  background: #fff;
+  text-align: center;
+}
+
+.conf-wall-overlay-state h2 {
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 800;
+  color: var(--conf-evergreen);
+  line-height: 1.15;
+  max-width: 18ch;
+}
+
+.conf-wall-overlay-state p {
+  font-size: clamp(22px, 2.4vw, 34px);
+  line-height: 1.45;
+  color: var(--conf-text);
+  max-width: 36ch;
+}
+
+.conf-wall-overlay-state__status {
+  font-size: clamp(20px, 2vw, 28px) !important;
+  color: var(--conf-text-dim);
+  font-weight: 600;
+}
+
+.conf-wall-overlay-state__bezel-hint {
+  font-size: clamp(16px, 1.5vw, 22px) !important;
+  color: var(--conf-text-dim);
+  max-width: 42ch;
+}
+
+.conf-loading-spinner--wall {
+  width: 72px;
+  height: 72px;
+  border-width: 6px;
+}
+
+.conf-wall-quadrant {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: clamp(20px, 2.2vw, 40px);
+  background: #fff;
+  overflow: hidden;
+}
+
+.conf-wall-quadrant__header {
+  flex-shrink: 0;
+  margin-bottom: clamp(12px, 1.2vw, 20px);
+  padding-bottom: clamp(10px, 1vw, 16px);
+  border-bottom: 3px solid var(--conf-evergreen);
+}
+
+.conf-wall-quadrant__title {
+  font-size: clamp(28px, 2.8vw, 44px);
+  font-weight: 800;
+  color: var(--conf-evergreen);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.conf-wall-quadrant__subtitle {
+  margin-top: clamp(8px, 0.8vw, 12px);
+  font-size: clamp(18px, 1.7vw, 26px);
+  line-height: 1.4;
+  color: var(--conf-text-dim);
+  font-weight: 500;
+}
+
+.conf-wall-quadrant__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.2vw, 20px);
+}
+
+/* Hide redundant inner titles / fine print on wall slides */
+.conf-wall-quadrant .conf-sld > h3,
+.conf-wall-quadrant .conf-result-section > h3,
+.conf-wall-quadrant .conf-targets-panel > h3,
+.conf-wall-quadrant .conf-sld__note,
+.conf-wall-quadrant .conf-field__helper,
+.conf-wall-quadrant .conf-optimizer-note,
+.conf-wall-quadrant .conf-info-tooltip {
+  display: none;
+}
+
+.conf-wall-quadrant--architecture .conf-sld {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.conf-wall-quadrant--architecture .conf-sld__svg {
+  flex: 1;
+  width: 100%;
+  min-height: 180px;
+  height: auto;
+}
+
+.conf-wall-quadrant .conf-sld__label {
+  font-size: 13px;
+}
+
+.conf-wall-quadrant .conf-sld__cap {
+  font-size: 12px;
+}
+
+.conf-wall-quadrant--kpis .conf-kpi-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 1.4vw, 22px);
+  margin: 0;
+}
+
+.conf-wall-quadrant .conf-kpi-card {
+  padding: clamp(16px, 1.6vw, 24px);
+  border-radius: 12px;
+  border-width: 2px;
+}
+
+.conf-wall-quadrant .conf-kpi-card__label {
+  font-size: clamp(18px, 1.6vw, 26px);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.conf-wall-quadrant .conf-kpi-card__value {
+  font-size: clamp(36px, 3.6vw, 56px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.conf-wall-quadrant .conf-kpi-card small,
+.conf-wall-quadrant .conf-kpi-card__status {
+  font-size: clamp(16px, 1.4vw, 22px);
+  margin-top: 8px;
+}
+
+.conf-wall-quadrant .conf-targets-panel {
+  margin-top: auto;
+}
+
+.conf-wall-quadrant .conf-targets-list {
+  gap: clamp(10px, 1vw, 14px);
+}
+
+.conf-wall-quadrant .conf-targets-list li {
+  padding: clamp(12px, 1.2vw, 18px) clamp(14px, 1.4vw, 20px);
+  font-size: clamp(18px, 1.7vw, 26px);
+  border-radius: 10px;
+}
+
+.conf-wall-quadrant .conf-target__label {
+  font-size: clamp(16px, 1.5vw, 22px);
+  font-weight: 800;
+}
+
+.conf-wall-quadrant .conf-target__value {
+  font-size: clamp(18px, 1.7vw, 26px);
+}
+
+.conf-wall-quadrant .conf-target__status {
+  font-size: clamp(16px, 1.4vw, 22px);
+  font-weight: 700;
+}
+
+.conf-wall-quadrant--supply .conf-supply-mix {
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(16px, 1.6vw, 24px);
+}
+
+.conf-wall-quadrant .conf-supply-mix__chart {
+  display: flex;
+  justify-content: center;
+}
+
+.conf-wall-quadrant .conf-donut {
+  width: clamp(140px, 14vw, 220px);
+  height: auto;
+}
+
+.conf-wall-quadrant .conf-table {
+  font-size: clamp(17px, 1.6vw, 24px);
+}
+
+.conf-wall-quadrant .conf-table th {
+  font-size: clamp(16px, 1.5vw, 22px);
+  padding: clamp(10px, 1vw, 14px);
+}
+
+.conf-wall-quadrant .conf-table td {
+  padding: clamp(10px, 1vw, 14px);
+}
+
+.conf-wall-quadrant .conf-bar-row__label,
+.conf-wall-quadrant .conf-bar-row__value {
+  font-size: clamp(17px, 1.6vw, 24px);
+  font-weight: 700;
+}
+
+.conf-wall-quadrant .conf-bar-row__track {
+  height: clamp(18px, 1.8vw, 28px);
+}
+
+.conf-wall-quadrant .conf-metrics-row {
+  grid-template-columns: 1fr;
+  gap: clamp(14px, 1.4vw, 22px);
+}
+
+.conf-wall-quadrant .conf-metric-card {
+  padding: clamp(16px, 1.6vw, 24px);
+}
+
+.conf-wall-quadrant .conf-metric-card__header span {
+  font-size: clamp(18px, 1.7vw, 26px);
+  font-weight: 700;
+}
+
+.conf-wall-quadrant .conf-metric-card__value {
+  font-size: clamp(32px, 3.2vw, 48px);
+  font-weight: 800;
+}
+
+.conf-wall-quadrant .conf-metric-card small {
+  font-size: clamp(16px, 1.4vw, 22px);
+}
+
+.conf-wall-quadrant .conf-curtailment-grid {
+  gap: clamp(12px, 1.2vw, 18px);
+}
+
+.conf-wall-quadrant .conf-curtailment-stat span {
+  font-size: clamp(16px, 1.5vw, 22px);
+}
+
+.conf-wall-quadrant .conf-curtailment-stat strong {
+  font-size: clamp(28px, 2.6vw, 40px);
+}
+
+.conf-wall-details-table-wrap {
+  margin-top: auto;
+  overflow: auto;
+}
+
+.conf-wall-details-table {
+  width: 100%;
+}
+
+/* ── Ideum touch table — page tabs (Configure + trade space) ── */
+.conf-ideum-page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.conf-ideum-page-tabs__btn {
+  border: 2px solid rgba(0, 94, 96, 0.22);
+  background: #fff;
+  color: var(--conf-evergreen);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: clamp(14px, 1.2vw, 16px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.conf-ideum-page-tabs__btn:hover {
+  border-color: var(--conf-evergreen);
+  background: var(--conf-evergreen-light);
+}
+
+.conf-ideum-page-tabs__btn--active {
+  border-color: var(--conf-evergreen);
+  background: var(--conf-evergreen);
+  color: #fff;
+}
+
+.conf-layout--ideum-trade {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 8px 12px 12px;
+  min-height: 0;
+}
+
+.conf-layout--ideum-trade .conf-trade-space {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.conf-layout--ideum-trade .conf-trade-space__title {
+  font-size: clamp(20px, 2vw, 28px);
+}
+
+.conf-layout--ideum-trade .conf-heatmap {
+  font-size: clamp(14px, 1.3vw, 18px);
+}
+
+.conf-layout--ideum-trade .conf-heatmap th,
+.conf-layout--ideum-trade .conf-heatmap td {
+  padding: 10px 12px;
+}
+

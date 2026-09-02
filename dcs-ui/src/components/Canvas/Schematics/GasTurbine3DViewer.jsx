@@ -45,6 +45,7 @@ export default function GasTurbine3DViewer({
   modelUrl,
   turntableOnly = false,
   cameraDist = 1.8,
+  neutralLighting = false,
 }) {
   const hostRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
@@ -74,7 +75,7 @@ export default function GasTurbine3DViewer({
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = neutralLighting ? 1.38 : 1.1;
         renderer.domElement.style.display = 'block';
         renderer.domElement.style.position = 'absolute';
         renderer.domElement.style.left = '0';
@@ -83,19 +84,37 @@ export default function GasTurbine3DViewer({
         renderer.domElement.style.height = `${height}px`;
         host.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
-        keyLight.position.set(4, 6, 5);
+        scene.add(new THREE.AmbientLight(0xffffff, neutralLighting ? 0.82 : 0.45));
+        const keyLight = new THREE.DirectionalLight(0xffffff, neutralLighting ? 1.65 : 1.4);
+        keyLight.position.set(neutralLighting ? 2 : 4, neutralLighting ? 4 : 6, neutralLighting ? 7 : 5);
         scene.add(keyLight);
-        const fillLight = new THREE.DirectionalLight(ACCENT_BLUE, 55);
-        fillLight.position.set(-5, 2, -3);
+        const fillLight = new THREE.DirectionalLight(
+          neutralLighting ? 0xffffff : ACCENT_BLUE,
+          neutralLighting ? 1.05 : 55,
+        );
+        fillLight.position.set(neutralLighting ? -2 : -5, neutralLighting ? 2 : 2, neutralLighting ? 6 : -3);
         scene.add(fillLight);
-        const accentSpecular = new THREE.PointLight(ACCENT_BLUE, 35, 80);
-        accentSpecular.position.set(-4, 0.5, 3);
+        const accentSpecular = new THREE.PointLight(
+          neutralLighting ? 0xffffff : ACCENT_BLUE,
+          neutralLighting ? 0.95 : 35,
+          80,
+        );
+        accentSpecular.position.set(neutralLighting ? 0 : -4, neutralLighting ? 1.5 : 0.5, neutralLighting ? 5.5 : 3);
         scene.add(accentSpecular);
-        const rimLight = new THREE.DirectionalLight(ACCENT_BLUE, 18);
+        const rimLight = new THREE.DirectionalLight(
+          neutralLighting ? 0xffffff : ACCENT_BLUE,
+          neutralLighting ? 0.55 : 18,
+        );
         rimLight.position.set(0, -2, -6);
         scene.add(rimLight);
+        if (neutralLighting) {
+          const frontLight = new THREE.DirectionalLight(0xffffff, 1.25);
+          frontLight.position.set(0.5, 0.5, 8);
+          scene.add(frontLight);
+          const topLight = new THREE.DirectionalLight(0xffffff, 0.75);
+          topLight.position.set(0, 9, 2);
+          scene.add(topLight);
+        }
 
         const blueColor = new THREE.Color(ACCENT_BLUE);
         const greenColor = new THREE.Color(ACCENT_GREEN);
@@ -130,14 +149,14 @@ export default function GasTurbine3DViewer({
           },
         );
 
-        const TURNTABLE_YAW = 0.0014;
+        const TURNTABLE_YAW = 0.004;
         const SHAFT_SPIN = 0.014;
 
         const animate = () => {
           frameId = requestAnimationFrame(animate);
           if (turntable && modelRoot && shaftAxis) {
             turntable.rotation.y += TURNTABLE_YAW;
-            if (!turntableOnly) {
+            if (!turntableOnly && !neutralLighting) {
               modelRoot.rotateOnAxis(shaftAxis, SHAFT_SPIN);
               shaftSpinAngle += SHAFT_SPIN;
 
@@ -179,7 +198,7 @@ export default function GasTurbine3DViewer({
         });
       }
     };
-  }, [width, height, modelUrl, turntableOnly, cameraDist]);
+  }, [width, height, modelUrl, turntableOnly, cameraDist, neutralLighting]);
 
   return (
     <div

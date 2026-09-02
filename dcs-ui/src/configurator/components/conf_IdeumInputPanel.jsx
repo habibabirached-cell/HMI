@@ -205,6 +205,7 @@ export default function ConfIdeumInputPanel({
         formatDisplay={formatReliabilityDisplay}
         isPresetActive={(presetValue) => reliabilityPresetActive(reliabilityTarget, presetValue)}
         ariaLabel="Reliability fine adjust"
+        presetSizing="reliability"
       />
     ),
     right: (

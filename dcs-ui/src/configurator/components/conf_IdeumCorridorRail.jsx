@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-function corridorPresetSizeClass(text) {
+function corridorPresetSizeClass(text, sizing = 'default') {
   const digits = String(text).replace(/[^\d.]/g, '').length;
+  if (sizing === 'reliability') {
+    if (digits <= 2) return 'conf-ideum-corridor-btn--size-xl';
+    if (digits <= 3) return 'conf-ideum-corridor-btn--size-lg';
+    if (digits <= 5) return 'conf-ideum-corridor-btn--size-lg';
+    return 'conf-ideum-corridor-btn--size-md';
+  }
   if (digits <= 2) return 'conf-ideum-corridor-btn--size-xl';
   if (digits <= 3) return 'conf-ideum-corridor-btn--size-lg';
   if (digits <= 4) return 'conf-ideum-corridor-btn--size-md';
@@ -92,6 +98,7 @@ export default function IdeumCorridorRail({
   formatDisplay,
   isPresetActive,
   ariaLabel,
+  presetSizing = 'default',
 }) {
   const bodyRef = useRef(null);
   const draggingRef = useRef(false);
@@ -241,7 +248,7 @@ export default function IdeumCorridorRail({
               <button
                 key={preset.value}
                 type="button"
-                className={`conf-ideum-corridor-btn ${corridorPresetSizeClass(labelText)}${active ? ' conf-ideum-corridor-btn--active' : ''}${fillPct > 0 ? ' conf-ideum-corridor-btn--filling' : ''}`}
+                className={`conf-ideum-corridor-btn ${corridorPresetSizeClass(labelText, presetSizing)}${active ? ' conf-ideum-corridor-btn--active' : ''}${fillPct > 0 ? ' conf-ideum-corridor-btn--filling' : ''}`}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();

@@ -67,6 +67,7 @@ const IDEUM_HUB_TECH_META = {
     modelName: 'Solid-oxide FC',
     model3d: 'turbine',
     model3dUrl: HUB_MODEL_URLS.fuelCell,
+    model3dNeutralLight: true,
   },
   recipEngine: {
     slot: 'bottom',
@@ -150,6 +151,7 @@ function TechCard3DPreview({ tech, meta }) {
           modelUrl={meta.model3dUrl || HUB_MODEL_URLS.aeroderivativeGT}
           turntableOnly
           cameraDist={meta.model3dCameraDist}
+          neutralLighting={meta.model3dNeutralLight}
         />
       )}
       {ready && meta.model3d === 'wind' && (
