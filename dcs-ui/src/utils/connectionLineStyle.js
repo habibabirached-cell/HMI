@@ -7,6 +7,7 @@ const PRODUCER_TYPES = new Set([
   'gas-turbine-3d',
   'gas-turbine-lm2500',
   'gas-turbine-lm2500-andritz',
+  'gas-turbine-7h',
   'gas-turbine-lm2500-plus',
   'gas-turbine-lm6000',
   'bess',

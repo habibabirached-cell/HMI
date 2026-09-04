@@ -38,15 +38,20 @@ export function technologyIdsFromPreferences(preferences) {
 
 export function setTechnologyPreference(preferences, techId, targetPref) {
   const next = { ...normalizeTechnologyPreferences(preferences) };
+  const current = next[techId];
+
   if (targetPref === TECH_PREFERENCE.MUST) {
-    next[techId] = next[techId] === TECH_PREFERENCE.MUST
+    next[techId] = current === TECH_PREFERENCE.MUST
       ? TECH_PREFERENCE.IF_NECESSARY
       : TECH_PREFERENCE.MUST;
   } else if (targetPref === TECH_PREFERENCE.SHOULD) {
-    next[techId] = next[techId] === TECH_PREFERENCE.SHOULD
+    next[techId] = current === TECH_PREFERENCE.SHOULD
       ? TECH_PREFERENCE.IF_NECESSARY
       : TECH_PREFERENCE.SHOULD;
+  } else {
+    next[techId] = TECH_PREFERENCE.IF_NECESSARY;
   }
+
   return next;
 }
 

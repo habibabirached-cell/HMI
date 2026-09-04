@@ -130,6 +130,7 @@ export const COMPONENT_LIBRARY = [
       { id: 'current-transformer-800', name: 'CT', fullName: 'Current Transformer 800:1', type: 'ct', properties: { rating: 800, voltage: 0, unit: '800:1' } },
       { id: 'current-transformer-1500', name: 'CT', fullName: 'Current Transformer 1500:1', type: 'ct', properties: { rating: 1500, voltage: 0, unit: '1500:1' } },
       { id: 'current-transformer-2000', name: 'CT', fullName: 'Current Transformer 2000:1', type: 'ct', properties: { rating: 2000, voltage: 0, unit: '2000:1' } },
+      { id: 'current-transformer-vertical', name: 'CT (V)', fullName: 'Current Transformer — vertical', type: 'ct-v', properties: { rating: 0, voltage: 0, unit: '' } },
       { id: 'voltage-transformer', name: 'VT / PT', fullName: 'Voltage / Potential Transformer', type: 'vt', properties: { rating: 0, voltage: 0, unit: '' } },
       { id: 'power-meter', name: 'Meter', fullName: 'Power / Energy Meter', type: 'meter', properties: { rating: 0, voltage: 0, unit: '' } },
       { id: 'frequency-meter', name: 'Freq Meter', fullName: 'Frequency Meter', type: 'freq-meter', properties: { rating: 0, voltage: 0, unit: '' } },

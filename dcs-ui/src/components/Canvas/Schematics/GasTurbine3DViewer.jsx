@@ -46,6 +46,7 @@ export default function GasTurbine3DViewer({
   turntableOnly = false,
   cameraDist = 1.8,
   neutralLighting = false,
+  lowPixelRatio = false,
 }) {
   const hostRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
@@ -60,6 +61,8 @@ export default function GasTurbine3DViewer({
     let disposed = false;
     let renderer = null;
     let scene = null;
+    let intersectionObserver = null;
+    let onVisibilityChange = null;
 
     loadThreeGltfRuntime()
       .then(({ THREE, createGltfLoader }) => {
@@ -72,7 +75,9 @@ export default function GasTurbine3DViewer({
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(width, height, false);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setPixelRatio(
+          Math.min(window.devicePixelRatio, lowPixelRatio ? 1 : 1.5),
+        );
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = neutralLighting ? 1.38 : 1.1;
@@ -152,8 +157,15 @@ export default function GasTurbine3DViewer({
         const TURNTABLE_YAW = 0.004;
         const SHAFT_SPIN = 0.014;
 
-        const animate = () => {
-          frameId = requestAnimationFrame(animate);
+        let inView = true;
+        let loopRunning = false;
+
+        const tick = () => {
+          if (disposed) return;
+          loopRunning = false;
+          if (!inView || document.hidden) return;
+          loopRunning = true;
+          frameId = requestAnimationFrame(tick);
           if (turntable && modelRoot && shaftAxis) {
             turntable.rotation.y += TURNTABLE_YAW;
             if (!turntableOnly && !neutralLighting) {
@@ -169,7 +181,28 @@ export default function GasTurbine3DViewer({
           }
           renderer.render(scene, camera);
         };
-        animate();
+
+        const startLoop = () => {
+          if (!loopRunning && inView && !document.hidden) tick();
+        };
+
+        intersectionObserver =
+          typeof IntersectionObserver !== 'undefined'
+            ? new IntersectionObserver(
+                ([entry]) => {
+                  inView = entry.isIntersecting;
+                  if (inView) startLoop();
+                },
+                { root: null, threshold: 0.01 },
+              )
+            : null;
+        intersectionObserver?.observe(host);
+
+        onVisibilityChange = () => {
+          if (!document.hidden) startLoop();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        startLoop();
       })
       .catch((err) => {
         if (!disposed) {
@@ -182,6 +215,10 @@ export default function GasTurbine3DViewer({
     return () => {
       disposed = true;
       cancelAnimationFrame(frameId);
+      if (onVisibilityChange) {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
+      intersectionObserver?.disconnect();
       if (renderer) {
         renderer.dispose();
         if (renderer.domElement.parentNode === host) {
@@ -198,7 +235,7 @@ export default function GasTurbine3DViewer({
         });
       }
     };
-  }, [width, height, modelUrl, turntableOnly, cameraDist, neutralLighting]);
+  }, [width, height, modelUrl, turntableOnly, cameraDist, neutralLighting, lowPixelRatio]);
 
   return (
     <div

@@ -112,12 +112,12 @@ def build_ideum05_conf() -> dict:
             {
                 "id": "comp-ideum-gfme-only-btn",
                 "type": "ideum-gfme-button",
-                "name": "ADD GFME only",
-                "fullName": "ADD GFME only",
+                "name": "ADD GFMe only",
+                "fullName": "ADD GFMe only",
                 "position": {"x": 900, "y": 580},
                 "status": "online",
                 "properties": {
-                    "title": "ADD GFME only",
+                    "title": "ADD GFMe only",
                     "ideumCommand": "addGfmeOnly",
                 },
                 "visualOverrides": {"width": 1080, "height": 380},

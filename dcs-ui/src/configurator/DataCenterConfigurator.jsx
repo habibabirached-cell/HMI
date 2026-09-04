@@ -14,6 +14,8 @@ import {
 import {
   connectConfiguratorClusterUpdates,
   fetchConfiguratorClusterSession,
+  isLocalClusterDev,
+  resolveMaingearBackendUrl,
   sessionToWallState,
   submitConfiguratorToMaingear,
 } from './utils/conf_configuratorCluster';
@@ -158,21 +160,31 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
       setIsGenerating(true);
       setStatusMessage('Sending to Maingear wall display…');
       try {
-        let role;
+        let role = null;
         try {
           role = await fetchMachineRole();
-        } catch (e) {
-          setError(e.message || 'Could not determine machine role.');
+        } catch (_) {
+          /* local dev may still submit via localhost / proxy */
+        }
+
+        if (isLocalClusterDev()) {
+          const backendUrl = resolveMaingearBackendUrl(role);
+          const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
+          if (session.status === 'error' || !session.result?.ok) {
+            setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
+            setErrorDetails(session.errorDetails || session.result?.details || []);
+          }
           return;
         }
-        if (role.isMaingear) {
+
+        if (role?.isMaingear) {
           setError(
             'You are on the Maingear. Configure sends inputs from the Ideum touch table to the Maingear wall display.',
           );
           return;
         }
-        if (!role.isIdeum) {
-          setError(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+        if (!role?.isIdeum) {
+          setError(`Unknown machine role (${role?.role || 'unknown'}). Check cluster.local.json on this PC.`);
           return;
         }
         if (!role.peerBackendUrl) {

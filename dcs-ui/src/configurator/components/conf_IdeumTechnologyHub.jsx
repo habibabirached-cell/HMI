@@ -210,9 +210,7 @@ function HubTechCard({
       <div className="conf-ideum-tech-card__body">
         <div className="conf-ideum-tech-card__prefs" role="group" aria-label={`${meta.category} priority`}>
           {PREF_ROWS.map((row) => {
-            const checked = row.key === TECH_PREFERENCE.IF_NECESSARY
-              ? true
-              : preference === row.key;
+            const checked = preference === row.key;
             const isLocked = row.locked === true;
             return (
               <button

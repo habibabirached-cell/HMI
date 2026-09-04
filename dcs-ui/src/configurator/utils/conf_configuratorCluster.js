@@ -15,6 +15,13 @@ function normalizePayload(inputs) {
   };
 }
 
+/** Two browser tabs on one laptop (localhost UI + local backend). */
+export function isLocalClusterDev() {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
 /**
  * Resolve where Ideum should POST cluster/submit.
  * Local dev (two browser tabs on one laptop) uses the same backend as the wall tab.
@@ -31,10 +38,7 @@ export function resolveMaingearBackendUrl(role) {
     return envUrl || peerUrl || API_BASE_URL || 'http://127.0.0.1:5000';
   }
 
-  const hostname = window.location.hostname;
-  const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';
-
-  if (isLocalDev) {
+  if (isLocalClusterDev()) {
     return envUrl || API_BASE_URL || '';
   }
 
@@ -43,7 +47,7 @@ export function resolveMaingearBackendUrl(role) {
     return peerUrl || envUrl || API_BASE_URL || '';
   }
 
-  return envUrl || API_BASE_URL || `http://${hostname}:5000`;
+  return envUrl || API_BASE_URL || `http://${window.location.hostname}:5000`;
 }
 
 /**

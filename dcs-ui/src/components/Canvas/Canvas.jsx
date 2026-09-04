@@ -19,6 +19,14 @@ import GFMe3DOverlays from './Schematics/GFMe3DOverlays';
 import Bess3DOverlays from './Schematics/Bess3DOverlays';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
 import { resolveConnectionRenderParams } from '../../utils/connectionLineStyle';
+import {
+  collectOpenBreakerConnectionIds,
+  INTERACTIVE_STUB_BREAKER_TYPE,
+  openBreakerAmberStops,
+  toggleInteractiveStubBreakerUpdate,
+} from '../../utils/openBreakerConnections';
+import { buildInteractiveBreakerPortsById } from '../../utils/interactiveBreakerPorts';
+import { playIdeumClick } from '../../utils/ideumClickSound';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
 import {
   clientToCanvasPoint,
@@ -340,6 +348,19 @@ const Canvas = forwardRef(({
   const disableCanvasGestureZoomRef = useRef(disableCanvasGestureZoom);
   disableCanvasGestureZoomRef.current = disableCanvasGestureZoom;
   zoomRef.current = zoom;
+
+  /** When lower section is hidden (e.g. HD_Aero), upper pane uses full canvas height — no green divider. */
+  const splitBottomShareEffective = useMemo(() => {
+    if (designSectionVisibility?.showLower === false) return 0;
+    if (designSectionVisibility?.showUpper === false) return 100;
+    return splitBottomShare;
+  }, [designSectionVisibility?.showLower, designSectionVisibility?.showUpper, splitBottomShare]);
+
+  const showSplitDivider =
+    splitView &&
+    designSectionVisibility?.showLower !== false &&
+    designSectionVisibility?.showUpper !== false;
+
   if (splitView) {
     panForGesturesRef.current = {
       top: panTop,
@@ -378,9 +399,9 @@ const Canvas = forwardRef(({
       if (!splitView) return null;
       const root = canvasContainerRef.current;
       if (!root) return 'top';
-      return resolveSplitPaneAtClientY(root, e.clientY, splitBottomShare);
+      return resolveSplitPaneAtClientY(root, e.clientY, splitBottomShareEffective);
     },
-    [splitView, splitBottomShare],
+    [splitView, splitBottomShareEffective],
   );
 
   const resolveInteractionPaneKey = useCallback(
@@ -628,6 +649,8 @@ const Canvas = forwardRef(({
   }, [components, renderComponents, collapseShiftById]);
 
   const connectionRenderList = useMemo(() => {
+    const openBreakerConnectionIds = collectOpenBreakerConnectionIds(components, connections);
+
     return connections.map((conn) => {
       const fromComp = renderComponents.find((c) => c.id === conn.from);
       const toComp = renderComponents.find((c) => c.id === conn.to);
@@ -719,13 +742,17 @@ const Canvas = forwardRef(({
         (presenceForcedOfflineIds?.has?.(toComp.id) ?? false);
       const connRuleForced =
         presenceForcedOfflineConnectionIds?.has?.(conn.id) ?? false;
-      const isEnergized = baseFromOk && !endpointForced && !connRuleForced;
+      const isOpenBreakerCut = openBreakerConnectionIds.has(conn.id);
+      const isEnergized = baseFromOk && !endpointForced && !connRuleForced && !isOpenBreakerCut;
       const resolved = resolveConnectionRenderParams(
         conn,
         fromComp.type,
         toComp.type,
         isEnergized
       );
+      if (isOpenBreakerCut) {
+        resolved.stops = openBreakerAmberStops();
+      }
       const gradientId = `conn-line-grad-${sanitizeSvgGradientId(conn.id)}`;
 
       return {
@@ -741,7 +768,12 @@ const Canvas = forwardRef(({
         isEnergized
       };
     }).filter(Boolean);
-  }, [connections, renderComponents, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds, canvasBlockTypeScale]);
+  }, [connections, renderComponents, components, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds, canvasBlockTypeScale]);
+
+  const interactiveBreakerPortsById = useMemo(
+    () => buildInteractiveBreakerPortsById(connectionRenderList, renderComponents, canvasBlockTypeScale),
+    [connectionRenderList, renderComponents, canvasBlockTypeScale],
+  );
 
   const componentPaneById = useMemo(() => {
     const m = new Map();
@@ -888,6 +920,19 @@ const Canvas = forwardRef(({
 
     const authoredComponent =
       components.find((c) => c.id === component.id) ?? component;
+
+    if (authoredComponent.type === INTERACTIVE_STUB_BREAKER_TYPE) {
+      onClearConnectionMultiSelection();
+      onSelectComponent(authoredComponent);
+      playIdeumClick();
+      if (onUpdateComponent) {
+        onUpdateComponent(
+          authoredComponent.id,
+          toggleInteractiveStubBreakerUpdate(authoredComponent, mode),
+        );
+      }
+      return;
+    }
 
     // IN SIMULATION MODE: Only allow selection, nothing else
     if (mode === 'simulation') {
@@ -1458,7 +1503,7 @@ const Canvas = forwardRef(({
       const prevZ = zoomRef.current;
       const nz = clampZ(nextZoom);
       if (splitView) {
-        const pk = resolveSplitPaneAtClientY(el, clientY, splitBottomShare);
+        const pk = resolveSplitPaneAtClientY(el, clientY, splitBottomShareEffective);
         const svg = getSvgRefForPane(pk).current;
         if (!svg) return;
         const svgRect = svg.getBoundingClientRect();
@@ -1505,7 +1550,7 @@ const Canvas = forwardRef(({
         dy *= 80;
       }
       const pk = splitView
-        ? resolveSplitPaneAtClientY(el, e.clientY, splitBottomShare)
+        ? resolveSplitPaneAtClientY(el, e.clientY, splitBottomShareEffective)
         : null;
       if (splitView && pk) activeSplitPaneRef.current = pk;
       applyPanDelta(-dx * CANVAS_WHEEL_PAN_SPEED, -dy * CANVAS_WHEEL_PAN_SPEED, pk);
@@ -1534,7 +1579,7 @@ const Canvas = forwardRef(({
       const midClientY = (t0.clientY + t1.clientY) / 2;
       const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
       const pk = splitView
-        ? resolveSplitPaneAtClientY(el, midClientY, splitBottomShare)
+        ? resolveSplitPaneAtClientY(el, midClientY, splitBottomShareEffective)
         : null;
       if (splitView && pk) activeSplitPaneRef.current = pk;
       const p0 = splitView ? getPanePan(pk) : panForGesturesRef.current;
@@ -1644,7 +1689,7 @@ const Canvas = forwardRef(({
     canvasZoomMin,
     canvasZoomMax,
     splitView,
-    splitBottomShare,
+    splitBottomShareEffective,
     getPanePan,
     setPanePan,
   ]);
@@ -2004,7 +2049,7 @@ const Canvas = forwardRef(({
     if (!svg) return undefined;
     const sync = () => {
       const totalPx = svg.clientHeight || 480;
-      const topPx = (totalPx * splitTopSharePercent(splitBottomShare)) / 100;
+      const topPx = (totalPx * splitTopSharePercent(splitBottomShareEffective)) / 100;
       setSplitHeights({ topPx, totalPx });
     };
     sync();
@@ -2015,7 +2060,7 @@ const Canvas = forwardRef(({
       ro.disconnect();
       window.removeEventListener('resize', sync);
     };
-  }, [splitView, splitBottomShare]);
+  }, [splitView, splitBottomShareEffective]);
 
   useLayoutEffect(() => {
     if (!splitView || !autoFitUpperPane || !onPanTop) return undefined;
@@ -2169,7 +2214,7 @@ const Canvas = forwardRef(({
             </clipPath>
           </defs>
         )}
-        {splitView && (
+        {showSplitDivider && (
           <line
             x1={0}
             y1={splitHeights.topPx}
@@ -2497,6 +2542,7 @@ const Canvas = forwardRef(({
               ideumKioskMode={ideumKioskMode}
               isIdeumTouchTarget={ideumTouchComponentIds?.has(component.id) ?? false}
               zoom={zoom}
+              interactiveBreakerPorts={interactiveBreakerPortsById.get(component.id) ?? null}
             />
           ))}
         </g>
@@ -2509,7 +2555,7 @@ const Canvas = forwardRef(({
         <>
           <div
             className="canvas-split-overlay-pane canvas-split-overlay-pane--top"
-            style={{ height: `${splitTopSharePercent(splitBottomShare)}%` }}
+            style={{ height: `${splitTopSharePercent(splitBottomShareEffective)}%` }}
           >
             <div
               className="canvas-split-overlay-coords"
@@ -2566,71 +2612,73 @@ const Canvas = forwardRef(({
             )}
             </div>
           </div>
-          <div
-            className="canvas-split-overlay-pane canvas-split-overlay-pane--bottom"
-            style={{
-              top: `${splitTopSharePercent(splitBottomShare)}%`,
-              height: `${splitBottomShare}%`,
-            }}
-          >
+          {designSectionVisibility?.showLower !== false && (
             <div
-              className="canvas-split-overlay-coords"
+              className="canvas-split-overlay-pane canvas-split-overlay-pane--bottom"
               style={{
-                height: splitHeights.totalPx,
-                marginTop: -splitHeights.topPx,
+                top: `${splitTopSharePercent(splitBottomShareEffective)}%`,
+                height: `${splitBottomShareEffective}%`,
               }}
             >
-            <GasTurbine3DOverlays
-              components={renderComponentsForPane(CANVAS_PANE_LOWER)}
-              pan={panBottom}
-              zoom={zoom}
-              canvasRef={canvasRef}
-              blockTypeScale={canvasBlockTypeScale}
-              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
-              onIdeumControlButtonClick={onIdeumControlButtonClick}
-              simulationData={simulationData}
-              ensembleMemberSimulationData={ensembleMemberSimulationData}
-              ensembleColumnGroups={ensembleColumnGroups}
-              simulationColumns={simulationColumns}
-              simulationTime={simulationTime}
-            />
-            <GFMe3DOverlays
-              renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
-              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
-              pan={panBottom}
-              zoom={zoom}
-              canvasRef={canvasRef}
-              blockTypeScale={canvasBlockTypeScale}
-              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
-              onIdeumControlButtonClick={onIdeumControlButtonClick}
-              simulationData={simulationData}
-              ensembleMemberSimulationData={ensembleMemberSimulationData}
-              ensembleColumnGroups={ensembleColumnGroups}
-              simulationColumns={simulationColumns}
-              simulationTime={simulationTime}
-            />
-            <Bess3DOverlays
-              renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
-              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
-              pan={panBottom}
-              zoom={zoom}
-              canvasRef={canvasRef}
-              blockTypeScale={canvasBlockTypeScale}
-              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
-              onIdeumControlButtonClick={onIdeumControlButtonClick}
-              simulationData={simulationData}
-              ensembleMemberSimulationData={ensembleMemberSimulationData}
-              ensembleColumnGroups={ensembleColumnGroups}
-              simulationColumns={simulationColumns}
-              simulationTime={simulationTime}
-            />
-            {renderIdeumKioskLayer(
-              filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER),
-              panBottom,
-              { primaryPane: false },
-            )}
+              <div
+                className="canvas-split-overlay-coords"
+                style={{
+                  height: splitHeights.totalPx,
+                  marginTop: -splitHeights.topPx,
+                }}
+              >
+                <GasTurbine3DOverlays
+                  components={renderComponentsForPane(CANVAS_PANE_LOWER)}
+                  pan={panBottom}
+                  zoom={zoom}
+                  canvasRef={canvasRef}
+                  blockTypeScale={canvasBlockTypeScale}
+                  ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+                  onIdeumControlButtonClick={onIdeumControlButtonClick}
+                  simulationData={simulationData}
+                  ensembleMemberSimulationData={ensembleMemberSimulationData}
+                  ensembleColumnGroups={ensembleColumnGroups}
+                  simulationColumns={simulationColumns}
+                  simulationTime={simulationTime}
+                />
+                <GFMe3DOverlays
+                  renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
+                  allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+                  pan={panBottom}
+                  zoom={zoom}
+                  canvasRef={canvasRef}
+                  blockTypeScale={canvasBlockTypeScale}
+                  ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+                  onIdeumControlButtonClick={onIdeumControlButtonClick}
+                  simulationData={simulationData}
+                  ensembleMemberSimulationData={ensembleMemberSimulationData}
+                  ensembleColumnGroups={ensembleColumnGroups}
+                  simulationColumns={simulationColumns}
+                  simulationTime={simulationTime}
+                />
+                <Bess3DOverlays
+                  renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
+                  allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+                  pan={panBottom}
+                  zoom={zoom}
+                  canvasRef={canvasRef}
+                  blockTypeScale={canvasBlockTypeScale}
+                  ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+                  onIdeumControlButtonClick={onIdeumControlButtonClick}
+                  simulationData={simulationData}
+                  ensembleMemberSimulationData={ensembleMemberSimulationData}
+                  ensembleColumnGroups={ensembleColumnGroups}
+                  simulationColumns={simulationColumns}
+                  simulationTime={simulationTime}
+                />
+                {renderIdeumKioskLayer(
+                  filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER),
+                  panBottom,
+                  { primaryPane: false },
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </>
       ) : (
         <>

@@ -86,15 +86,15 @@
     {
       "id": "comp-ideum-gfme-only-btn",
       "type": "ideum-gfme-button",
-      "name": "ADD GFME only",
-      "fullName": "ADD GFME only",
+      "name": "ADD GFMe only",
+      "fullName": "ADD GFMe only",
       "position": {
         "x": 900,
         "y": 580
       },
       "status": "idle",
       "properties": {
-        "title": "ADD GFME only",
+        "title": "ADD GFMe only",
         "ideumCommand": "addGfmeOnly"
       },
       "visualOverrides": {

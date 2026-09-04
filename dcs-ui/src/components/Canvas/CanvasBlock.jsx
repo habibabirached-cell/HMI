@@ -58,6 +58,7 @@ function CanvasBlock({
   ideumKioskMode = false,
   isIdeumTouchTarget = false,
   zoom = 1,
+  interactiveBreakerPorts = null,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
   const collapsedFontPxDelta = useCollapsedComponentFontPxDelta();
@@ -90,6 +91,7 @@ function CanvasBlock({
   const centerY = height / 2;
   const presentationOffline = presenceForcedOffline;
   const ideumDecorOnly = ideumKioskMode && component?.properties?.ideumDecorOnly === true;
+  const isInteractiveStubBreaker = component?.type === 'breaker-interactive-stub';
   const { strokeColor, strokeWidthVal } = strokeForStatus(component, isSelected, presentationOffline);
 
   const showBlockTypeScaleUi =
@@ -98,6 +100,7 @@ function CanvasBlock({
     !isMultiSelected &&
     onNudgeCanvasBlockTypeScale &&
     !stripMode &&
+    !isInteractiveStubBreaker &&
     !TYPE_SCALE_EXCLUDED.has(component.type);
 
   return (
@@ -142,6 +145,8 @@ function CanvasBlock({
       style={{
         cursor: ideumDecorOnly
           ? 'default'
+          : isInteractiveStubBreaker
+            ? 'pointer'
           : isIdeumTouchTarget || mode === 'simulation'
             ? 'pointer'
             : mode === 'design'
@@ -185,6 +190,7 @@ function CanvasBlock({
             presentationOffline={presenceForcedOffline}
             labelFontPxDelta={labelFontPxDelta}
             collapseAggregateArt={collapseAggregateArt}
+            interactiveBreakerPorts={interactiveBreakerPorts}
           />
         )}
 

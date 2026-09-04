@@ -1,0 +1,1634 @@
+{
+  "name": "HD-Aero Ideum",
+  "description": "",
+  "canvasComponents": [
+    {
+      "id": "comp-hd-turbine",
+      "type": "gas-turbine-7h",
+      "name": "HD",
+      "fullName": "Heavy-Duty Gas Turbine 7HA-class",
+      "position": {
+        "x": -350,
+        "y": -105
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 33.3,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-hd-gen-cb",
+      "type": "breaker-gen-13.8",
+      "name": "Gen CB",
+      "fullName": "Generator CB 13.8 kV",
+      "position": {
+        "x": -275,
+        "y": 106
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 2000,
+        "voltage": 13.8,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-hd-gsu",
+      "type": "gsu",
+      "name": "GSU",
+      "fullName": "Generator Step-Up Transformer",
+      "position": {
+        "x": -100,
+        "y": 100
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "unit": "MVA",
+        "primaryVoltageKv": 13.8,
+        "secondaryVoltageKv": 34.5,
+        "gsuBusOnComponentSide": "right"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-hd-ct",
+      "type": "ct-v",
+      "name": "CT",
+      "fullName": "Current Transformer 800:1",
+      "position": {
+        "x": -75,
+        "y": 250
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 800,
+        "voltage": 0,
+        "unit": "800:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-ct",
+      "type": "ct-v",
+      "name": "CT",
+      "fullName": "Current Transformer 1500:1",
+      "position": {
+        "x": 175,
+        "y": 600
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 1500,
+        "voltage": 0,
+        "unit": "1500:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-xfmr",
+      "type": "gsu",
+      "name": "GSU",
+      "fullName": "GSU 34.5 kV : 480 V 100 MVA",
+      "position": {
+        "x": 150,
+        "y": 750
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "unit": "MVA",
+        "primaryVoltageKv": 34.5,
+        "secondaryVoltageKv": 0.48
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-knot",
+      "type": "bus-knot",
+      "name": "",
+      "fullName": "Connection Point",
+      "position": {
+        "x": 25,
+        "y": 625
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 0,
+        "unit": ""
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-aux",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux Loads #1",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": -25,
+        "y": 950
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-aux-cb",
+      "type": "breaker-lv",
+      "name": "Aux CB",
+      "fullName": "Auxiliary feeder circuit breaker",
+      "position": {
+        "x": 25,
+        "y": 775
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 4000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-dc-cb",
+      "type": "breaker-dc",
+      "name": "DC CB 480V",
+      "fullName": "DC Circuit Breaker 480V",
+      "position": {
+        "x": -175,
+        "y": 606
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 3000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-pcs",
+      "type": "it-pcs-rect-inv",
+      "name": "Rectifier / Inverter",
+      "fullName": "UPS branch AC-DC conversion (one-line combined)",
+      "position": {
+        "x": -200,
+        "y": 775
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 25,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-ups",
+      "type": "ups",
+      "name": "UPS lt",
+      "fullName": "UPS / LV UPS 400Vdc",
+      "position": {
+        "x": -200,
+        "y": 950
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.4,
+        "unit": "MVA"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load1-rack",
+      "type": "it-rack-load",
+      "name": "Load 1",
+      "fullName": "IT Rack Load 1",
+      "position": {
+        "x": -200,
+        "y": 1100
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 25,
+        "voltage": 0.4,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-aero-turbine",
+      "type": "gas-turbine-lm2500-andritz",
+      "name": "Aero1",
+      "fullName": "LM2500 Aero1",
+      "position": {
+        "x": 725,
+        "y": -100
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 33.3,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-aero-gen-cb",
+      "type": "breaker-gen-13.8",
+      "name": "Gen CB",
+      "fullName": "Generator CB 13.8 kV",
+      "position": {
+        "x": 775,
+        "y": 106
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 2000,
+        "voltage": 13.8,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-aero-gsu",
+      "type": "gsu",
+      "name": "GSU",
+      "fullName": "Generator Step-Up Transformer",
+      "position": {
+        "x": 550,
+        "y": 100
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "unit": "MVA",
+        "primaryVoltageKv": 13.8,
+        "secondaryVoltageKv": 34.5
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-aero-ct",
+      "type": "ct-v",
+      "name": "CT",
+      "fullName": "Current Transformer 800:1",
+      "position": {
+        "x": 575,
+        "y": 250
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 800,
+        "voltage": 0,
+        "unit": "800:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-ct",
+      "type": "ct-v",
+      "name": "CT",
+      "fullName": "Current Transformer 1500:1",
+      "position": {
+        "x": 425,
+        "y": 600
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 1500,
+        "voltage": 0,
+        "unit": "1500:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-xfmr",
+      "type": "gsu",
+      "name": "GSU",
+      "fullName": "GSU 34.5 kV : 480 V 100 MVA",
+      "position": {
+        "x": 400,
+        "y": 750
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 100,
+        "unit": "MVA",
+        "primaryVoltageKv": 0.48,
+        "secondaryVoltageKv": 34.5,
+        "gsuBusOnComponentSide": "left"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-knot",
+      "type": "bus-knot",
+      "name": "",
+      "fullName": "Connection Point",
+      "position": {
+        "x": 575,
+        "y": 625
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 0,
+        "unit": ""
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-aux",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux Loads #2",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": 525,
+        "y": 950
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-aux-cb",
+      "type": "breaker-lv",
+      "name": "Aux CB",
+      "fullName": "Auxiliary feeder circuit breaker",
+      "position": {
+        "x": 575,
+        "y": 775
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 4000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": "open",
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-dc-cb",
+      "type": "breaker-dc",
+      "name": "DC CB 480V",
+      "fullName": "DC Circuit Breaker 480V",
+      "position": {
+        "x": 775,
+        "y": 606
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 3000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-pcs",
+      "type": "it-pcs-rect-inv",
+      "name": "Rectifier / Inverter",
+      "fullName": "UPS branch AC-DC conversion (one-line combined)",
+      "position": {
+        "x": 750,
+        "y": 775
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 25,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-ups",
+      "type": "ups",
+      "name": "UPS rb",
+      "fullName": "UPS / LV UPS 400Vdc",
+      "position": {
+        "x": 750,
+        "y": 950
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.4,
+        "unit": "MVA"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-rack",
+      "type": "it-rack-load",
+      "name": "Load 2",
+      "fullName": "IT Rack Load 2",
+      "position": {
+        "x": 750,
+        "y": 1100
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 25,
+        "voltage": 0.4,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "initialSimStatus": null,
+      "connectionReadout": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-bus-main",
+      "type": "bus-hv",
+      "name": "34.5kV Bus",
+      "fullName": "Main Horizontal Bus 34.5kV",
+      "position": {
+        "x": -300,
+        "y": 480
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "kV"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "visualOverrides": {
+        "width": 1200,
+        "height": 40
+      },
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-hd-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "HD",
+      "fullName": "Heavy-Duty Gas Turbine (7HA-class)",
+      "position": {
+        "x": -349,
+        "y": -87.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "HD",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW",
+        "model3dUrl": "/models/7HA.glb"
+      },
+      "visualOverrides": {
+        "width": 598,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "connectionReadout": null
+    },
+    {
+      "id": "comp-aero-3d-preview",
+      "type": "gas-turbine-3d",
+      "name": "Aero1",
+      "fullName": "Aeroderivative LM2500",
+      "position": {
+        "x": 301,
+        "y": -87.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "Aero1",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW"
+      },
+      "visualOverrides": {
+        "width": 598,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "connectionReadout": null
+    },
+    {
+      "id": "comp-load1-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Load 1",
+      "fullName": "Load 1",
+      "position": {
+        "x": -299,
+        "y": 712.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW",
+        "primaryLabel": "Load 1"
+      },
+      "visualOverrides": {
+        "width": 598,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-load2-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Load 2",
+      "fullName": "Load 2",
+      "position": {
+        "x": 301,
+        "y": 712.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW",
+        "primaryLabel": "Load 2"
+      },
+      "visualOverrides": {
+        "width": 598,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "connectionReadout": null,
+      "canvasPane": "upper",
+      "initialSimStatus": null
+    },
+    {
+      "id": "comp-hd-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "HD Gen Bank",
+      "fullName": "HD Gen Bank",
+      "position": {
+        "x": -300,
+        "y": -12
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 900
+          },
+          "previewMemberId": "comp-hd-3d-preview",
+          "collapseCompanionMemberId": "comp-load1-preview",
+          "collapseColumnLeft": -300,
+          "memberIds": [
+            "comp-hd-turbine",
+            "comp-hd-gen-cb",
+            "comp-hd-gsu",
+            "comp-hd-ct",
+            "comp-load1-ct",
+            "comp-load1-xfmr",
+            "comp-load1-knot",
+            "comp-load1-aux",
+            "comp-load1-aux-cb",
+            "comp-load1-dc-cb",
+            "comp-load1-pcs",
+            "comp-load1-ups",
+            "comp-load1-rack"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "busMemberId": "comp-bus-main",
+            "leftAnchorIds": [],
+            "rightAnchorIds": []
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-aero-gen-bank",
+      "type": "gas-turbine-bank",
+      "name": "Aero Gen Bank",
+      "fullName": "Aero Gen Bank",
+      "position": {
+        "x": 302,
+        "y": -12
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 0,
+            "maxY": 900
+          },
+          "previewMemberId": "comp-aero-3d-preview",
+          "collapseCompanionMemberId": "comp-load2-preview",
+          "collapseColumnLeft": 302,
+          "memberIds": [
+            "comp-aero-turbine",
+            "comp-aero-gen-cb",
+            "comp-aero-gsu",
+            "comp-aero-ct",
+            "comp-load2-ct",
+            "comp-load2-xfmr",
+            "comp-load2-knot",
+            "comp-load2-aux",
+            "comp-load2-aux-cb",
+            "comp-load2-dc-cb",
+            "comp-load2-pcs",
+            "comp-load2-ups",
+            "comp-load2-rack"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "busMemberId": "comp-bus-main",
+            "leftAnchorIds": [],
+            "rightAnchorIds": []
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-154",
+      "from": "comp-hd-turbine",
+      "to": "comp-hd-gen-cb",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-155",
+      "from": "comp-hd-gen-cb",
+      "to": "comp-hd-gsu",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-156",
+      "from": "comp-hd-gsu",
+      "to": "comp-hd-ct",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-157",
+      "from": "comp-hd-ct",
+      "to": "comp-bus-main",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-158",
+      "from": "comp-bus-main",
+      "to": "comp-aero-ct",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-159",
+      "from": "comp-aero-ct",
+      "to": "comp-aero-gsu",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-160",
+      "from": "comp-aero-gsu",
+      "to": "comp-aero-gen-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-161",
+      "from": "comp-aero-gen-cb",
+      "to": "comp-aero-turbine",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-194",
+      "from": "comp-bus-main",
+      "to": "comp-load1-ct",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-195",
+      "from": "comp-load1-ct",
+      "to": "comp-load1-xfmr",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-196",
+      "from": "comp-load1-xfmr",
+      "to": "comp-load1-knot",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-197",
+      "from": "comp-load1-knot",
+      "to": "comp-load1-dc-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-198",
+      "from": "comp-load1-knot",
+      "to": "comp-load1-aux-cb",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-199",
+      "from": "comp-load1-aux",
+      "to": "comp-load1-aux-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-201",
+      "from": "comp-load1-dc-cb",
+      "to": "comp-load1-pcs",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-202",
+      "from": "comp-load1-pcs",
+      "to": "comp-load1-ups",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-203",
+      "from": "comp-load1-ups",
+      "to": "comp-load1-rack",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-224",
+      "from": "comp-bus-main",
+      "to": "comp-load2-ct",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-225",
+      "from": "comp-load2-ct",
+      "to": "comp-load2-xfmr",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-226",
+      "from": "comp-load2-xfmr",
+      "to": "comp-load2-knot",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-227",
+      "from": "comp-load2-knot",
+      "to": "comp-load2-dc-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-228",
+      "from": "comp-load2-knot",
+      "to": "comp-load2-aux-cb",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-229",
+      "from": "comp-load2-aux",
+      "to": "comp-load2-aux-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-231",
+      "from": "comp-load2-dc-cb",
+      "to": "comp-load2-pcs",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-232",
+      "from": "comp-load2-pcs",
+      "to": "comp-load2-ups",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-233",
+      "from": "comp-load2-ups",
+      "to": "comp-load2-rack",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-1780007122211",
+      "from": "comp-hd-3d-preview",
+      "to": "comp-bus-main",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-1780007128062",
+      "from": "comp-aero-3d-preview",
+      "to": "comp-bus-main",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "conn-1780009038007",
+      "from": "comp-load1-preview",
+      "to": "comp-bus-main",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-1780009041117",
+      "from": "comp-load2-preview",
+      "to": "comp-bus-main",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#1565c0",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "reverse"
+      }
+    },
+    {
+      "id": "conn-comp-hd-3d-preview-bus",
+      "from": "comp-hd-3d-preview",
+      "to": "comp-bus-main",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-comp-aero-3d-preview-bus",
+      "from": "comp-aero-3d-preview",
+      "to": "comp-bus-main",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-comp-load1-preview-bus",
+      "from": "comp-load1-preview",
+      "to": "comp-bus-main",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-comp-load2-preview-bus",
+      "from": "comp-load2-preview",
+      "to": "comp-bus-main",
+      "type": "power",
+      "status": "idle"
+    }
+  ],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 1.1129085412980555,
+    "pan": {
+      "x": 140,
+      "y": 30
+    },
+    "panTop": {
+      "x": 841.6516644145922,
+      "y": 191.03801287182137
+    },
+    "panBottom": {
+      "x": 0,
+      "y": 0
+    },
+    "quadBottomRowShare": 52.5,
+    "mode": "design",
+    "uiFontPxShift": 5,
+    "canvasFontPxShift": 20,
+    "collapsedComponentFontPxShift": 24,
+    "splitPaneTitles": null,
+    "designViewMode": "canvas",
+    "workspaceLayoutPreset": "conf3"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "playbackTimeRange": {
+    "t1": 8.0,
+    "t2": 60.0
+  },
+  "designUiSession": {
+    "ensembleId": "all",
+    "designSectionVisibility": {
+      "showUpper": true,
+      "showLower": false,
+      "hideBranches": []
+    },
+    "quickScenarioBranchCollapsed": {
+      "noBessNoStatcom": true,
+      "withBessandStatCom": true,
+      "withBessAlone": true,
+      "withStatcomAlone": true
+    }
+  },
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": [],
+  "ideumKioskMode": false
+}

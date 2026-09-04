@@ -131,6 +131,7 @@ import {
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
+import { isLocalClusterDev } from './configurator/utils/conf_configuratorCluster';
 import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
@@ -192,6 +193,12 @@ function isP2R18Design(loadedConfig) {
   const name = String(loadedConfig?.name || '').toLowerCase();
   const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
   return name === 'p2r_18' || rel === 'p2r_18' || rel.endsWith('/p2r_18');
+}
+
+function isHDAeroDesign(loadedConfig) {
+  const name = String(loadedConfig?.name || '').toLowerCase();
+  const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
+  return name === 'hd_aero' || rel === 'hd_aero' || rel.endsWith('/hd_aero');
 }
 
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
@@ -6057,7 +6064,7 @@ function App() {
     // Save the configuration name for future quick saves
     setCurrentConfigName(loadedConfig.name);
 
-    if (isP2R18Design(loadedConfig)) {
+    if (isP2R18Design(loadedConfig) || isHDAeroDesign(loadedConfig)) {
       // Same as pressing Hide on Simulation Controls — tuck property panel, keep scenario strip.
       setRightRailCollapsed(false);
       setRightRailGridPeek(true);
@@ -6522,7 +6529,8 @@ function App() {
   });
 
   useEffect(() => {
-    if (!machineRole?.isMaingear) return undefined;
+    const shouldListen = machineRole?.isMaingear || isLocalClusterDev();
+    if (!shouldListen) return undefined;
     return connectClusterWebSocket((msg) => {
       if (msg?.type === 'configurator_open_wall') {
         handleOpenConfiguratorRef.current('wall');

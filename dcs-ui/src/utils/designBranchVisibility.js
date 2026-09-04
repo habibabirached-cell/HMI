@@ -49,14 +49,14 @@ function expandBranchWithAdjacentCts(seedIds, components, connections) {
     for (const conn of connections || []) {
       if (ids.has(conn.from) && !ids.has(conn.to)) {
         const peer = byId.get(conn.to);
-        if (peer?.type === 'ct') {
+        if (peer?.type === 'ct' || peer?.type === 'ct-v') {
           ids.add(conn.to);
           changed = true;
         }
       }
       if (ids.has(conn.to) && !ids.has(conn.from)) {
         const peer = byId.get(conn.from);
-        if (peer?.type === 'ct') {
+        if (peer?.type === 'ct' || peer?.type === 'ct-v') {
           ids.add(conn.from);
           changed = true;
         }

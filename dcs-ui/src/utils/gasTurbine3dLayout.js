@@ -65,5 +65,15 @@ export function getIdeumTurbineTurntableOnly(component) {
   const flag =
     component?.visualOverrides?.model3dTurntableOnly ??
     component?.properties?.model3dTurntableOnly;
-  return flag === true || flag === 'true' || flag === 1;
+  if (flag === true || flag === 'true' || flag === 1) return true;
+  return /7HA\.glb/i.test(getGasTurbine3DModelUrl(component));
+}
+
+/** Static studio lighting — cheaper than animated accent lights (large GLBs). */
+export function getGasTurbine3DNeutralLighting(component) {
+  const flag =
+    component?.visualOverrides?.model3dNeutralLighting ??
+    component?.properties?.model3dNeutralLighting;
+  if (flag === true || flag === 'true' || flag === 1) return true;
+  return /7HA\.glb/i.test(getGasTurbine3DModelUrl(component));
 }

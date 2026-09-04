@@ -19,9 +19,11 @@
  * shape: 'schematic-breaker' — horizontal bar + diagonal blade; frameless (transparent hit area).
  * shape: 'schematic-earth-breaker' — earth (⏚) style stem + graded bars; frameless.
  * shape: 'schematic-ct' — resistor-style zigzag for current transformers; use canvasPrimaryLabel + ctRatio.
+ * shape: 'schematic-ct-vertical' — vertical zigzag for CTs on bus drops.
  * shape: 'schematic-gsu' — GSU: labels + line-art texture; ratio from properties.primaryVoltageKv / secondaryVoltageKv (kV).
  * shape: 'schematic-bess-xfmr' — BESS xfmr: lightning pair + same stack + hugging outline.
  * shape: 'schematic-lm2500-andritz' — LM2500 Andritz: card + line-art texture + title / MW (SchematicLm2500Andritz.jsx).
+ * shape: 'schematic-hd-7h' — 7H/7HA: mirrored orange fluorescent line-art (SchematicHd7H.jsx).
  * shape: 'schematic-gas-turbine-3d' — Gas Turbine 3D: live GLB preview + title / MW (SchematicGasTurbine3D.jsx).
  * shape: 'schematic-bess-3d' — BESS collapse tile: Bess.c.glb preview + title (SchematicBess3D.jsx).
  *
@@ -130,11 +132,14 @@ export const COMPONENT_VISUAL_CONFIG = {
     shape: 'shape-rounded-rect'
   },
   'gas-turbine-7h': {
-    width: 200,
-    height: 110,
+    width: 150,
+    height: 100,
     icon: '⚙️',
-    color: '#ff5722',
-    shape: 'shape-rounded-rect'
+    color: '#ff7700',
+    shape: 'schematic-hd-7h',
+    backgroundTexture: '/component-textures/hd7h-line-art.png',
+    backgroundTextureOpacity: 1,
+    canvasPrimaryLabel: 'HD',
   },
   'gas-turbine-9ha': {
     width: 220,
@@ -522,6 +527,14 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#f44336',
     shape: 'schematic-earth-breaker-framed'
   },
+  /** Large animated stub breaker for collapsed one-line views (click to open/close). */
+  'breaker-interactive-stub': {
+    width: 100,
+    height: 130,
+    icon: '⏚',
+    color: '#2d7a32',
+    shape: 'schematic-interactive-breaker'
+  },
   'breaker-mv': {
     width: 55,
     height: 65,
@@ -685,6 +698,24 @@ export const COMPONENT_VISUAL_CONFIG = {
     icon: 'CT',
     color: '#005E60',
     shape: 'schematic-ct',
+    canvasPrimaryLabel: 'CT',
+    canvasSecondaryLabel: 'ctRatio'
+  },
+  'current-transformer-vertical': {
+    width: 50,
+    height: 100,
+    icon: 'CT',
+    color: '#005E60',
+    shape: 'schematic-ct-vertical',
+    canvasPrimaryLabel: 'CT',
+    canvasSecondaryLabel: 'ctRatio'
+  },
+  'ct-v': {
+    width: 50,
+    height: 100,
+    icon: 'CT',
+    color: '#005E60',
+    shape: 'schematic-ct-vertical',
     canvasPrimaryLabel: 'CT',
     canvasSecondaryLabel: 'ctRatio'
   },
@@ -992,6 +1023,7 @@ export const COMPONENT_VISUAL_CONFIG = {
 export const BREAKER_TYPES = new Set([
   'breaker-hv',
   'breaker-hv-boxed',
+  'breaker-interactive-stub',
   'breaker-mv',
   'breaker-lv',
   'breaker-dc',

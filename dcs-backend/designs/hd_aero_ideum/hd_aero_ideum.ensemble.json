@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "ensembles": [
+    {
+      "id": "all",
+      "display_name": "all",
+      "member_simulations": [
+        "_HD_1",
+        "_Aero_1",
+        "_Load_1",
+        "_Load_2",
+        "_Load",
+        "_Main"
+      ],
+      "chart_panel": {
+        "charts_to_display": [],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      }
+    }
+  ]
+}

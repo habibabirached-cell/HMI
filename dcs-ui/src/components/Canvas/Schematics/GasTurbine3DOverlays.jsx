@@ -14,6 +14,8 @@ import {
   GAS_TURBINE_3D_TYPE,
   getGasTurbine3DLayout,
   getGasTurbine3DModelUrl,
+  getGasTurbine3DNeutralLighting,
+  getIdeumTurbineTurntableOnly,
   GT3D_TITLE_BASE_FONT,
   GT3D_MW_BASE_FONT,
   GT3D_TITLE_MARGIN,
@@ -51,8 +53,6 @@ export default function GasTurbine3DOverlays({
       return undefined;
     }
 
-    const modelUrl = getGasTurbine3DModelUrl();
-
     const update = () => {
       const next = components
         .filter(
@@ -61,6 +61,7 @@ export default function GasTurbine3DOverlays({
             c.properties?.collapsePlaceholderOnly !== true,
         )
         .map((component) => {
+          const modelUrl = getGasTurbine3DModelUrl(component);
           const visualConfig = getComponentVisualConfig(component.type);
           const { width, height } = getScaledCanvasBlockDimensions(
             component,
@@ -82,6 +83,9 @@ export default function GasTurbine3DOverlays({
             pixelHeight: Math.max(8, Math.round(slotH)),
             rotation,
             modelUrl,
+            turntableOnly: getIdeumTurbineTurntableOnly(component),
+            neutralLighting: getGasTurbine3DNeutralLighting(component),
+            lowPixelRatio: /7HA\.glb/i.test(modelUrl),
             title: primaryLabelText(component, visualConfig),
             mwLabel: secondaryLabelText(component, visualConfig),
             titleFontPx: fsP * zoom,
@@ -141,6 +145,9 @@ export default function GasTurbine3DOverlays({
             width={slot.pixelWidth}
             height={slot.pixelHeight}
             modelUrl={slot.modelUrl}
+            turntableOnly={slot.turntableOnly}
+            neutralLighting={slot.neutralLighting}
+            lowPixelRatio={slot.lowPixelRatio}
           />
           <div
             className="gas-turbine-3d-title"

@@ -2,13 +2,16 @@ import React from 'react';
 import SchematicBreaker from '../Schematics/SchematicBreaker';
 import SchematicEarthBreaker from '../Schematics/SchematicEarthBreaker';
 import SchematicCT from '../Schematics/SchematicCT';
+import SchematicCTVertical from '../Schematics/SchematicCTVertical';
 import SchematicGSU from '../Schematics/SchematicGSU';
 import SchematicBessXfmr from '../Schematics/SchematicBessXfmr';
 import SchematicLm2500Andritz from '../Schematics/SchematicLm2500Andritz';
+import SchematicHd7H from '../Schematics/SchematicHd7H';
 import SchematicGasTurbine3D from '../Schematics/SchematicGasTurbine3D';
 import SchematicGFMe3D from '../Schematics/SchematicGFMe3D';
 import SchematicBess3D from '../Schematics/SchematicBess3D';
 import SchematicManualLineSwitch from '../Schematics/SchematicManualLineSwitch';
+import SchematicInteractiveBreaker from '../Schematics/SchematicInteractiveBreaker';
 import ShapeRoundedRect from './shape-rounded-rect';
 import ShapeRect from './shape-rect';
 import ShapeCircle from './shape-circle';
@@ -40,6 +43,7 @@ export default function CanvasComponentBody({
   presentationOffline = false,
   labelFontPxDelta = null,
   collapseAggregateArt = false,
+  interactiveBreakerPorts = null,
 }) {
   const p = {
     ...passthrough(component, visualConfig, width, height, strokeColor, strokeWidthVal),
@@ -101,6 +105,20 @@ export default function CanvasComponentBody({
         />
       );
 
+    case 'schematic-interactive-breaker':
+      return (
+        <SchematicInteractiveBreaker
+          component={component}
+          width={width}
+          height={height}
+          strokeColor={strokeColor}
+          strokeWidthVal={strokeWidthVal}
+          primaryLabel={canvasPrimaryText}
+          secondaryLabel={canvasSecondaryText}
+          breakerPorts={interactiveBreakerPorts}
+        />
+      );
+
     case 'schematic-manual-line-switch':
       return (
         <SchematicManualLineSwitch
@@ -116,6 +134,20 @@ export default function CanvasComponentBody({
     case 'schematic-ct':
       return (
         <SchematicCT
+          width={width}
+          height={height}
+          strokeColor={strokeColor}
+          zigzagColor={visualConfig.color}
+          strokeWidthVal={strokeWidthVal}
+          presentationOffline={presentationOffline}
+          primaryLabel={canvasPrimaryText}
+          secondaryLabel={canvasSecondaryText}
+        />
+      );
+
+    case 'schematic-ct-vertical':
+      return (
+        <SchematicCTVertical
           width={width}
           height={height}
           strokeColor={strokeColor}
@@ -169,6 +201,21 @@ export default function CanvasComponentBody({
           textureOpacity={textureOpacity}
           strokeColor={strokeColor}
           strokeWidthVal={strokeWidthVal}
+        />
+      );
+
+    case 'schematic-hd-7h':
+      return (
+        <SchematicHd7H
+          width={width}
+          height={height}
+          primaryLabel={canvasPrimaryText}
+          mwLabel={canvasSecondaryText}
+          textureHref={visualConfig.backgroundTexture}
+          textureOpacity={textureOpacity}
+          strokeColor={strokeColor}
+          strokeWidthVal={strokeWidthVal}
+          glowFilterId={`hd7h-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
       );
 
