@@ -1,38 +1,39 @@
 """
-Maingear wall display keepalive — prevents 4K OLED panels from sleeping on static frames.
+Maingear OLED wall — idle mouse sweep (Windows host, outside Docker).
 
-When the mouse is idle for KEEPALIVE_IDLE_MINUTES (default 10), sweeps the cursor across
-the full virtual desktop in KEEPALIVE_SCAN_LINES horizontal passes over KEEPALIVE_SCAN_SECONDS,
-then waits another idle period before repeating.
+When the mouse is idle for IDLE_SECONDS (see config.py), moves the cursor across
+the full virtual desktop, then waits for another idle period before repeating.
 
-Windows only (uses SetCursorPos + pynput). Started automatically on Maingear backend startup.
+Double-click StartWinScreenSaver.bat to run. Close the window or press Ctrl+C to stop.
 """
 
 from __future__ import annotations
 
 import logging
-import os
+import signal
 import sys
 import threading
 import time
 from typing import Callable
 
-logger = logging.getLogger(__name__)
+import config
 
-IDLE_SECONDS = max(60, int(os.getenv("KEEPALIVE_IDLE_MINUTES", "10")) * 60)
-SCAN_SECONDS = max(1.0, float(os.getenv("KEEPALIVE_SCAN_SECONDS", "10")))
-SCAN_LINES = max(2, int(os.getenv("KEEPALIVE_SCAN_LINES", "10")))
-POLL_SECONDS = max(1.0, float(os.getenv("KEEPALIVE_POLL_SECONDS", "5")))
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("winScreenSaver")
 
 
-class DisplayKeepAlive:
+class MouseKeepAlive:
     def __init__(
         self,
         *,
-        idle_seconds: float = IDLE_SECONDS,
-        scan_seconds: float = SCAN_SECONDS,
-        scan_lines: int = SCAN_LINES,
-        poll_seconds: float = POLL_SECONDS,
+        idle_seconds: float,
+        scan_seconds: float,
+        scan_lines: int,
+        poll_seconds: float,
         set_cursor: Callable[[int, int], None] | None = None,
         virtual_bounds: Callable[[], tuple[int, int, int, int]] | None = None,
     ) -> None:
@@ -40,8 +41,8 @@ class DisplayKeepAlive:
         self.scan_seconds = scan_seconds
         self.scan_lines = scan_lines
         self.poll_seconds = poll_seconds
-        self._set_cursor = set_cursor or _default_set_cursor
-        self._virtual_bounds = virtual_bounds or _default_virtual_bounds
+        self._set_cursor = set_cursor or _set_cursor_pos
+        self._virtual_bounds = virtual_bounds or _virtual_desktop_bounds
         self._last_activity = time.monotonic()
         self._scanning = False
         self._stop = threading.Event()
@@ -66,7 +67,7 @@ class DisplayKeepAlive:
     def _run_scan(self) -> None:
         left, top, width, height = self._virtual_bounds()
         if width <= 0 or height <= 0:
-            logger.warning("Display keepalive: invalid virtual desktop bounds")
+            logger.warning("Invalid virtual desktop bounds")
             return
 
         right = left + width - 1
@@ -77,7 +78,7 @@ class DisplayKeepAlive:
         self._scanning = True
         try:
             logger.info(
-                "Display keepalive: scanning %dx%d desktop (%d lines, %.1fs)",
+                "Scanning %dx%d desktop (%d lines, %.1fs)",
                 width,
                 height,
                 self.scan_lines,
@@ -99,25 +100,23 @@ class DisplayKeepAlive:
 
     def _watch_loop(self) -> None:
         while not self._stop.is_set():
-            if self._seconds_idle() >= self.idle_seconds:
+            idle_for = self._seconds_idle()
+            if idle_for >= self.idle_seconds:
+                logger.info(
+                    "Idle %.1fs (threshold %.1fs) — starting scan",
+                    idle_for,
+                    self.idle_seconds,
+                )
                 self._run_scan()
                 self._mark_scan_complete()
             self._stop.wait(self.poll_seconds)
 
-    def start(self) -> bool:
+    def start(self) -> None:
         if self._thread and self._thread.is_alive():
-            return True
+            return
 
-        if sys.platform != "win32":
-            logger.info("Display keepalive: skipped (Windows-only; platform=%s)", sys.platform)
-            return False
-
-        try:
-            self._virtual_bounds()
-            self._set_cursor(0, 0)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Display keepalive: cursor API unavailable (%s)", exc)
-            return False
+        self._virtual_bounds()
+        self._set_cursor(0, 0)
 
         try:
             from pynput import mouse
@@ -137,24 +136,20 @@ class DisplayKeepAlive:
                 on_scroll=on_scroll,
             )
             self._listener.start()
+            logger.info("Mouse listener started (pynput)")
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Display keepalive: pynput unavailable (%s); using timer-only mode", exc)
+            logger.warning("pynput unavailable (%s); timer-only mode", exc)
             self._listener = None
 
         self._stop.clear()
-        self._thread = threading.Thread(
-            target=self._watch_loop,
-            name="display-keepalive",
-            daemon=True,
-        )
+        self._thread = threading.Thread(target=self._watch_loop, name="mouse-keepalive", daemon=True)
         self._thread.start()
         logger.info(
-            "Display keepalive: started (idle=%ds, scan=%.1fs, lines=%d)",
+            "Running — idle=%ds, scan=%.1fs, lines=%d (Ctrl+C to stop)",
             int(self.idle_seconds),
             self.scan_seconds,
             self.scan_lines,
         )
-        return True
 
     def stop(self) -> None:
         self._stop.set()
@@ -169,9 +164,7 @@ class DisplayKeepAlive:
             self._thread = None
 
 
-def _default_virtual_bounds() -> tuple[int, int, int, int]:
-    if sys.platform != "win32":
-        raise OSError("virtual desktop bounds are Windows-only")
+def _virtual_desktop_bounds() -> tuple[int, int, int, int]:
     import ctypes
 
     user32 = ctypes.windll.user32
@@ -182,27 +175,47 @@ def _default_virtual_bounds() -> tuple[int, int, int, int]:
     return left, top, width, height
 
 
-def _default_set_cursor(x: int, y: int) -> None:
-    if sys.platform != "win32":
-        raise OSError("SetCursorPos is Windows-only")
+def _set_cursor_pos(x: int, y: int) -> None:
     import ctypes
 
     if not ctypes.windll.user32.SetCursorPos(int(x), int(y)):
         raise OSError(f"SetCursorPos failed at ({x}, {y})")
 
 
-_keepalive: DisplayKeepAlive | None = None
+def main() -> int:
+    if sys.platform != "win32":
+        print("winScreenSaver is Windows-only.")
+        return 1
+
+    keepalive = MouseKeepAlive(
+        idle_seconds=max(1.0, float(config.IDLE_SECONDS)),
+        scan_seconds=max(1.0, float(config.SCAN_SECONDS)),
+        scan_lines=max(2, int(config.SCAN_LINES)),
+        poll_seconds=max(0.25, float(config.POLL_SECONDS)),
+    )
+
+    stop_event = threading.Event()
+
+    def handle_stop(signum, frame) -> None:  # noqa: ARG001
+        logger.info("Stopping...")
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, handle_stop)
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, handle_stop)
+
+    keepalive.start()
+    print("winScreenSaver is active. Leave this window open. Close it to stop.")
+    try:
+        while not stop_event.is_set():
+            stop_event.wait(0.5)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        keepalive.stop()
+        print("Stopped.")
+    return 0
 
 
-def start_display_keepalive() -> bool:
-    """Start the background keepalive thread (idempotent)."""
-    global _keepalive
-    if _keepalive is None:
-        _keepalive = DisplayKeepAlive()
-    return _keepalive.start()
-
-
-def stop_display_keepalive() -> None:
-    global _keepalive
-    if _keepalive is not None:
-        _keepalive.stop()
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -11,7 +11,7 @@
         "x": -300,
         "y": 45
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -36,7 +36,7 @@
         "x": -225,
         "y": 256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -61,7 +61,7 @@
         "x": 50,
         "y": 250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -88,7 +88,7 @@
         "x": 75,
         "y": 375
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -113,7 +113,7 @@
         "x": 75,
         "y": 550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -138,7 +138,7 @@
         "x": 0,
         "y": 775
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -164,7 +164,7 @@
         "x": -50,
         "y": 800
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -189,7 +189,7 @@
         "x": -75,
         "y": 1150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -214,7 +214,7 @@
         "x": -50,
         "y": 975
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -239,7 +239,7 @@
         "x": -275,
         "y": 806
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -264,7 +264,7 @@
         "x": -300,
         "y": 975
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -289,7 +289,7 @@
         "x": -300,
         "y": 1150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -314,7 +314,7 @@
         "x": -300,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -339,7 +339,7 @@
         "x": 600,
         "y": 50
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -365,7 +365,7 @@
         "x": 625,
         "y": 256
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -391,7 +391,7 @@
         "x": 300,
         "y": 250
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -418,7 +418,7 @@
         "x": 225,
         "y": 375
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -443,7 +443,7 @@
         "x": 225,
         "y": 550
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -468,7 +468,7 @@
         "x": 300,
         "y": 775
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -496,7 +496,7 @@
         "x": 325,
         "y": 825
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -522,7 +522,7 @@
         "x": 275,
         "y": 1150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -548,7 +548,7 @@
         "x": 325,
         "y": 975
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -574,7 +574,7 @@
         "x": 575,
         "y": 806
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -600,7 +600,7 @@
         "x": 550,
         "y": 975
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -626,7 +626,7 @@
         "x": 550,
         "y": 1150
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -652,7 +652,7 @@
         "x": 550,
         "y": 1300
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -678,7 +678,7 @@
         "x": -450,
         "y": 715
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -707,7 +707,7 @@
         "x": 401,
         "y": 500
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -738,7 +738,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -758,7 +758,7 @@
         "height": 130
       },
       "connectionReadout": null,
-      "initialSimStatus": null
+      "initialSimStatus": "open"
     },
     {
       "id": "comp-hd-3d-preview",
@@ -769,7 +769,7 @@
         "x": -450,
         "y": 40
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "HD",
         "rating": 0,
@@ -800,7 +800,7 @@
         "x": 152,
         "y": 40
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "primaryLabel": "Aero1",
         "rating": 0,
@@ -830,7 +830,7 @@
         "x": -450,
         "y": 1055
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -860,7 +860,7 @@
         "x": 152,
         "y": 1055
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -891,13 +891,13 @@
         "x": -450,
         "y": -12
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
         "unit": "",
         "gasTurbineGroup": {
-          "collapsed": false,
+          "collapsed": true,
           "side": "left",
           "verticalBand": {
             "minY": 0,
@@ -948,13 +948,13 @@
         "x": 152,
         "y": -12
       },
-      "status": "idle",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
         "unit": "",
         "gasTurbineGroup": {
-          "collapsed": false,
+          "collapsed": true,
           "side": "right",
           "verticalBand": {
             "minY": 0,
@@ -1775,8 +1775,8 @@
     "simulationRunning": false,
     "zoom": 0.88,
     "pan": {
-      "x": 487.19999999999834,
-      "y": 116.53333333333319
+      "x": 500.533333333331,
+      "y": 89.333333333333
     },
     "panTop": {
       "x": 507.7333333333344,
@@ -1798,7 +1798,13 @@
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
-  "perChartSampleStep": {},
+  "perChartSampleStep": {
+    "open-1788736980239": 1,
+    "open-1788736984260": 1,
+    "open-1788736987620": 1,
+    "open-1788736968366": 1,
+    "open-1788736975451": 1
+  },
   "playbackTimeRange": {
     "t1": 8.0,
     "t2": 60.0

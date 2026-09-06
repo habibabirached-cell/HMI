@@ -9,6 +9,7 @@ import {
   buildTraceLineStyle,
   DEFAULT_CHART_COLORS,
   getChartXThreshold,
+  getChartSimulationStartAt,
   resolveVariableStyle,
 } from './chartVariableStyles';
 
@@ -64,14 +65,16 @@ function buildSteppedRowIndices(
   sampleStep,
   rigid = false,
   xThreshold = null,
+  simulationStartAt = null,
 ) {
   let rowIdx = Array.from({ length: nMin }, (_, i) => i);
   if (!rigid && simulationRunning && simulationTime !== undefined) {
     const x0 = items[0];
     const rows = memberData[x0.simId];
+    const startAt = simulationStartAt ?? 0;
     rowIdx = rowIdx.filter((i) => {
       const v = cellFloat(rows[i], x0.column);
-      return !Number.isNaN(v) && v <= simulationTime;
+      return !Number.isNaN(v) && v >= startAt && v <= simulationTime;
     });
   }
   if (xThreshold != null && items[0]) {
@@ -141,6 +144,7 @@ export function buildCross2dTraces({
     sampleStep,
     rigid,
     xThreshold,
+    getChartSimulationStartAt(chart),
   );
   const xValues = mapXForIndices(rowIdx, xb.simId, xb.column, memberData);
   const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
@@ -200,6 +204,7 @@ export function buildCrossNdTraces({
       sampleStep,
       rigid,
       xThreshold,
+      getChartSimulationStartAt(chart),
     );
     const xValues = mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData);
     const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
@@ -268,6 +273,7 @@ export function buildCrossStackedNdTraces({
         sampleStep,
         rigid,
         xThreshold,
+        getChartSimulationStartAt(chart),
       );
       const traceX = mapXForIndices(traceRowIdx, xItem.simId, xItem.column, memberData);
       const yValues = mapYForIndices(traceRowIdx, yb.simId, yb.column, memberData);
@@ -331,6 +337,7 @@ export function buildCrossMultiLineTraces({
       sampleStep,
       rigid,
       xThreshold,
+      getChartSimulationStartAt(chart),
     );
     const xValues = mapXForIndices(rowIdx, tItem.simId, tItem.column, memberData);
     const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
@@ -369,6 +376,7 @@ export function buildCrossPieTraces({ chart, memberData, simulationRunning, simu
   const xItem = items[0];
   const yItems = items.slice(1);
   const xThreshold = getChartXThreshold(chart);
+  const simulationStartAt = getChartSimulationStartAt(chart);
 
   let rowIndex = 0;
   let bestTime = -Infinity;
@@ -378,6 +386,7 @@ export function buildCrossPieTraces({ chart, memberData, simulationRunning, simu
       const xv = cellFloat(rows[i], xItem.column);
       if (Number.isNaN(xv)) continue;
       if (xThreshold != null && xv <= xThreshold) continue;
+      if (xv < simulationStartAt) continue;
       if (xv <= simulationTime && xv >= bestTime) {
         bestTime = xv;
         rowIndex = i;

@@ -138,7 +138,7 @@ import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
 import { isLocalClusterDev } from './configurator/utils/conf_configuratorCluster';
-import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave } from './utils/chartVariableStyles';
+import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave, resolveEffectiveSimulationStart } from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
@@ -346,6 +346,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
                 ...(a.danger_y_threshold != null &&
                 Number.isFinite(Number(a.danger_y_threshold))
                   ? { dangerYThreshold: Number(a.danger_y_threshold) }
+                  : {}),
+                ...(a.simulation_start_at != null &&
+                Number.isFinite(Number(a.simulation_start_at))
+                  ? { simulationStartAt: Number(a.simulation_start_at) }
                   : {}),
                 ...(a.x_reference != null && Number.isFinite(Number(a.x_reference))
                   ? { xReference: Number(a.x_reference) }
@@ -1433,9 +1437,14 @@ function App() {
   // Start simulation
   const handleStartSimulation = () => {
     const start = () => {
-      const { loopStart } = getPlaybackLoopBounds();
+      const { loopStart, loopEnd } = getPlaybackLoopBounds();
+      const loopStartTime = resolveEffectiveSimulationStart(
+        openChartsRef.current,
+        loopStart,
+        loopEnd,
+      );
       setSimulationRunning(true);
-      setSimulationTime(loopStart);
+      setSimulationTime(loopStartTime);
 
       resetPlaybackVisualsRef.current();
 
@@ -1781,12 +1790,17 @@ function App() {
         const dt = 0.1 * spd;
         const next = prev + dt;
         const { loopStart, loopEnd } = getPlaybackLoopBounds();
-        if (Number.isFinite(loopEnd) && loopEnd > loopStart && next >= loopEnd) {
+        const effectiveStart = resolveEffectiveSimulationStart(
+          openChartsRef.current,
+          loopStart,
+          loopEnd,
+        );
+        if (Number.isFinite(loopEnd) && loopEnd > effectiveStart && next >= loopEnd) {
           queueMicrotask(() => resetPlaybackVisualsRef.current());
-          return loopStart;
+          return effectiveStart;
         }
-        if (Number.isFinite(loopStart) && next < loopStart) {
-          return loopStart;
+        if (Number.isFinite(effectiveStart) && next < effectiveStart) {
+          return effectiveStart;
         }
         return next;
       });
@@ -1805,8 +1819,13 @@ function App() {
     stopSimulationClock();
     setSimulationRunning(false);
 
-    const { loopStart } = getPlaybackLoopBounds();
-    setSimulationTime(loopStart);
+    const { loopStart, loopEnd } = getPlaybackLoopBounds();
+    const loopStartTime = resolveEffectiveSimulationStart(
+      openChartsRef.current,
+      loopStart,
+      loopEnd,
+    );
+    setSimulationTime(loopStartTime);
     resetPlaybackVisualsRef.current();
 
     await new Promise((resolve) => {
@@ -2619,7 +2638,6 @@ function App() {
         }
         setSimulationData(augmentedRows);
         setSimulationMetadata(simulationMetadata);
-        setSimulationTime(Number.isFinite(tMin) ? tMin : 0);
 
         setSimConfig(prev => {
           const sims = prev?.simulations ? { ...prev.simulations } : {};
@@ -2659,12 +2677,14 @@ function App() {
           }
         }
         const initialPerChart = {};
+        let nextOpenCharts = [];
         if (chartsToDisplay.length > 0) {
           const { newCharts, initialPerChart: ipc } = buildOpenChartsFromChartsToDisplay(
             chartsToDisplay,
             canvasComponentsRef.current,
             () => csvNameForCharts,
           );
+          nextOpenCharts = newCharts;
           Object.assign(initialPerChart, ipc);
           dcsSimDbg('handleRunSimulation ◈ openCharts build', {
             requestedCharts: chartsToDisplay.length,
@@ -2686,6 +2706,16 @@ function App() {
           setChartStacks([]);
           setPerChartSampleStep({});
         }
+
+        const { loopStart, loopEnd } = resolvePlaybackLoopBounds(
+          playbackTimeRangeRef.current,
+          tMin,
+          tMax,
+        );
+        const initialTime = nextOpenCharts.length
+          ? resolveEffectiveSimulationStart(nextOpenCharts, loopStart, loopEnd)
+          : (Number.isFinite(tMin) ? tMin : 0);
+        setSimulationTime(initialTime);
 
         setNamedSimulationConfigs(result.named_configuration_keys || []);
       });
@@ -4695,7 +4725,7 @@ function App() {
           base.variable_styles = c.variableStyles;
         }
         if (c.axisRange != null) {
-          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, xReference } =
+          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, xReference, simulationStartAt } =
             c.axisRange;
           const rangeObj = {};
           if (xThreshold != null && !Number.isNaN(xThreshold)) {
@@ -4703,6 +4733,9 @@ function App() {
           }
           if (dangerYThreshold != null && !Number.isNaN(dangerYThreshold)) {
             rangeObj.danger_y_threshold = dangerYThreshold;
+          }
+          if (simulationStartAt != null && !Number.isNaN(simulationStartAt)) {
+            rangeObj.simulation_start_at = simulationStartAt;
           }
           if (xReference != null && !Number.isNaN(xReference)) {
             rangeObj.x_reference = xReference;

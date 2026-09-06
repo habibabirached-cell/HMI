@@ -45,7 +45,6 @@ from cluster_peer import (
     cluster_manager,
     resolve_machine_role,
 )
-from display_keepalive import start_display_keepalive, stop_display_keepalive
 from rtds_live_service import rtds_live_service
 from configurator.router import router as configurator_router
 
@@ -3748,18 +3747,6 @@ async def startup_event():
     print("✅ Health check available at: http://localhost:5000/health")
     print("✅ API docs available at: http://localhost:5000/docs")
     print("=" * 60)
-
-    role = resolve_machine_role()
-    if role.get("isMaingear"):
-        if start_display_keepalive():
-            print("🖥️  Display keepalive enabled (OLED wall — idle mouse scan)")
-        else:
-            print("⚠️  Display keepalive could not start (see logs)")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    stop_display_keepalive()
 
 # ============================================================================
 # MAIN ENTRY POINT

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 /**
  * Request Screen Wake Lock while the wall display tab is visible.
- * Helps prevent browser-level dimming; pair with backend display_keepalive for OLED panels.
+ * Helps prevent browser-level dimming; pair with winScreenSaver on the Maingear Windows host for OLED panels.
  */
 export function useWallDisplayKeepAlive(enabled) {
   useEffect(() => {

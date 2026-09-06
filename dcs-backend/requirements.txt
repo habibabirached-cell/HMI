@@ -78,9 +78,6 @@ numpy>=2.0.0,<3
 # Pillow - Image processing (for design diagram fixes, etc.)
 Pillow>=10.0.0
 
-# pynput - Maingear display keepalive (mouse idle detection on wall OLED setup)
-pynput>=1.7.6,<2
-
 # scipy - Scientific computing (ndimage for image morphology)
 # SciPy <1.13 pins NumPy 1.x; pip then ignores numpy>=2 above. 1.13+ supports NumPy 2 (pickles).
 scipy>=1.13.0

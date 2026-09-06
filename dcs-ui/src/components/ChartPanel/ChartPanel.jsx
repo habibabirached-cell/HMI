@@ -27,9 +27,11 @@ import {
   buildTraceLineStyle,
   compactVariableStylesForSave,
   defaultVariableStyle,
+  DEFAULT_CHART_SIMULATION_START_AT,
   getChartVariableKeys,
   chartHasMultiTraceLegend,
   getChartXThreshold,
+  getChartSimulationStartAt,
   rowPassesXThreshold,
   sampleIndexedRowsForVariable,
   seedVariableStylesForEditor,
@@ -446,16 +448,20 @@ const ChartPanel = ({
       yLocked: saved?.yLocked ?? false,
       xThreshold: fmt(saved?.xThreshold),
       dangerYThreshold: fmt(saved?.dangerYThreshold),
+      simulationStartAt: fmt(
+        saved?.simulationStartAt ?? DEFAULT_CHART_SIMULATION_START_AT,
+      ),
     });
   };
 
   const commitAxisRangeEdit = () => {
     if (!editingAxisRange) return;
-    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold } =
+    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, simulationStartAt } =
       editingAxisRange;
     const p = (v) => (v === '' || v == null ? undefined : Number(v));
     const xThr = p(xThreshold);
     const yDanger = p(dangerYThreshold);
+    const simStart = p(simulationStartAt);
     // Only persist min/max for a locked axis; Plotly "Home" uses saved range on locked
     // axes and autorange on unlocked axes, so we must not store unused box values.
     const axisRange = {
@@ -463,6 +469,9 @@ const ChartPanel = ({
       yLocked,
       ...(xThr != null && !Number.isNaN(xThr) ? { xThreshold: xThr } : {}),
       ...(yDanger != null && !Number.isNaN(yDanger) ? { dangerYThreshold: yDanger } : {}),
+      ...(simStart != null && !Number.isNaN(simStart)
+        ? { simulationStartAt: Math.max(0, simStart) }
+        : {}),
       ...(xLocked ? { xMin: p(xMin), xMax: p(xMax) } : {}),
       ...(yLocked ? { yMin: p(yMin), yMax: p(yMax) } : {}),
     };
@@ -472,8 +481,9 @@ const ChartPanel = ({
     const hasLock = xLocked || yLocked;
     const hasXThreshold = axisRange.xThreshold != null;
     const hasDangerY = axisRange.dangerYThreshold != null;
+    const hasSimulationStart = axisRange.simulationStartAt != null;
     onUpdateChart?.(chartId, {
-      axisRange: hasRange || hasLock || hasXThreshold || hasDangerY ? axisRange : null,
+      axisRange: hasRange || hasLock || hasXThreshold || hasDangerY || hasSimulationStart ? axisRange : null,
     });
     setEditingAxisRange(null);
   };
@@ -710,6 +720,29 @@ const ChartPanel = ({
           </label>
           <span className="chart-axis-range-threshold-hint">
             Amber line at Y = y0; amber alert when a non-rigid trace reaches Y ≥ y0 during playback
+          </span>
+        </div>
+
+        <div className="chart-axis-range-threshold-row">
+          <label className="chart-axis-range-threshold-label">
+            <span>Start simulation at</span>
+            <input
+              className="chart-axis-range-editor-input chart-axis-range-threshold-input"
+              type="number"
+              min={0}
+              step={0.1}
+              value={editingAxisRange.simulationStartAt}
+              onChange={(e) =>
+                setEditingAxisRange((p) => ({ ...p, simulationStartAt: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitAxisRangeEdit();
+                if (e.key === 'Escape') setEditingAxisRange(null);
+              }}
+            />
+          </label>
+          <span className="chart-axis-range-threshold-hint">
+            Seconds — playback for this chart begins here (default {DEFAULT_CHART_SIMULATION_START_AT}s)
           </span>
         </div>
 
@@ -1877,6 +1910,7 @@ const ChartPanel = ({
     const xCol = chart.xColumn;
     const yCols = chart.yColumns;
     const xThreshold = getChartXThreshold(chart);
+    const simulationStartAt = getChartSimulationStartAt(chart);
     let rowIndex = 0;
     let bestTime = -Infinity;
     if (simulationRunning && simulationTime !== undefined) {
@@ -1884,6 +1918,7 @@ const ChartPanel = ({
         const xv = cellFloat(data[i], xCol);
         if (Number.isNaN(xv)) continue;
         if (xThreshold != null && xv <= xThreshold) continue;
+        if (xv < simulationStartAt) continue;
         if (xv <= simulationTime && xv >= bestTime) {
           bestTime = xv;
           rowIndex = i;

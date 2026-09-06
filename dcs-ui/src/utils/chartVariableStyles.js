@@ -147,6 +147,46 @@ export function isVariableRigid(chart, colKey) {
   return savedStyleForColumn(chart, colKey)?.rigid === true;
 }
 
+/** Default playback start (seconds) for a chart when not saved on the design. */
+export const DEFAULT_CHART_SIMULATION_START_AT = 8;
+
+/** Per-chart simulation start time (seconds). Uses default only when not saved on the chart. */
+export function getChartSimulationStartAt(chart) {
+  const t = chart?.axisRange?.simulationStartAt;
+  if (t == null || t === '') return DEFAULT_CHART_SIMULATION_START_AT;
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.max(0, n) : DEFAULT_CHART_SIMULATION_START_AT;
+}
+
+export function hasExplicitSimulationStartAt(chart) {
+  const t = chart?.axisRange?.simulationStartAt;
+  return t != null && t !== '' && Number.isFinite(Number(t));
+}
+
+/** Lowest explicitly saved start among open charts (ignores charts without a saved value). */
+export function minSimulationStartFromOpenCharts(openCharts) {
+  if (!openCharts?.length) return null;
+  let min = Infinity;
+  let found = false;
+  for (const chart of openCharts) {
+    if (!hasExplicitSimulationStartAt(chart)) continue;
+    found = true;
+    min = Math.min(min, getChartSimulationStartAt(chart));
+  }
+  return found && Number.isFinite(min) ? min : null;
+}
+
+/** Per-chart start when saved; otherwise global loop start (t1). */
+export function resolveEffectiveSimulationStart(openCharts, loopStart, loopEnd) {
+  const base = Number.isFinite(loopStart) ? loopStart : 0;
+  const chartMin = minSimulationStartFromOpenCharts(openCharts);
+  let start = chartMin != null ? chartMin : base;
+  if (Number.isFinite(loopEnd)) {
+    start = Math.min(start, loopEnd);
+  }
+  return start;
+}
+
 /** Minimum X (time) — points with x ≤ threshold are hidden when set. */
 export function getChartXThreshold(chart) {
   const t = chart?.axisRange?.xThreshold;
@@ -176,9 +216,10 @@ export function sampleIndexedRowsForVariable({
   const { rigid } = resolveVariableStyle(chart, colKey, index);
   let filtered = indexed;
   if (!rigid && simulationRunning && simulationTime !== undefined && xColumn) {
+    const startAt = getChartSimulationStartAt(chart);
     filtered = indexed.filter(({ row }) => {
       const xVal = cellFloat(row, xColumn);
-      return !Number.isNaN(xVal) && xVal <= simulationTime;
+      return !Number.isNaN(xVal) && xVal >= startAt && xVal <= simulationTime;
     });
   }
   const xThr = getChartXThreshold(chart);
