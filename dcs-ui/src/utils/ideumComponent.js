@@ -8,6 +8,7 @@ export const IDEUM_BESS_GFME_BUTTON_TYPE = 'ideum-bess-gfme-button';
 export const IDEUM_BESS_BUTTON_TYPE = 'ideum-bess-button';
 export const IDEUM_GFME_BUTTON_TYPE = 'ideum-gfme-button';
 export const IDEUM_EXPANSION_PANEL_TYPE = 'ideum-expansion-panel';
+export const IDEUM_MAINGEAR_VIEW_PANEL_TYPE = 'ideum-maingear-view-panel';
 
 export const IDEUM_START_SIMULATION_BUTTON_TYPE = 'ideum-start-simulation-button';
 
@@ -17,6 +18,7 @@ export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_BESS_BUTTON_TYPE,
   IDEUM_GFME_BUTTON_TYPE,
   IDEUM_EXPANSION_PANEL_TYPE,
+  IDEUM_MAINGEAR_VIEW_PANEL_TYPE,
   IDEUM_START_SIMULATION_BUTTON_TYPE,
 ]);
 
@@ -85,6 +87,10 @@ export function isIdeumTurbineButton(component) {
 
 export function isIdeumExpansionPanel(component) {
   return component?.type === IDEUM_EXPANSION_PANEL_TYPE;
+}
+
+export function isIdeumMaingearViewPanel(component) {
+  return component?.type === IDEUM_MAINGEAR_VIEW_PANEL_TYPE;
 }
 
 export function isIdeumStartSimulationButton(component) {

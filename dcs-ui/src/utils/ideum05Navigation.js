@@ -38,12 +38,48 @@ export function getIdeum05NavScreen(stack) {
   return stack[stack.length - 1];
 }
 
+/** Maingear HD_Aero catalog (cluster loadHdAero). */
+export const IDEUM05_HD_AERO_MAINGEAR_CATALOG = 'hd_aero';
+
+/** Ideum-only HD_Aero copy (Reference 500 MW overlay; pan/zoom saved here). */
+export const IDEUM05_HD_AERO_IDEUM_CATALOG = 'hd_aero_ideum';
+
+/** @deprecated use IDEUM05_HD_AERO_IDEUM_CATALOG */
+export const IDEUM05_HD_AERO_DESIGN_DIR = IDEUM05_HD_AERO_IDEUM_CATALOG;
+
+/** Per Ideum05 drill screen: catalog folder + conf display name for Save to Ideum. */
+export const IDEUM05_OVERLAY_SAVE_TARGETS = {
+  'ref-500-mw': {
+    catalogDir: IDEUM05_HD_AERO_IDEUM_CATALOG,
+    saveName: 'HD_Aero Ideum',
+  },
+  // ref-200-mw: add p2r_16_ideum (or similar) when 200 MW loads a schematic overlay on Ideum.
+};
+
+export function getIdeum05OverlaySaveTarget(screenId) {
+  return IDEUM05_OVERLAY_SAVE_TARGETS[screenId] ?? null;
+}
+
 export function isIdeum05ControlsScreen(screenId) {
   return screenId === 'ref-200-mw';
 }
 
+export function isIdeum05HdAeroScreen(screenId) {
+  return screenId === 'ref-500-mw';
+}
+
+/** Any drill target that hides the nav cards and shows a touch control surface. */
+export function isIdeum05DesignScreen(screenId) {
+  return isIdeum05ControlsScreen(screenId) || isIdeum05HdAeroScreen(screenId);
+}
+
 export function isIdeum05ConfiguratorScreen(screenId) {
   return screenId === 'configurator';
+}
+
+export function getIdeum05OverlayDesignDir(screenId) {
+  const target = IDEUM05_OVERLAY_SAVE_TARGETS[screenId];
+  return target?.catalogDir ?? null;
 }
 
 /** Root landing: two small cards left, featured card right (index maps to IDEUM05_NAV_CARD_LAYOUT). */
@@ -176,7 +212,8 @@ const SCREENS = {
       modelFitScale: 0.92,
       modelYOffset: 0.1,
       cameraPitchLift: 0.5,
-      navDisabled: true,
+      navFeatured: true,
+      navDrillTarget: 'ref-500-mw',
     },
   ],
   'island-microgrids': [

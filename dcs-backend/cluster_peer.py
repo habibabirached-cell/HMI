@@ -28,6 +28,8 @@ VALID_REMOTE_COMMANDS = frozenset({
     "stopSimulation",
     "reset",
     "liveRtds",
+    "loadHdAero",
+    "toggleInteractiveBreaker",
 })
 
 

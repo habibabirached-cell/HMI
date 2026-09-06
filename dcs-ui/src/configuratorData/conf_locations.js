@@ -5,6 +5,8 @@ const RESOURCE_SCORE = { high: 1.0, medium: 0.62, low: 0.32 };
 export const CONFIGURATOR_STATES = [
   { id: 'texas', label: 'Texas', solar: 'medium', wind: 'high', lcoeFactor: 1.0, carbonFactor: 1.0 },
   { id: 'arizona', label: 'Arizona', solar: 'high', wind: 'low', lcoeFactor: 0.96, carbonFactor: 0.94 },
+  { id: 'idaho', label: 'Idaho', solar: 'medium', wind: 'high', lcoeFactor: 0.95, carbonFactor: 0.96 },
+  { id: 'pennsylvania', label: 'Pennsylvania', solar: 'low', wind: 'medium', lcoeFactor: 1.04, carbonFactor: 1.0 },
   { id: 'california', label: 'California', solar: 'high', wind: 'medium', lcoeFactor: 1.12, carbonFactor: 0.88 },
   { id: 'virginia', label: 'Virginia', solar: 'medium', wind: 'medium', lcoeFactor: 1.05, carbonFactor: 1.02 },
   { id: 'iowa', label: 'Iowa', solar: 'low', wind: 'high', lcoeFactor: 0.94, carbonFactor: 0.97 },
@@ -16,6 +18,8 @@ export const CONFIGURATOR_CITIES = [
   { id: 'dallas_tx', label: 'Dallas, TX', stateId: 'texas' },
   { id: 'houston_tx', label: 'Houston, TX', stateId: 'texas' },
   { id: 'phoenix_az', label: 'Phoenix, AZ', stateId: 'arizona' },
+  { id: 'boise_id', label: 'Boise, ID', stateId: 'idaho' },
+  { id: 'philadelphia_pa', label: 'Philadelphia, PA', stateId: 'pennsylvania' },
   { id: 'las_vegas_nv', label: 'Las Vegas, NV', stateId: 'nevada' },
   { id: 'northern_virginia', label: 'Northern Virginia', stateId: 'virginia' },
   { id: 'san_jose_ca', label: 'San Jose, CA', stateId: 'california' },

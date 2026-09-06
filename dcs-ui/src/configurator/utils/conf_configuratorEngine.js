@@ -50,6 +50,8 @@ function snapReliabilityLevel(target) {
   return levels.reduce((best, k) => (Math.abs(k - target) < Math.abs(best - target) ? k : best), 99.99);
 }
 
+export { snapReliabilityLevel };
+
 function normalizeInputs(raw) {
   return {
     loadMW: raw.loadMW,
@@ -219,7 +221,9 @@ function buildTechnologyRows(capacities, inputs, profile, seed) {
     const annualGWh = cf != null ? mw * cf * 8760 / 1000 : mw * (utilization ?? 1) * 2.5 * 365 / 1000;
     totalEnergy += annualGWh;
     if (tech.cfeClass === 'Carbon-Free') cfeEnergy += annualGWh;
-    if (tech.cfeClass === 'Storage') cfeEnergy += annualGWh * 0.35;
+    if (tech.cfeClass === 'Storage' && (inputs.minCfePercent ?? 0) > 0) {
+      cfeEnergy += annualGWh * 0.35;
+    }
 
     const lcoe = tech.defaultLcoe * profile.lcoeFactor * (1 + (inputs.reliabilityTarget - 99) * 0.0015);
     weightedLcoe += lcoe * annualGWh;
@@ -266,7 +270,7 @@ function guaranteeMinCfe(achieved, minimum) {
   return Math.max(achieved, minimum + 0.3 + (minimum > 0 ? 0.5 : 0));
 }
 
-function computeCurtailment(inputs, profile, rows, seed) {
+export function computeCurtailment(inputs, profile, rows, seed) {
   const solarRow = rows.find((r) => r.id === 'solar');
   const windRow = rows.find((r) => r.id === 'wind');
   const renEnergy = rows
@@ -316,7 +320,9 @@ export function runConfiguratorEngine(rawInputs) {
   const { capacities, totalInstalled } = allocation;
   const metrics = buildTechnologyRows(capacities, inputs, profile, seed);
   const rawCfe = metrics.totalEnergy > 0 ? (metrics.cfeEnergy / metrics.totalEnergy) * 100 : 0;
-  const achievedCfe = guaranteeMinCfe(rawCfe, inputs.minCfePercent);
+  const achievedCfe = inputs.minCfePercent <= 0
+    ? 0
+    : guaranteeMinCfe(rawCfe, inputs.minCfePercent);
   const achievedReliability = guaranteeReliability(inputs.reliabilityTarget, seed);
   const curtailment = computeCurtailment(inputs, profile, metrics.rows, seed);
 

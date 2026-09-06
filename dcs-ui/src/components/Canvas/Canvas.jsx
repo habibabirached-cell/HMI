@@ -309,12 +309,15 @@ const Canvas = forwardRef(({
   onIdeumSimulationClick,
   isIdeum05 = false,
   ideum05ShowControls = true,
+  ideum05HdAeroMode = false,
   ideum05NavScreen = 'root',
   ideum05NavStack = ['root'],
   onIdeum05NavSelect,
   onIdeum05NavBack,
   onIdeum05Reset,
   onIdeum05LiveRtds,
+  ideumHdAeroViewCompact = true,
+  onIdeumHdAeroViewToggle,
   /** Ideum designs: lock mouse / trackpad / touch pan; arrow keys still pan. */
   disableCanvasPan = false,
   /** Ideum05: block wheel / pinch / gesture zoom; toolbar +/- still works; arrow keys still pan. */
@@ -563,11 +566,33 @@ const Canvas = forwardRef(({
           />
         );
       }
+      if (isIdeum05 && ideum05HdAeroMode) {
+        if (!primaryPane) return null;
+        const showIdeum05Back = (ideum05NavStack?.length ?? 0) > 1;
+        return (
+          <div className="ideum05-nav-layer" aria-hidden={false}>
+            {showIdeum05Back ? (
+              <div className="ideum05-nav-top-actions">
+                <Ideum05BackButton onBack={onIdeum05NavBack} />
+              </div>
+            ) : null}
+            <IdeumComponentLayer
+              components={ideumComponents}
+              pan={panePan}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumMaingearViewCompact={ideumHdAeroViewCompact}
+              onIdeumMaingearViewToggle={onIdeumHdAeroViewToggle}
+            />
+          </div>
+        );
+      }
       if (!ideumComponents?.length) return null;
       const showIdeum05Back = isIdeum05 && (ideum05NavStack?.length ?? 0) > 1;
       return (
         <div className="ideum05-nav-layer" aria-hidden={false}>
-          {isIdeum05 && ideum05ShowControls && primaryPane && (
+          {isIdeum05 && ideum05ShowControls && !ideum05HdAeroMode && primaryPane && (
             <div className="ideum05-nav-top-actions">
               {showIdeum05Back ? (
                 <Ideum05BackButton onBack={onIdeum05NavBack} />
@@ -585,6 +610,8 @@ const Canvas = forwardRef(({
             onIdeumClick={onIdeumControlButtonClick}
             ideumExpansionMirror={ideumExpansionMirror}
             onIdeumExpansionToggle={onIdeumExpansionToggle}
+            ideumMaingearViewCompact={ideumHdAeroViewCompact}
+            onIdeumMaingearViewToggle={onIdeumHdAeroViewToggle}
             ideumSimulationMirror={ideumSimulationMirror}
             onIdeumSimulationClick={onIdeumSimulationClick}
           />
@@ -595,6 +622,7 @@ const Canvas = forwardRef(({
       ideumKioskMode,
       isIdeum05,
       ideum05ShowControls,
+      ideum05HdAeroMode,
       ideum05NavScreen,
       ideum05NavStack,
       zoom,
@@ -604,6 +632,8 @@ const Canvas = forwardRef(({
       onIdeum05NavBack,
       onIdeum05Reset,
       onIdeum05LiveRtds,
+      ideumHdAeroViewCompact,
+      onIdeumHdAeroViewToggle,
       onIdeumControlButtonClick,
       ideumExpansionMirror,
       onIdeumExpansionToggle,
@@ -1046,6 +1076,10 @@ const Canvas = forwardRef(({
   const handleComponentContextMenu = (e, component) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (ideum05HdAeroMode) {
+      return;
+    }
 
     if (isIdeumComponent(component)) {
       return;

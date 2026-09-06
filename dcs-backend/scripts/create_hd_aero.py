@@ -597,6 +597,27 @@ def build_hd_aero_conf(p2r: dict) -> dict:
         "quickScenarioButtons": [],
         "hiddenDefaultQuickScenarios": [],
         "ideumControlButtons": [],
+        "remoteControlProfile": {
+            "enabled": True,
+            "commands": {
+                "loadHdAero": {
+                    "action": "loadDesign",
+                    "designDir": "hd_aero",
+                }
+            },
+            "interactiveBreakers": {
+                "comp-aero-stub-cb": {
+                    "simulationId": "_Aero_1",
+                    "startSimulation": True,
+                    "revealCharts": True,
+                },
+                "comp-load2-stub-cb": {
+                    "simulationId": "_Load_2",
+                    "startSimulation": True,
+                    "revealCharts": True,
+                },
+            },
+        },
     }
 
 

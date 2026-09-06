@@ -54,9 +54,9 @@ export default function ConfCapacityBars({ mix, capacityFactors }) {
   const maxCf = Math.max(...cfRows.map((r) => r.value), 1);
 
   return (
-    <>
+    <div className="conf-capacity-bars">
       <BarGroup
-        title="Capacity Sizing"
+        title="Installed Capacity (MW)"
         rows={sizingRows}
         maxValue={maxMW}
         renderValue={(row) => (
@@ -67,7 +67,7 @@ export default function ConfCapacityBars({ mix, capacityFactors }) {
       />
       {cfRows.length > 0 && (
         <BarGroup
-          title="Capacity Factor"
+          title="Utilization (CF % or cycles/day)"
           className="conf-capacity-factor"
           rows={cfRows}
           maxValue={maxCf}
@@ -78,6 +78,6 @@ export default function ConfCapacityBars({ mix, capacityFactors }) {
           )}
         />
       )}
-    </>
+    </div>
   );
 }

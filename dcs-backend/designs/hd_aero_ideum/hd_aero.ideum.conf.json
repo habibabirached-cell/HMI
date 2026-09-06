@@ -1,5 +1,5 @@
 {
-  "name": "HD-Aero Ideum",
+  "name": "HD_Aero Ideum",
   "description": "",
   "canvasComponents": [
     {
@@ -8,8 +8,8 @@
       "name": "HD",
       "fullName": "Heavy-Duty Gas Turbine 7HA-class",
       "position": {
-        "x": -350,
-        "y": -105
+        "x": -300,
+        "y": 45
       },
       "status": "idle",
       "properties": {
@@ -33,8 +33,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": -275,
-        "y": 106
+        "x": -225,
+        "y": 256
       },
       "status": "idle",
       "properties": {
@@ -49,7 +49,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-hd-gsu",
@@ -57,8 +58,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": -100,
-        "y": 100
+        "x": 50,
+        "y": 250
       },
       "status": "idle",
       "properties": {
@@ -75,7 +76,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-hd-ct",
@@ -83,8 +85,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -75,
-        "y": 250
+        "x": 75,
+        "y": 375
       },
       "status": "idle",
       "properties": {
@@ -99,7 +101,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-ct",
@@ -107,8 +110,8 @@
       "name": "CT",
       "fullName": "Current Transformer 1500:1",
       "position": {
-        "x": 175,
-        "y": 600
+        "x": 75,
+        "y": 550
       },
       "status": "idle",
       "properties": {
@@ -123,7 +126,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-xfmr",
@@ -131,8 +135,8 @@
       "name": "GSU",
       "fullName": "GSU 34.5 kV : 480 V 100 MVA",
       "position": {
-        "x": 150,
-        "y": 750
+        "x": 0,
+        "y": 775
       },
       "status": "idle",
       "properties": {
@@ -148,7 +152,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-knot",
@@ -156,8 +161,8 @@
       "name": "",
       "fullName": "Connection Point",
       "position": {
-        "x": 25,
-        "y": 625
+        "x": -50,
+        "y": 800
       },
       "status": "idle",
       "properties": {
@@ -172,7 +177,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-aux",
@@ -180,8 +186,8 @@
       "name": "Aux Loads #1",
       "fullName": "Auxiliary Loads",
       "position": {
-        "x": -25,
-        "y": 950
+        "x": -75,
+        "y": 1150
       },
       "status": "idle",
       "properties": {
@@ -205,8 +211,8 @@
       "name": "Aux CB",
       "fullName": "Auxiliary feeder circuit breaker",
       "position": {
-        "x": 25,
-        "y": 775
+        "x": -50,
+        "y": 975
       },
       "status": "idle",
       "properties": {
@@ -221,7 +227,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-dc-cb",
@@ -229,8 +236,8 @@
       "name": "DC CB 480V",
       "fullName": "DC Circuit Breaker 480V",
       "position": {
-        "x": -175,
-        "y": 606
+        "x": -275,
+        "y": 806
       },
       "status": "idle",
       "properties": {
@@ -245,7 +252,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-pcs",
@@ -253,8 +261,8 @@
       "name": "Rectifier / Inverter",
       "fullName": "UPS branch AC-DC conversion (one-line combined)",
       "position": {
-        "x": -200,
-        "y": 775
+        "x": -300,
+        "y": 975
       },
       "status": "idle",
       "properties": {
@@ -269,7 +277,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-ups",
@@ -277,8 +286,8 @@
       "name": "UPS lt",
       "fullName": "UPS / LV UPS 400Vdc",
       "position": {
-        "x": -200,
-        "y": 950
+        "x": -300,
+        "y": 1150
       },
       "status": "idle",
       "properties": {
@@ -293,7 +302,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load1-rack",
@@ -301,8 +311,8 @@
       "name": "Load 1",
       "fullName": "IT Rack Load 1",
       "position": {
-        "x": -200,
-        "y": 1100
+        "x": -300,
+        "y": 1300
       },
       "status": "idle",
       "properties": {
@@ -326,8 +336,8 @@
       "name": "Aero1",
       "fullName": "LM2500 Aero1",
       "position": {
-        "x": 725,
-        "y": -100
+        "x": 600,
+        "y": 50
       },
       "status": "idle",
       "properties": {
@@ -352,8 +362,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 775,
-        "y": 106
+        "x": 625,
+        "y": 256
       },
       "status": "idle",
       "properties": {
@@ -369,7 +379,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-aero-gsu",
@@ -377,8 +388,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 550,
-        "y": 100
+        "x": 300,
+        "y": 250
       },
       "status": "idle",
       "properties": {
@@ -395,7 +406,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-aero-ct",
@@ -403,8 +415,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 575,
-        "y": 250
+        "x": 225,
+        "y": 375
       },
       "status": "idle",
       "properties": {
@@ -419,7 +431,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-ct",
@@ -427,8 +440,8 @@
       "name": "CT",
       "fullName": "Current Transformer 1500:1",
       "position": {
-        "x": 425,
-        "y": 600
+        "x": 225,
+        "y": 550
       },
       "status": "idle",
       "properties": {
@@ -443,7 +456,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-xfmr",
@@ -451,8 +465,8 @@
       "name": "GSU",
       "fullName": "GSU 34.5 kV : 480 V 100 MVA",
       "position": {
-        "x": 400,
-        "y": 750
+        "x": 300,
+        "y": 775
       },
       "status": "idle",
       "properties": {
@@ -470,7 +484,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-knot",
@@ -478,8 +493,8 @@
       "name": "",
       "fullName": "Connection Point",
       "position": {
-        "x": 575,
-        "y": 625
+        "x": 325,
+        "y": 825
       },
       "status": "idle",
       "properties": {
@@ -495,16 +510,17 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-aux",
       "type": "auxiliary-loads-bess",
-      "name": "Aux Loads #2",
+      "name": "Aux Loads #4",
       "fullName": "Auxiliary Loads",
       "position": {
-        "x": 525,
-        "y": 950
+        "x": 275,
+        "y": 1150
       },
       "status": "idle",
       "properties": {
@@ -529,8 +545,8 @@
       "name": "Aux CB",
       "fullName": "Auxiliary feeder circuit breaker",
       "position": {
-        "x": 575,
-        "y": 775
+        "x": 325,
+        "y": 975
       },
       "status": "idle",
       "properties": {
@@ -546,7 +562,8 @@
       },
       "isTripped": false,
       "initialSimStatus": "open",
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-dc-cb",
@@ -554,8 +571,8 @@
       "name": "DC CB 480V",
       "fullName": "DC Circuit Breaker 480V",
       "position": {
-        "x": 775,
-        "y": 606
+        "x": 575,
+        "y": 806
       },
       "status": "idle",
       "properties": {
@@ -571,7 +588,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-pcs",
@@ -579,8 +597,8 @@
       "name": "Rectifier / Inverter",
       "fullName": "UPS branch AC-DC conversion (one-line combined)",
       "position": {
-        "x": 750,
-        "y": 775
+        "x": 550,
+        "y": 975
       },
       "status": "idle",
       "properties": {
@@ -596,7 +614,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-ups",
@@ -604,8 +623,8 @@
       "name": "UPS rb",
       "fullName": "UPS / LV UPS 400Vdc",
       "position": {
-        "x": 750,
-        "y": 950
+        "x": 550,
+        "y": 1150
       },
       "status": "idle",
       "properties": {
@@ -621,7 +640,8 @@
       },
       "isTripped": false,
       "initialSimStatus": null,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-load2-rack",
@@ -629,8 +649,8 @@
       "name": "Load 2",
       "fullName": "IT Rack Load 2",
       "position": {
-        "x": 750,
-        "y": 1100
+        "x": 550,
+        "y": 1300
       },
       "status": "idle",
       "properties": {
@@ -655,8 +675,8 @@
       "name": "34.5kV Bus",
       "fullName": "Main Horizontal Bus 34.5kV",
       "position": {
-        "x": -300,
-        "y": 480
+        "x": -450,
+        "y": 715
       },
       "status": "idle",
       "properties": {
@@ -675,7 +695,70 @@
         "width": 1200,
         "height": 40
       },
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
+    },
+    {
+      "id": "comp-aero-stub-cb",
+      "type": "breaker-interactive-stub",
+      "name": "CB",
+      "fullName": "34.5kV interactive stub breaker (collapsed view)",
+      "position": {
+        "x": 401,
+        "y": 500
+      },
+      "status": "open",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "",
+        "primaryLabel": "CB"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 100,
+        "height": 130
+      },
+      "connectionReadout": null,
+      "initialSimStatus": "open"
+    },
+    {
+      "id": "comp-load2-stub-cb",
+      "type": "breaker-interactive-stub",
+      "name": "CB",
+      "fullName": "34.5kV interactive stub breaker (collapsed view)",
+      "position": {
+        "x": 401,
+        "y": 840
+      },
+      "status": "open",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "",
+        "primaryLabel": "CB"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 100,
+        "height": 130
+      },
+      "connectionReadout": null,
+      "initialSimStatus": "open"
     },
     {
       "id": "comp-hd-3d-preview",
@@ -683,8 +766,8 @@
       "name": "HD",
       "fullName": "Heavy-Duty Gas Turbine (7HA-class)",
       "position": {
-        "x": -349,
-        "y": -87.5
+        "x": -450,
+        "y": 40
       },
       "status": "idle",
       "properties": {
@@ -714,8 +797,8 @@
       "name": "Aero1",
       "fullName": "Aeroderivative LM2500",
       "position": {
-        "x": 301,
-        "y": -87.5
+        "x": 152,
+        "y": 40
       },
       "status": "idle",
       "properties": {
@@ -744,8 +827,8 @@
       "name": "Load 1",
       "fullName": "Load 1",
       "position": {
-        "x": -299,
-        "y": 712.5
+        "x": -450,
+        "y": 1055
       },
       "status": "idle",
       "properties": {
@@ -774,8 +857,8 @@
       "name": "Load 2",
       "fullName": "Load 2",
       "position": {
-        "x": 301,
-        "y": 712.5
+        "x": 152,
+        "y": 1055
       },
       "status": "idle",
       "properties": {
@@ -805,7 +888,7 @@
       "name": "HD Gen Bank",
       "fullName": "HD Gen Bank",
       "position": {
-        "x": -300,
+        "x": -450,
         "y": -12
       },
       "status": "idle",
@@ -818,11 +901,11 @@
           "side": "left",
           "verticalBand": {
             "minY": 0,
-            "maxY": 900
+            "maxY": 1510
           },
           "previewMemberId": "comp-hd-3d-preview",
           "collapseCompanionMemberId": "comp-load1-preview",
-          "collapseColumnLeft": -300,
+          "collapseColumnLeft": -450,
           "memberIds": [
             "comp-hd-turbine",
             "comp-hd-gen-cb",
@@ -853,7 +936,8 @@
         "frequency": 60
       },
       "isTripped": false,
-      "canvasPane": "upper"
+      "canvasPane": "upper",
+      "connectionReadout": null
     },
     {
       "id": "comp-aero-gen-bank",
@@ -861,7 +945,7 @@
       "name": "Aero Gen Bank",
       "fullName": "Aero Gen Bank",
       "position": {
-        "x": 302,
+        "x": 152,
         "y": -12
       },
       "status": "idle",
@@ -874,11 +958,15 @@
           "side": "right",
           "verticalBand": {
             "minY": 0,
-            "maxY": 900
+            "maxY": 1510
           },
           "previewMemberId": "comp-aero-3d-preview",
           "collapseCompanionMemberId": "comp-load2-preview",
-          "collapseColumnLeft": 302,
+          "collapseColumnLeft": 152,
+          "collapseExtraMemberIds": [
+            "comp-aero-stub-cb",
+            "comp-load2-stub-cb"
+          ],
           "memberIds": [
             "comp-aero-turbine",
             "comp-aero-gen-cb",
@@ -909,6 +997,33 @@
         "frequency": 60
       },
       "isTripped": false,
+      "canvasPane": "upper",
+      "connectionReadout": null
+    },
+    {
+      "id": "comp-ideum-maingear-view-panel",
+      "type": "ideum-maingear-view-panel",
+      "name": "Maingear View",
+      "fullName": "Maingear View",
+      "position": {
+        "x": 850,
+        "y": 40
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Maingear"
+      },
+      "visualOverrides": {
+        "width": 480,
+        "height": 480
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
       "canvasPane": "upper"
     }
   ],
@@ -918,7 +1033,22 @@
       "from": "comp-hd-turbine",
       "to": "comp-hd-gen-cb",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
       "id": "conn-155",
@@ -1087,7 +1217,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1110,7 +1240,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1132,7 +1262,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1155,7 +1285,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1175,7 +1305,22 @@
       "from": "comp-load1-knot",
       "to": "comp-load1-aux-cb",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
       "id": "conn-199",
@@ -1185,7 +1330,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1208,7 +1353,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1230,7 +1375,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1253,7 +1398,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1276,7 +1421,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1298,7 +1443,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1321,7 +1466,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1343,7 +1488,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1363,7 +1508,22 @@
       "from": "comp-load2-knot",
       "to": "comp-load2-aux-cb",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
       "id": "conn-229",
@@ -1373,7 +1533,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1395,7 +1555,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1418,7 +1578,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1441,7 +1601,7 @@
       "status": "idle",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1481,30 +1641,6 @@
       }
     },
     {
-      "id": "conn-1780007128062",
-      "from": "comp-aero-3d-preview",
-      "to": "comp-bus-main",
-      "voltage": 0,
-      "type": "AC",
-      "status": "normal",
-      "style": {
-        "useAuto": false,
-        "color": "#2d7a32",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        },
-        "flowArrows": "forward"
-      }
-    },
-    {
       "id": "conn-1780009038007",
       "from": "comp-load1-preview",
       "to": "comp-bus-main",
@@ -1513,31 +1649,7 @@
       "status": "normal",
       "style": {
         "useAuto": false,
-        "color": "#1565c0",
-        "thickness": 5,
-        "animation": "none",
-        "depth3d": 38,
-        "glossiness": 18,
-        "shadow": {
-          "blur": 4,
-          "offsetX": 2,
-          "offsetY": 2,
-          "opacity": 0.35,
-          "color": "#000000"
-        },
-        "flowArrows": "reverse"
-      }
-    },
-    {
-      "id": "conn-1780009041117",
-      "from": "comp-load2-preview",
-      "to": "comp-bus-main",
-      "voltage": 0,
-      "type": "AC",
-      "status": "normal",
-      "style": {
-        "useAuto": false,
-        "color": "#1565c0",
+        "color": "#2d7a32",
         "thickness": 5,
         "animation": "none",
         "depth3d": 38,
@@ -1557,53 +1669,157 @@
       "from": "comp-hd-3d-preview",
       "to": "comp-bus-main",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
-      "id": "conn-comp-aero-3d-preview-bus",
+      "id": "conn-comp-aero-3d-preview-comp-aero-stub-cb",
       "from": "comp-aero-3d-preview",
+      "to": "comp-aero-stub-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-comp-aero-stub-cb-bus",
+      "from": "comp-aero-stub-cb",
       "to": "comp-bus-main",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
       "id": "conn-comp-load1-preview-bus",
       "from": "comp-load1-preview",
       "to": "comp-bus-main",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     },
     {
-      "id": "conn-comp-load2-preview-bus",
+      "id": "conn-comp-load2-preview-comp-load2-stub-cb",
       "from": "comp-load2-preview",
+      "to": "comp-load2-stub-cb",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
+    },
+    {
+      "id": "conn-comp-load2-stub-cb-bus",
+      "from": "comp-load2-stub-cb",
       "to": "comp-bus-main",
       "type": "power",
-      "status": "idle"
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        }
+      }
     }
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 1.1129085412980555,
+    "zoom": 0.88,
     "pan": {
-      "x": 140,
-      "y": 30
+      "x": 692,
+      "y": 76
     },
     "panTop": {
-      "x": 841.6516644145922,
-      "y": 191.03801287182137
+      "x": 507.7333333333344,
+      "y": 54.3999999999999
     },
     "panBottom": {
       "x": 0,
       "y": 0
     },
-    "quadBottomRowShare": 52.5,
+    "quadBottomRowShare": 50,
     "mode": "design",
     "uiFontPxShift": 5,
-    "canvasFontPxShift": 20,
+    "canvasFontPxShift": 5,
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": null,
     "designViewMode": "canvas",
-    "workspaceLayoutPreset": "conf3"
+    "workspaceLayoutPreset": "conf4"
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
@@ -1614,7 +1830,6 @@
     "t2": 60.0
   },
   "designUiSession": {
-    "ensembleId": "all",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": false,
@@ -1630,5 +1845,30 @@
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
-  "ideumKioskMode": false
+  "ideumKioskMode": false,
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "loadHdAero": {
+        "action": "loadDesign",
+        "designDir": "hd_aero"
+      }
+    },
+    "interactiveBreakers": {
+      "comp-aero-stub-cb": {
+        "simulationId": "_Aero_1",
+        "startSimulation": true,
+        "revealCharts": true
+      },
+      "comp-load2-stub-cb": {
+        "simulationId": "_Load_2",
+        "startSimulation": true,
+        "revealCharts": true
+      }
+    }
+  },
+  "remoteControlTarget": {
+    "designDir": "p2r_16",
+    "designName": "P2R_16"
+  }
 }

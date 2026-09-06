@@ -516,7 +516,7 @@
     {
       "id": "comp-load2-aux",
       "type": "auxiliary-loads-bess",
-      "name": "Aux Loads #4",
+      "name": "Aux Loads #2",
       "fullName": "Auxiliary Loads",
       "position": {
         "x": 275,
@@ -707,7 +707,7 @@
         "x": 401,
         "y": 500
       },
-      "status": "open",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -897,7 +897,7 @@
         "voltage": 13.8,
         "unit": "",
         "gasTurbineGroup": {
-          "collapsed": true,
+          "collapsed": false,
           "side": "left",
           "verticalBand": {
             "minY": 0,
@@ -954,7 +954,7 @@
         "voltage": 13.8,
         "unit": "",
         "gasTurbineGroup": {
-          "collapsed": true,
+          "collapsed": false,
           "side": "right",
           "verticalBand": {
             "minY": 0,
@@ -1775,8 +1775,8 @@
     "simulationRunning": false,
     "zoom": 0.88,
     "pan": {
-      "x": 140,
-      "y": -20
+      "x": 487.19999999999834,
+      "y": 116.53333333333319
     },
     "panTop": {
       "x": 507.7333333333344,
@@ -1793,7 +1793,7 @@
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": null,
     "designViewMode": "canvas",
-    "workspaceLayoutPreset": "conf3"
+    "workspaceLayoutPreset": "conf2"
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
@@ -1820,5 +1820,30 @@
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
-  "ideumKioskMode": false
+  "ideumKioskMode": false,
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "loadHdAero": {
+        "action": "loadDesign",
+        "designDir": "hd_aero"
+      },
+      "togglePeripheralsExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "peripherals"
+      }
+    },
+    "interactiveBreakers": {
+      "comp-aero-stub-cb": {
+        "simulationId": "_Aero_1",
+        "startSimulation": true,
+        "revealCharts": true
+      },
+      "comp-load2-stub-cb": {
+        "simulationId": "_Load_2",
+        "startSimulation": true,
+        "revealCharts": true
+      }
+    }
+  }
 }

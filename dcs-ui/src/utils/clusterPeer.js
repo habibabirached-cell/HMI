@@ -16,12 +16,16 @@ export async function fetchMachineRole() {
 /**
  * Ideum → Maingear: POST remote command to peer backend (direct Ethernet, not UI proxy).
  */
-export async function sendRemoteCommandToMaingear(peerBackendUrl, command) {
+export async function sendRemoteCommandToMaingear(peerBackendUrl, command, payload = undefined) {
   const base = (peerBackendUrl || '').replace(/\/$/, '');
+  const body = { command, source: 'ideum' };
+  if (payload != null && typeof payload === 'object') {
+    body.payload = payload;
+  }
   const res = await fetch(`${base}/api/cluster/remote-command`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ command, source: 'ideum' }),
+    body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

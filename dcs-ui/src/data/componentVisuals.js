@@ -81,6 +81,13 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#e65100',
     shape: 'schematic-ideum-touch',
   },
+  'ideum-maingear-view-panel': {
+    width: 480,
+    height: 480,
+    icon: '⬍',
+    color: '#e65100',
+    shape: 'schematic-ideum-touch',
+  },
   'ideum-start-simulation-button': {
     width: 480,
     height: 100,

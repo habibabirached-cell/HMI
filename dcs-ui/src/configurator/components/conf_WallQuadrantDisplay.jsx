@@ -3,7 +3,7 @@ import ConfKpiStrip from './conf_KpiStrip';
 import ConfSupplyMixChart from './conf_SupplyMixChart';
 import ConfCapacityBars from './conf_CapacityBars';
 import ConfMetricsPanel from './conf_MetricsPanel';
-import ConfSldDiagram from './conf_SldDiagram';
+import ConfArchitectureCanvas from './conf_ArchitectureCanvas';
 import ConfDesignTargets from './conf_DesignTargets';
 import { formatGWh, formatMWExact, formatPercent } from '../utils/conf_formatters';
 
@@ -196,7 +196,7 @@ function WallDetailsTable({ mix }) {
                 {formatMWExact(row.installedMW)}
                 {row.batteryMWh ? ` / ${Math.round(row.batteryMWh).toLocaleString()} MWh` : ''}
               </td>
-              <td>{formatPercent(row.energySharePercent, 1)}</td>
+              <td>{formatPercent(row.capacitySharePercent ?? row.energySharePercent, 2)}</td>
               <td>{formatGWh(row.energyContributionGWh)}</td>
             </tr>
           ))}
@@ -268,10 +268,11 @@ export default function ConfWallQuadrantDisplay({
         subtitle={result.summary}
         className="conf-wall-quadrant--architecture"
       >
-        <ConfSldDiagram
+        <ConfArchitectureCanvas
           supplyMix={result.supplyMix}
           loadMW={inputs.loadMW}
           gridConnectionMode={result.gridConnectionMode || inputs.gridConnectionMode}
+          variant="wall"
         />
       </WallQuadrant>
 
@@ -294,7 +295,7 @@ export default function ConfWallQuadrantDisplay({
       </WallQuadrant>
 
       <WallQuadrant
-        title="Economics & Environment"
+        title={'Economics & Environment'}
         subtitle="LCOE, carbon intensity, and renewable utilization"
         className="conf-wall-quadrant--economics"
       >

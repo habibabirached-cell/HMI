@@ -41,7 +41,7 @@ export default function ConfSupplyMixChart({ mix }) {
     <section className="conf-result-section" data-screen-region="supply-mix">
       <h3>Optimal Energy Supply Mix</h3>
       <p className="conf-field__helper conf-optimizer-note">
-        Capacities and percentages below are calculated by the least-cost optimizer — technologies with 0 MW were considered but not selected.
+        Share percentages reflect installed capacity (MW), not annual energy production.
       </p>
       <div className="conf-supply-mix">
         <div className="conf-supply-mix__chart">
@@ -66,7 +66,7 @@ export default function ConfSupplyMixChart({ mix }) {
                   {formatMWExact(row.installedMW)}
                   {row.batteryMWh ? ` / ${Math.round(row.batteryMWh).toLocaleString()} MWh` : ''}
                 </td>
-                <td>{formatPercent(row.percent, 0)}</td>
+                <td>{formatPercent(row.percent, 2)}</td>
               </tr>
             ))}
           </tbody>

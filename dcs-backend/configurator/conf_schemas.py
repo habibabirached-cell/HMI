@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 
 
 class ConfiguratorInputs(BaseModel):
-    loadMW: float = Field(ge=50, le=2000)
+    loadMW: float = Field(ge=200, le=1800)
     stateId: str = "texas"
     cityId: str = "dallas_tx"
-    reliabilityTarget: float = Field(ge=99, le=99.999)
+    reliabilityTarget: float = Field(ge=99, le=99.9999)
     minCfePercent: float = Field(default=0, ge=0, le=100)
     cfeTarget: Optional[float] = Field(default=None, ge=0, le=100)
     gridConnectionMode: str = Field(default="grid-connected")
@@ -19,6 +19,7 @@ class ConfiguratorInputs(BaseModel):
     uiMode: str = Field(default="basic")
     optimizationObjective: str = Field(default="lowestCost")
     technologyMinPercent: dict[str, float] = Field(default_factory=dict)
+    technologyPreferences: dict[str, str] = Field(default_factory=dict)
 
 
 class ConfiguratorGenerateResponse(BaseModel):

@@ -45,6 +45,7 @@ from cluster_peer import (
     cluster_manager,
     resolve_machine_role,
 )
+from display_keepalive import start_display_keepalive, stop_display_keepalive
 from rtds_live_service import rtds_live_service
 from configurator.router import router as configurator_router
 
@@ -651,11 +652,16 @@ async def post_cluster_remote_command(body: dict):
             status_code=400,
             detail=f"Invalid command. Expected one of: {sorted(VALID_REMOTE_COMMANDS)}",
         )
+    payload = body.get("payload")
+    if payload is not None and not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="payload must be a JSON object when provided")
     message = {
         "type": "remote_command",
         "command": command,
         "source": body.get("source") or "ideum",
     }
+    if isinstance(payload, dict):
+        message["payload"] = payload
     delivered = await cluster_manager.broadcast(message)
     return {
         "ok": True,
@@ -3742,6 +3748,18 @@ async def startup_event():
     print("✅ Health check available at: http://localhost:5000/health")
     print("✅ API docs available at: http://localhost:5000/docs")
     print("=" * 60)
+
+    role = resolve_machine_role()
+    if role.get("isMaingear"):
+        if start_display_keepalive():
+            print("🖥️  Display keepalive enabled (OLED wall — idle mouse scan)")
+        else:
+            print("⚠️  Display keepalive could not start (see logs)")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    stop_display_keepalive()
 
 # ============================================================================
 # MAIN ENTRY POINT

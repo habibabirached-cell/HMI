@@ -102,11 +102,11 @@ export default function ConfInputPanel({
               id="conf-load"
               type="number"
               className="conf-number-input"
-              min={50}
-              max={2000}
-              step={10}
+              min={200}
+              max={1800}
+              step={50}
               value={inputs.loadMW}
-              onChange={(e) => update({ loadMW: Math.max(50, Math.min(2000, Number(e.target.value) || 50)) })}
+              onChange={(e) => update({ loadMW: Math.max(200, Math.min(1800, Number(e.target.value) || 200)) })}
             />
             <span className="conf-unit">MW</span>
             <span className="conf-load-formatted">{formatMW(inputs.loadMW)}</span>

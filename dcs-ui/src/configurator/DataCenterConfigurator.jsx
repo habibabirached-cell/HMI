@@ -26,6 +26,7 @@ import {
   normalizeTechnologyPreferences,
   technologyIdsFromPreferences,
 } from './utils/conf_technologyPreferences';
+import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { fetchMachineRole } from '../utils/clusterPeer';
 import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
 import '../components/IdeumKiosk/Ideum05NavLayer.css';
@@ -58,6 +59,8 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
   const meta = MODE_META[mode] || MODE_META.full;
   const isIdeumMode = mode === 'ideum';
   const isWallMode = mode === 'wall';
+
+  useWallDisplayKeepAlive(isWallMode);
 
   const [inputs, setInputs] = useState({ ...CONFIGURATOR_DEFAULT_INPUTS });
   const [uiMode, setUiMode] = useState(UI_MODES.BASIC);

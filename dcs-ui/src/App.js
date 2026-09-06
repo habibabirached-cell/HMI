@@ -73,11 +73,17 @@ import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
-  isIdeum05ControlsScreen,
+  getIdeum05OverlayDesignDir,
+  getIdeum05OverlaySaveTarget,
   isIdeum05ConfiguratorScreen,
   isIdeum05DesignName,
+  isIdeum05DesignScreen,
+  isIdeum05HdAeroScreen,
+  IDEUM05_HD_AERO_IDEUM_CATALOG,
+  IDEUM05_HD_AERO_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
+import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -196,9 +202,22 @@ function isP2R18Design(loadedConfig) {
 }
 
 function isHDAeroDesign(loadedConfig) {
-  const name = String(loadedConfig?.name || '').toLowerCase();
-  const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
-  return name === 'hd_aero' || rel === 'hd_aero' || rel.endsWith('/hd_aero');
+  const name = String(loadedConfig?.name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  const rel = String(
+    loadedConfig?.csv_status?.design_catalog_rel ||
+      loadedConfig?.design_catalog_rel ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+  return (
+    name === 'hd_aero' ||
+    rel === 'hd_aero' ||
+    rel.endsWith('/hd_aero')
+  );
 }
 
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
@@ -845,6 +864,11 @@ function App() {
   }));
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
+  /** Saved Ideum05 canvas while HD_Aero overlay is active (Reference 500 MW). */
+  const ideum05BaseSnapshotRef = useRef(null);
+  /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
+  const ideum05OverlayLoadedMetaRef = useRef(null);
+  const ideum05OverlayLoadGenRef = useRef(0);
   const initialConfigurator = resolveConfiguratorFromUrl();
   const [configuratorOpen, setConfiguratorOpen] = useState(initialConfigurator.open);
   const [configuratorMode, setConfiguratorMode] = useState(initialConfigurator.mode);
@@ -905,7 +929,12 @@ function App() {
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
-  const ideum05ShowControls = !isIdeum05 || isIdeum05ControlsScreen(ideum05NavScreen);
+  const ideum05HdAeroMode = isIdeum05 && isIdeum05HdAeroScreen(ideum05NavScreen);
+  const ideum05OverlaySaveTarget = isIdeum05
+    ? getIdeum05OverlaySaveTarget(ideum05NavScreen)
+    : null;
+  const canSaveToIdeum = Boolean(ideum05OverlaySaveTarget);
+  const ideum05ShowControls = !isIdeum05 || isIdeum05DesignScreen(ideum05NavScreen);
   const showConfigurator = configuratorOpen || (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen));
   const effectiveConfiguratorMode =
     isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen) && configuratorMode === 'full'
@@ -3260,6 +3289,53 @@ function App() {
     }
   };
 
+  const handleIdeumHdAeroViewToggle = async () => {
+    setIdeumExpansionMirror((prev) => ({
+      ...prev,
+      peripheralsCompact: !prev.peripheralsCompact,
+    }));
+    setDesignExpansion((prev) => {
+      const next = normalizeDesignExpansion({
+        ...prev,
+        peripheralsCompact: !prev.peripheralsCompact,
+      });
+      setCanvasComponents((comps) => applyDesignExpansionToComponents(comps, next));
+      return next;
+    });
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return;
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. This switch sends commands from the Ideum touch table to the Maingear display.',
+      );
+      return;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return;
+    }
+    try {
+      const result = await sendRemoteCommandToMaingear(
+        role.peerBackendUrl,
+        'togglePeripheralsExpansion',
+      );
+      if (!result.deliveredToClients) {
+        alert(
+          'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
+        );
+      }
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send view command to Maingear.');
+    }
+  };
+
   const handleIdeumSimulationRemoteClick = async () => {
     const command = ideumSimulationMirror ? 'stopSimulation' : 'startSimulation';
     let role;
@@ -3296,17 +3372,160 @@ function App() {
     }
   };
 
+  const sendIdeumClusterCommand = useCallback(async (command, payload) => {
+    let role = machineRole;
+    try {
+      if (!role?.role) {
+        role = await fetchMachineRole();
+        setMachineRole(role);
+      }
+    } catch (e) {
+      console.warn(e);
+      return;
+    }
+    if (role.isMaingear || !role.isIdeum) return;
+    try {
+      await sendRemoteCommandToMaingear(role.peerBackendUrl, command, payload);
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [machineRole]);
+
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
     if (drillTarget) {
+      if (isIdeum05HdAeroScreen(drillTarget)) {
+        void sendIdeumClusterCommand('loadHdAero');
+      }
       setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
-  }, [ideum05NavStack]);
+  }, [ideum05NavStack, sendIdeumClusterCommand]);
 
   const handleIdeum05NavBack = useCallback(() => {
     setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   }, []);
+
+  const applyIdeum05HdAeroOverlay = useCallback((loadedConfig) => {
+    const { data } = loadedConfig || {};
+    if (!data) return;
+    ideum05OverlayLoadedMetaRef.current = {
+      remoteControlProfile: data.remoteControlProfile,
+      remoteControlTarget: data.remoteControlTarget,
+      globalSampleStep: data.globalSampleStep,
+      perChartSampleStep: data.perChartSampleStep,
+      playbackTimeRange: data.playbackTimeRange,
+      quickScenarioButtons: data.quickScenarioButtons,
+      hiddenDefaultQuickScenarios: data.hiddenDefaultQuickScenarios,
+    };
+    const dus = data.designUiSession;
+    const loadedExpansion = normalizeDesignExpansion(dus?.designExpansion);
+    if (data.canvasComponents) {
+      const componentsWithStatus = data.canvasComponents.map((comp) => ({
+        ...comp,
+        status: comp.status === 'open' ? 'open' : 'idle',
+        isTripped: false,
+      }));
+      setCanvasComponents(
+        applyDesignExpansionToComponents(
+          normalizeLoadedCanvasComponents(componentsWithStatus),
+          loadedExpansion,
+        ),
+      );
+    }
+    if (data.connections) {
+      setConnections(data.connections);
+    }
+    if (dus?.designSectionVisibility) {
+      setDesignSectionVisibility(normalizeDesignSectionVisibility(dus.designSectionVisibility));
+    }
+    setDesignExpansion(loadedExpansion);
+    setIdeumExpansionMirror({ ...loadedExpansion });
+    const ss = data.systemState || {};
+    if (ss.zoom != null) setZoom(ss.zoom);
+    if (ss.pan) setPan(ss.pan);
+    if (ss.panTop) setPanTop(ss.panTop);
+    if (ss.panBottom) setPanBottom(ss.panBottom);
+    if (
+      data.canvasBlockTypeScale != null &&
+      typeof data.canvasBlockTypeScale === 'object' &&
+      !Array.isArray(data.canvasBlockTypeScale)
+    ) {
+      setCanvasBlockTypeScale(data.canvasBlockTypeScale);
+    }
+  }, []);
+
+  const restoreIdeum05BaseSnapshot = useCallback(() => {
+    const snap = ideum05BaseSnapshotRef.current;
+    if (!snap) return;
+    setCanvasComponents(snap.canvasComponents);
+    setConnections(snap.connections);
+    setPan(snap.pan);
+    setPanTop(snap.panTop);
+    setPanBottom(snap.panBottom);
+    setZoom(snap.zoom);
+    setDesignExpansion(snap.designExpansion);
+    setDesignSectionVisibility(snap.designSectionVisibility);
+    setIdeumExpansionMirror({ ...snap.designExpansion });
+    setCanvasBlockTypeScale(snap.canvasBlockTypeScale);
+    ideum05BaseSnapshotRef.current = null;
+    ideum05OverlayLoadedMetaRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isIdeum05) return undefined;
+    const overlayDir = getIdeum05OverlayDesignDir(ideum05NavScreen);
+    const loadGen = ++ideum05OverlayLoadGenRef.current;
+
+    if (overlayDir) {
+      void sendIdeumClusterCommand('loadHdAero');
+      if (!ideum05BaseSnapshotRef.current) {
+        ideum05BaseSnapshotRef.current = {
+          canvasComponents: canvasComponentsRef.current,
+          connections,
+          pan,
+          panTop,
+          panBottom,
+          zoom,
+          designExpansion,
+          designSectionVisibility,
+          canvasBlockTypeScale,
+        };
+      }
+      (async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(overlayDir)}/load`,
+          );
+          if (!res.ok || loadGen !== ideum05OverlayLoadGenRef.current) return;
+          const loadedConfig = await res.json();
+          if (loadGen !== ideum05OverlayLoadGenRef.current) return;
+          applyIdeum05HdAeroOverlay(loadedConfig);
+        } catch (e) {
+          console.warn('Ideum05 HD_Aero overlay load failed', e);
+        }
+      })();
+      return undefined;
+    }
+
+    if (ideum05BaseSnapshotRef.current) {
+      restoreIdeum05BaseSnapshot();
+    }
+    return undefined;
+    // Only react to nav screen changes — snapshot uses refs for latest canvas state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIdeum05, ideum05NavScreen]);
+
+  const handleCanvasUpdateComponent = useCallback((componentId, updates) => {
+    handleUpdateComponent(componentId, updates);
+    if (!ideum05HdAeroMode || updates?.status == null) return;
+    const comp = canvasComponentsRef.current.find((c) => c.id === componentId);
+    if (comp?.type !== INTERACTIVE_STUB_BREAKER_TYPE) return;
+    void sendIdeumClusterCommand('toggleInteractiveBreaker', {
+      componentId,
+      status: updates.status,
+    });
+  }, [handleUpdateComponent, ideum05HdAeroMode, sendIdeumClusterCommand]);
 
   const handleDesignExpansionChange = useCallback((key, expanded) => {
     setDesignExpansion((prev) => {
@@ -3558,7 +3777,7 @@ function App() {
     await handleIdeumControlButtonClick({ command: 'liveRtds' });
   }, [handleIdeumControlButtonClick]);
 
-  const handleRemoteClusterCommand = async (command) => {
+  const handleRemoteClusterCommand = async (command, payload) => {
     if (!command) return;
 
     // Transport commands — work on any Maingear design with a loaded simulation;
@@ -3587,6 +3806,53 @@ function App() {
     }
     if (command === 'liveRtds') {
       await handleLiveRtds();
+      return;
+    }
+    if (command === 'loadHdAero') {
+      if (
+        isHDAeroDesign({
+          name: currentConfigName,
+          design_catalog_rel: designApiPath,
+          csv_status: { design_catalog_rel: designApiPath },
+        })
+      ) {
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(IDEUM05_HD_AERO_MAINGEAR_CATALOG)}/load`,
+        );
+        if (!res.ok) return;
+        const loadedConfig = await res.json();
+        loadSkipSessionRestoreRef.current = true;
+        handleConfigurationLoadedRef.current?.(loadedConfig);
+      } catch (e) {
+        console.warn('loadHdAero remote command failed', e);
+      }
+      return;
+    }
+    if (command === 'toggleInteractiveBreaker') {
+      const componentId = payload?.componentId;
+      const status = payload?.status;
+      if (!componentId || !status) return;
+      if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+        console.warn('toggleInteractiveBreaker ignored — HD_Aero not loaded on Maingear');
+        return;
+      }
+      handleUpdateComponent(componentId, { status });
+      const breakerSpec = remoteControlProfile?.interactiveBreakers?.[componentId];
+      if (breakerSpec?.revealCharts) {
+        setRightRailCollapsed(false);
+        setRightRailGridPeek(true);
+      }
+      if (breakerSpec?.startSimulation && !simulationRunning) {
+        const simId = breakerSpec.simulationId;
+        if (simId && availableSimulations.includes(simId)) {
+          await handleRunSimulationRef.current?.(simId);
+        } else if (availableSimulations.includes('all')) {
+          await handleRunSimulationRef.current?.('all');
+        }
+      }
       return;
     }
 
@@ -4108,6 +4374,134 @@ function App() {
     } catch (error) {
       console.error('❌ Error saving configuration:', error);
       alert(`❌ Failed to save: ${error.message}`);
+    } finally {
+      const elapsed = Date.now() - saveStartTime;
+      const remaining = Math.max(0, SAVE_SPINNER_MIN_MS - elapsed);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
+      setIsSaving(false);
+    }
+  };
+
+  /** Save the active Ideum overlay (e.g. HD_Aero Ideum on Reference 500 MW) — not Ideum05 itself. */
+  const getIdeumOverlayConfiguration = useCallback(() => {
+    const meta = ideum05OverlayLoadedMetaRef.current;
+    const componentsForSave =
+      quadChartDrawers && designHasStackedSections(canvasComponents)
+        ? canvasComponents.map((c) => ({
+            ...c,
+            canvasPane: resolveComponentCanvasPane(c),
+          }))
+        : canvasComponents;
+
+    return {
+      canvasComponents: componentsForSave,
+      connections,
+      variableDrivenPresence,
+      canvasBlockTypeScale,
+      globalSampleStep: meta?.globalSampleStep ?? globalSampleStep,
+      perChartSampleStep: meta?.perChartSampleStep ?? perChartSampleStep,
+      playbackTimeRange: meta?.playbackTimeRange ?? playbackTimeRange,
+      designUiSession: {
+        ensembleId:
+          simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
+            ? simulationMetadata.ensembleId
+            : null,
+        designSectionVisibility,
+        quickScenarioBranchCollapsed,
+        designExpansion,
+        hiddenChartPanelNamedConfigs,
+      },
+      quickScenarioButtons: meta?.quickScenarioButtons ?? quickScenarioButtons,
+      hiddenDefaultQuickScenarios:
+        meta?.hiddenDefaultQuickScenarios ?? hiddenDefaultQuickScenarios,
+      ideumKioskMode: false,
+      ideumControlButtons: [],
+      remoteControlProfile: meta?.remoteControlProfile ?? remoteControlProfile,
+      remoteControlTarget: meta?.remoteControlTarget ?? remoteControlTarget,
+      systemState: {
+        simulationRunning,
+        zoom,
+        pan,
+        panTop,
+        panBottom,
+        quadBottomRowShare,
+        mode,
+        uiFontPxShift,
+        canvasFontPxShift,
+        collapsedComponentFontPxShift,
+        splitPaneTitles,
+        designViewMode,
+        workspaceLayoutPreset,
+      },
+    };
+  }, [
+    canvasComponents,
+    connections,
+    variableDrivenPresence,
+    canvasBlockTypeScale,
+    globalSampleStep,
+    perChartSampleStep,
+    playbackTimeRange,
+    simulationMetadata,
+    designSectionVisibility,
+    quickScenarioBranchCollapsed,
+    designExpansion,
+    hiddenChartPanelNamedConfigs,
+    quickScenarioButtons,
+    hiddenDefaultQuickScenarios,
+    remoteControlProfile,
+    remoteControlTarget,
+    simulationRunning,
+    zoom,
+    pan,
+    panTop,
+    panBottom,
+    quadBottomRowShare,
+    mode,
+    uiFontPxShift,
+    canvasFontPxShift,
+    collapsedComponentFontPxShift,
+    splitPaneTitles,
+    designViewMode,
+    workspaceLayoutPreset,
+    quadChartDrawers,
+  ]);
+
+  const handleSaveToIdeum = async () => {
+    const target = getIdeum05OverlaySaveTarget(ideum05NavScreen);
+    if (!target) {
+      alert('Open an Ideum reference screen (e.g. Reference 500 MW) before Save to Ideum.');
+      return;
+    }
+
+    const SAVE_SPINNER_MIN_MS = 1000;
+    setIsSaving(true);
+    const saveStartTime = Date.now();
+
+    try {
+      const configData = {
+        name: target.saveName,
+        description: null,
+        data: getIdeumOverlayConfiguration(),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `HTTP ${response.status}`);
+      }
+
+      console.log(`✅ Ideum overlay saved: ${target.saveName} → ${target.catalogDir}`);
+    } catch (error) {
+      console.error('❌ Error saving Ideum overlay:', error);
+      alert(`❌ Failed to save to Ideum: ${error.message}`);
     } finally {
       const elapsed = Date.now() - saveStartTime;
       const remaining = Math.max(0, SAVE_SPINNER_MIN_MS - elapsed);
@@ -6348,19 +6742,32 @@ function App() {
    * Get current configuration for saving
    */
   const getCurrentConfiguration = () => {
+    // Ideum05 Reference 500 MW loads HD_Aero as a temporary overlay — never persist overlay canvas into Ideum05.
+    const ideum05OverlaySnap = ideum05BaseSnapshotRef.current;
+    const saveComponents = ideum05OverlaySnap?.canvasComponents ?? canvasComponents;
+    const saveConnections = ideum05OverlaySnap?.connections ?? connections;
+    const saveBlockTypeScale = ideum05OverlaySnap?.canvasBlockTypeScale ?? canvasBlockTypeScale;
+    const saveDesignExpansion = ideum05OverlaySnap?.designExpansion ?? designExpansion;
+    const saveDesignSectionVisibility =
+      ideum05OverlaySnap?.designSectionVisibility ?? designSectionVisibility;
+    const savePan = ideum05OverlaySnap?.pan ?? pan;
+    const savePanTop = ideum05OverlaySnap?.panTop ?? panTop;
+    const savePanBottom = ideum05OverlaySnap?.panBottom ?? panBottom;
+    const saveZoom = ideum05OverlaySnap?.zoom ?? zoom;
+
     const componentsForSave =
-      quadChartDrawers && designHasStackedSections(canvasComponents)
-        ? canvasComponents.map((c) => ({
+      quadChartDrawers && designHasStackedSections(saveComponents)
+        ? saveComponents.map((c) => ({
             ...c,
             canvasPane: resolveComponentCanvasPane(c),
           }))
-        : canvasComponents;
+        : saveComponents;
 
     return {
       canvasComponents: componentsForSave,
-      connections,
+      connections: saveConnections,
       variableDrivenPresence,
-      canvasBlockTypeScale,
+      canvasBlockTypeScale: saveBlockTypeScale,
       globalSampleStep,
       perChartSampleStep,
       playbackTimeRange,
@@ -6369,9 +6776,9 @@ function App() {
           simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
             ? simulationMetadata.ensembleId
             : null,
-        designSectionVisibility,
+        designSectionVisibility: saveDesignSectionVisibility,
         quickScenarioBranchCollapsed,
-        designExpansion,
+        designExpansion: saveDesignExpansion,
         hiddenChartPanelNamedConfigs,
       },
       quickScenarioButtons,
@@ -6382,10 +6789,10 @@ function App() {
       remoteControlTarget,
       systemState: {
         simulationRunning,
-        zoom,
-        pan,
-        panTop,
-        panBottom,
+        zoom: saveZoom,
+        pan: savePan,
+        panTop: savePanTop,
+        panBottom: savePanBottom,
         quadBottomRowShare,
         mode,
         uiFontPxShift,
@@ -6537,7 +6944,7 @@ function App() {
         return;
       }
       if (msg?.type === 'remote_command' && msg.command) {
-        handleRemoteClusterCommandRef.current(msg.command);
+        handleRemoteClusterCommandRef.current(msg.command, msg.payload);
       }
     });
   }, [machineRole?.isMaingear]);
@@ -7099,6 +7506,8 @@ function App() {
           }}
           onSave={handleQuickSave}
           onSaveAs={handleOpenSaveDialog}
+          onSaveToIdeum={handleSaveToIdeum}
+          canSaveToIdeum={canSaveToIdeum}
           onSaveSimulationConfig={() => setSaveSimConfigDialogOpen(true)}
           onSaveScenarioAs={() => handleOpenSaveScenarioAs(null)}
           onLoad={handleOpenLoadDialog}
@@ -7172,7 +7581,7 @@ function App() {
               onDeleteSelection={handleDeleteCanvasSelection}
               onAddComponent={handleAddComponent}
               onAddConnection={handleAddConnection}
-              onUpdateComponent={handleUpdateComponent}
+              onUpdateComponent={handleCanvasUpdateComponent}
               onAssociateChart={handleAssociateChart}
               onOpenChart={handleOpenChart}
               onCreateMultiComponentChart={handleCreateMultiComponentChart}
@@ -7224,12 +7633,15 @@ function App() {
               disableCanvasGestureZoom={isIdeum05}
               isIdeum05={isIdeum05}
               ideum05ShowControls={ideum05ShowControls}
+              ideum05HdAeroMode={ideum05HdAeroMode}
               ideum05NavScreen={ideum05NavScreen}
               ideum05NavStack={ideum05NavStack}
               onIdeum05NavSelect={handleIdeum05NavSelect}
               onIdeum05NavBack={handleIdeum05NavBack}
               onIdeum05Reset={handleIdeum05Reset}
               onIdeum05LiveRtds={handleIdeum05LiveRtds}
+              ideumHdAeroViewCompact={ideumExpansionMirror.peripheralsCompact}
+              onIdeumHdAeroViewToggle={handleIdeumHdAeroViewToggle}
             />
           )}
         </div>
@@ -7300,7 +7712,7 @@ function App() {
       )}
 
       {/* Chart Panel */}
-      {openCharts.length > 0 && ideum05ShowControls && !showConfigurator && (
+      {openCharts.length > 0 && ideum05ShowControls && !ideum05HdAeroMode && !showConfigurator && (
         <ChartPanel
           charts={openCharts}
           chartStacks={chartStacks}

@@ -41,16 +41,25 @@ const CFE_PRESETS = MIN_CFE_PRESETS.map((pct) => ({
 
 const IDEUM_LOCATION_OPTIONS = [
   { id: 'texas', label: 'Texas', cityId: 'dallas_tx' },
+  { id: 'arizona', label: 'Arizona', cityId: 'phoenix_az' },
+  { id: 'idaho', label: 'Idaho', cityId: 'boise_id' },
+  { id: 'pennsylvania', label: 'Pennsylvania', cityId: 'philadelphia_pa' },
 ];
 
-const LOAD_MW_MIN = 50;
-const LOAD_MW_MAX = 2000;
-const LOAD_MW_STEP = 10;
+const LOAD_MW_MIN = 200;
+const LOAD_MW_MAX = 1800;
+const LOAD_MW_STEP = 50;
 
-function clampLoadMW(value) {
+const LOAD_MW_TICKS = Array.from(
+  { length: (LOAD_MW_MAX - LOAD_MW_MIN) / LOAD_MW_STEP + 1 },
+  (_, index) => LOAD_MW_MIN + index * LOAD_MW_STEP,
+);
+
+function snapLoadMW(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return LOAD_MW_MIN;
-  return Math.min(LOAD_MW_MAX, Math.max(LOAD_MW_MIN, Math.round(n)));
+  const snapped = Math.round(n / LOAD_MW_STEP) * LOAD_MW_STEP;
+  return Math.min(LOAD_MW_MAX, Math.max(LOAD_MW_MIN, snapped));
 }
 
 function IdeumLoadEditor({ loadMW, onChange }) {
@@ -63,6 +72,13 @@ function IdeumLoadEditor({ loadMW, onChange }) {
     }
   }, [loadMW, focused]);
 
+  useEffect(() => {
+    const snapped = snapLoadMW(loadMW);
+    if (snapped !== loadMW) {
+      onChange(snapped);
+    }
+  }, [loadMW, onChange]);
+
   const commitDraft = () => {
     const trimmed = draft.trim();
     if (trimmed === '') {
@@ -70,16 +86,18 @@ function IdeumLoadEditor({ loadMW, onChange }) {
       setDraft(String(LOAD_MW_MIN));
       return;
     }
-    const next = clampLoadMW(trimmed);
+    const next = snapLoadMW(trimmed);
     onChange(next);
     setDraft(String(next));
   };
 
   const handleSliderChange = (value) => {
-    const next = clampLoadMW(value);
+    const next = snapLoadMW(value);
     onChange(next);
     setDraft(String(next));
   };
+
+  const snappedLoadMW = snapLoadMW(loadMW);
 
   return (
     <div className="conf-ideum-hub-load-editor">
@@ -103,17 +121,40 @@ function IdeumLoadEditor({ loadMW, onChange }) {
         />
         <span className="conf-ideum-hub-load-unit" aria-hidden="true">MW</span>
       </div>
-      <input
-        type="range"
-        className="conf-ideum-hub-load-slider"
-        min={LOAD_MW_MIN}
-        max={LOAD_MW_MAX}
-        step={LOAD_MW_STEP}
-        value={clampLoadMW(loadMW)}
-        onChange={(e) => handleSliderChange(e.target.value)}
-        aria-label="Load in megawatts slider"
-        aria-valuetext={`${clampLoadMW(loadMW)} MW`}
-      />
+      <div className="conf-ideum-hub-load-slider-wrap">
+        <input
+          type="range"
+          className="conf-ideum-hub-load-slider"
+          min={LOAD_MW_MIN}
+          max={LOAD_MW_MAX}
+          step={LOAD_MW_STEP}
+          value={snappedLoadMW}
+          onChange={(e) => handleSliderChange(e.target.value)}
+          aria-label="Load in megawatts slider"
+          aria-valuemin={LOAD_MW_MIN}
+          aria-valuemax={LOAD_MW_MAX}
+          aria-valuenow={snappedLoadMW}
+          aria-valuetext={`${snappedLoadMW} MW`}
+          list="conf-ideum-load-ticks"
+        />
+        <datalist id="conf-ideum-load-ticks">
+          {LOAD_MW_TICKS.map((tick) => (
+            <option key={tick} value={tick} />
+          ))}
+        </datalist>
+        <div className="conf-ideum-hub-load-ticks" aria-hidden="true">
+          {LOAD_MW_TICKS.map((tick) => (
+            <span
+              key={tick}
+              className={`conf-ideum-hub-load-tick${tick === snappedLoadMW ? ' conf-ideum-hub-load-tick--active' : ''}`}
+            />
+          ))}
+        </div>
+        <div className="conf-ideum-hub-load-tick-labels" aria-hidden="true">
+          <span>{LOAD_MW_MIN}</span>
+          <span>{LOAD_MW_MAX}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -138,13 +179,6 @@ export default function ConfIdeumInputPanel({
       update({ gridConnectionMode: GRID_CONNECTION_MODES.ISLANDED });
     }
   }, [inputs.gridConnectionMode]);
-
-  useEffect(() => {
-    const texas = IDEUM_LOCATION_OPTIONS[0];
-    if (inputs.stateId !== texas.id) {
-      update({ stateId: texas.id, cityId: texas.cityId });
-    }
-  }, [inputs.stateId]);
 
   const handlePreferencesChange = (technologyPreferences) => {
     update({

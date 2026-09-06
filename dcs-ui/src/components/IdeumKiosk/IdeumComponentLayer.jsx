@@ -17,6 +17,7 @@ import {
   isIdeumBessGfmeButton,
   isIdeumExpansionPanel,
   isIdeumGfmeButton,
+  isIdeumMaingearViewPanel,
   isIdeumStartSimulationButton,
   isIdeumTurbineButton,
 } from '../../utils/ideumComponent';
@@ -96,6 +97,8 @@ export default function IdeumComponentLayer({
   onIdeumClick,
   ideumExpansionMirror = { breakersCompact: true, peripheralsCompact: true },
   onIdeumExpansionToggle,
+  ideumMaingearViewCompact = true,
+  onIdeumMaingearViewToggle,
   ideumSimulationMirror = false,
   onIdeumSimulationClick,
 }) {
@@ -138,13 +141,63 @@ export default function IdeumComponentLayer({
   };
 
   const buttonSlots = slots.filter(
-    (s) => !isIdeumExpansionPanel(s.component) && !isIdeumStartSimulationButton(s.component),
+    (s) =>
+      !isIdeumExpansionPanel(s.component) &&
+      !isIdeumMaingearViewPanel(s.component) &&
+      !isIdeumStartSimulationButton(s.component),
   );
   const expansionSlots = slots.filter((s) => isIdeumExpansionPanel(s.component));
+  const maingearViewSlots = slots.filter((s) => isIdeumMaingearViewPanel(s.component));
   const startSimSlots = slots.filter((s) => isIdeumStartSimulationButton(s.component));
 
   return (
     <div className="ideum-component-layer" aria-hidden={false}>
+      {maingearViewSlots.map((slot) => {
+        const titlePx = Math.max(16, Math.round(24 * zoom));
+        const labelPx = Math.max(20, Math.round(32 * zoom));
+        const rowPad = Math.max(16, Math.round(24 * zoom));
+        const switchTrackH = Math.max(
+          140,
+          Math.round(slot.pixelHeight - titlePx - rowPad * 3),
+        );
+
+        return (
+          <div
+            key={slot.id}
+            className="ideum-expansion-panel"
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+              padding: rowPad,
+            }}
+            aria-label="Maingear view remote control"
+          >
+            <div
+              className="ideum-expansion-panel__title"
+              style={{ fontSize: titlePx, marginBottom: rowPad }}
+            >
+              Maingear
+            </div>
+            <div className="ideum-expansion-panel__row">
+              <span
+                className="ideum-expansion-panel__label"
+                style={{ fontSize: labelPx }}
+              >
+                Detail
+              </span>
+              <IdeumVerticalSwitch
+                compact={ideumMaingearViewCompact !== false}
+                onToggle={() => onIdeumMaingearViewToggle?.()}
+                label="Detail"
+                zoom={zoom}
+                trackH={switchTrackH}
+              />
+            </div>
+          </div>
+        );
+      })}
       {expansionSlots.map((slot) => {
         const titlePx = Math.max(16, Math.round(24 * zoom));
         const labelPx = Math.max(20, Math.round(32 * zoom));

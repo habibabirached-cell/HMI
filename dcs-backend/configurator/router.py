@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 
 from cluster_peer import cluster_manager, resolve_machine_role
 from configurator.cluster_state import get_configurator_session, submit_configurator_cluster
-from configurator.conf_engine import run_configurator_engine
+from configurator.conf_consolidated import generate_configurator_result
 from configurator.conf_schemas import ConfiguratorGenerateResponse, ConfiguratorInputs
 
 router = APIRouter(prefix="/api/configurator", tags=["configurator"])
@@ -67,7 +67,7 @@ async def _run_maingear_cluster_submit(body: dict) -> dict:
     session = await submit_configurator_cluster(
         inputs_dict,
         source=source,
-        run_engine=run_configurator_engine,
+        run_engine=generate_configurator_result,
         broadcast=broadcast,
     )
     return {"ok": True, "session": session}
@@ -80,8 +80,8 @@ async def configurator_health():
 
 @router.post("/generate", response_model=ConfiguratorGenerateResponse)
 async def generate_configuration(body: ConfiguratorInputs):
-    result = run_configurator_engine(body.model_dump())
-    return ConfiguratorGenerateResponse(**result, source="backend")
+    result = generate_configurator_result(body.model_dump())
+    return ConfiguratorGenerateResponse(**result, source=result.get("source", "backend"))
 
 
 @router.get("/cluster/session")

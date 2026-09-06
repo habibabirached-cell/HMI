@@ -21,6 +21,8 @@ TECHNOLOGIES: dict[str, dict[str, Any]] = {
 STATES: dict[str, dict[str, Any]] = {
     "texas": {"label": "Texas", "solar": 0.62, "wind": 1.0, "lcoeFactor": 1.0, "carbonFactor": 1.0},
     "arizona": {"label": "Arizona", "solar": 1.0, "wind": 0.32, "lcoeFactor": 0.96, "carbonFactor": 0.94},
+    "idaho": {"label": "Idaho", "solar": 0.62, "wind": 1.0, "lcoeFactor": 0.95, "carbonFactor": 0.96},
+    "pennsylvania": {"label": "Pennsylvania", "solar": 0.32, "wind": 0.62, "lcoeFactor": 1.04, "carbonFactor": 1.0},
     "california": {"label": "California", "solar": 1.0, "wind": 0.62, "lcoeFactor": 1.12, "carbonFactor": 0.88},
     "virginia": {"label": "Virginia", "solar": 0.62, "wind": 0.62, "lcoeFactor": 1.05, "carbonFactor": 1.02},
     "iowa": {"label": "Iowa", "solar": 0.32, "wind": 1.0, "lcoeFactor": 0.94, "carbonFactor": 0.97},
@@ -32,6 +34,8 @@ CITIES: dict[str, dict[str, str]] = {
     "dallas_tx": {"label": "Dallas, TX", "stateId": "texas"},
     "houston_tx": {"label": "Houston, TX", "stateId": "texas"},
     "phoenix_az": {"label": "Phoenix, AZ", "stateId": "arizona"},
+    "boise_id": {"label": "Boise, ID", "stateId": "idaho"},
+    "philadelphia_pa": {"label": "Philadelphia, PA", "stateId": "pennsylvania"},
     "las_vegas_nv": {"label": "Las Vegas, NV", "stateId": "nevada"},
     "northern_virginia": {"label": "Northern Virginia", "stateId": "virginia"},
     "san_jose_ca": {"label": "San Jose, CA", "stateId": "california"},

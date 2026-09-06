@@ -4,6 +4,8 @@
  */
 
 import { runConfiguratorEngine } from './conf_configuratorEngine';
+import { runConsolidatedEngine, mapSyntheticResultToGranular } from './conf_consolidatedEngine';
+import { applyElevatedOptionalTechnologies } from './conf_technologyPreferences';
 import { validateConfiguratorInputs } from './conf_validateInputs';
 
 let trainingRecords = [];
@@ -20,14 +22,15 @@ export function getTrainingRecordCount() {
   return trainingRecords.length;
 }
 
-function normalizeInputs(inputs) {
+function normalizeInputs(raw) {
   return {
-    ...inputs,
-    minCfePercent: inputs.minCfePercent ?? inputs.cfeTarget ?? 0,
-    gridConnectionMode: inputs.gridConnectionMode ?? 'grid-connected',
-    uiMode: inputs.uiMode ?? 'basic',
-    optimizationObjective: inputs.optimizationObjective ?? 'lowestCost',
-    technologyMinPercent: inputs.technologyMinPercent ?? {},
+    ...raw,
+    minCfePercent: raw.minCfePercent ?? raw.cfeTarget ?? 0,
+    gridConnectionMode: raw.gridConnectionMode ?? 'grid-connected',
+    uiMode: raw.uiMode ?? 'basic',
+    optimizationObjective: raw.optimizationObjective ?? 'lowestCost',
+    technologyMinPercent: raw.technologyMinPercent ?? {},
+    technologyPreferences: raw.technologyPreferences ?? {},
   };
 }
 
@@ -72,6 +75,11 @@ function trainingRecordToResult(record) {
   };
 }
 
+function finalizeConfiguratorResult(result, inputs) {
+  if (!result?.ok) return result;
+  return applyElevatedOptionalTechnologies(result, inputs);
+}
+
 /**
  * @param {object} rawInputs
  * @returns {object}
@@ -85,12 +93,25 @@ export function generateConfiguratorResult(rawInputs) {
 
   const match = trainingRecords.find((r) => recordMatches(r.inputs, inputs));
   if (match) {
-    return trainingRecordToResult(match);
+    return finalizeConfiguratorResult(trainingRecordToResult(match), inputs);
   }
 
-  const result = runConfiguratorEngine(inputs);
-  if (result.ok && validation.warnings?.length) {
-    result.warnings = validation.warnings;
+  const consolidated = runConsolidatedEngine(inputs);
+  if (consolidated.ok) {
+    const result = finalizeConfiguratorResult(consolidated, inputs);
+    if (validation.warnings?.length) {
+      result.warnings = validation.warnings;
+    }
+    return result;
   }
-  return result;
+
+  const synthetic = runConfiguratorEngine(inputs);
+  if (synthetic.ok) {
+    const mapped = finalizeConfiguratorResult(mapSyntheticResultToGranular(synthetic), inputs);
+    if (validation.warnings?.length) {
+      mapped.warnings = validation.warnings;
+    }
+    return mapped;
+  }
+  return synthetic;
 }

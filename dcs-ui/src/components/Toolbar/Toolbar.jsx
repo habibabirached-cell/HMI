@@ -17,6 +17,8 @@ const Toolbar = ({
   onResetView,
   onSave,
   onSaveAs,
+  onSaveToIdeum,
+  canSaveToIdeum = false,
   onSaveSimulationConfig,
   onSaveScenarioAs,
   onCopyScenarioLink,
@@ -235,6 +237,20 @@ const Toolbar = ({
                   }}
                 >
                   Save Design As
+                </button>
+              )}
+              {canSaveToIdeum && (
+                <button
+                  type="button"
+                  className="toolbar-save-menu-item toolbar-save-menu-item--ideum"
+                  role="menuitem"
+                  title="Save the current Ideum reference view (pan/zoom and layout) to its Ideum-only design file — not Ideum05"
+                  onClick={() => {
+                    closeSaveMenu();
+                    onSaveToIdeum?.();
+                  }}
+                >
+                  Save to Ideum
                 </button>
               )}
               {canSaveSimulationConfig && (

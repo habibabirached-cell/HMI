@@ -1,0 +1,271 @@
+{
+  "meta": {
+    "source": "consolidated.transpose.xlsx",
+    "recordCount": 12,
+    "outputFields": [
+      "hd7ha02",
+      "hd7f05",
+      "lm2500g4",
+      "lm250022mw",
+      "wind",
+      "solar",
+      "battery",
+      "lcoe",
+      "achievedReliability"
+    ],
+    "inputFields": [
+      "reliabilityTarget",
+      "minCfePercent",
+      "loadMW",
+      "place"
+    ],
+    "places": [
+      "AZ",
+      "ID",
+      "PA",
+      "TX"
+    ]
+  },
+  "records": [
+    {
+      "id": "record-1",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 59.0,
+        "loadMW": 1350.0,
+        "place": "TX"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 210.0,
+        "lm250022mw": 0.0,
+        "wind": 880.44,
+        "solar": 1391.23,
+        "battery": 1521.12,
+        "lcoe": 92.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-2",
+      "inputs": {
+        "reliabilityTarget": 99.96,
+        "minCfePercent": 58.1,
+        "loadMW": 1350.0,
+        "place": "AZ"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 140.0,
+        "lm250022mw": 48.0,
+        "wind": 0.0,
+        "solar": 2375.01,
+        "battery": 1344.96,
+        "lcoe": 89.0,
+        "achievedReliability": 99.97
+      }
+    },
+    {
+      "id": "record-3",
+      "inputs": {
+        "reliabilityTarget": 99.95,
+        "minCfePercent": 49.0,
+        "loadMW": 1350.0,
+        "place": "ID"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 105.0,
+        "lm250022mw": 0.0,
+        "wind": 1067.78,
+        "solar": 1122.29,
+        "battery": 1141.61,
+        "lcoe": 94.0,
+        "achievedReliability": 99.967
+      }
+    },
+    {
+      "id": "record-4",
+      "inputs": {
+        "reliabilityTarget": 99.997,
+        "minCfePercent": 43.0,
+        "loadMW": 1350.0,
+        "place": "PA"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 1195.0,
+        "lm2500g4": 35.0,
+        "lm250022mw": 32.0,
+        "wind": 188.31,
+        "solar": 2495.61,
+        "battery": 1390.33,
+        "lcoe": 99.0,
+        "achievedReliability": 99.9996
+      }
+    },
+    {
+      "id": "record-5",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 70.0,
+        "loadMW": 1350.0,
+        "place": "TX"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 96.0,
+        "wind": 956.0,
+        "solar": 2702.0,
+        "battery": 1848.0,
+        "lcoe": 75.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-6",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 62.2,
+        "loadMW": 1350.0,
+        "place": "AZ"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 961.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 37.0,
+        "wind": 0.0,
+        "solar": 2812.39,
+        "battery": 1232.45,
+        "lcoe": 68.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-7",
+      "inputs": {
+        "reliabilityTarget": 99.991,
+        "minCfePercent": 61.0,
+        "loadMW": 1350.0,
+        "place": "ID"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 48.0,
+        "wind": 1188.4,
+        "solar": 2813.67,
+        "battery": 1508.06,
+        "lcoe": 79.0,
+        "achievedReliability": 99.995
+      }
+    },
+    {
+      "id": "record-8",
+      "inputs": {
+        "reliabilityTarget": 99.95,
+        "minCfePercent": 56.0,
+        "loadMW": 1350.0,
+        "place": "PA"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 956.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 0.0,
+        "wind": 471.92,
+        "solar": 3236.32,
+        "battery": 1342.72,
+        "lcoe": 80.0,
+        "achievedReliability": 99.97
+      }
+    },
+    {
+      "id": "record-9",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 72.0,
+        "loadMW": 1350.0,
+        "place": "TX"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 160.0,
+        "wind": 1030.51,
+        "solar": 2901.9,
+        "battery": 1792.1,
+        "lcoe": 64.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-10",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 59.0,
+        "loadMW": 1350.0,
+        "place": "AZ"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 956.0,
+        "lm2500g4": 105.0,
+        "lm250022mw": 0.0,
+        "wind": 0.0,
+        "solar": 2924.06,
+        "battery": 1219.94,
+        "lcoe": 60.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-11",
+      "inputs": {
+        "reliabilityTarget": 99.9999,
+        "minCfePercent": 66.0,
+        "loadMW": 1350.0,
+        "place": "ID"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 717.0,
+        "lm2500g4": 70.0,
+        "lm250022mw": 16.0,
+        "wind": 1908.03,
+        "solar": 1855.07,
+        "battery": 1757.03,
+        "lcoe": 75.0,
+        "achievedReliability": 99.9999
+      }
+    },
+    {
+      "id": "record-12",
+      "inputs": {
+        "reliabilityTarget": 99.98,
+        "minCfePercent": 56.0,
+        "loadMW": 1350.0,
+        "place": "PA"
+      },
+      "outputs": {
+        "hd7ha02": 573.0,
+        "hd7f05": 956.0,
+        "lm2500g4": 0.0,
+        "lm250022mw": 48.0,
+        "wind": 711.08,
+        "solar": 3191.61,
+        "battery": 1364.7,
+        "lcoe": 73.0,
+        "achievedReliability": 99.99
+      }
+    }
+  ]
+}
