@@ -163,12 +163,17 @@ function WallDisplayShell({ split, setSplit, resetSplit, children }) {
   );
 }
 
-function WallQuadrant({ title, subtitle, children, className = '' }) {
+function formatWallGwLoad(loadMW) {
+  const gw = Number(loadMW) / 1000;
+  if (!Number.isFinite(gw) || gw <= 0) return null;
+  return `${gw.toFixed(2)} GW`;
+}
+
+function WallQuadrant({ title, children, className = '' }) {
   return (
     <section className={`conf-wall-quadrant ${className}`.trim()} aria-label={title}>
       <header className="conf-wall-quadrant__header">
         <h2 className="conf-wall-quadrant__title">{title}</h2>
-        {subtitle ? <p className="conf-wall-quadrant__subtitle">{subtitle}</p> : null}
       </header>
       <div className="conf-wall-quadrant__body">{children}</div>
     </section>
@@ -258,14 +263,18 @@ export default function ConfWallQuadrantDisplay({
   const locationLabel = result.location
     ? `${result.location.city || ''}, ${result.location.state || ''}`.replace(/^,\s*|,\s*$/g, '').trim()
     : '';
-  const loadLabel = inputs?.loadMW ? `${inputs.loadMW} MW load` : '';
-  const headline = [loadLabel, locationLabel].filter(Boolean).join(' · ');
+  const gwLoad = formatWallGwLoad(inputs?.loadMW);
+  const architectureTitle = gwLoad
+    ? `Recommended Architecture for ${gwLoad} data center`
+    : 'Recommended Architecture';
+  const kpiTitle = [gwLoad ? `Key Performance Indicators — ${gwLoad}` : 'Key Performance Indicators', locationLabel]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <WallDisplayShell split={split} setSplit={setSplit} resetSplit={resetSplit}>
       <WallQuadrant
-        title="Recommended Architecture"
-        subtitle={result.summary}
+        title={architectureTitle}
         className="conf-wall-quadrant--architecture"
       >
         <ConfArchitectureCanvas
@@ -277,8 +286,7 @@ export default function ConfWallQuadrantDisplay({
       </WallQuadrant>
 
       <WallQuadrant
-        title="Key Performance Indicators"
-        subtitle={headline || 'Portfolio performance vs. design constraints'}
+        title={kpiTitle}
         className="conf-wall-quadrant--kpis"
       >
         <ConfKpiStrip result={result} />
@@ -286,8 +294,7 @@ export default function ConfWallQuadrantDisplay({
       </WallQuadrant>
 
       <WallQuadrant
-        title="Optimal Supply Mix"
-        subtitle="Least-cost capacity allocation by technology"
+        title="Optimal Supply Mix — capacity allocation by technology"
         className="conf-wall-quadrant--supply"
       >
         <ConfSupplyMixChart mix={result.supplyMix} />
@@ -295,8 +302,7 @@ export default function ConfWallQuadrantDisplay({
       </WallQuadrant>
 
       <WallQuadrant
-        title={'Economics & Environment'}
-        subtitle="LCOE, carbon intensity, and renewable utilization"
+        title="Economics & Environment — LCOE, carbon & renewables"
         className="conf-wall-quadrant--economics"
       >
         <ConfMetricsPanel result={result} />

@@ -2476,12 +2476,24 @@
   color: var(--conf-text);
 }
 
+.conf-kpi-card__footnote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
 .conf-kpi-card small,
 .conf-kpi-card__status {
-  display: block;
   font-size: 11px;
   color: var(--conf-text-dim);
-  margin-top: 4px;
+}
+
+.conf-kpi-card__status {
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .conf-kpi--met .conf-kpi-card__status { color: #047857; }
@@ -3710,24 +3722,42 @@
 
 /* ── Wall display — 2×2 quadrants for 4× 75″ 4K projection ── */
 .conf-page--wall {
+  position: relative;
+  height: 100vh;
+  min-height: 0;
   background: #0f1419;
 }
 
-.conf-page-header--wall {
-  padding: 10px 24px;
-  border-bottom: 3px solid var(--conf-evergreen);
-}
-
-.conf-page-header--wall .conf-page-eyebrow,
-.conf-page-header--wall p,
-.conf-page-header--wall .conf-badges,
-.conf-page-header--wall .conf-page-header__actions {
-  display: none;
-}
-
-.conf-page-header--wall h1 {
-  font-size: clamp(24px, 2.2vw, 36px);
+.conf-page-header--wall-chrome {
+  position: absolute;
+  top: clamp(10px, 1vw, 18px);
+  right: clamp(12px, 1.2vw, 24px);
+  z-index: 30;
+  padding: 0;
   margin: 0;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.conf-page-header--wall-chrome .conf-page-header__actions {
+  display: flex;
+  pointer-events: auto;
+}
+
+.conf-close-btn--wall {
+  width: clamp(40px, 3.6vw, 52px);
+  height: clamp(40px, 3.6vw, 52px);
+  font-size: clamp(18px, 1.6vw, 24px);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.conf-close-btn--wall:hover {
+  background: #fff;
+  border-color: var(--conf-evergreen);
+  color: var(--conf-evergreen);
 }
 
 .conf-page--wall .conf-error-banner {
@@ -3916,19 +3946,14 @@ body.conf-wall-bezel-dragging-both {
 }
 
 .conf-wall-quadrant__title {
-  font-size: clamp(28px, 2.8vw, 44px);
+  font-size: clamp(24px, 2.4vw, 38px);
   font-weight: 800;
   color: var(--conf-evergreen);
   line-height: 1.1;
   letter-spacing: -0.02em;
-}
-
-.conf-wall-quadrant__subtitle {
-  margin-top: clamp(8px, 0.8vw, 12px);
-  font-size: clamp(18px, 1.7vw, 26px);
-  line-height: 1.4;
-  color: var(--conf-text-dim);
-  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .conf-wall-quadrant__body {
@@ -4004,10 +4029,15 @@ body.conf-wall-bezel-dragging-both {
   line-height: 1.05;
 }
 
+.conf-wall-quadrant .conf-kpi-card__footnote {
+  margin-top: clamp(4px, 0.5vw, 8px);
+  gap: clamp(8px, 0.8vw, 14px);
+}
+
 .conf-wall-quadrant .conf-kpi-card small,
 .conf-wall-quadrant .conf-kpi-card__status {
   font-size: clamp(16px, 1.4vw, 22px);
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .conf-wall-quadrant .conf-targets-panel {

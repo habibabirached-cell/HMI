@@ -17,14 +17,18 @@ export default function ConfKpiStrip({ result }) {
       <div className={`conf-kpi-card ${relMet ? 'conf-kpi--met' : 'conf-kpi--miss'}`}>
         <span className="conf-kpi-card__label">Reliability</span>
         <strong className="conf-kpi-card__value">{formatPercent(kpis.achievedReliability, 3)}</strong>
-        <small>Minimum: {formatPercent(kpis.reliabilityTarget, kpis.reliabilityTarget >= 99.99 ? 3 : 2)}</small>
-        <span className="conf-kpi-card__status">{relMet ? '✓ Meets minimum' : '⚠ Below minimum'}</span>
+        <div className="conf-kpi-card__footnote">
+          <small>Minimum: {formatPercent(kpis.reliabilityTarget, kpis.reliabilityTarget >= 99.99 ? 3 : 2)}</small>
+          <span className="conf-kpi-card__status">{relMet ? '✓ Meets minimum' : '⚠ Below minimum'}</span>
+        </div>
       </div>
       <div className={`conf-kpi-card ${cfeMet ? 'conf-kpi--met' : 'conf-kpi--miss'}`}>
         <span className="conf-kpi-card__label">Carbon-Free Energy</span>
         <strong className="conf-kpi-card__value">{formatPercent(kpis.achievedCfe, 0)}</strong>
-        <small>{minCfe > 0 ? `Minimum: ${formatPercent(minCfe, 0)}` : 'No minimum set'}</small>
-        <span className="conf-kpi-card__status">{cfeMet ? '✓ Meets minimum' : '⚠ Below minimum'}</span>
+        <div className="conf-kpi-card__footnote">
+          <small>{minCfe > 0 ? `Minimum: ${formatPercent(minCfe, 0)}` : 'No minimum set'}</small>
+          <span className="conf-kpi-card__status">{cfeMet ? '✓ Meets minimum' : '⚠ Below minimum'}</span>
+        </div>
       </div>
       <div className="conf-kpi-card">
         <span className="conf-kpi-card__label">Portfolio LCOE</span>

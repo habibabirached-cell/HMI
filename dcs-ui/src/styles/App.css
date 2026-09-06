@@ -303,6 +303,16 @@ body {
   height: 100vh;
 }
 
+.app-container--configurator-wall {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-container--configurator-wall .app-main--configurator {
+  height: 100vh;
+  background: #0f1419;
+}
+
 /* Design view wrapper: canvas / image / split modes */
 .design-view-wrapper {
   flex: 1;

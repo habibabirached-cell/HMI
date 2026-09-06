@@ -941,10 +941,14 @@ function App() {
       ? 'ideum'
       : configuratorMode;
 
+  const isConfiguratorIdeum = showConfigurator && effectiveConfiguratorMode === 'ideum';
+  const isConfiguratorWall = showConfigurator && effectiveConfiguratorMode === 'wall';
+  const hideAppHeader = isConfiguratorIdeum || isConfiguratorWall;
+
   const isIdeumTouchUi =
     Boolean(machineRole?.isIdeum) ||
     ideumKioskMode ||
-    (showConfigurator && effectiveConfiguratorMode === 'ideum');
+    isConfiguratorIdeum;
 
   useEffect(() => {
     if (!isIdeumTouchUi) return undefined;
@@ -7424,8 +7428,8 @@ function App() {
       setCanvasFontPxShift={setCanvasFontPxShift}
       setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
     >
-    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}${showConfigurator && effectiveConfiguratorMode === 'ideum' ? ' app-container--configurator-ideum' : ''}`}>
-      {!(showConfigurator && effectiveConfiguratorMode === 'ideum') && (
+    <div className={`app-container${ideumKioskMode ? ' app-container--ideum-mode' : ''}${isConfiguratorIdeum ? ' app-container--configurator-ideum' : ''}${isConfiguratorWall ? ' app-container--configurator-wall' : ''}`}>
+      {!hideAppHeader && (
       <header ref={appHeaderRef} className="app-header">
         <div className="header-left">
           <img 

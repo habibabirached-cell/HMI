@@ -271,7 +271,23 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
 
   return (
     <div className={`conf-page conf-page--${mode}`}>
-      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isWallMode ? ' conf-page-header--wall' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
+      {isWallMode ? (
+        onClose ? (
+          <header className="conf-page-header conf-page-header--wall-chrome">
+            <div className="conf-page-header__actions">
+              <button
+                type="button"
+                className="conf-close-btn conf-close-btn--wall"
+                onClick={onClose}
+                aria-label="Close wall display"
+              >
+                ✕
+              </button>
+            </div>
+          </header>
+        ) : null
+      ) : (
+      <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
         {isIdeumMode ? (
           <>
             <div className="conf-page-header__ideum-start">
@@ -342,6 +358,7 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
           </>
         )}
       </header>
+      )}
 
       {error && (
         <div className="conf-error-banner" role="alert">
