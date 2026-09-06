@@ -109,9 +109,12 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
     }
   }, []);
 
-  const applyWallSession = useCallback((session) => {
+  const applyWallSession = useCallback((session, options = {}) => {
     setWallSession(session);
-    const wall = sessionToWallState(session, { onlyAfter: wallListeningSince });
+    const wall = sessionToWallState(session, {
+      onlyAfter: wallListeningSince,
+      ignoreStale: options.ignoreStale,
+    });
     setError(wall.error);
     setErrorDetails(wall.errorDetails || []);
     if (wall.result) {
@@ -132,7 +135,8 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
     let cancelled = false;
     fetchConfiguratorClusterSession()
       .then((session) => {
-        if (!cancelled) applyWallSession(session);
+        // Initial snapshot may already be "ready" before this tab mounts (Ideum auto-open race).
+        if (!cancelled) applyWallSession(session, { ignoreStale: true });
       })
       .catch((e) => {
         if (!cancelled) setError(e.message);

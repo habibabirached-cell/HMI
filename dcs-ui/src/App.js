@@ -872,6 +872,8 @@ function App() {
   const initialConfigurator = resolveConfiguratorFromUrl();
   const [configuratorOpen, setConfiguratorOpen] = useState(initialConfigurator.open);
   const [configuratorMode, setConfiguratorMode] = useState(initialConfigurator.mode);
+  /** Bumped on Ideum submit so wall display remounts and refetches cluster session. */
+  const [configuratorWallMountKey, setConfiguratorWallMountKey] = useState(0);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
@@ -6944,6 +6946,7 @@ function App() {
     if (!shouldListen) return undefined;
     return connectClusterWebSocket((msg) => {
       if (msg?.type === 'configurator_open_wall') {
+        setConfiguratorWallMountKey((k) => k + 1);
         handleOpenConfiguratorRef.current('wall');
         return;
       }
@@ -7530,6 +7533,7 @@ function App() {
       {showConfigurator ? (
         <div className="app-main app-main--configurator">
           <DataCenterConfigurator
+            key={effectiveConfiguratorMode === 'wall' ? `wall-${configuratorWallMountKey}` : effectiveConfiguratorMode}
             mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);

@@ -94,9 +94,10 @@ export function connectConfiguratorClusterUpdates(onSession) {
 /**
  * Map backend session → wall UI state.
  * @param {object} [options.onlyAfter] ISO timestamp — ignore stale results from before wall opened
+ * @param {boolean} [options.ignoreStale] accept ready/error even if updatedAt predates onlyAfter (initial fetch)
  */
 export function sessionToWallState(session, options = {}) {
-  const { onlyAfter } = options;
+  const { onlyAfter, ignoreStale = false } = options;
 
   if (!session) {
     return {
@@ -112,6 +113,7 @@ export function sessionToWallState(session, options = {}) {
   const status = session.status || 'idle';
   const updatedAt = session.updatedAt;
   const isFresh =
+    ignoreStale ||
     !onlyAfter ||
     !updatedAt ||
     updatedAt >= onlyAfter ||

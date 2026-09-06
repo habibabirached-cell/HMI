@@ -101,25 +101,28 @@ function IdeumLoadEditor({ loadMW, onChange }) {
 
   return (
     <div className="conf-ideum-hub-load-editor">
-      <div className="conf-ideum-hub-load-field">
-        <input
-          id="conf-ideum-load"
-          type="text"
-          inputMode="numeric"
-          className="conf-ideum-hub-load-input"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ''))}
-          onFocus={() => setFocused(true)}
-          onBlur={() => {
-            setFocused(false);
-            commitDraft();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-          }}
-          aria-label="Load in megawatts"
-        />
-        <span className="conf-ideum-hub-load-unit" aria-hidden="true">MW</span>
+      <div className="conf-ideum-hub-load-header">
+        <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d">Data Center Load</span>
+        <div className="conf-ideum-hub-load-field">
+          <input
+            id="conf-ideum-load"
+            type="text"
+            inputMode="numeric"
+            className="conf-ideum-hub-load-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ''))}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+              setFocused(false);
+              commitDraft();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+            }}
+            aria-label="Load in megawatts"
+          />
+          <span className="conf-ideum-hub-load-unit" aria-hidden="true">MW</span>
+        </div>
       </div>
       <div className="conf-ideum-hub-load-slider-wrap">
         <input

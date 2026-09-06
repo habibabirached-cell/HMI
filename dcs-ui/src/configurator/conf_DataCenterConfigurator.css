@@ -507,15 +507,15 @@
 }
 
 .conf-ideum-corridor-arrow__value {
-  font-size: clamp(20px, 2vw, 25px);
+  font-size: clamp(40px, 4vw, 50px);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--conf-evergreen);
   white-space: nowrap;
-  padding: 4px 6px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(0, 0, 0, 0.55);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 2px 4px rgba(0, 94, 96, 0.18);
@@ -533,15 +533,15 @@
 }
 
 .conf-ideum-corridor-arrow--left .conf-ideum-corridor-arrow__head {
-  border-top: 18px solid transparent;
-  border-bottom: 18px solid transparent;
-  border-left: 28px solid var(--conf-evergreen);
+  border-top: 36px solid transparent;
+  border-bottom: 36px solid transparent;
+  border-left: 56px solid var(--conf-evergreen);
 }
 
 .conf-ideum-corridor-arrow--right .conf-ideum-corridor-arrow__head {
-  border-top: 18px solid transparent;
-  border-bottom: 18px solid transparent;
-  border-right: 28px solid var(--conf-evergreen);
+  border-top: 36px solid transparent;
+  border-bottom: 36px solid transparent;
+  border-right: 56px solid var(--conf-evergreen);
 }
 
 .conf-ideum-corridor-stack--bottom-up {
@@ -944,7 +944,7 @@
 }
 
 .conf-ideum-corridor-rail--left .conf-ideum-corridor-arrow__value {
-  font-size: clamp(18px, 1.85vw, 24px);
+  font-size: clamp(36px, 3.7vw, 48px);
 }
 
 .conf-ideum-corridor-btn--size-xl .conf-ideum-corridor-btn__value {
@@ -1200,25 +1200,25 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
+  gap: 22px;
   width: max-content;
   max-width: 100%;
   min-width: 0;
   min-height: 0;
   flex-shrink: 0;
-  padding: 2px 0;
+  padding: 3px 0;
 }
 
 .conf-ideum-tech-pref {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
   width: max-content;
   max-width: 100%;
-  min-height: 58px;
-  padding: 14px 18px;
+  min-height: 81px;
+  padding: 20px 25px;
   border: 1px solid rgba(15, 35, 52, 0.12);
-  border-radius: 12px;
+  border-radius: 17px;
   background: linear-gradient(180deg, #ffffff 0%, #edf1f4 100%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95) inset,
@@ -1252,15 +1252,15 @@
 
 .conf-ideum-tech-pref__box {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  width: 34px;
+  height: 34px;
   border: 2px solid rgba(15, 35, 52, 0.18);
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--conf-evergreen);
   box-shadow:
@@ -1271,7 +1271,7 @@
 }
 
 .conf-ideum-tech-pref__label {
-  font-size: clamp(15px, 1.45vw, 19px);
+  font-size: clamp(21px, 2.03vw, 27px);
   font-weight: 700;
   line-height: 1.25;
   color: var(--conf-text);
@@ -1383,7 +1383,7 @@
 .conf-ideum-tech-hub__center-label {
   flex: 0 0 auto;
   text-align: center;
-  padding: 12px 14px 10px;
+  padding: 10px 14px 8px;
   border-bottom: 1px solid var(--conf-border);
   background: linear-gradient(180deg, #fff 0%, #f4f8f9 100%);
   container-type: inline-size;
@@ -1400,12 +1400,28 @@
 .conf-ideum-hub-load-editor {
   width: 100%;
   max-width: none;
-  margin: 6px 0 0;
+  margin: 0;
+}
+
+.conf-ideum-hub-load-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.4vw, 16px);
+  width: 100%;
+}
+
+.conf-ideum-hub-load-header .conf-ideum-tech-hub__center-eyebrow {
+  display: inline-block;
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  text-align: left;
+  font-size: clamp(12px, 6cqi, 20px);
 }
 
 .conf-ideum-hub-load-slider-wrap {
   width: calc(100% + 28px);
-  margin: 10px -14px 0;
+  margin: 12px -14px 0;
   padding: 0 14px;
   box-sizing: border-box;
 }
@@ -1415,23 +1431,23 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 0;
-  height: 10px;
-  margin-top: 4px;
-  padding: 0 13px;
+  height: 14px;
+  margin-top: 6px;
+  padding: 0 16px;
   pointer-events: none;
 }
 
 .conf-ideum-hub-load-tick {
-  flex: 0 0 2px;
-  width: 2px;
-  height: 6px;
+  flex: 0 0 3px;
+  width: 3px;
+  height: 9px;
   border-radius: 1px;
   background: rgba(0, 120, 118, 0.42);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .conf-ideum-hub-load-tick--active {
-  height: 10px;
+  height: 14px;
   background: rgba(0, 78, 80, 0.92);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.55),
@@ -1441,9 +1457,9 @@
 .conf-ideum-hub-load-tick-labels {
   display: flex;
   justify-content: space-between;
-  margin-top: 2px;
+  margin-top: 4px;
   padding: 0 2px;
-  font-size: clamp(11px, 1.1vw, 14px);
+  font-size: clamp(12px, 1.2vw, 16px);
   font-weight: 800;
   color: var(--conf-evergreen);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
@@ -1452,22 +1468,24 @@
 .conf-ideum-hub-load-field {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex: 0 1 auto;
   gap: 8px;
+  min-width: 0;
 }
 
 .conf-ideum-hub-load-input {
   display: block;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   width: auto;
-  max-width: 180px;
+  max-width: 220px;
   margin: 0;
-  font-size: clamp(22px, 2.4vw, 34px);
+  font-size: clamp(26px, 2.8vw, 40px);
   font-weight: 800;
-  padding: 8px 12px;
-  border: 2px solid rgba(0, 0, 0, 0.88);
-  border-radius: 12px;
+  padding: 16px 24px;
+  border: 4px solid rgba(0, 0, 0, 0.88);
+  border-radius: 24px;
   background: var(--conf-cfe-pane-fill);
   text-align: center;
   color: #fff;
@@ -1487,7 +1505,7 @@
 
 .conf-ideum-hub-load-unit {
   flex: 0 0 auto;
-  font-size: clamp(16px, 1.6vw, 22px);
+  font-size: clamp(20px, 2vw, 28px);
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--conf-evergreen);
@@ -1507,8 +1525,8 @@
 .conf-ideum-hub-load-slider {
   display: block;
   width: 100%;
-  height: 38px;
-  margin: 10px 0 0;
+  height: 68px;
+  margin: 4px 0 0;
   cursor: pointer;
   background: transparent;
   -webkit-appearance: none;
@@ -1516,8 +1534,8 @@
 }
 
 .conf-ideum-hub-load-slider::-webkit-slider-runnable-track {
-  height: 16px;
-  border: 2px solid rgba(0, 78, 80, 0.42);
+  height: 48px;
+  border: 3px solid rgba(0, 78, 80, 0.42);
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -1533,10 +1551,10 @@
 .conf-ideum-hub-load-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 32px;
-  height: 32px;
-  margin-top: -10px;
-  border: 2px solid rgba(0, 0, 0, 0.88);
+  width: 54px;
+  height: 54px;
+  margin-top: -3px;
+  border: 3px solid rgba(0, 0, 0, 0.88);
   border-radius: 50%;
   background: var(--conf-cfe-pane-fill);
   box-shadow:
@@ -1566,8 +1584,8 @@
 }
 
 .conf-ideum-hub-load-slider::-moz-range-track {
-  height: 16px;
-  border: 2px solid rgba(0, 78, 80, 0.42);
+  height: 48px;
+  border: 3px solid rgba(0, 78, 80, 0.42);
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -1581,9 +1599,9 @@
 }
 
 .conf-ideum-hub-load-slider::-moz-range-thumb {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(0, 0, 0, 0.88);
+  width: 54px;
+  height: 54px;
+  border: 3px solid rgba(0, 0, 0, 0.88);
   border-radius: 50%;
   background: linear-gradient(
     180deg,
@@ -1625,6 +1643,12 @@
   min-width: 0;
 }
 
+.conf-ideum-hub-site-bar__section--grid {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 .conf-ideum-hub-site-bar__section--location {
   flex: 1 1 auto;
 }
@@ -1633,7 +1657,7 @@
   flex: 0 0 auto;
   align-self: stretch;
   width: 2px;
-  min-height: 36px;
+  min-height: 94px;
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -1680,11 +1704,11 @@
 .conf-ideum-hub-location-select {
   flex: 1 1 auto;
   min-width: 132px;
-  font-size: clamp(13px, 1.25vw, 17px);
+  font-size: clamp(34px, 3.25vw, 44px);
   font-weight: 800;
-  padding: 10px 38px 10px 14px;
-  border: 2px solid rgba(0, 0, 0, 0.88);
-  border-radius: 12px;
+  padding: 26px 99px 26px 36px;
+  border: 4px solid rgba(0, 0, 0, 0.88);
+  border-radius: 31px;
   background-color: #007876;
   color: #fff;
   cursor: pointer;
@@ -1695,8 +1719,8 @@
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.25L7 8.75L10.5 5.25' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
     var(--conf-cfe-pane-fill);
   background-repeat: no-repeat, no-repeat;
-  background-position: right 12px center, 0 0;
-  background-size: 14px 14px, 100% 100%;
+  background-position: right 31px center, 0 0;
+  background-size: 36px 36px, 100% 100%;
   box-shadow: var(--conf-cfe-input-shadow);
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.28),
@@ -1706,6 +1730,14 @@
     box-shadow 0.12s ease,
     border-color 0.12s ease,
     background 0.12s ease;
+}
+
+.conf-ideum-hub-location-select option {
+  font-size: clamp(34px, 3.25vw, 44px);
+  font-weight: 800;
+  padding: 21px 26px;
+  min-height: 2.86em;
+  line-height: 1.2;
 }
 
 .conf-ideum-hub-location-select:hover {
@@ -1756,7 +1788,7 @@
 
 .conf-ideum-tech-hub__center-stage {
   position: relative;
-  flex: 3 1 0;
+  flex: 2.1 1 0;
   min-height: 0;
   background: #0a0e10;
 }

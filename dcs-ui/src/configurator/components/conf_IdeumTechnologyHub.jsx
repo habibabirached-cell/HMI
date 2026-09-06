@@ -265,8 +265,12 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
       data-integrated-count={elevatedCount}
     >
       <div className="conf-ideum-tech-hub__center-label">
-        <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d">Data Center Load</span>
-        {loadEditor || <strong>Critical IT Infrastructure</strong>}
+        {loadEditor || (
+          <>
+            <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d">Data Center Load</span>
+            <strong>Critical IT Infrastructure</strong>
+          </>
+        )}
       </div>
       <div
         ref={setStageRef}
@@ -277,7 +281,7 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
             width={size.w}
             height={size.h}
             modelUrl={IDEUM05_NAV_MODEL_URLS.outdoorDataCenter}
-            fitScale={0.88}
+            fitScale={0.82}
             modelYOffset={-0.04}
             cameraPitchLift={0.38}
           />
