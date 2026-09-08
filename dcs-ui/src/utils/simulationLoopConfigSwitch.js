@@ -96,6 +96,27 @@ function axisRangeFromDef(chartDef) {
           ...(a.y_max != null && { yMax: a.y_max }),
         }
       : {}),
+    ...(a.stacked_y_ranges != null && typeof a.stacked_y_ranges === 'object'
+      ? {
+          stackedYRanges: Object.fromEntries(
+            Object.entries(a.stacked_y_ranges).map(([key, row]) => {
+              const yLocked = row?.y_locked ?? false;
+              return [
+                key,
+                {
+                  yLocked,
+                  ...(yLocked
+                    ? {
+                        ...(row?.y_min != null && { yMin: row.y_min }),
+                        ...(row?.y_max != null && { yMax: row.y_max }),
+                      }
+                    : {}),
+                },
+              ];
+            }),
+          ),
+        }
+      : {}),
   };
 }
 

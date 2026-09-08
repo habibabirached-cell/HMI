@@ -372,6 +372,42 @@
   color: #d4c4a4;
 }
 
+.chart-panel-preset-context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+}
+
+.chart-panel-preset-context-menu {
+  position: fixed;
+  min-width: 220px;
+  background: #1a1a1a;
+  border: 1px solid #005e60;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 4px 0;
+}
+
+.chart-panel-preset-context-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chart-panel-preset-context-item:hover,
+.chart-panel-preset-context-item:focus-visible {
+  background: rgba(0, 94, 96, 0.25);
+  color: #fff;
+  outline: none;
+}
+
 .chart-panel-header button,
 .chart-panel-header select {
   cursor: pointer;
@@ -1966,6 +2002,28 @@
   align-items: flex-end;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.chart-axis-range-axis-row--stacked-y {
+  flex-wrap: wrap;
+}
+
+.chart-axis-range-stacked-y-label {
+  flex: 0 0 56px;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  color: #00d4a8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  align-self: flex-end;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-axis-lock-btn--stacked {
+  width: 40px;
 }
 
 .chart-axis-lock-btn {

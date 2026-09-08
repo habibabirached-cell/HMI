@@ -434,6 +434,27 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
                       ...(a.y_max != null && { yMax: a.y_max }),
                     }
                   : {}),
+                ...(a.stacked_y_ranges != null && typeof a.stacked_y_ranges === 'object'
+                  ? {
+                      stackedYRanges: Object.fromEntries(
+                        Object.entries(a.stacked_y_ranges).map(([key, row]) => {
+                          const yLocked = row?.y_locked ?? false;
+                          return [
+                            key,
+                            {
+                              yLocked,
+                              ...(yLocked
+                                ? {
+                                    ...(row?.y_min != null && { yMin: row.y_min }),
+                                    ...(row?.y_max != null && { yMax: row.y_max }),
+                                  }
+                                : {}),
+                            },
+                          ];
+                        }),
+                      ),
+                    }
+                  : {}),
               },
             };
           })()
@@ -4445,6 +4466,16 @@ function App() {
     }
   };
 
+  const handleSaveNamedSimulationConfig = async (presetName) => {
+    if (!presetName || !designApiPath || !simulationMetadata?.id) return;
+    try {
+      await saveNamedSimulationPreset({ name: presetName, overwrite: true });
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to save named configuration');
+    }
+  };
+
   const handleQuickScenarioCollapseChange = useCallback((shortcut, collapsed) => {
     if (!shortcut?.presetName) return;
     setQuickScenarioBranchCollapsed((prev) => ({
@@ -5259,6 +5290,18 @@ function App() {
             if (yMin != null && !Number.isNaN(yMin)) rangeObj.y_min = yMin;
             if (yMax != null && !Number.isNaN(yMax)) rangeObj.y_max = yMax;
             rangeObj.y_locked = true;
+          }
+          const stackedSrc = c.axisRange?.stackedYRanges;
+          if (stackedSrc != null && typeof stackedSrc === 'object') {
+            const stackedOut = {};
+            for (const [key, entry] of Object.entries(stackedSrc)) {
+              if (!entry?.yLocked) continue;
+              const row = { y_locked: true };
+              if (entry.yMin != null && !Number.isNaN(entry.yMin)) row.y_min = entry.yMin;
+              if (entry.yMax != null && !Number.isNaN(entry.yMax)) row.y_max = entry.yMax;
+              stackedOut[key] = row;
+            }
+            if (Object.keys(stackedOut).length) rangeObj.stacked_y_ranges = stackedOut;
           }
           if (Object.keys(rangeObj).length) base.axis_range = rangeObj;
         }
@@ -8572,6 +8615,9 @@ function App() {
             csvStatus?.use_design_dir && designApiPath ? handleCopyNamedPresetLink : undefined
           }
           onHideChartPanelNamedConfig={handleHideChartPanelNamedConfig}
+          onSaveNamedSimulationConfig={
+            csvStatus?.use_design_dir && designApiPath ? handleSaveNamedSimulationConfig : undefined
+          }
           onRequestMoreRows={
             useLazySimulationData && !simulationMetadata?.isEnsemble
               ? requestMoreSimulationRows

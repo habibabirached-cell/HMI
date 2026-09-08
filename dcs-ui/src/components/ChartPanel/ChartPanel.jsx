@@ -188,6 +188,66 @@ function buildStackedYLabelsForEditor(chart) {
   );
 }
 
+function normalizeStackedYRangeEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return { yLocked: false, yMin: undefined, yMax: undefined };
+  }
+  return {
+    yLocked: entry.yLocked ?? entry.y_locked ?? false,
+    yMin: entry.yMin ?? entry.y_min,
+    yMax: entry.yMax ?? entry.y_max,
+  };
+}
+
+function getStackedSubplotYRangeEntry(axisRange, index) {
+  const key = String(index);
+  const stacked = axisRange?.stackedYRanges?.[key];
+  if (stacked) return normalizeStackedYRangeEntry(stacked);
+  if (axisRange?.yLocked) {
+    return { yLocked: true, yMin: axisRange.yMin, yMax: axisRange.yMax };
+  }
+  return { yLocked: false, yMin: undefined, yMax: undefined };
+}
+
+function buildStackedYRangesForEditor(chart, liveRanges, savedAxisRange) {
+  const fmt = (v) => (v != null && !Number.isNaN(Number(v)) ? String(v) : '');
+  return Object.fromEntries(
+    getStackedNdGroups(chart).map((grp, i) => {
+      const key = String(i);
+      const saved = getStackedSubplotYRangeEntry(savedAxisRange, i);
+      const live = liveRanges?.stackedY?.[key] ?? {};
+      return [
+        key,
+        {
+          yLocked: saved.yLocked,
+          yMin: fmt(live.yMin ?? saved.yMin),
+          yMax: fmt(live.yMax ?? saved.yMax),
+        },
+      ];
+    }),
+  );
+}
+
+function stackedYRangeRowLabel(index, total) {
+  if (total === 2) return index === 0 ? 'Y upper' : 'Y lower';
+  return `Y ${index + 1}`;
+}
+
+function hasAnyStackedYLock(stackedYRanges) {
+  if (!stackedYRanges || typeof stackedYRanges !== 'object') return false;
+  return Object.values(stackedYRanges).some((entry) => entry?.yLocked);
+}
+
+function hasAnyStackedYRange(stackedYRanges, p) {
+  if (!stackedYRanges || typeof stackedYRanges !== 'object') return false;
+  return Object.entries(stackedYRanges).some(([key, entry]) => {
+    if (!entry?.yLocked) return false;
+    const yMin = p(entry.yMin);
+    const yMax = p(entry.yMax);
+    return yMin != null || yMax != null;
+  });
+}
+
 /** Decide how x/y columns are stored on the chart after label-editor Save. */
 function buildColumnCommitFromEditor(chart, xColumnKey, yKeys, isEnsemble) {
   if (!isEnsemble) {
@@ -412,6 +472,8 @@ const ChartPanel = ({
   onCopyNamedPresetLink,
   /** Hide this preset row from the CHARTS bar (does not delete from disk). */
   onHideChartPanelNamedConfig,
+  /** Overwrite a named preset with the current chart layout (right-click on preset tab). */
+  onSaveNamedSimulationConfig,
   /** Paged scenario data: not all file rows are in memory yet. */
   onRequestMoreRows,
   /** Insets (px) so the fixed panel does not cover the left component library or right control rail. */
@@ -545,6 +607,8 @@ const ChartPanel = ({
   chartsRef.current = charts;
   const [editingAxisRange, setEditingAxisRange] = useState(null);
   const [legendMoveChartId, setLegendMoveChartId] = useState(null);
+  /** Right-click on a named preset tab (HD, HD-A, …). */
+  const [namedPresetContextMenu, setNamedPresetContextMenu] = useState(null);
 
   const chartPlaybackCtx = useMemo(
     () => ({ simulationMetadata, simulationData, ensembleMemberSimulationData }),
@@ -583,14 +647,16 @@ const ChartPanel = ({
     const saved = chart.axisRange;
     const bounds = dataBoundsForChart(chart);
     const fmt = (v) => (v != null && !Number.isNaN(Number(v)) ? String(v) : '');
+    const isStackedNd = chart.chartType === 'stacked-nd' && chart.yColumns?.length;
     setEditingAxisRange({
       chartId: chart.id,
       xMin: fmt(live?.xMin ?? saved?.xMin),
       xMax: fmt(live?.xMax ?? saved?.xMax),
-      yMin: fmt(live?.yMin ?? saved?.yMin),
-      yMax: fmt(live?.yMax ?? saved?.yMax),
+      yMin: isStackedNd ? '' : fmt(live?.yMin ?? saved?.yMin),
+      yMax: isStackedNd ? '' : fmt(live?.yMax ?? saved?.yMax),
       xLocked: saved?.xLocked ?? false,
-      yLocked: saved?.yLocked ?? false,
+      yLocked: isStackedNd ? false : (saved?.yLocked ?? false),
+      stackedYRanges: isStackedNd ? buildStackedYRangesForEditor(chart, live, saved) : undefined,
       xThreshold: fmt(saved?.xThreshold),
       dangerYThreshold: fmt(saved?.dangerYThreshold),
       simulationStartAt: fmt(
@@ -609,19 +675,47 @@ const ChartPanel = ({
 
   const commitAxisRangeEdit = () => {
     if (!editingAxisRange) return;
-    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, simulationStartAt, simulationEndAt, tLoop } =
-      editingAxisRange;
+    const {
+      chartId,
+      xMin,
+      xMax,
+      yMin,
+      yMax,
+      xLocked,
+      yLocked,
+      stackedYRanges,
+      xThreshold,
+      dangerYThreshold,
+      simulationStartAt,
+      simulationEndAt,
+      tLoop,
+    } = editingAxisRange;
+    const chart = chartsRef.current.find((c) => c.id === chartId);
+    const isStackedNd = chart?.chartType === 'stacked-nd' && chart.yColumns?.length;
     const p = (v) => (v === '' || v == null ? undefined : Number(v));
     const xThr = p(xThreshold);
     const yDanger = p(dangerYThreshold);
     const simStart = p(simulationStartAt);
     const simEnd = p(simulationEndAt);
     const loopT = p(tLoop);
+    const stackedYRangesSaved = isStackedNd
+      ? Object.fromEntries(
+          Object.entries(stackedYRanges || {}).map(([key, entry]) => [
+            key,
+            {
+              yLocked: Boolean(entry?.yLocked),
+              ...(entry?.yLocked
+                ? { yMin: p(entry.yMin), yMax: p(entry.yMax) }
+                : {}),
+            },
+          ]),
+        )
+      : undefined;
     // Only persist min/max for a locked axis; Plotly "Home" uses saved range on locked
     // axes and autorange on unlocked axes, so we must not store unused box values.
     const axisRange = {
       xLocked,
-      yLocked,
+      yLocked: isStackedNd ? false : yLocked,
       ...(xThr != null && !Number.isNaN(xThr) ? { xThreshold: xThr } : {}),
       ...(yDanger != null && !Number.isNaN(yDanger) ? { dangerYThreshold: yDanger } : {}),
       ...(simStart != null && !Number.isNaN(simStart)
@@ -630,12 +724,21 @@ const ChartPanel = ({
       ...(simEnd != null && !Number.isNaN(simEnd) ? { simulationEndAt: simEnd } : {}),
       ...(loopT != null && !Number.isNaN(loopT) && loopT > 0 ? { tLoop: loopT } : {}),
       ...(xLocked ? { xMin: p(xMin), xMax: p(xMax) } : {}),
-      ...(yLocked ? { yMin: p(yMin), yMax: p(yMax) } : {}),
+      ...(isStackedNd
+        ? hasAnyStackedYLock(stackedYRangesSaved)
+          ? { stackedYRanges: stackedYRangesSaved }
+          : {}
+        : yLocked
+          ? { yMin: p(yMin), yMax: p(yMax) }
+          : {}),
     };
     const hasRange =
       (xLocked && (axisRange.xMin != null || axisRange.xMax != null)) ||
-      (yLocked && (axisRange.yMin != null || axisRange.yMax != null));
-    const hasLock = xLocked || yLocked;
+      (isStackedNd
+        ? hasAnyStackedYRange(stackedYRangesSaved, p)
+        : yLocked && (axisRange.yMin != null || axisRange.yMax != null));
+    const hasLock =
+      xLocked || (isStackedNd ? hasAnyStackedYLock(stackedYRangesSaved) : yLocked);
     const hasXThreshold = axisRange.xThreshold != null;
     const hasDangerY = axisRange.dangerYThreshold != null;
     const hasSimulationStart = axisRange.simulationStartAt != null;
@@ -654,14 +757,33 @@ const ChartPanel = ({
 
   const handlePlotlyRelayout = (chart, relayoutData) => {
     if (!relayoutData) return;
-    if (relayoutData['xaxis.range[0]'] != null || relayoutData['yaxis.range[0]'] != null) {
-      plotlyRangesRef.current[chart.id] = {
-        xMin: relayoutData['xaxis.range[0]'],
-        xMax: relayoutData['xaxis.range[1]'],
-        yMin: relayoutData['yaxis.range[0]'],
-        yMax: relayoutData['yaxis.range[1]'],
-      };
+    const prev = plotlyRangesRef.current[chart.id] || {};
+    const next = { ...prev };
+    let changed = false;
+    if (relayoutData['xaxis.range[0]'] != null) {
+      next.xMin = relayoutData['xaxis.range[0]'];
+      next.xMax = relayoutData['xaxis.range[1]'];
+      changed = true;
     }
+    if (chart.chartType === 'stacked-nd' && chart.yColumns?.length) {
+      const stackedY = { ...(prev.stackedY || {}) };
+      getStackedNdGroups(chart).forEach((_grp, i) => {
+        const axisKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
+        if (relayoutData[`${axisKey}.range[0]`] != null) {
+          stackedY[String(i)] = {
+            yMin: relayoutData[`${axisKey}.range[0]`],
+            yMax: relayoutData[`${axisKey}.range[1]`],
+          };
+          changed = true;
+        }
+      });
+      if (Object.keys(stackedY).length) next.stackedY = stackedY;
+    } else if (relayoutData['yaxis.range[0]'] != null) {
+      next.yMin = relayoutData['yaxis.range[0]'];
+      next.yMax = relayoutData['yaxis.range[1]'];
+      changed = true;
+    }
+    if (changed) plotlyRangesRef.current[chart.id] = next;
   };
 
   const commitLegendPosition = useCallback((chartId, pos) => {
@@ -767,6 +889,18 @@ const ChartPanel = ({
   const renderAxisRangeForm = (chart) => {
     const xL = editingAxisRange.xLocked;
     const yL = editingAxisRange.yLocked;
+    const stackedGroups =
+      chart.chartType === 'stacked-nd' && chart.yColumns?.length ? getStackedNdGroups(chart) : [];
+    const updateStackedYRange = (index, patch) => {
+      const key = String(index);
+      setEditingAxisRange((prev) => ({
+        ...prev,
+        stackedYRanges: {
+          ...(prev.stackedYRanges || {}),
+          [key]: { ...(prev.stackedYRanges?.[key] || {}), ...patch },
+        },
+      }));
+    };
     return (
       <div className="chart-axis-range-editor" onClick={(e) => e.stopPropagation()}>
         <div className="chart-axis-range-editor-title">
@@ -810,39 +944,104 @@ const ChartPanel = ({
           </label>
         </div>
 
-        {/* Y axis row */}
-        <div className="chart-axis-range-axis-row">
-          <button
-            className={`chart-axis-lock-btn${yL ? ' chart-axis-lock-btn--locked' : ''}`}
-            onClick={() => setEditingAxisRange((p) => ({ ...p, yLocked: !p.yLocked }))}
-            title={yL ? 'Y axis locked — click to unlock' : 'Click to lock Y axis (prevents zoom/pan on Y)'}
-          >
-            {yL ? '🔒' : '🔓'} Y
-          </button>
-          <label className="chart-axis-range-editor-row">
-            <span>min</span>
-            <input
-              className="chart-axis-range-editor-input"
-              type="number"
-              value={editingAxisRange.yMin}
-              onChange={(e) => setEditingAxisRange((p) => ({ ...p, yMin: e.target.value }))}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitAxisRangeEdit(); if (e.key === 'Escape') setEditingAxisRange(null); }}
-              placeholder="auto"
-              autoFocus
-            />
-          </label>
-          <label className="chart-axis-range-editor-row">
-            <span>max</span>
-            <input
-              className="chart-axis-range-editor-input"
-              type="number"
-              value={editingAxisRange.yMax}
-              onChange={(e) => setEditingAxisRange((p) => ({ ...p, yMax: e.target.value }))}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitAxisRangeEdit(); if (e.key === 'Escape') setEditingAxisRange(null); }}
-              placeholder="auto"
-            />
-          </label>
-        </div>
+        {stackedGroups.length > 0 ? (
+          stackedGroups.map((grp, i) => {
+            const key = String(i);
+            const entry = editingAxisRange.stackedYRanges?.[key] ?? {
+              yLocked: false,
+              yMin: '',
+              yMax: '',
+            };
+            const rowLabel = stackedYRangeRowLabel(i, stackedGroups.length);
+            const detailLabel = resolveStackedYLabel(chart, grp, i);
+            return (
+              <div
+                key={key}
+                className="chart-axis-range-axis-row chart-axis-range-axis-row--stacked-y"
+              >
+                <span
+                  className="chart-axis-range-stacked-y-label"
+                  title={detailLabel}
+                >
+                  {rowLabel}
+                </span>
+                <button
+                  className={`chart-axis-lock-btn chart-axis-lock-btn--stacked${entry.yLocked ? ' chart-axis-lock-btn--locked' : ''}`}
+                  onClick={() => updateStackedYRange(i, { yLocked: !entry.yLocked })}
+                  title={
+                    entry.yLocked
+                      ? `${detailLabel} locked — click to unlock`
+                      : `Lock ${detailLabel} (prevents zoom/pan on this Y axis)`
+                  }
+                >
+                  {entry.yLocked ? '🔒' : '🔓'}
+                </button>
+                <label className="chart-axis-range-editor-row">
+                  <span>min</span>
+                  <input
+                    className="chart-axis-range-editor-input"
+                    type="number"
+                    value={entry.yMin}
+                    onChange={(e) => updateStackedYRange(i, { yMin: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitAxisRangeEdit();
+                      if (e.key === 'Escape') setEditingAxisRange(null);
+                    }}
+                    placeholder="auto"
+                    autoFocus={i === 0}
+                  />
+                </label>
+                <label className="chart-axis-range-editor-row">
+                  <span>max</span>
+                  <input
+                    className="chart-axis-range-editor-input"
+                    type="number"
+                    value={entry.yMax}
+                    onChange={(e) => updateStackedYRange(i, { yMax: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitAxisRangeEdit();
+                      if (e.key === 'Escape') setEditingAxisRange(null);
+                    }}
+                    placeholder="auto"
+                  />
+                </label>
+              </div>
+            );
+          })
+        ) : (
+          <div className="chart-axis-range-axis-row">
+            <button
+              className={`chart-axis-lock-btn${yL ? ' chart-axis-lock-btn--locked' : ''}`}
+              onClick={() => setEditingAxisRange((p) => ({ ...p, yLocked: !p.yLocked }))}
+              title={yL ? 'Y axis locked — click to unlock' : 'Click to lock Y axis (prevents zoom/pan on Y)'}
+            >
+              {yL ? '🔒' : '🔓'} Y
+            </button>
+            <label className="chart-axis-range-editor-row">
+              <span>min</span>
+              <input
+                className="chart-axis-range-editor-input"
+                type="number"
+                value={editingAxisRange.yMin}
+                onChange={(e) => setEditingAxisRange((p) => ({ ...p, yMin: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === 'Enter') commitAxisRangeEdit(); if (e.key === 'Escape') setEditingAxisRange(null); }}
+                placeholder="auto"
+                autoFocus
+              />
+            </label>
+            <label className="chart-axis-range-editor-row">
+              <span>max</span>
+              <input
+                className="chart-axis-range-editor-input"
+                type="number"
+                value={editingAxisRange.yMax}
+                onChange={(e) => setEditingAxisRange((p) => ({ ...p, yMax: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === 'Enter') commitAxisRangeEdit(); if (e.key === 'Escape') setEditingAxisRange(null); }}
+                placeholder="auto"
+              />
+            </label>
+          </div>
+        )}
 
         <div className="chart-axis-range-threshold-row">
           <label className="chart-axis-range-threshold-label">
@@ -2661,8 +2860,14 @@ const ChartPanel = ({
         ? 'xlocked'
         : (data?.length ?? 0);
     const ar = chart.axisRange;
+    const stackedRev = ar?.stackedYRanges
+      ? Object.entries(ar.stackedYRanges)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([k, v]) => `sy${k}:${v.yLocked ? 1 : 0}:${v.yMin ?? ''}:${v.yMax ?? ''}`)
+          .join('|')
+      : '';
     const axisRev = ar
-      ? `x${ar.xLocked ? 1 : 0}:${ar.xMin ?? ''}:${ar.xMax ?? ''}|y${ar.yLocked ? 1 : 0}:${ar.yMin ?? ''}:${ar.yMax ?? ''}`
+      ? `x${ar.xLocked ? 1 : 0}:${ar.xMin ?? ''}:${ar.xMax ?? ''}|y${ar.yLocked ? 1 : 0}:${ar.yMin ?? ''}:${ar.yMax ?? ''}|${stackedRev}`
       : '';
     return `${chart.id}|${sid}|${csv}|${n}|${step}|${axisRev}`;
   };
@@ -2687,6 +2892,32 @@ const ChartPanel = ({
 
   const chartYDataExtent = (chart, data) => {
     const yKeys = collectChartYKeys(chart);
+    if (!yKeys.length) return null;
+    const values = [];
+    if (chart.ensembleCrossMember && ensembleMemberSimulationData) {
+      for (const key of yKeys) {
+        const parsed = parseEnsembleQualifiedColumn(key);
+        if (!parsed) continue;
+        const rows = ensembleMemberSimulationData[parsed.simId];
+        if (!rows?.length) continue;
+        const col = findColumnKey(rows[0], parsed.column) ?? parsed.column;
+        for (const row of rows) {
+          values.push(cellFloat(row, col));
+        }
+      }
+      return scanNumericExtent(values);
+    }
+    if (!data?.length) return null;
+    for (const row of data) {
+      for (const key of yKeys) {
+        values.push(cellFloat(row, findColumnKey(row, key) ?? key));
+      }
+    }
+    return scanNumericExtent(values);
+  };
+
+  const chartStackedYDataExtent = (chart, data, group) => {
+    const yKeys = group?.cols || [];
     if (!yKeys.length) return null;
     const values = [];
     if (chart.ensembleCrossMember && ensembleMemberSimulationData) {
@@ -2791,6 +3022,24 @@ const ChartPanel = ({
       xRangeProps,
       yRangeProps,
       xLockProps: xLocked ? { fixedrange: true } : {},
+      yLockProps: yLocked ? { fixedrange: true } : {},
+    };
+  };
+
+  const resolveStackedSubplotYProps = (chart, ar, data, index, group) => {
+    const entry = getStackedSubplotYRangeEntry(ar, index);
+    const yLocked = entry.yLocked ?? false;
+    const yHas = entry.yMin != null || entry.yMax != null;
+    const yExtent = chartStackedYDataExtent(chart, data, group);
+    const yRangeProps =
+      yLocked && yHas
+        ? {
+            range: completeLockedAxisRange(entry.yMin, entry.yMax, yExtent),
+            autorange: false,
+          }
+        : { autorange: true };
+    return {
+      yRangeProps,
       yLockProps: yLocked ? { fixedrange: true } : {},
     };
   };
@@ -2987,6 +3236,13 @@ const ChartPanel = ({
         const top = 1 - i * rowHeight;
         const bottom = Math.max(0, 1 - (i + 1) * rowHeight);
         const yKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
+        const { yRangeProps, yLockProps } = resolveStackedSubplotYProps(
+          chart,
+          chart.axisRange,
+          data,
+          i,
+          groups[i],
+        );
         layout[yKey] = {
           title: {
             text: resolveStackedYLabel(chart, groups[i], i),
@@ -2997,6 +3253,8 @@ const ChartPanel = ({
           domain: [bottom, top],
           anchor: 'x',
           ...axisStyle,
+          ...yRangeProps,
+          ...yLockProps,
         };
       }
       return withDangerY(layout);
@@ -4079,12 +4337,28 @@ const ChartPanel = ({
                       isActivePreset ? ' chart-panel-named-config-btn-active' : ''
                     }${isDraftHint ? ' chart-panel-named-config-btn-draft' : ''}`}
                     onClick={() => onActivateNamedSimulationConfig(presetName)}
+                    onContextMenu={(e) => {
+                      if (!onSaveNamedSimulationConfig) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setNamedPresetContextMenu({
+                        presetName,
+                        x: e.clientX,
+                        y: e.clientY,
+                      });
+                    }}
                     title={
                       isActivePreset
-                        ? `Loaded snapshot “${presetName}” (matches file)`
+                        ? `Loaded snapshot “${presetName}” (matches file)${
+                            onSaveNamedSimulationConfig ? ' · Right-click to save changes' : ''
+                          }`
                         : isDraftHint
-                          ? `Your chart draft diverged from “${presetName}”; click to reload that preset`
-                          : `Load preset “${presetName}” from this scenario’s .sim.json`
+                          ? `Your chart draft diverged from “${presetName}”; click to reload that preset${
+                              onSaveNamedSimulationConfig ? ' · Right-click to save changes here' : ''
+                            }`
+                          : `Load preset “${presetName}” from this scenario’s .sim.json${
+                              onSaveNamedSimulationConfig ? ' · Right-click to save current layout as this preset' : ''
+                            }`
                     }
                   >
                     {presetName}
@@ -4636,6 +4910,39 @@ const ChartPanel = ({
             }}
             onBlur={commitInlineLabelEdit}
           />
+        </div>
+      )}
+      {namedPresetContextMenu && onSaveNamedSimulationConfig && (
+        <div
+          className="chart-panel-preset-context-overlay"
+          onClick={() => setNamedPresetContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setNamedPresetContextMenu(null);
+          }}
+        >
+          <div
+            className="chart-panel-preset-context-menu"
+            style={{
+              left: `${namedPresetContextMenu.x}px`,
+              top: `${namedPresetContextMenu.y}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="menu"
+          >
+            <button
+              type="button"
+              className="chart-panel-preset-context-item"
+              role="menuitem"
+              onClick={() => {
+                const { presetName } = namedPresetContextMenu;
+                setNamedPresetContextMenu(null);
+                onSaveNamedSimulationConfig(presetName);
+              }}
+            >
+              Save as “{namedPresetContextMenu.presetName}”
+            </button>
+          </div>
         </div>
       )}
       {variablePicker && editingLabels && (
