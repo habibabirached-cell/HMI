@@ -1600,6 +1600,36 @@
   flex-shrink: 0;
 }
 
+.chart-label-editor-row--stacked-y span {
+  width: 58px;
+}
+
+.chart-inline-label-edit {
+  position: fixed;
+  z-index: 10050;
+  transform: translate(-8px, -50%);
+  background: #1e1e1e;
+  border: 1px solid #005E60;
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+.chart-inline-label-edit-input {
+  min-width: 160px;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: calc(13px + var(--ui-font-px-shift, 0px));
+  padding: 6px 8px;
+  outline: none;
+}
+
+.chart-inline-label-edit-input:focus {
+  border-color: #00d4a8;
+}
+
 .chart-label-editor-input {
   flex: 1;
   background: #111;

@@ -33,6 +33,7 @@ class MouseKeepAlive:
         idle_seconds: float,
         scan_seconds: float,
         scan_lines: int,
+        scan_skip_bottom_lines: int = 0,
         poll_seconds: float,
         set_cursor: Callable[[int, int], None] | None = None,
         virtual_bounds: Callable[[], tuple[int, int, int, int]] | None = None,
@@ -40,6 +41,7 @@ class MouseKeepAlive:
         self.idle_seconds = idle_seconds
         self.scan_seconds = scan_seconds
         self.scan_lines = scan_lines
+        self.scan_skip_bottom_lines = max(0, scan_skip_bottom_lines)
         self.poll_seconds = poll_seconds
         self._set_cursor = set_cursor or _set_cursor_pos
         self._virtual_bounds = virtual_bounds or _virtual_desktop_bounds
@@ -72,22 +74,24 @@ class MouseKeepAlive:
 
         right = left + width - 1
         bottom = top + height - 1
-        line_duration = self.scan_seconds / self.scan_lines
+        active_lines = max(1, self.scan_lines - self.scan_skip_bottom_lines)
+        line_duration = self.scan_seconds / active_lines
         steps_per_line = max(24, int(line_duration * 80))
 
         self._scanning = True
         try:
             logger.info(
-                "Scanning %dx%d desktop (%d lines, %.1fs)",
+                "Scanning %dx%d desktop (%d/%d lines, %.1fs)",
                 width,
                 height,
+                active_lines,
                 self.scan_lines,
                 self.scan_seconds,
             )
-            for line_index in range(self.scan_lines):
+            y_den = max(self.scan_lines - 1, 1)
+            for line_index in range(active_lines):
                 if self._stop.is_set():
                     break
-                y_den = max(self.scan_lines - 1, 1)
                 y = int(top + (bottom - top) * line_index / y_den)
                 for step in range(steps_per_line + 1):
                     if self._stop.is_set():
@@ -144,10 +148,12 @@ class MouseKeepAlive:
         self._stop.clear()
         self._thread = threading.Thread(target=self._watch_loop, name="mouse-keepalive", daemon=True)
         self._thread.start()
+        active_lines = max(1, self.scan_lines - self.scan_skip_bottom_lines)
         logger.info(
-            "Running — idle=%ds, scan=%.1fs, lines=%d (Ctrl+C to stop)",
+            "Running — idle=%ds, scan=%.1fs, lines=%d/%d (Ctrl+C to stop)",
             int(self.idle_seconds),
             self.scan_seconds,
+            active_lines,
             self.scan_lines,
         )
 
@@ -191,6 +197,7 @@ def main() -> int:
         idle_seconds=max(1.0, float(config.IDLE_SECONDS)),
         scan_seconds=max(1.0, float(config.SCAN_SECONDS)),
         scan_lines=max(2, int(config.SCAN_LINES)),
+        scan_skip_bottom_lines=max(0, int(getattr(config, "SCAN_SKIP_BOTTOM_LINES", 0))),
         poll_seconds=max(0.25, float(config.POLL_SECONDS)),
     )
 

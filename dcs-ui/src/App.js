@@ -140,7 +140,7 @@ import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSess
 import {
   computePlaybackClockOriginSeconds,
 } from './utils/playbackClockOrigin';
-import { readSimulationSpeedFromConfig } from './utils/simulationSpeed';
+import { normalizeSimulationSpeed, readSimulationSpeedFromConfig } from './utils/simulationSpeed';
 import {
   DEFAULT_PLAYBACK_TIME_RANGE,
   normalizePlaybackTimeRange,
@@ -268,6 +268,16 @@ function isHDAeroIdeumDesign(loadedConfig) {
   );
 }
 
+function isSavedViewportPoint(point) {
+  return (
+    point &&
+    typeof point.x === 'number' &&
+    typeof point.y === 'number' &&
+    Number.isFinite(point.x) &&
+    Number.isFinite(point.y)
+  );
+}
+
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
 const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
@@ -367,6 +377,9 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
               : `${component.name} - ${chartDef.y_column}`),
       ...(chartDef.x_label != null && { xLabel: chartDef.x_label }),
       ...(chartDef.y_label != null && { yLabel: chartDef.y_label }),
+      ...(chartDef.stacked_y_labels != null
+        && typeof chartDef.stacked_y_labels === 'object'
+        && { stackedYLabels: chartDef.stacked_y_labels }),
       ...(chartDef.legend_labels != null && typeof chartDef.legend_labels === 'object' && { legendLabels: chartDef.legend_labels }),
       ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
         legendTitle: String(chartDef.legend_title).trim(),
@@ -937,6 +950,9 @@ function App() {
     ...DEFAULT_DESIGN_EXPANSION,
   }));
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
+  const [ideumSimulateMirror, setIdeumSimulateMirror] = useState(false);
+  const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
+  const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
   /** Saved Ideum05 canvas while HD_Aero overlay is active (Reference 500 MW). */
   const ideum05BaseSnapshotRef = useRef(null);
@@ -1632,6 +1648,9 @@ function App() {
   const handleStartSimulationRef = useRef(handleStartSimulation);
   handleStartSimulationRef.current = handleStartSimulation;
 
+  const handleStartSimulationWithLoopRef = useRef(handleStartSimulationWithLoop);
+  handleStartSimulationWithLoopRef.current = handleStartSimulationWithLoop;
+
   // Stop simulation
   const handleStopSimulation = () => {
     simulationLoopModeRef.current = false;
@@ -2011,6 +2030,9 @@ function App() {
       startSimulationClock(speed);
     }
   };
+
+  const handleSetSimulationSpeedRef = useRef(handleSetSimulationSpeed);
+  handleSetSimulationSpeedRef.current = handleSetSimulationSpeed;
 
   const handleSetPlaybackTimeRange = useCallback((patch) => {
     setPlaybackTimeRange((prev) => {
@@ -3367,10 +3389,16 @@ function App() {
                 simulationRunning,
                 zoom,
                 pan,
+                panTop,
+                panBottom,
+                quadBottomRowShare,
                 mode,
                 uiFontPxShift,
                 canvasFontPxShift,
                 collapsedComponentFontPxShift,
+                splitPaneTitles,
+                designViewMode,
+                workspaceLayoutPreset,
               },
             },
           }),
@@ -3399,6 +3427,9 @@ function App() {
       simulationRunning,
       zoom,
       pan,
+      panTop,
+      panBottom,
+      quadBottomRowShare,
       mode,
       uiFontPxShift,
       canvasFontPxShift,
@@ -3406,6 +3437,9 @@ function App() {
       designSectionVisibility,
       quickScenarioBranchCollapsed,
       hiddenChartPanelNamedConfigs,
+      splitPaneTitles,
+      designViewMode,
+      workspaceLayoutPreset,
     ],
   );
 
@@ -3632,7 +3666,15 @@ function App() {
     try {
       const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
       if (result?.ok) {
-        setIdeumSimulationMirror(command === 'startSimulation');
+        const starting = command === 'startSimulation';
+        setIdeumSimulationMirror(starting);
+        if (starting) {
+          setIdeumSimulateMirror(false);
+          setIdeumSimulateLoopMirror(false);
+        } else {
+          setIdeumSimulateMirror(false);
+          setIdeumSimulateLoopMirror(false);
+        }
       }
       if (!result.deliveredToClients) {
         alert(
@@ -3642,6 +3684,86 @@ function App() {
     } catch (e) {
       console.warn(e);
       alert(e.message || 'Failed to send simulation command to Maingear.');
+    }
+  };
+
+  const sendIdeumMaingearSimulationCommand = async (command, payload) => {
+    let role;
+    try {
+      role = await fetchMachineRole();
+      setMachineRole(role);
+    } catch (e) {
+      alert(e.message || 'Could not determine machine role.');
+      return null;
+    }
+    if (role.isMaingear) {
+      alert(
+        'You are on the Maingear. These buttons send commands from the Ideum touch table to the Maingear display.',
+      );
+      return null;
+    }
+    if (!role.isIdeum) {
+      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
+      return null;
+    }
+    try {
+      return await sendRemoteCommandToMaingear(role.peerBackendUrl, command, payload);
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to send simulation command to Maingear.');
+      return null;
+    }
+  };
+
+  const handleIdeumSimulateRemoteClick = async () => {
+    const stopping = ideumSimulateMirror;
+    const command = stopping ? 'stopSimulation' : 'startSimulation';
+    const result = await sendIdeumMaingearSimulationCommand(command);
+    if (!result?.ok) return;
+    if (stopping) {
+      setIdeumSimulateMirror(false);
+      setIdeumSimulateLoopMirror(false);
+    } else {
+      setIdeumSimulateMirror(true);
+      setIdeumSimulateLoopMirror(false);
+    }
+    if (!result.deliveredToClients) {
+      alert(
+        'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
+      );
+    }
+  };
+
+  const handleIdeumSimulateLoopRemoteClick = async () => {
+    const stopping = ideumSimulateLoopMirror;
+    const command = stopping ? 'stopSimulation' : 'startSimulationLoop';
+    const result = await sendIdeumMaingearSimulationCommand(command);
+    if (!result?.ok) return;
+    if (stopping) {
+      setIdeumSimulateMirror(false);
+      setIdeumSimulateLoopMirror(false);
+    } else {
+      setIdeumSimulateMirror(false);
+      setIdeumSimulateLoopMirror(true);
+    }
+    if (!result.deliveredToClients) {
+      alert(
+        'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
+      );
+    }
+  };
+
+  const handleIdeumSimulationSpeedRemoteClick = async (speed) => {
+    const normalized = normalizeSimulationSpeed(speed, 1);
+    const result = await sendIdeumMaingearSimulationCommand('setSimulationSpeed', {
+      speed: normalized,
+    });
+    if (!result?.ok) return;
+    setIdeumSimulationSpeedMirror(normalized);
+    if (!result.deliveredToClients) {
+      alert(
+        'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
+      );
     }
   };
 
@@ -3717,10 +3839,25 @@ function App() {
     setDesignExpansion(loadedExpansion);
     setIdeumExpansionMirror({ ...loadedExpansion });
     const ss = data.systemState || {};
-    if (ss.zoom != null) setZoom(ss.zoom);
-    if (ss.pan) setPan(ss.pan);
-    if (ss.panTop) setPanTop(ss.panTop);
-    if (ss.panBottom) setPanBottom(ss.panBottom);
+    if (ss.zoom != null) {
+      const z = Number(ss.zoom);
+      setZoom(
+        Number.isFinite(z)
+          ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
+          : 1,
+      );
+    }
+    if (isSavedViewportPoint(ss.pan)) setPan(ss.pan);
+    if (isSavedViewportPoint(ss.panTop)) setPanTop(ss.panTop);
+    if (isSavedViewportPoint(ss.panBottom)) setPanBottom(ss.panBottom);
+    if (
+      ss.zoom != null ||
+      isSavedViewportPoint(ss.pan) ||
+      isSavedViewportPoint(ss.panTop) ||
+      isSavedViewportPoint(ss.panBottom)
+    ) {
+      setAutoFitUpperPane(false);
+    }
     if (
       data.canvasBlockTypeScale != null &&
       typeof data.canvasBlockTypeScale === 'object' &&
@@ -4153,8 +4290,17 @@ function App() {
       await restartSimulationPlaybackFromStart();
       return;
     }
+    if (command === 'startSimulationLoop') {
+      handleStartSimulationWithLoopRef.current();
+      return;
+    }
     if (command === 'stopSimulation') {
       handleStopSimulation();
+      return;
+    }
+    if (command === 'setSimulationSpeed') {
+      const speed = normalizeSimulationSpeed(payload?.speed, 1);
+      handleSetSimulationSpeedRef.current(speed);
       return;
     }
     if (command === 'reset') {
@@ -5064,6 +5210,13 @@ function App() {
         }
         if (c.xLabel != null) base.x_label = c.xLabel;
         if (c.yLabel != null) base.y_label = c.yLabel;
+        if (
+          c.stackedYLabels != null
+          && typeof c.stackedYLabels === 'object'
+          && Object.keys(c.stackedYLabels).length
+        ) {
+          base.stacked_y_labels = c.stackedYLabels;
+        }
         if (c.legendLabels != null && typeof c.legendLabels === 'object' && Object.keys(c.legendLabels).length) {
           base.legend_labels = c.legendLabels;
         }
@@ -7044,7 +7197,14 @@ function App() {
         : { ...DEFAULT_DESIGN_EXPANSION },
     );
     setIdeumSimulationMirror(false);
+    setIdeumSimulateMirror(false);
+    setIdeumSimulateLoopMirror(false);
+    setIdeumSimulationSpeedMirror(1);
     setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    if (!isIdeum05DesignName(loadedConfig.name)) {
+      ideum05BaseSnapshotRef.current = null;
+      ideum05OverlayLoadedMetaRef.current = null;
+    }
     
     // Apply the loaded state to the application
     if (data.canvasComponents) {
@@ -7162,6 +7322,7 @@ function App() {
     if (data.systemState) {
       setSystemState(data.systemState);
       
+      let restoredViewport = false;
       // Apply zoom and pan if they exist
       if (data.systemState.zoom !== undefined) {
         const z = Number(data.systemState.zoom);
@@ -7170,36 +7331,39 @@ function App() {
             ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
             : 1,
         );
+        restoredViewport = true;
       }
-      if (data.systemState.pan) {
+      if (isSavedViewportPoint(data.systemState.pan)) {
         setPan(data.systemState.pan);
+        restoredViewport = true;
       }
       // conf3 stacked designs: restore saved UpperCanvas pan; auto-fit only on first load.
       if (designHasStackedSections(data.canvasComponents)) {
         const savedTop = data.systemState.panTop;
-        if (
-          savedTop &&
-          typeof savedTop.x === 'number' &&
-          typeof savedTop.y === 'number' &&
-          Number.isFinite(savedTop.x) &&
-          Number.isFinite(savedTop.y)
-        ) {
+        if (isSavedViewportPoint(savedTop)) {
           setPanTop(savedTop);
+          restoredViewport = true;
         } else {
           setPanTop({ x: 0, y: 0 });
           setAutoFitUpperPane(true);
         }
-      } else if (data.systemState.panTop) {
+      } else if (isSavedViewportPoint(data.systemState.panTop)) {
         setPanTop(data.systemState.panTop);
-      } else if (data.systemState.pan) {
+        restoredViewport = true;
+      } else if (isSavedViewportPoint(data.systemState.pan)) {
         setPanTop(data.systemState.pan);
+        restoredViewport = true;
       } else {
         setPanTop({ x: 0, y: 0 });
       }
-      if (data.systemState.panBottom) {
+      if (isSavedViewportPoint(data.systemState.panBottom)) {
         setPanBottom(data.systemState.panBottom);
+        restoredViewport = true;
       } else {
         setPanBottom({ x: 0, y: 0 });
+      }
+      if (restoredViewport) {
+        setAutoFitUpperPane(false);
       }
       if (data.systemState.quadBottomRowShare !== undefined) {
         const share = Number(data.systemState.quadBottomRowShare);
@@ -7292,16 +7456,29 @@ function App() {
   const getCurrentConfiguration = () => {
     // Ideum05 Reference 500 MW loads HD_Aero as a temporary overlay — never persist overlay canvas into Ideum05.
     const ideum05OverlaySnap = ideum05BaseSnapshotRef.current;
-    const saveComponents = ideum05OverlaySnap?.canvasComponents ?? canvasComponents;
-    const saveConnections = ideum05OverlaySnap?.connections ?? connections;
-    const saveBlockTypeScale = ideum05OverlaySnap?.canvasBlockTypeScale ?? canvasBlockTypeScale;
-    const saveDesignExpansion = ideum05OverlaySnap?.designExpansion ?? designExpansion;
-    const saveDesignSectionVisibility =
-      ideum05OverlaySnap?.designSectionVisibility ?? designSectionVisibility;
-    const savePan = ideum05OverlaySnap?.pan ?? pan;
-    const savePanTop = ideum05OverlaySnap?.panTop ?? panTop;
-    const savePanBottom = ideum05OverlaySnap?.panBottom ?? panBottom;
-    const saveZoom = ideum05OverlaySnap?.zoom ?? zoom;
+    const preserveIdeum05BaseOnSave =
+      isIdeum05DesignName(currentConfigName) &&
+      ideum05OverlaySnap &&
+      isIdeum05HdAeroScreen(getIdeum05NavScreen(ideum05NavStack));
+    const saveComponents = preserveIdeum05BaseOnSave
+      ? ideum05OverlaySnap.canvasComponents
+      : canvasComponents;
+    const saveConnections = preserveIdeum05BaseOnSave
+      ? ideum05OverlaySnap.connections
+      : connections;
+    const saveBlockTypeScale = preserveIdeum05BaseOnSave
+      ? ideum05OverlaySnap.canvasBlockTypeScale
+      : canvasBlockTypeScale;
+    const saveDesignExpansion = preserveIdeum05BaseOnSave
+      ? ideum05OverlaySnap.designExpansion
+      : designExpansion;
+    const saveDesignSectionVisibility = preserveIdeum05BaseOnSave
+      ? ideum05OverlaySnap.designSectionVisibility
+      : designSectionVisibility;
+    const savePan = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.pan : pan;
+    const savePanTop = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.panTop : panTop;
+    const savePanBottom = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.panBottom : panBottom;
+    const saveZoom = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.zoom : zoom;
 
     const componentsForSave =
       quadChartDrawers && designHasStackedSections(saveComponents)
@@ -8064,34 +8241,14 @@ function App() {
             alt="GE Vernova" 
             className="ge-vernova-logo"
           />
-          <h1>Datacenter &ldquo;Power to Rack&rdquo; Experience Center</h1>
+          <h1>ACDC lab</h1>
           {currentConfigName && (
             <div className="config-status-badge">
               <span className="config-name">{currentConfigName}</span>
-              {csvStatus && (
-                csvStatus.use_design_dir ? (
-                  <div className="design-view-tri-state" role="group" aria-label="Design view mode">
-                    {[
-                      { id: 'canvas', icon: '◉', label: 'Interactive' },
-                      { id: 'image', icon: '▣', label: 'Diagram' },
-                      { id: 'split', icon: '⊞', label: 'Split' }
-                    ].map(({ id, icon, label }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`tri-state-btn ${designViewMode === id ? 'active' : ''}`}
-                        onClick={() => setDesignViewMode(id)}
-                        title={label}
-                      >
-                        <span className="tri-state-icon">{icon}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
+              {csvStatus && !csvStatus.use_design_dir && (
                   <span className={`csv-status ${csvStatus.exists ? 'csv-loaded' : 'csv-missing'}`}>
                     {csvStatus.exists ? '✅ Data loaded' : '⚠️ No CSV data'}
                   </span>
-                )
               )}
             </div>
           )}
@@ -8263,6 +8420,12 @@ function App() {
               onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
               ideumSimulationMirror={ideumSimulationMirror}
               onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
+              ideumSimulateMirror={ideumSimulateMirror}
+              onIdeumSimulateClick={handleIdeumSimulateRemoteClick}
+              ideumSimulateLoopMirror={ideumSimulateLoopMirror}
+              onIdeumSimulateLoopClick={handleIdeumSimulateLoopRemoteClick}
+              ideumSimulationSpeedMirror={ideumSimulationSpeedMirror}
+              onIdeumSimulationSpeedClick={handleIdeumSimulationSpeedRemoteClick}
               disableCanvasPan={isIdeumDesignName(currentConfigName)}
               disableCanvasGestureZoom={isIdeum05}
               isIdeum05={isIdeum05}

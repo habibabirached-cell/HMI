@@ -640,7 +640,8 @@ async def post_cluster_remote_command(body: dict):
     Ideum posts a remote command; Maingear broadcasts it to connected UI clients.
     Body: { "command": "add8Turbines" | "addStatcomAndGFMe" | "addBessOnly" | "addGfmeOnly"
             | "toggleBreakersExpansion" | "togglePeripheralsExpansion"
-            | "startSimulation" | "stopSimulation" }
+            | "startSimulation" | "startSimulationLoop" | "stopSimulation"
+            | "setSimulationSpeed" }
     """
     role = resolve_machine_role()
     if not role.get("isMaingear"):

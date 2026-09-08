@@ -110,6 +110,84 @@ function editorKeyForChartColumn(chart, columnName) {
   return columnName;
 }
 
+/** Group Y columns by split type (phase, load, column) — shared by data, layout, and label editor. */
+function groupColumnsBySplit(yColumns, splitBy, manualGroupBreaks) {
+  if (!yColumns?.length) return [];
+  if (splitBy === 'manual') {
+    if (!manualGroupBreaks?.length) return [{ key: 'Group 1', cols: yColumns }];
+    const groups = [];
+    let start = 0;
+    for (const b of manualGroupBreaks) {
+      const slice = yColumns.slice(start, b - 1);
+      if (slice.length) groups.push({ key: `Group ${groups.length + 1}`, cols: slice });
+      start = b - 1;
+    }
+    if (start < yColumns.length) {
+      groups.push({ key: `Group ${groups.length + 1}`, cols: yColumns.slice(start) });
+    }
+    return groups.filter((g) => g.cols.length > 0);
+  }
+  if (splitBy === 'column') {
+    return yColumns.map((col) => ({ key: col, cols: [col] }));
+  }
+  if (splitBy === 'phase') {
+    const groups = {};
+    yColumns.forEach((col) => {
+      const m = col.match(/[._-]([aAbBcC])[._-]|[._-]([aAbBcC])[\d.]|([aAbBcC])[._-]/i);
+      const letter = m ? (m[1] || m[2] || m[3]).toUpperCase() : 'Other';
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push(col);
+    });
+    const order = ['A', 'B', 'C'];
+    const keys = [...order.filter((k) => groups[k]?.length), ...(groups.Other?.length ? ['Other'] : [])];
+    return keys.map((k) => ({ key: `Phase ${k}`, cols: groups[k] }));
+  }
+  if (splitBy === 'load') {
+    const groups = {};
+    yColumns.forEach((col) => {
+      const m = col.match(/_(\d+)\b|\.(\d+)\b|load[_-]?(\d+)/i);
+      const num = m ? (m[1] || m[2] || m[3]) : 'Other';
+      if (!groups[num]) groups[num] = [];
+      groups[num].push(col);
+    });
+    const sorted = Object.entries(groups).sort((a, b) => {
+      if (a[0] === 'Other') return 1;
+      if (b[0] === 'Other') return -1;
+      return Number(a[0]) - Number(b[0]);
+    });
+    return sorted.map(([k, cols]) => ({ key: `Load ${k}`, cols }));
+  }
+  return [{ key: 'All', cols: yColumns }];
+}
+
+function getStackedNdGroups(chart) {
+  if (chart?.chartType !== 'stacked-nd' || !chart.yColumns?.length) return [];
+  return groupColumnsBySplit(chart.yColumns, chart.splitBy || 'phase', chart.manualGroupBreaks);
+}
+
+function defaultStackedYLabel(chart, group) {
+  if (group.cols?.length === 1) {
+    const col = group.cols[0];
+    return chart?.legendLabels?.[col] ?? col;
+  }
+  return group.key;
+}
+
+function resolveStackedYLabel(chart, group, index) {
+  const key = String(index);
+  const stored =
+    chart?.stackedYLabels?.[key]
+    ?? chart?.stackedYLabels?.[group.key]
+    ?? (group.cols?.length === 1 ? chart?.stackedYLabels?.[group.cols[0]] : undefined);
+  return stored?.trim() ? stored.trim() : defaultStackedYLabel(chart, group);
+}
+
+function buildStackedYLabelsForEditor(chart) {
+  return Object.fromEntries(
+    getStackedNdGroups(chart).map((grp, i) => [String(i), resolveStackedYLabel(chart, grp, i)]),
+  );
+}
+
 /** Decide how x/y columns are stored on the chart after label-editor Save. */
 function buildColumnCommitFromEditor(chart, xColumnKey, yKeys, isEnsemble) {
   if (!isEnsemble) {
@@ -452,8 +530,11 @@ const ChartPanel = ({
   const CHART_SIDE_COLLAPSED_PX = 30;
   /** Bottom-dock collapsed: thin horizontal hinge only (no chart toolbar). */
   const CHART_BOTTOM_RAIL_COLLAPSED_H_PX = 22;
-  /** Inline label editor: { chartId, title, xLabel, yLabel } | null */
+  /** Inline label editor: { chartId, title, xLabel, yLabel, stackedYLabels } | null */
   const [editingLabels, setEditingLabels] = useState(null);
+  /** Right-click axis label popup: { chartId, kind, yIndex?, value, left, top } */
+  const [inlineLabelEdit, setInlineLabelEdit] = useState(null);
+  const axisTitleMenuCleanupRef = useRef({});
   const [variablePicker, setVariablePicker] = useState(null);
   /** Per-chart last known Plotly axis ranges, for pre-populating the axis range editor. */
   const plotlyRangesRef = useRef({});
@@ -671,6 +752,7 @@ const ChartPanel = ({
 
   const attachPlotlyChartListeners = (chart, gd) => {
     plotlyGdByChartRef.current[chart.id] = gd;
+    bindPlotlyAxisTitleContextMenus(chart, gd);
     if (chartHasMultiTraceLegend(chart)) {
       syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
     }
@@ -905,6 +987,10 @@ const ChartPanel = ({
       title: chart.title || chart.componentName || '',
       xLabel: chart.xLabel ?? chart.xColumn ?? '',
       yLabel: chart.yLabel ?? (chart.chartType === 'nd' ? 'Value' : (chart.yColumn ?? '')),
+      stackedYLabels:
+        chart.chartType === 'stacked-nd' && chart.yColumns?.length
+          ? buildStackedYLabelsForEditor(chart)
+          : null,
       legendLabels: yKeys.length
         ? Object.fromEntries(
             yKeys.map((k, i) => [k, chart.legendLabels?.[k] ?? chart.legendLabels?.[rawYKeys[i]] ?? '']),
@@ -949,10 +1035,23 @@ const ChartPanel = ({
         .filter(Boolean),
     );
     const variableStyles = compactVariableStylesForSave(storageVariableStyles, yStorage);
+    const stackedYLabelsPatch =
+      chart?.chartType === 'stacked-nd' && editingLabels.stackedYLabels
+        ? Object.fromEntries(
+            Object.entries(editingLabels.stackedYLabels)
+              .map(([k, v]) => [k, String(v ?? '').trim()])
+              .filter(([, v]) => v),
+          )
+        : undefined;
     const patch = {
       title: editingLabels.title,
       xLabel: editingLabels.xLabel || undefined,
-      yLabel: editingLabels.yLabel || undefined,
+      yLabel: chart?.chartType === 'stacked-nd' ? undefined : (editingLabels.yLabel || undefined),
+      ...(stackedYLabelsPatch && Object.keys(stackedYLabelsPatch).length
+        ? { stackedYLabels: stackedYLabelsPatch }
+        : chart?.chartType === 'stacked-nd'
+          ? { stackedYLabels: undefined }
+          : {}),
       ...(legendLabels && Object.keys(legendLabels).length ? { legendLabels } : { legendLabels: undefined }),
       ...(chartHasMultiTraceLegend(chart)
         ? editingLabels.legendTitle?.trim()
@@ -991,6 +1090,109 @@ const ChartPanel = ({
     setEditingLabels(null);
     setVariablePicker(null);
   };
+
+  const openInlineAxisLabelEditor = useCallback((chart, { kind, yIndex, current, clientX, clientY }) => {
+    setInlineLabelEdit({
+      chartId: chart.id,
+      kind,
+      yIndex: yIndex ?? undefined,
+      value: current ?? '',
+      left: clientX,
+      top: clientY,
+    });
+  }, []);
+
+  const commitInlineLabelEdit = useCallback(() => {
+    if (!inlineLabelEdit) return;
+    const chart = chartsRef.current.find((c) => c.id === inlineLabelEdit.chartId);
+    if (!chart) {
+      setInlineLabelEdit(null);
+      return;
+    }
+    const trimmed = inlineLabelEdit.value.trim();
+    let patch;
+    if (inlineLabelEdit.kind === 'x') {
+      patch = { xLabel: trimmed || undefined };
+    } else if (chart.chartType === 'stacked-nd' && inlineLabelEdit.yIndex != null) {
+      const groups = getStackedNdGroups(chart);
+      const idx = inlineLabelEdit.yIndex;
+      const next = { ...(chart.stackedYLabels || {}) };
+      const defaultLabel = groups[idx] ? defaultStackedYLabel(chart, groups[idx]) : '';
+      if (trimmed && trimmed !== defaultLabel) {
+        next[String(idx)] = trimmed;
+      } else {
+        delete next[String(idx)];
+      }
+      patch = { stackedYLabels: Object.keys(next).length ? next : undefined };
+    } else {
+      patch = { yLabel: trimmed || undefined };
+    }
+    onUpdateChart?.(inlineLabelEdit.chartId, patch);
+    setInlineLabelEdit(null);
+  }, [inlineLabelEdit, onUpdateChart]);
+
+  const bindPlotlyAxisTitleContextMenus = useCallback(
+    (chart, gd) => {
+      const prevCleanup = axisTitleMenuCleanupRef.current[chart.id];
+      if (prevCleanup) prevCleanup();
+      if (!gd) return;
+
+      const cleanups = [];
+      const bindTitle = (el, handler) => {
+        if (!el) return;
+        el.style.cursor = 'context-menu';
+        el.addEventListener('contextmenu', handler);
+        cleanups.push(() => {
+          el.removeEventListener('contextmenu', handler);
+          el.style.cursor = '';
+        });
+      };
+
+      bindTitle(gd.querySelector('.xaxislayer-above text.xtitle'), (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openInlineAxisLabelEditor(chart, {
+          kind: 'x',
+          current: chart.xLabel ?? chart.xColumn ?? e.target?.textContent ?? '',
+          clientX: e.clientX,
+          clientY: e.clientY,
+        });
+      });
+
+      gd.querySelectorAll('.yaxislayer-above text.ytitle').forEach((el, idx) => {
+        bindTitle(el, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const groups = getStackedNdGroups(chart);
+          const current =
+            chart.chartType === 'stacked-nd' && groups[idx]
+              ? resolveStackedYLabel(chart, groups[idx], idx)
+              : chart.yLabel ?? chart.yColumn ?? e.target?.textContent ?? '';
+          openInlineAxisLabelEditor(chart, {
+            kind: 'y',
+            yIndex: chart.chartType === 'stacked-nd' ? idx : undefined,
+            current,
+            clientX: e.clientX,
+            clientY: e.clientY,
+          });
+        });
+      });
+
+      axisTitleMenuCleanupRef.current[chart.id] = () => {
+        cleanups.forEach((fn) => fn());
+        delete axisTitleMenuCleanupRef.current[chart.id];
+      };
+    },
+    [openInlineAxisLabelEditor],
+  );
+
+  useEffect(
+    () => () => {
+      Object.values(axisTitleMenuCleanupRef.current).forEach((fn) => fn?.());
+      axisTitleMenuCleanupRef.current = {};
+    },
+    [],
+  );
 
   const openVariablePicker = (role, replaceKey = null) => {
     setVariablePicker({ role, replaceKey });
@@ -1156,6 +1358,7 @@ const ChartPanel = ({
       || chart.chartType === 'stacked-nd'
       || chartHasMultiTraceLegend(chart)
     );
+    const stackedGroups = chart?.chartType === 'stacked-nd' ? getStackedNdGroups(chart) : [];
     const xShort = variableDisplayLabel(editingLabels.xColumnKey);
 
     return (
@@ -1180,16 +1383,45 @@ const ChartPanel = ({
           placeholder="default (column name)"
         />
       </label>
-      <label className="chart-label-editor-row">
-        <span>Y label</span>
-        <input
-          className="chart-label-editor-input"
-          value={editingLabels.yLabel}
-          onChange={(e) => setEditingLabels((p) => ({ ...p, yLabel: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === 'Enter') commitLabelEdit(); if (e.key === 'Escape') setEditingLabels(null); }}
-          placeholder="default (column name)"
-        />
-      </label>
+      {stackedGroups.length > 0 ? (
+        stackedGroups.map((grp, i) => {
+          const rowLabel =
+            stackedGroups.length === 2
+              ? (i === 0 ? 'Y upper' : 'Y lower')
+              : `Y ${i + 1}`;
+          return (
+            <label key={i} className="chart-label-editor-row chart-label-editor-row--stacked-y">
+              <span>{rowLabel}</span>
+              <input
+                className="chart-label-editor-input"
+                value={editingLabels.stackedYLabels?.[String(i)] ?? ''}
+                onChange={(e) =>
+                  setEditingLabels((p) => ({
+                    ...p,
+                    stackedYLabels: { ...p.stackedYLabels, [String(i)]: e.target.value },
+                  }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitLabelEdit();
+                  if (e.key === 'Escape') setEditingLabels(null);
+                }}
+                placeholder={defaultStackedYLabel(chart, grp)}
+              />
+            </label>
+          );
+        })
+      ) : (
+        <label className="chart-label-editor-row">
+          <span>Y label</span>
+          <input
+            className="chart-label-editor-input"
+            value={editingLabels.yLabel}
+            onChange={(e) => setEditingLabels((p) => ({ ...p, yLabel: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === 'Enter') commitLabelEdit(); if (e.key === 'Escape') setEditingLabels(null); }}
+            placeholder="default (column name)"
+          />
+        </label>
+      )}
       {chartHasMultiTraceLegend(chart) && (
           <label className="chart-label-editor-row">
             <span>Legend title</span>
@@ -1783,58 +2015,6 @@ const ChartPanel = ({
         }),
       };
     });
-  };
-
-  /**
-   * Group Y columns by split type (phase, load, column)
-   */
-  const groupColumnsBySplit = (yColumns, splitBy, manualGroupBreaks) => {
-    if (!yColumns?.length) return [];
-    if (splitBy === 'manual') {
-      if (!manualGroupBreaks?.length) return [{ key: 'Group 1', cols: yColumns }];
-      const groups = [];
-      let start = 0;
-      for (const b of manualGroupBreaks) {
-        const slice = yColumns.slice(start, b - 1);
-        if (slice.length) groups.push({ key: `Group ${groups.length + 1}`, cols: slice });
-        start = b - 1;
-      }
-      if (start < yColumns.length) {
-        groups.push({ key: `Group ${groups.length + 1}`, cols: yColumns.slice(start) });
-      }
-      return groups.filter(g => g.cols.length > 0);
-    }
-    if (splitBy === 'column') {
-      return yColumns.map(col => ({ key: col, cols: [col] }));
-    }
-    if (splitBy === 'phase') {
-      const groups = {};
-      yColumns.forEach(col => {
-        const m = col.match(/[._-]([aAbBcC])[._-]|[._-]([aAbBcC])[\d.]|([aAbBcC])[._-]/i);
-        const letter = m ? (m[1] || m[2] || m[3]).toUpperCase() : 'Other';
-        if (!groups[letter]) groups[letter] = [];
-        groups[letter].push(col);
-      });
-      const order = ['A', 'B', 'C'];
-      const keys = [...order.filter(k => groups[k]?.length), ...(groups.Other?.length ? ['Other'] : [])];
-      return keys.map(k => ({ key: `Phase ${k}`, cols: groups[k] }));
-    }
-    if (splitBy === 'load') {
-      const groups = {};
-      yColumns.forEach(col => {
-        const m = col.match(/_(\d+)\b|\.(\d+)\b|load[_-]?(\d+)/i);
-        const num = m ? (m[1] || m[2] || m[3]) : 'Other';
-        if (!groups[num]) groups[num] = [];
-        groups[num].push(col);
-      });
-      const sorted = Object.entries(groups).sort((a, b) => {
-        if (a[0] === 'Other') return 1;
-        if (b[0] === 'Other') return -1;
-        return Number(a[0]) - Number(b[0]);
-      });
-      return sorted.map(([k, cols]) => ({ key: `Load ${k}`, cols: cols }));
-    }
-    return [{ key: 'All', cols: yColumns }];
   };
 
   /**
@@ -2785,10 +2965,16 @@ const ChartPanel = ({
         title: { ...baseLayout.title, text: chart.title || `${chart.componentName || ''} - Stacked nD` },
         showlegend: true,
         legend: buildInPlotLegendLayout(),
-        margin: { l: 50, r: 40, t: 50, b: 50 },
+        margin: { l: 90, r: 40, t: 50, b: 130 },
         shapes: [...(baseLayout.shapes || []), ...shapes],
         xaxis: {
-          title: { text: chart.xLabel ?? chart.xColumn, font: { family: 'Arial, sans-serif', size: 13, color: '#999', weight: 600 } },
+          title: {
+            text: chart.xLabel ?? chart.xColumn,
+            font: { family: 'Arial, sans-serif', size: 26, color: '#999', weight: 600 },
+            standoff: 32,
+          },
+          automargin: true,
+          ticklabelstandoff: 8,
           domain: [0, 1],
           anchor: n === 1 ? 'y' : `y${n}`,
           ...axisStyle,
@@ -2802,10 +2988,15 @@ const ChartPanel = ({
         const bottom = Math.max(0, 1 - (i + 1) * rowHeight);
         const yKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
         layout[yKey] = {
-          title: { text: groups[i].key, font: { family: 'Arial, sans-serif', size: 12, color: '#00d4a8', weight: 600 } },
+          title: {
+            text: resolveStackedYLabel(chart, groups[i], i),
+            font: { family: 'Arial, sans-serif', size: 24, color: '#00d4a8', weight: 600 },
+            standoff: 20,
+          },
+          automargin: true,
           domain: [bottom, top],
           anchor: 'x',
-          ...axisStyle
+          ...axisStyle,
         };
       }
       return withDangerY(layout);
@@ -4268,6 +4459,7 @@ const ChartPanel = ({
                     onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
                     onUpdate={(fig, gd) => {
                       plotlyGdByChartRef.current[chart.id] = gd;
+                      bindPlotlyAxisTitleContextMenus(chart, gd);
                       if (chartHasMultiTraceLegend(chart)) {
                         syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
                       }
@@ -4387,6 +4579,7 @@ const ChartPanel = ({
                           onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
                           onUpdate={(fig, gd) => {
                             plotlyGdByChartRef.current[chart.id] = gd;
+                            bindPlotlyAxisTitleContextMenus(chart, gd);
                             if (chartHasMultiTraceLegend(chart)) {
                               syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
                             }
@@ -4426,6 +4619,25 @@ const ChartPanel = ({
           <span className="chart-panel-chart-drag-ghost__title">{chartDragGhost.title}</span>
         </div>
       ) : null}
+      {inlineLabelEdit && (
+        <div
+          className="chart-inline-label-edit"
+          style={{ left: inlineLabelEdit.left, top: inlineLabelEdit.top }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            className="chart-inline-label-edit-input"
+            value={inlineLabelEdit.value}
+            autoFocus
+            onChange={(e) => setInlineLabelEdit((p) => ({ ...p, value: e.target.value }))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitInlineLabelEdit();
+              if (e.key === 'Escape') setInlineLabelEdit(null);
+            }}
+            onBlur={commitInlineLabelEdit}
+          />
+        </div>
+      )}
       {variablePicker && editingLabels && (
         <ChartVariablePickerDialog
           title={

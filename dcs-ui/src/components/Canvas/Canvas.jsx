@@ -307,6 +307,12 @@ const Canvas = forwardRef(({
   onIdeumExpansionToggle,
   ideumSimulationMirror = false,
   onIdeumSimulationClick,
+  ideumSimulateMirror = false,
+  onIdeumSimulateClick,
+  ideumSimulateLoopMirror = false,
+  onIdeumSimulateLoopClick,
+  ideumSimulationSpeedMirror = 1,
+  onIdeumSimulationSpeedClick,
   isIdeum05 = false,
   ideum05ShowControls = true,
   ideum05HdAeroMode = false,
@@ -584,6 +590,12 @@ const Canvas = forwardRef(({
               blockTypeScale={canvasBlockTypeScale}
               ideumMaingearViewCompact={ideumHdAeroViewCompact}
               onIdeumMaingearViewToggle={onIdeumHdAeroViewToggle}
+              ideumSimulateMirror={ideumSimulateMirror}
+              onIdeumSimulateClick={onIdeumSimulateClick}
+              ideumSimulateLoopMirror={ideumSimulateLoopMirror}
+              onIdeumSimulateLoopClick={onIdeumSimulateLoopClick}
+              ideumSimulationSpeedMirror={ideumSimulationSpeedMirror}
+              onIdeumSimulationSpeedClick={onIdeumSimulationSpeedClick}
             />
           </div>
         );
@@ -614,6 +626,12 @@ const Canvas = forwardRef(({
             onIdeumMaingearViewToggle={onIdeumHdAeroViewToggle}
             ideumSimulationMirror={ideumSimulationMirror}
             onIdeumSimulationClick={onIdeumSimulationClick}
+            ideumSimulateMirror={ideumSimulateMirror}
+            onIdeumSimulateClick={onIdeumSimulateClick}
+            ideumSimulateLoopMirror={ideumSimulateLoopMirror}
+            onIdeumSimulateLoopClick={onIdeumSimulateLoopClick}
+            ideumSimulationSpeedMirror={ideumSimulationSpeedMirror}
+            onIdeumSimulationSpeedClick={onIdeumSimulationSpeedClick}
           />
         </div>
       );
@@ -639,6 +657,12 @@ const Canvas = forwardRef(({
       onIdeumExpansionToggle,
       ideumSimulationMirror,
       onIdeumSimulationClick,
+      ideumSimulateMirror,
+      onIdeumSimulateClick,
+      ideumSimulateLoopMirror,
+      onIdeumSimulateLoopClick,
+      ideumSimulationSpeedMirror,
+      onIdeumSimulationSpeedClick,
     ],
   );
 

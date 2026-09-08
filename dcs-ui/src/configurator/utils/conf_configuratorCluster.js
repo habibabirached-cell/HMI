@@ -3,7 +3,13 @@
  */
 
 import { API_BASE_URL } from '../../apiConfig';
-import { connectClusterWebSocket } from '../../utils/clusterPeer';
+import {
+  connectClusterWebSocket,
+  isLocalClusterDev,
+  resolveMaingearPeerPostBase,
+} from '../../utils/clusterPeer';
+
+export { isLocalClusterDev };
 
 function normalizePayload(inputs) {
   const cfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
@@ -15,39 +21,9 @@ function normalizePayload(inputs) {
   };
 }
 
-/** Two browser tabs on one laptop (localhost UI + local backend). */
-export function isLocalClusterDev() {
-  if (typeof window === 'undefined') return false;
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || hostname === '127.0.0.1';
-}
-
-/**
- * Resolve where Ideum should POST cluster/submit.
- * Local dev (two browser tabs on one laptop) uses the same backend as the wall tab.
- * Physical Ideum touch table posts directly to peerBackendUrl (same as remote commands).
- *
- * @param {object | null} role from GET /api/cluster/machine-role
- * @returns {string} base URL, or '' for same-origin / CRA dev-server proxy
- */
+/** @deprecated use resolveMaingearPeerPostBase from clusterPeer.js */
 export function resolveMaingearBackendUrl(role) {
-  const peerUrl = (role?.peerBackendUrl || '').replace(/\/$/, '');
-  const envUrl = (process.env.REACT_APP_MAINGEAR_BACKEND_URL || '').replace(/\/$/, '');
-
-  if (typeof window === 'undefined') {
-    return envUrl || peerUrl || API_BASE_URL || 'http://127.0.0.1:5000';
-  }
-
-  if (isLocalClusterDev()) {
-    return envUrl || API_BASE_URL || '';
-  }
-
-  if (role?.isIdeum) {
-    // Direct Ethernet POST — mirrors sendRemoteCommandToMaingear (Add 8 turbine, etc.).
-    return peerUrl || envUrl || API_BASE_URL || '';
-  }
-
-  return envUrl || API_BASE_URL || `http://${window.location.hostname}:5000`;
+  return resolveMaingearPeerPostBase(role);
 }
 
 /**

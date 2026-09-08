@@ -286,3 +286,104 @@
   text-align: center;
   padding: 0 16px;
 }
+
+.ideum-component-btn--simulate-icon,
+.ideum-component-btn--simulate-loop-icon {
+  border: none;
+  border-radius: 12px;
+  background: #4caf50;
+  color: #000;
+  box-shadow: 0 0 24px rgba(76, 175, 80, 0.35);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ideum-component-btn--simulate-icon:hover,
+.ideum-component-btn--simulate-loop-icon:hover {
+  background: #66bb6a;
+  box-shadow: 0 0 32px rgba(76, 175, 80, 0.5);
+}
+
+.ideum-component-btn--simulate-icon-running,
+.ideum-component-btn--simulate-loop-icon-running {
+  background: #f44336;
+  color: #fff;
+  box-shadow: 0 0 24px rgba(244, 67, 54, 0.45);
+}
+
+.ideum-component-btn--simulate-icon-running:hover,
+.ideum-component-btn--simulate-loop-icon-running:hover {
+  background: #e53935;
+  box-shadow: 0 0 32px rgba(244, 67, 54, 0.55);
+}
+
+.ideum-component-btn__sim-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ideum-component-btn__sim-icon-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ideum-component-btn__sim-icon-svg--loop {
+  overflow: visible;
+}
+
+.ideum-speed-panel {
+  position: absolute;
+  box-sizing: border-box;
+  border: 4px solid #00d4a8;
+  border-radius: 16px;
+  background: rgba(12, 12, 12, 0.92);
+  box-shadow: 0 0 36px rgba(0, 212, 168, 0.25);
+  pointer-events: auto;
+}
+
+.ideum-speed-panel__title {
+  color: #e65100;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ideum-speed-panel__buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  height: calc(100% - 2.5em);
+}
+
+.ideum-speed-panel__btn {
+  padding: 16px 8px;
+  border: 4px solid #444;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ideum-speed-panel__btn:hover {
+  background: #3a3a3a;
+  border-color: #005e60;
+  box-shadow: 0 8px 24px rgba(0, 94, 96, 0.4);
+}
+
+.ideum-speed-panel__btn--active {
+  background: #005e60;
+  border-color: #005e60;
+  color: #fff;
+  box-shadow: 0 0 32px rgba(0, 94, 96, 0.6);
+}
+
+.ideum-speed-panel__btn--active:hover {
+  background: #007a7d;
+  border-color: #007a7d;
+}

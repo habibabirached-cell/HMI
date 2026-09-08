@@ -11,6 +11,9 @@ export const IDEUM_EXPANSION_PANEL_TYPE = 'ideum-expansion-panel';
 export const IDEUM_MAINGEAR_VIEW_PANEL_TYPE = 'ideum-maingear-view-panel';
 
 export const IDEUM_START_SIMULATION_BUTTON_TYPE = 'ideum-start-simulation-button';
+export const IDEUM_SIMULATE_BUTTON_TYPE = 'ideum-simulate-button';
+export const IDEUM_SIMULATE_LOOP_BUTTON_TYPE = 'ideum-simulate-loop-button';
+export const IDEUM_SIMULATION_SPEED_PANEL_TYPE = 'ideum-simulation-speed-panel';
 
 export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_TURBINE_BUTTON_TYPE,
@@ -20,6 +23,9 @@ export const IDEUM_COMPONENT_TYPES = new Set([
   IDEUM_EXPANSION_PANEL_TYPE,
   IDEUM_MAINGEAR_VIEW_PANEL_TYPE,
   IDEUM_START_SIMULATION_BUTTON_TYPE,
+  IDEUM_SIMULATE_BUTTON_TYPE,
+  IDEUM_SIMULATE_LOOP_BUTTON_TYPE,
+  IDEUM_SIMULATION_SPEED_PANEL_TYPE,
 ]);
 
 export function isIdeumDesignName(name) {
@@ -97,12 +103,26 @@ export function isIdeumStartSimulationButton(component) {
   return component?.type === IDEUM_START_SIMULATION_BUTTON_TYPE;
 }
 
+export function isIdeumSimulateButton(component) {
+  return component?.type === IDEUM_SIMULATE_BUTTON_TYPE;
+}
+
+export function isIdeumSimulateLoopButton(component) {
+  return component?.type === IDEUM_SIMULATE_LOOP_BUTTON_TYPE;
+}
+
+export function isIdeumSimulationSpeedPanel(component) {
+  return component?.type === IDEUM_SIMULATION_SPEED_PANEL_TYPE;
+}
+
 export function getIdeumExpansionPanels(components) {
   if (!Array.isArray(components)) return [];
   return components.filter(isIdeumExpansionPanel);
 }
 
 export function getIdeumButtonStyleClass(component) {
+  if (isIdeumSimulateButton(component)) return 'ideum-component-btn--simulate-icon';
+  if (isIdeumSimulateLoopButton(component)) return 'ideum-component-btn--simulate-loop-icon';
   if (isIdeumStartSimulationButton(component)) return 'ideum-component-btn--start-sim';
   if (isIdeumBessGfmeButton(component)) return 'ideum-component-btn--grouped';
   if (isIdeumBessButton(component)) return 'ideum-component-btn--bess-only';

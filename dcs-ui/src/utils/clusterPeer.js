@@ -5,6 +5,40 @@
 const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
 const BACKEND_PORT = '5000';
 
+/** Two browser tabs on one laptop (localhost UI + local backend). */
+export function isLocalClusterDev() {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
+ * Base URL for Ideum browser → Maingear HTTP (remote-command, configurator submit, etc.).
+ * Physical Ideum always posts directly to peerBackendUrl — even when the UI is opened
+ * via localhost/127.0.0.1 on the touch-table PC (same as HD_Aero cluster commands).
+ *
+ * @param {object | null} role from GET /api/cluster/machine-role
+ * @returns {string} base URL, or '' for same-origin / CRA dev-server proxy
+ */
+export function resolveMaingearPeerPostBase(role) {
+  const peerUrl = (role?.peerBackendUrl || '').replace(/\/$/, '');
+  const envUrl = (process.env.REACT_APP_MAINGEAR_BACKEND_URL || '').replace(/\/$/, '');
+
+  if (typeof window === 'undefined') {
+    return envUrl || peerUrl || API_BASE || 'http://127.0.0.1:5000';
+  }
+
+  if (role?.isIdeum && peerUrl) {
+    return peerUrl;
+  }
+
+  if (isLocalClusterDev()) {
+    return envUrl || API_BASE || '';
+  }
+
+  return peerUrl || envUrl || API_BASE || `http://${window.location.hostname}:${BACKEND_PORT}`;
+}
+
 export async function fetchMachineRole() {
   const res = await fetch(`${API_BASE}/api/cluster/machine-role`);
   if (!res.ok) {
@@ -15,9 +49,13 @@ export async function fetchMachineRole() {
 
 /**
  * Ideum → Maingear: POST remote command to peer backend (direct Ethernet, not UI proxy).
+ * @param {string | object | null} peerBackendUrlOrRole peer URL or machine-role object
  */
-export async function sendRemoteCommandToMaingear(peerBackendUrl, command, payload = undefined) {
-  const base = (peerBackendUrl || '').replace(/\/$/, '');
+export async function sendRemoteCommandToMaingear(peerBackendUrlOrRole, command, payload = undefined) {
+  const base =
+    typeof peerBackendUrlOrRole === 'object' && peerBackendUrlOrRole !== null
+      ? resolveMaingearPeerPostBase(peerBackendUrlOrRole)
+      : (peerBackendUrlOrRole || '').replace(/\/$/, '');
   const body = { command, source: 'ideum' };
   if (payload != null && typeof payload === 'object') {
     body.payload = payload;

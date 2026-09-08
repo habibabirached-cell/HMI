@@ -95,6 +95,27 @@ export const COMPONENT_VISUAL_CONFIG = {
     color: '#4caf50',
     shape: 'schematic-ideum-touch',
   },
+  'ideum-simulate-button': {
+    width: 144,
+    height: 144,
+    icon: '▶',
+    color: '#4caf50',
+    shape: 'schematic-ideum-touch',
+  },
+  'ideum-simulate-loop-button': {
+    width: 144,
+    height: 144,
+    icon: '↻',
+    color: '#4caf50',
+    shape: 'schematic-ideum-touch',
+  },
+  'ideum-simulation-speed-panel': {
+    width: 320,
+    height: 720,
+    icon: '⏩',
+    color: '#005E60',
+    shape: 'schematic-ideum-touch',
+  },
   'gas-turbine-3d': {
     width: 500,
     height: 250,

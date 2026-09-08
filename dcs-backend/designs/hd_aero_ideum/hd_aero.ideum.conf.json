@@ -707,7 +707,7 @@
         "x": 401,
         "y": 500
       },
-      "status": "open",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -738,7 +738,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "open",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -1016,6 +1016,84 @@
       "visualOverrides": {
         "width": 480,
         "height": 480
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-simulate-btn",
+      "type": "ideum-simulate-button",
+      "name": "Simulate",
+      "fullName": "Simulate",
+      "position": {
+        "x": 850,
+        "y": 540
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Simulate"
+      },
+      "visualOverrides": {
+        "width": 144,
+        "height": 144
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-simulate-loop-btn",
+      "type": "ideum-simulate-loop-button",
+      "name": "Simulate Loop",
+      "fullName": "Simulate Loop",
+      "position": {
+        "x": 1026,
+        "y": 540
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Simulate Loop"
+      },
+      "visualOverrides": {
+        "width": 144,
+        "height": 144
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-simulation-speed-panel",
+      "type": "ideum-simulation-speed-panel",
+      "name": "Simulation Speed",
+      "fullName": "Simulation Speed",
+      "position": {
+        "x": 1202,
+        "y": 540
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Speed"
+      },
+      "visualOverrides": {
+        "width": 320,
+        "height": 720
       },
       "state": {
         "power": 0,
@@ -1799,10 +1877,10 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.88,
+    "zoom": 0.9400000000000001,
     "pan": {
-      "x": 692,
-      "y": 76
+      "x": 668.4000000000028,
+      "y": 49.866666666666625
     },
     "panTop": {
       "x": 507.7333333333344,
@@ -1845,7 +1923,7 @@
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
-  "ideumKioskMode": false,
+  "ideumKioskMode": true,
   "remoteControlProfile": {
     "enabled": true,
     "commands": {
@@ -1856,6 +1934,18 @@
       "togglePeripheralsExpansion": {
         "action": "toggleExpansion",
         "expansionKey": "peripherals"
+      },
+      "startSimulation": {
+        "action": "startSimulation"
+      },
+      "startSimulationLoop": {
+        "action": "startSimulationLoop"
+      },
+      "stopSimulation": {
+        "action": "stopSimulation"
+      },
+      "setSimulationSpeed": {
+        "action": "setSimulationSpeed"
       }
     },
     "interactiveBreakers": {

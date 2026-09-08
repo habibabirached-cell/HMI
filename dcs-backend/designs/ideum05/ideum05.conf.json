@@ -197,6 +197,7 @@
     "t2": 60.0
   },
   "designUiSession": {
+    "ensembleId": "all",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": true,

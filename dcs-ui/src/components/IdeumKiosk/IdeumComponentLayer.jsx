@@ -18,9 +18,14 @@ import {
   isIdeumExpansionPanel,
   isIdeumGfmeButton,
   isIdeumMaingearViewPanel,
+  isIdeumSimulateButton,
+  isIdeumSimulateLoopButton,
+  isIdeumSimulationSpeedPanel,
   isIdeumStartSimulationButton,
   isIdeumTurbineButton,
 } from '../../utils/ideumComponent';
+import { SimPlayIcon, SimPlayLoopIcon, SimStopIcon } from '../Toolbar/SimControlIcons';
+import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
 import './IdeumComponentLayer.css';
 
 const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
@@ -101,6 +106,12 @@ export default function IdeumComponentLayer({
   onIdeumMaingearViewToggle,
   ideumSimulationMirror = false,
   onIdeumSimulationClick,
+  ideumSimulateMirror = false,
+  onIdeumSimulateClick,
+  ideumSimulateLoopMirror = false,
+  onIdeumSimulateLoopClick,
+  ideumSimulationSpeedMirror = 1,
+  onIdeumSimulationSpeedClick,
 }) {
   const [slots, setSlots] = useState([]);
 
@@ -144,11 +155,17 @@ export default function IdeumComponentLayer({
     (s) =>
       !isIdeumExpansionPanel(s.component) &&
       !isIdeumMaingearViewPanel(s.component) &&
-      !isIdeumStartSimulationButton(s.component),
+      !isIdeumStartSimulationButton(s.component) &&
+      !isIdeumSimulateButton(s.component) &&
+      !isIdeumSimulateLoopButton(s.component) &&
+      !isIdeumSimulationSpeedPanel(s.component),
   );
   const expansionSlots = slots.filter((s) => isIdeumExpansionPanel(s.component));
   const maingearViewSlots = slots.filter((s) => isIdeumMaingearViewPanel(s.component));
   const startSimSlots = slots.filter((s) => isIdeumStartSimulationButton(s.component));
+  const simulateSlots = slots.filter((s) => isIdeumSimulateButton(s.component));
+  const simulateLoopSlots = slots.filter((s) => isIdeumSimulateLoopButton(s.component));
+  const simulationSpeedSlots = slots.filter((s) => isIdeumSimulationSpeedPanel(s.component));
 
   return (
     <div className="ideum-component-layer" aria-hidden={false}>
@@ -289,6 +306,122 @@ export default function IdeumComponentLayer({
               {running ? '⏹ Stop Simulation' : '▶ Start Simulation'}
             </span>
           </button>
+        );
+      })}
+      {simulateSlots.map((slot) => {
+        const iconPx = Math.max(48, Math.round(Math.min(slot.width, slot.height) * 0.42));
+        const running = !!ideumSimulateMirror;
+        return (
+          <button
+            key={slot.id}
+            type="button"
+            className={`ideum-component-btn ideum-component-btn--simulate-icon${
+              running ? ' ideum-component-btn--simulate-icon-running' : ''
+            }`}
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onIdeumSimulateClick?.();
+            }}
+            aria-label={running ? 'Stop simulation on Maingear' : 'Simulate on Maingear'}
+            title={running ? 'Stop simulation' : 'Simulate'}
+          >
+            <span className="ideum-component-btn__sim-icon" style={{ width: iconPx, height: iconPx }}>
+              {running ? <SimStopIcon className="ideum-component-btn__sim-icon-svg" /> : (
+                <SimPlayIcon className="ideum-component-btn__sim-icon-svg" />
+              )}
+            </span>
+          </button>
+        );
+      })}
+      {simulateLoopSlots.map((slot) => {
+        const iconPx = Math.max(48, Math.round(Math.min(slot.width, slot.height) * 0.42));
+        const running = !!ideumSimulateLoopMirror;
+        return (
+          <button
+            key={slot.id}
+            type="button"
+            className={`ideum-component-btn ideum-component-btn--simulate-loop-icon${
+              running ? ' ideum-component-btn--simulate-loop-icon-running' : ''
+            }`}
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onIdeumSimulateLoopClick?.();
+            }}
+            aria-label={running ? 'Stop loop simulation on Maingear' : 'Simulate loop on Maingear'}
+            title={running ? 'Stop loop simulation' : 'Simulate loop'}
+          >
+            <span className="ideum-component-btn__sim-icon" style={{ width: iconPx, height: iconPx }}>
+              {running ? <SimStopIcon className="ideum-component-btn__sim-icon-svg" /> : (
+                <SimPlayLoopIcon className="ideum-component-btn__sim-icon-svg ideum-component-btn__sim-icon-svg--loop" />
+              )}
+            </span>
+          </button>
+        );
+      })}
+      {simulationSpeedSlots.map((slot) => {
+        const titlePx = Math.max(36, Math.round(slot.width * 0.11));
+        const labelPx = Math.max(28, Math.round(slot.width * 0.08));
+        const rowPad = Math.max(24, Math.round(slot.width * 0.07));
+        const btnGap = Math.max(16, Math.round(slot.width * 0.038));
+        const activeSpeed = Number(ideumSimulationSpeedMirror) || 1;
+        return (
+          <div
+            key={slot.id}
+            className="ideum-speed-panel"
+            style={{
+              left: slot.left,
+              top: slot.top,
+              width: slot.width,
+              height: slot.height,
+              padding: rowPad,
+            }}
+            aria-label="Maingear simulation speed remote control"
+          >
+            <div
+              className="ideum-speed-panel__title"
+              style={{ fontSize: titlePx, marginBottom: rowPad }}
+            >
+              Speed
+            </div>
+            <div
+              className="ideum-speed-panel__buttons"
+              style={{ gap: btnGap }}
+            >
+              {SIMULATION_SPEED_OPTIONS.map((speed) => (
+                <button
+                  key={speed}
+                  type="button"
+                  className={`ideum-speed-panel__btn${
+                    Math.abs(activeSpeed - speed) < 1e-9 ? ' ideum-speed-panel__btn--active' : ''
+                  }`}
+                  style={{ fontSize: labelPx }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onIdeumSimulationSpeedClick?.(speed);
+                  }}
+                  title={`${speed}× speed on Maingear`}
+                  aria-label={`Set Maingear simulation speed to ${speed}x`}
+                >
+                  {speed}×
+                </button>
+              ))}
+            </div>
+          </div>
         );
       })}
       {buttonSlots.map((slot) => {
