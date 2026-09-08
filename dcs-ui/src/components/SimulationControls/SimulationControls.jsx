@@ -140,6 +140,7 @@ const SimulationControls = ({
   playbackTimeRange = { t1: 8, t2: 60 },
   onPlaybackTimeRangeChange,
   onPublishPlaybackTimeRange,
+  onResetAllConf,
   availableSimulations,
   simConfig,
   onRunSimulation,
@@ -749,6 +750,14 @@ const SimulationControls = ({
                 title="Lock all time-based chart X axes to t1–t2, limit simulation playback to that window, and save with the design"
               >
                 Publish
+              </button>
+              <button
+                type="button"
+                className="playback-range-reset-conf-btn"
+                onClick={() => onResetAllConf?.()}
+                title="Reset Start/End simulation at on every saved preset from each chart's data file min/max time, then save the design"
+              >
+                reset all conf
               </button>
             </div>
 

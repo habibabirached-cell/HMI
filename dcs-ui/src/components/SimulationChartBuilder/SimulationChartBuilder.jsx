@@ -50,6 +50,7 @@ function SimulationChartBuilder({
   onAddDerivedVariable,
   onRemoveScenarioColumn,
   onRemoveEnsembleLiveDerived,
+  onRenameEnsembleMember,
   removeColumnDisabled = false,
   displayName,
   onAddChart,
@@ -358,8 +359,24 @@ function SimulationChartBuilder({
                 </p>
                 {ensembleColumnGroups.map((g) => (
                   <div key={g.simId} className="sim-chart-builder-ensemble-group">
-                    <div className="sim-chart-builder-ensemble-group-label">
-                      {formatEnsembleMemberTabLabel(g.simId)}
+                    <div className="sim-chart-builder-ensemble-group-label-row">
+                      {!inSelectionMode &&
+                        onRenameEnsembleMember &&
+                        !isFormulaParquetScenarioId(g.simId) &&
+                        !removeColumnDisabled && (
+                          <button
+                            type="button"
+                            className="sim-chart-builder-ensemble-rename"
+                            aria-label={`Edit scenario ${formatEnsembleMemberTabLabel(g.simId)}`}
+                            title={`Edit "${formatEnsembleMemberTabLabel(g.simId)}" — rename or replace CSV data`}
+                            onClick={() => onRenameEnsembleMember(g.simId)}
+                          >
+                            ✎
+                          </button>
+                        )}
+                      <div className="sim-chart-builder-ensemble-group-label">
+                        {formatEnsembleMemberTabLabel(g.simId)}
+                      </div>
                     </div>
                     <div className="sim-chart-builder-ensemble-group-items">
                       {(g.columns || []).map((rawCol) => {

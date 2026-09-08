@@ -65,12 +65,14 @@ from simulation_data_store import (
 )
 from simulation_parquet_bundle import (
     bundle_exists,
+    validate_replace_columns_match,
     delete_bundle_column,
     read_bundle_columns_row_count,
     scenario_data_dir,
     time_column_min_max_from_bundle,
 )
 from clone_graph_presets import clone_graph_presets_between_designs
+from reset_config_simulation_bounds import reset_all_config_simulation_bounds
 # Import Pydantic schemas for request/response validation
 from schemas import (
     ConfigurationSaveRequest,
@@ -84,6 +86,7 @@ from schemas import (
     CloneGraphPresetsRequest,
     CreateEnsembleRequest,
     UpdateEnsembleRequest,
+    RenameSimulationRequest,
 )
 # Additional imports for CSV handling
 from fastapi import File, UploadFile, Form
@@ -2490,6 +2493,168 @@ async def delete_simulation(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Must match dcs-ui ENSEMBLE_COLUMN_SEP in simulationLazyApi.js
+_ENSEMBLE_QUALIFIED_SEP = " — "
+
+
+def _replace_qualified_sim_prefix(value, old_id: str, new_id: str):
+    if not isinstance(value, str):
+        return value
+    prefix = f"{old_id}{_ENSEMBLE_QUALIFIED_SEP}"
+    if value.startswith(prefix):
+        return f"{new_id}{_ENSEMBLE_QUALIFIED_SEP}{value[len(prefix):]}"
+    return value
+
+
+def _replace_formula_qualified_refs(formula: str, old_id: str, new_id: str) -> str:
+    prefix_old = f"{old_id}{_ENSEMBLE_QUALIFIED_SEP}"
+    if prefix_old not in formula:
+        return formula
+    prefix_new = f"{new_id}{_ENSEMBLE_QUALIFIED_SEP}"
+    return formula.replace(prefix_old, prefix_new)
+
+
+def _remap_sim_id_in_json_tree(obj, old_id: str, new_id: str) -> None:
+    """Walk JSON in place, replacing scenario id references."""
+    if isinstance(obj, dict):
+        for k, v in list(obj.items()):
+            if k in ("ensembleSimId", "ensemble_sim_id") and v == old_id:
+                obj[k] = new_id
+            elif k in ("x_column", "y_column", "time_column") and isinstance(v, str):
+                obj[k] = _replace_qualified_sim_prefix(v, old_id, new_id)
+            elif k == "y_columns" and isinstance(v, list):
+                obj[k] = [_replace_qualified_sim_prefix(c, old_id, new_id) for c in v]
+            elif k == "member_simulations" and isinstance(v, list):
+                obj[k] = [new_id if str(m).strip() == old_id else m for m in v]
+            elif k == "formula" and isinstance(v, str):
+                obj[k] = _replace_formula_qualified_refs(v, old_id, new_id)
+            else:
+                _remap_sim_id_in_json_tree(v, old_id, new_id)
+    elif isinstance(obj, list):
+        for item in obj:
+            _remap_sim_id_in_json_tree(item, old_id, new_id)
+
+
+def _apply_sim_rename_to_sim_config(cfg: dict, old_id: str, new_id: str) -> None:
+    _remap_sim_id_in_json_tree(cfg, old_id, new_id)
+    dn = str(cfg.get("display_name") or "").strip()
+    if not dn or dn == old_id:
+        cfg["display_name"] = new_id
+
+
+def _apply_sim_rename_to_design_files(dir_path: str, old_id: str, new_id: str) -> None:
+    """Update every .sim.json, ensemble sidecar, and .conf.json under one design dir."""
+    for fn in os.listdir(dir_path):
+        if fn.endswith(".sim.json"):
+            sim_path = os.path.join(dir_path, fn)
+            try:
+                with open(sim_path, "r", encoding="utf-8") as fp:
+                    cfg = json.load(fp)
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"Warning: skip sim rename in {fn}: {e}")
+                continue
+            if not isinstance(cfg, dict):
+                continue
+            _apply_sim_rename_to_sim_config(cfg, old_id, new_id)
+            with open(sim_path, "w", encoding="utf-8") as fp:
+                json.dump(cfg, fp, indent=2)
+
+    ens_path = _ensemble_sidecar_path(dir_path)
+    if os.path.isfile(ens_path):
+        try:
+            with open(ens_path, "r", encoding="utf-8") as fp:
+                ens_data = json.load(fp)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Warning: skip ensemble rename: {e}")
+        else:
+            if isinstance(ens_data, dict):
+                _remap_sim_id_in_json_tree(ens_data, old_id, new_id)
+                with open(ens_path, "w", encoding="utf-8") as fp:
+                    json.dump(ens_data, fp, indent=2)
+
+    leaf = os.path.basename(dir_path.rstrip("/\\"))
+    conf_path = resolve_conf_json_path_in_dir(dir_path, leaf)
+    if conf_path and os.path.isfile(conf_path):
+        try:
+            with open(conf_path, "r", encoding="utf-8") as fp:
+                conf = json.load(fp)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Warning: skip conf rename: {e}")
+        else:
+            if isinstance(conf, dict):
+                _remap_sim_id_in_json_tree(conf, old_id, new_id)
+                with open(conf_path, "w", encoding="utf-8") as fp:
+                    json.dump(conf, fp, indent=2)
+
+
+@app.patch("/api/designs/{design_name:path}/simulations/{sim_name}/rename")
+async def rename_simulation(
+    design_name: str,
+    sim_name: str,
+    body: RenameSimulationRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Rename a scenario id: moves .sim.json / Parquet bundle and updates references in
+    ensemble sidecar, design conf, charts, derived formulas, and connection readouts.
+    """
+    try:
+        dir_path, catalog_rel = resolve_design_storage_from_api(design_name)
+        if not os.path.isdir(dir_path):
+            raise HTTPException(status_code=404, detail=f"Design directory not found: {design_name}")
+
+        old_id = re.sub(r"[^\w\-]", "", sim_name) or (sim_name or "").strip()
+        new_id = str(body.new_sim_name or "").strip()
+        if not old_id:
+            raise HTTPException(status_code=400, detail="Invalid source scenario id")
+        if not new_id or not re.match(r"^[a-zA-Z0-9_-]+$", new_id):
+            raise HTTPException(status_code=400, detail="Invalid new scenario id")
+        if old_id == new_id:
+            return {"design_name": design_name, "old_sim_name": old_id, "new_sim_name": new_id, "changed": False}
+        if old_id == "formula":
+            raise HTTPException(status_code=400, detail="The formula scenario cannot be renamed")
+
+        old_json = os.path.join(dir_path, f"{old_id}.sim.json")
+        new_json = os.path.join(dir_path, f"{new_id}.sim.json")
+        if not os.path.isfile(old_json):
+            raise HTTPException(status_code=404, detail=f"Simulation '{old_id}' not found")
+        if os.path.isfile(new_json):
+            raise HTTPException(status_code=409, detail=f"Scenario '{new_id}' already exists")
+
+        _apply_sim_rename_to_design_files(dir_path, old_id, new_id)
+
+        os.rename(old_json, new_json)
+
+        old_bundle = scenario_data_dir(dir_path, old_id)
+        new_bundle = scenario_data_dir(dir_path, new_id)
+        if os.path.isdir(old_bundle):
+            os.rename(old_bundle, new_bundle)
+
+        old_csv = os.path.join(dir_path, f"{old_id}.data.csv")
+        new_csv = os.path.join(dir_path, f"{new_id}.data.csv")
+        if os.path.isfile(old_csv):
+            os.rename(old_csv, new_csv)
+
+        try:
+            clear_simulation_csv_mirror(db, catalog_rel, old_id)
+            ensure_bundle_import(db, catalog_rel, new_id, dir_path, force=True)
+        except Exception as e:
+            print(f"Warning: SQLite mirror rename for {old_id}→{new_id}: {e}")
+
+        print(f"✅ Renamed simulation {old_id} → {new_id} in {catalog_rel}")
+        return {
+            "design_name": design_name,
+            "old_sim_name": old_id,
+            "new_sim_name": new_id,
+            "changed": True,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error renaming simulation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def _prune_derived_variables_in_sim_json(sim_json_path: str, column_name: str) -> bool:
     """Remove derived_variables entries matching column_name (top-level + current_configuration)."""
     nn = (column_name or "").strip()
@@ -3181,6 +3346,11 @@ async def upload_simulation_data(
 
         df = _sanitize_import_hyphens_in_column_names(df)
 
+        try:
+            validate_replace_columns_match(dir_path, safe_sim, list(df.columns))
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=str(ve)) from ve
+
         import_simulation_from_dataframe(db, catalog_rel, safe_sim, dir_path, df, force=True)
 
         legacy_csv = os.path.join(dir_path, f"{safe_sim}.data.csv")
@@ -3202,6 +3372,31 @@ async def upload_simulation_data(
         raise HTTPException(status_code=400, detail="File must be UTF-8 encoded")
     except Exception as e:
         print(f"❌ Error uploading sim data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/designs/{design_name:path}/reset-all-config-simulation-bounds")
+async def reset_all_config_simulation_bounds_endpoint(design_name: str):
+    """
+    Set simulation_start_at / simulation_end_at on every saved chart configuration in this design
+    from each chart's scenario Parquet time column (first / last sample).
+    """
+    try:
+        dir_path, _catalog_rel = resolve_design_storage_from_api(design_name)
+        ens_path = _ensemble_sidecar_path(dir_path)
+        if not os.path.isfile(ens_path):
+            ens_path = None
+        summary = reset_all_config_simulation_bounds(dir_path, ens_path)
+        print(
+            f"✅ Reset simulation bounds on design {design_name}: "
+            f"{summary['charts_updated']} charts in {summary['configs_updated']} configs "
+            f"({summary['files_touched']} files)"
+        )
+        return {"design_name": design_name, **summary}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ reset-all-config-simulation-bounds failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

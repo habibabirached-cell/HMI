@@ -581,10 +581,35 @@
   margin-bottom: 14px;
 }
 
+.sim-chart-builder-ensemble-group-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.sim-chart-builder-ensemble-rename {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(0, 212, 168, 0.35);
+  border-radius: 4px;
+  background: rgba(0, 212, 168, 0.08);
+  color: #00d4a8;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sim-chart-builder-ensemble-rename:hover {
+  background: rgba(0, 212, 168, 0.18);
+  border-color: rgba(0, 212, 168, 0.55);
+}
+
 .sim-chart-builder-ensemble-group-label {
   font-weight: 700;
   color: #00d4a8;
-  margin-bottom: 6px;
   font-size: calc(11px + var(--ui-font-px-shift, 0px));
 }
 

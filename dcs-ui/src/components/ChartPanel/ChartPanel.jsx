@@ -32,10 +32,24 @@ import {
   chartHasMultiTraceLegend,
   getChartXThreshold,
   getChartSimulationStartAt,
+  hasExplicitSimulationStartAt,
+  hasExplicitSimulationEndAt,
+  effectivePlaybackTimeForChart,
   rowPassesXThreshold,
   sampleIndexedRowsForVariable,
   seedVariableStylesForEditor,
 } from '../../utils/chartVariableStyles';
+import {
+  DEFAULT_CHART_T_LOOP,
+  getChartLoopBounds,
+  getChartLoopStartAt,
+  hasExplicitChartLoopT,
+  mapDisplayTimeToDataTime,
+  nearestRowIndexForDataTime,
+  resolveLoopVisibleXWindow,
+  buildSortedTimeIndex,
+} from '../../utils/simulationLoopPlayback';
+import { resolveChartDataTimeBounds } from '../../utils/chartSimulationTimeBounds';
 import {
   ENSEMBLE_COLUMN_SEP,
   isEnsembleCrossMemberSelection,
@@ -285,7 +299,9 @@ const ChartPanel = ({
   onChartCardWidthChange,
   onPerChartCardWidthChange,
   simulationTime, 
-  simulationRunning, 
+  simulationRunning,
+  simulationLoopMode = false,
+  loopChartPlaybackStateRef = null,
   selectedComponentId,
   simulationData,
   /** Per-member row tables when simulationMetadata.isEnsemble; charts use chart.ensembleSimId to pick one. */
@@ -370,6 +386,26 @@ const ChartPanel = ({
       return n;
     });
   };
+  /** Toggle preset name / Copy link row in the chart header. */
+  const [namedConfigsVisible, setNamedConfigsVisible] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem('dcsChartPanelNamedConfigsVisible') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const toggleNamedConfigsVisible = () => {
+    setNamedConfigsVisible((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem('dcsChartPanelNamedConfigsVisible', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
   const [quadBottomRowShareLocal, setQuadBottomRowShareLocal] = useState(() => {
     try {
       const n = Number(window.localStorage?.getItem('dcsQuadBottomRowShare'));
@@ -428,6 +464,33 @@ const ChartPanel = ({
   chartsRef.current = charts;
   const [editingAxisRange, setEditingAxisRange] = useState(null);
   const [legendMoveChartId, setLegendMoveChartId] = useState(null);
+
+  const chartPlaybackCtx = useMemo(
+    () => ({ simulationMetadata, simulationData, ensembleMemberSimulationData }),
+    [simulationMetadata, simulationData, ensembleMemberSimulationData],
+  );
+
+  const dataBoundsForChart = useCallback(
+    (chart) => resolveChartDataTimeBounds(chart, chartPlaybackCtx),
+    [chartPlaybackCtx],
+  );
+
+  const loopVisibleWindowForChart = useCallback(
+    (chart) => {
+      if (!simulationLoopMode || !simulationRunning) return null;
+      return resolveLoopVisibleXWindow(
+        chart,
+        chart.axisRange,
+        simulationTime,
+        dataBoundsForChart(chart),
+      );
+    },
+    [simulationLoopMode, simulationRunning, simulationTime, dataBoundsForChart],
+  );
+
+  const getLoopPlaybackState = (chartId) =>
+    simulationLoopMode ? loopChartPlaybackStateRef?.current?.[chartId] : null;
+
   // { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked }
 
   const legendMoveChartIdRef = useRef(null);
@@ -437,6 +500,7 @@ const ChartPanel = ({
     e.stopPropagation();
     const live = plotlyRangesRef.current[chart.id];
     const saved = chart.axisRange;
+    const bounds = dataBoundsForChart(chart);
     const fmt = (v) => (v != null && !Number.isNaN(Number(v)) ? String(v) : '');
     setEditingAxisRange({
       chartId: chart.id,
@@ -449,19 +513,29 @@ const ChartPanel = ({
       xThreshold: fmt(saved?.xThreshold),
       dangerYThreshold: fmt(saved?.dangerYThreshold),
       simulationStartAt: fmt(
-        saved?.simulationStartAt ?? DEFAULT_CHART_SIMULATION_START_AT,
+        hasExplicitSimulationStartAt(chart)
+          ? saved?.simulationStartAt
+          : bounds?.min ?? DEFAULT_CHART_SIMULATION_START_AT,
+      ),
+      simulationEndAt: fmt(
+        hasExplicitSimulationEndAt(chart) ? saved?.simulationEndAt : bounds?.max,
+      ),
+      tLoop: fmt(
+        hasExplicitChartLoopT(chart) ? saved?.tLoop : DEFAULT_CHART_T_LOOP,
       ),
     });
   };
 
   const commitAxisRangeEdit = () => {
     if (!editingAxisRange) return;
-    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, simulationStartAt } =
+    const { chartId, xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, simulationStartAt, simulationEndAt, tLoop } =
       editingAxisRange;
     const p = (v) => (v === '' || v == null ? undefined : Number(v));
     const xThr = p(xThreshold);
     const yDanger = p(dangerYThreshold);
     const simStart = p(simulationStartAt);
+    const simEnd = p(simulationEndAt);
+    const loopT = p(tLoop);
     // Only persist min/max for a locked axis; Plotly "Home" uses saved range on locked
     // axes and autorange on unlocked axes, so we must not store unused box values.
     const axisRange = {
@@ -472,6 +546,8 @@ const ChartPanel = ({
       ...(simStart != null && !Number.isNaN(simStart)
         ? { simulationStartAt: Math.max(0, simStart) }
         : {}),
+      ...(simEnd != null && !Number.isNaN(simEnd) ? { simulationEndAt: simEnd } : {}),
+      ...(loopT != null && !Number.isNaN(loopT) && loopT > 0 ? { tLoop: loopT } : {}),
       ...(xLocked ? { xMin: p(xMin), xMax: p(xMax) } : {}),
       ...(yLocked ? { yMin: p(yMin), yMax: p(yMax) } : {}),
     };
@@ -482,8 +558,10 @@ const ChartPanel = ({
     const hasXThreshold = axisRange.xThreshold != null;
     const hasDangerY = axisRange.dangerYThreshold != null;
     const hasSimulationStart = axisRange.simulationStartAt != null;
+    const hasSimulationEnd = axisRange.simulationEndAt != null;
+    const hasLoopT = axisRange.tLoop != null;
     onUpdateChart?.(chartId, {
-      axisRange: hasRange || hasLock || hasXThreshold || hasDangerY || hasSimulationStart ? axisRange : null,
+      axisRange: hasRange || hasLock || hasXThreshold || hasDangerY || hasSimulationStart || hasSimulationEnd || hasLoopT ? axisRange : null,
     });
     setEditingAxisRange(null);
   };
@@ -742,7 +820,53 @@ const ChartPanel = ({
             />
           </label>
           <span className="chart-axis-range-threshold-hint">
-            Seconds — playback for this chart begins here (default {DEFAULT_CHART_SIMULATION_START_AT}s)
+            Seconds — playback for this chart begins here (default: start of this chart&apos;s data file)
+          </span>
+        </div>
+
+        <div className="chart-axis-range-threshold-row">
+          <label className="chart-axis-range-threshold-label">
+            <span>End simulation at</span>
+            <input
+              className="chart-axis-range-editor-input chart-axis-range-threshold-input"
+              type="number"
+              min={0}
+              step={0.1}
+              value={editingAxisRange.simulationEndAt}
+              onChange={(e) =>
+                setEditingAxisRange((p) => ({ ...p, simulationEndAt: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitAxisRangeEdit();
+                if (e.key === 'Escape') setEditingAxisRange(null);
+              }}
+            />
+          </label>
+          <span className="chart-axis-range-threshold-hint">
+            Seconds — progressive traces stop advancing here (default: end of this chart&apos;s data file)
+          </span>
+        </div>
+
+        <div className="chart-axis-range-threshold-row">
+          <label className="chart-axis-range-threshold-label">
+            <span>t_loop</span>
+            <input
+              className="chart-axis-range-editor-input chart-axis-range-threshold-input"
+              type="number"
+              min={0.1}
+              step={0.1}
+              value={editingAxisRange.tLoop}
+              onChange={(e) =>
+                setEditingAxisRange((p) => ({ ...p, tLoop: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitAxisRangeEdit();
+                if (e.key === 'Escape') setEditingAxisRange(null);
+              }}
+            />
+          </label>
+          <span className="chart-axis-range-threshold-hint">
+            Seconds — loop play clones this much data before t_end (default: {DEFAULT_CHART_T_LOOP})
           </span>
         </div>
 
@@ -1636,6 +1760,10 @@ const ChartPanel = ({
         simulationRunning,
         simulationTime,
         sampleStep: step,
+        dataBounds: dataBoundsForChart(chart),
+        simulationLoopMode,
+        visibleWindow: loopVisibleWindowForChart(chart),
+        loopPlaybackState: getLoopPlaybackState(chart.id),
       });
       const style = buildTraceLineStyle(chart, colKey, index);
       return {
@@ -1736,6 +1864,10 @@ const ChartPanel = ({
           simulationRunning,
           simulationTime,
           sampleStep: step,
+          dataBounds: dataBoundsForChart(chart),
+          simulationLoopMode,
+          visibleWindow: loopVisibleWindowForChart(chart),
+          loopPlaybackState: getLoopPlaybackState(chart.id),
         });
         const style = buildTraceLineStyle(chart, yCol, styleIndex);
         const xValues = sampledData.map((row) => parseFloat(row[chart.xColumn]) || 0);
@@ -1782,6 +1914,10 @@ const ChartPanel = ({
         simulationRunning,
         simulationTime,
         sampleStep: step,
+        dataBounds: dataBoundsForChart(chart),
+        simulationLoopMode,
+        visibleWindow: loopVisibleWindowForChart(chart),
+        loopPlaybackState: getLoopPlaybackState(chart.id),
       });
       const style = buildTraceLineStyle(chart, yCol, index);
       const xValues = sampledData.map((row) => parseFloat(row[chart.xColumn]) || 0);
@@ -1825,10 +1961,35 @@ const ChartPanel = ({
     // Filter data based on simulation time
     let filteredData = data;
     if (simulationRunning && simulationTime !== undefined) {
-      filteredData = data.filter(row => {
-        const timeValue = parseFloat(row[chart.timeColumn]);
-        return !isNaN(timeValue) && timeValue <= simulationTime;
-      });
+      if (simulationLoopMode) {
+        const bounds = dataBoundsForChart(chart);
+        const loopBounds = getChartLoopBounds(chart, bounds);
+        const loopState = getLoopPlaybackState(chart.id);
+        if (loopState?.halted) {
+          const frozen = loopState?.frozenSamples ?? [];
+          filteredData =
+            frozen.length > 0 ? [frozen[frozen.length - 1].row] : [];
+        } else {
+          const indexed = data.map((row, i) => ({ row, i }));
+          const sorted = buildSortedTimeIndex(indexed, chart.timeColumn);
+          const displayOrigin = loopState?.displayOrigin ?? null;
+          const dataT = mapDisplayTimeToDataTime(
+            simulationTime,
+            loopBounds,
+            sorted,
+            chart.timeColumn,
+            displayOrigin,
+          );
+          const idx =
+            dataT != null ? nearestRowIndexForDataTime(data, chart.timeColumn, dataT) : -1;
+          filteredData = idx >= 0 ? [data[idx]] : [];
+        }
+      } else {
+        filteredData = data.filter(row => {
+          const timeValue = parseFloat(row[chart.timeColumn]);
+          return !isNaN(timeValue) && timeValue <= simulationTime;
+        });
+      }
     }
 
     // Get the last data point for current time (for bar chart)
@@ -1910,21 +2071,52 @@ const ChartPanel = ({
     const xCol = chart.xColumn;
     const yCols = chart.yColumns;
     const xThreshold = getChartXThreshold(chart);
-    const simulationStartAt = getChartSimulationStartAt(chart);
+    const bounds = dataBoundsForChart(chart);
+    const simulationStartAt = getChartLoopStartAt(chart, bounds);
+    const capTime = simulationLoopMode
+      ? simulationTime
+      : effectivePlaybackTimeForChart(simulationTime, chart, bounds);
     let rowIndex = 0;
     let bestTime = -Infinity;
     if (simulationRunning && simulationTime !== undefined) {
-      for (let i = 0; i < data.length; i++) {
-        const xv = cellFloat(data[i], xCol);
-        if (Number.isNaN(xv)) continue;
-        if (xThreshold != null && xv <= xThreshold) continue;
-        if (xv < simulationStartAt) continue;
-        if (xv <= simulationTime && xv >= bestTime) {
-          bestTime = xv;
-          rowIndex = i;
+      if (simulationLoopMode) {
+        const loopBounds = getChartLoopBounds(chart, bounds);
+        const loopState = getLoopPlaybackState(chart.id);
+        if (loopState?.halted) {
+          const frozen = loopState?.frozenSamples ?? [];
+          if (!frozen.length) return [];
+          rowIndex = frozen[frozen.length - 1].rowIndex;
+          if (rowIndex < 0) return [];
+        } else {
+          const indexed = data.map((row, i) => ({ row, i }));
+          const sorted = buildSortedTimeIndex(indexed, xCol);
+          const displayOrigin = loopState?.displayOrigin ?? null;
+          const dataT = mapDisplayTimeToDataTime(
+            simulationTime,
+            loopBounds,
+            sorted,
+            xCol,
+            displayOrigin,
+          );
+          if (dataT == null || simulationTime < simulationStartAt) return [];
+          rowIndex = nearestRowIndexForDataTime(data, xCol, dataT);
+          if (rowIndex < 0) return [];
+          const xv = cellFloat(data[rowIndex], xCol);
+          if (xThreshold != null && xv <= xThreshold) return [];
         }
+      } else {
+        for (let i = 0; i < data.length; i++) {
+          const xv = cellFloat(data[i], xCol);
+          if (Number.isNaN(xv)) continue;
+          if (xThreshold != null && xv <= xThreshold) continue;
+          if (xv < simulationStartAt) continue;
+          if (xv <= capTime && xv >= bestTime) {
+            bestTime = xv;
+            rowIndex = i;
+          }
+        }
+        if (bestTime === -Infinity) return [];
       }
-      if (bestTime === -Infinity) return [];
     } else if (xThreshold != null && xCol) {
       let found = false;
       for (let i = 0; i < data.length; i++) {
@@ -1990,6 +2182,10 @@ const ChartPanel = ({
         simulationRunning,
         simulationTime,
         selectedRowIndices,
+        dataBounds: dataBoundsForChart(chart),
+        simulationLoopMode,
+        visibleWindow: loopVisibleWindowForChart(chart),
+        loopPlaybackState: getLoopPlaybackState(chart.id),
       };
       if (chart.isMultiComponent && chart.chartType === 'multi-line-chart') {
         return buildCrossMultiLineTraces(base);
@@ -2006,6 +2202,9 @@ const ChartPanel = ({
           memberData: ensembleMemberSimulationData,
           simulationRunning,
           simulationTime,
+          dataBounds: dataBoundsForChart(chart),
+          simulationLoopMode,
+          loopPlaybackState: getLoopPlaybackState(chart.id),
         });
       }
       if (chart.chartType === '2d') {
@@ -2088,6 +2287,10 @@ const ChartPanel = ({
           simulationRunning,
           simulationTime,
           sampleStep: step,
+          dataBounds: dataBoundsForChart(chart),
+          simulationLoopMode,
+          visibleWindow: loopVisibleWindowForChart(chart),
+          loopPlaybackState: getLoopPlaybackState(chart.id),
         });
         const style = buildTraceLineStyle(chart, colKey, 0);
         const xValues = sampledData.map((row) => cellFloat(row, chart.xColumn));
@@ -2364,7 +2567,14 @@ const ChartPanel = ({
     const yLocked = ar.yLocked ?? false;
     let xMin = ar.xMin;
     let xMax = ar.xMax;
-    if (xLocked && isTimeBasedChart(chart) && playbackTimeRange) {
+    const chartBounds = dataBoundsForChart(chart);
+    if (simulationLoopMode && simulationRunning && xLocked) {
+      const win = resolveLoopVisibleXWindow(chart, ar, simulationTime, chartBounds);
+      if (win) {
+        xMin = win.xMin;
+        xMax = win.xMax;
+      }
+    } else if (xLocked && isTimeBasedChart(chart) && playbackTimeRange) {
       if (xMin == null && Number.isFinite(Number(playbackTimeRange.t1))) {
         xMin = Number(playbackTimeRange.t1);
       }
@@ -2376,11 +2586,15 @@ const ChartPanel = ({
     const yHas = ar.yMin != null || ar.yMax != null;
     const xExtent = chartXDataExtent(chart, data);
     const yExtent = chartYDataExtent(chart, data);
+    const loopXLocked =
+      simulationLoopMode && simulationRunning && xLocked && xMin != null && xMax != null;
 
     const xRangeProps =
       xLocked && xHas
         ? {
-            range: completeLockedAxisRange(xMin, xMax, xExtent),
+            range: loopXLocked
+              ? [xMin, xMax]
+              : completeLockedAxisRange(xMin, xMax, xExtent),
             autorange: false,
             rangemode: 'normal',
           }
@@ -3607,7 +3821,32 @@ const ChartPanel = ({
       >
         <div className="chart-panel-header-left">
           <div className="chart-panel-title">
-            📊 Charts ({charts.length})
+            <span className="chart-panel-title-main">
+              📊 Charts ({charts.length})
+              {namedSimulationConfigs.length > 0 && onActivateNamedSimulationConfig && (
+                <button
+                  type="button"
+                  className="chart-panel-named-configs-eye"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleNamedConfigsVisible();
+                  }}
+                  aria-label={
+                    namedConfigsVisible
+                      ? 'Hide configuration presets'
+                      : 'Show configuration presets'
+                  }
+                  aria-pressed={namedConfigsVisible}
+                  title={
+                    namedConfigsVisible
+                      ? 'Hide configuration presets (HD, HD-A, …)'
+                      : 'Show configuration presets'
+                  }
+                >
+                  {namedConfigsVisible ? '👁' : '👁‍🗨'}
+                </button>
+              )}
+            </span>
             {typeof simulationMetadata?.loadedRowCount === 'number' &&
               simulationMetadata.rowCount > simulationMetadata.loadedRowCount && (
                 <span
@@ -3631,7 +3870,9 @@ const ChartPanel = ({
               )}
           </div>
           {/* One button per named preset; activating rewrites root + current_configuration on disk and reloads this scenario. */}
-          {namedSimulationConfigs.length > 0 && onActivateNamedSimulationConfig && (
+          {namedConfigsVisible &&
+            namedSimulationConfigs.length > 0 &&
+            onActivateNamedSimulationConfig && (
             <div className="chart-panel-named-configs" onMouseDown={(e) => e.stopPropagation()}>
               {namedSimulationConfigs.map((presetName) => {
                 const isActivePreset = activeNamedSimulationConfig === presetName;

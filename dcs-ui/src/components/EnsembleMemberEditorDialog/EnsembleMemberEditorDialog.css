@@ -1,0 +1,76 @@
+@import '../EnsembleEditorDialog/EnsembleEditorDialog.css';
+
+.ensemble-member-editor-columns {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  max-height: min(160px, 28vh);
+  overflow: auto;
+}
+
+.ensemble-member-editor-columns-title {
+  margin: 0 0 8px;
+  font-size: calc(0.78rem + var(--ui-font-px-shift, 0px));
+  color: rgba(220, 228, 240, 0.72);
+}
+
+.ensemble-member-editor-columns ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: calc(0.82rem + var(--ui-font-px-shift, 0px));
+  color: #e8ecf4;
+  line-height: 1.5;
+}
+
+.ensemble-member-editor-divider {
+  margin: 16px 0 12px;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ensemble-member-editor-file-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ensemble-member-editor-file-input {
+  font-size: calc(0.82rem + var(--ui-font-px-shift, 0px));
+  color: rgba(220, 228, 240, 0.85);
+}
+
+.ensemble-member-editor-file-name {
+  font-size: calc(0.78rem + var(--ui-font-px-shift, 0px));
+  color: rgba(160, 220, 180, 0.95);
+  word-break: break-all;
+}
+
+.ensemble-member-editor-replace {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(80, 180, 120, 0.45);
+  background: rgba(40, 120, 80, 0.35);
+  color: #d4ffe8;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: calc(0.88rem + var(--ui-font-px-shift, 0px));
+  align-self: flex-start;
+}
+
+.ensemble-member-editor-replace:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ensemble-member-editor-success {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(40, 120, 80, 0.25);
+  border: 1px solid rgba(100, 220, 150, 0.35);
+  color: #b8f5d0;
+  font-size: calc(0.82rem + var(--ui-font-px-shift, 0px));
+}

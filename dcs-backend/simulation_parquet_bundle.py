@@ -145,6 +145,40 @@ def _write_single_column_parquet(sub: pd.DataFrame, path: str) -> None:
             raise second from first
 
 
+def validate_replace_columns_match(
+    design_dir: str,
+    sim_name: str,
+    new_columns: list[str],
+) -> None:
+    """
+    When a Parquet bundle already exists, require the upload to use exactly the same
+    column names and count (order may differ).
+    """
+    if not bundle_exists(design_dir, sim_name):
+        return
+    manifest = read_manifest(design_dir, sim_name)
+    existing = [str(c) for c in (manifest.get("columns") or [])]
+    incoming = [str(c) for c in new_columns]
+    if len(existing) != len(incoming):
+        raise ValueError(
+            f"Column count mismatch: this scenario has {len(existing)} columns, "
+            f"but the CSV has {len(incoming)}."
+        )
+    existing_set = set(existing)
+    incoming_set = set(incoming)
+    if existing_set != incoming_set:
+        missing = sorted(existing_set - incoming_set)
+        extra = sorted(incoming_set - existing_set)
+        parts = []
+        if missing:
+            parts.append(f"missing: {', '.join(missing)}")
+        if extra:
+            parts.append(f"extra: {', '.join(extra)}")
+        raise ValueError(
+            "Column names must match exactly. " + "; ".join(parts)
+        )
+
+
 def write_bundle_from_dataframe(df: pd.DataFrame, design_dir: str, sim_name: str) -> str:
     """
     Write {sim_name}.data/manifest.json + column parquets. Returns bundle root path.

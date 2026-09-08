@@ -4,6 +4,11 @@
 
 import { cellFloat } from './csvRowAccess';
 import { qualifyEnsembleColumn } from './simulationLazyApi';
+import {
+  buildLoopPlaybackSamples,
+  effectivePlaybackCapTime,
+  getChartLoopBounds,
+} from './simulationLoopPlayback';
 
 export const DEFAULT_CHART_COLORS = [
   '#005E60',
@@ -147,20 +152,49 @@ export function isVariableRigid(chart, colKey) {
   return savedStyleForColumn(chart, colKey)?.rigid === true;
 }
 
-/** Default playback start (seconds) for a chart when not saved on the design. */
+/** Default playback start (seconds) when no data bounds are available. */
 export const DEFAULT_CHART_SIMULATION_START_AT = 8;
 
-/** Per-chart simulation start time (seconds). Uses default only when not saved on the chart. */
-export function getChartSimulationStartAt(chart) {
+/** Per-chart simulation start (seconds). Saved value wins; else data file min when known. */
+export function getChartSimulationStartAt(chart, dataBounds = null) {
   const t = chart?.axisRange?.simulationStartAt;
-  if (t == null || t === '') return DEFAULT_CHART_SIMULATION_START_AT;
-  const n = Number(t);
-  return Number.isFinite(n) ? Math.max(0, n) : DEFAULT_CHART_SIMULATION_START_AT;
+  if (t != null && t !== '' && Number.isFinite(Number(t))) {
+    return Math.max(0, Number(t));
+  }
+  if (dataBounds && Number.isFinite(dataBounds.min)) {
+    return dataBounds.min;
+  }
+  return DEFAULT_CHART_SIMULATION_START_AT;
 }
 
 export function hasExplicitSimulationStartAt(chart) {
   const t = chart?.axisRange?.simulationStartAt;
   return t != null && t !== '' && Number.isFinite(Number(t));
+}
+
+/** Per-chart simulation end (seconds). Saved value wins; else data file max when known. */
+export function getChartSimulationEndAt(chart, dataBounds = null) {
+  const t = chart?.axisRange?.simulationEndAt;
+  if (t != null && t !== '' && Number.isFinite(Number(t))) {
+    return Number(t);
+  }
+  if (dataBounds && Number.isFinite(dataBounds.max)) {
+    return dataBounds.max;
+  }
+  return null;
+}
+
+export function hasExplicitSimulationEndAt(chart) {
+  const t = chart?.axisRange?.simulationEndAt;
+  return t != null && t !== '' && Number.isFinite(Number(t));
+}
+
+/** Cap playhead time for progressive traces on one chart. */
+export function effectivePlaybackTimeForChart(simulationTime, chart, dataBounds = null) {
+  if (simulationTime === undefined || simulationTime === null) return simulationTime;
+  const endAt = getChartSimulationEndAt(chart, dataBounds);
+  if (endAt == null) return simulationTime;
+  return Math.min(simulationTime, endAt);
 }
 
 /** Lowest explicitly saved start among open charts (ignores charts without a saved value). */
@@ -212,20 +246,73 @@ export function sampleIndexedRowsForVariable({
   simulationRunning,
   simulationTime,
   sampleStep = 1,
+  dataBounds = null,
+  simulationLoopMode = false,
+  visibleWindow = null,
+  loopPlaybackState = null,
 }) {
   const { rigid } = resolveVariableStyle(chart, colKey, index);
   let filtered = indexed;
+
   if (!rigid && simulationRunning && simulationTime !== undefined && xColumn) {
-    const startAt = getChartSimulationStartAt(chart);
-    filtered = indexed.filter(({ row }) => {
-      const xVal = cellFloat(row, xColumn);
-      return !Number.isNaN(xVal) && xVal >= startAt && xVal <= simulationTime;
-    });
+    const startAt = getChartSimulationStartAt(chart, dataBounds);
+    if (simulationLoopMode) {
+      const bounds = getChartLoopBounds(chart, dataBounds);
+      const displayOrigin = loopPlaybackState?.displayOrigin ?? null;
+      const halted = loopPlaybackState?.halted ?? false;
+
+      if (halted) {
+        const frozen = loopPlaybackState?.frozenSamples ?? [];
+        filtered = frozen.map((s) => ({
+          row: { ...s.row, [xColumn]: s.displayX },
+          i: s.rowIndex,
+        }));
+      } else {
+        const newSamples = buildLoopPlaybackSamples({
+          indexed,
+          timeCol: xColumn,
+          displayTime: simulationTime,
+          bounds,
+          simulationLoopMode: true,
+          visibleWindow,
+          displayOrigin,
+        });
+        const frozen = loopPlaybackState?.frozenSamples ?? [];
+        const combined = [
+          ...frozen.map((s) => ({
+            displayX: s.displayX,
+            rowIndex: s.rowIndex,
+            row: s.row,
+          })),
+          ...newSamples.filter(
+            (s) => displayOrigin == null || s.displayX >= displayOrigin - 1e-9,
+          ),
+        ];
+        filtered = combined
+          .filter((s) => s.displayX >= startAt)
+          .map((s) => ({
+            row: { ...s.row, [xColumn]: s.displayX },
+            i: s.rowIndex,
+          }));
+      }
+    } else {
+      const capTime = effectivePlaybackCapTime(
+        simulationTime,
+        chart,
+        dataBounds,
+        false,
+      );
+      filtered = indexed.filter(({ row }) => {
+        const xVal = cellFloat(row, xColumn);
+        return !Number.isNaN(xVal) && xVal >= startAt && xVal <= capTime;
+      });
+    }
   }
   const xThr = getChartXThreshold(chart);
   if (xThr != null && xColumn) {
     filtered = filtered.filter(({ row }) => rowPassesXThreshold(row, xColumn, xThr));
   }
+  // Apply per-chart sample stride after time / loop filtering (same as plain simulate).
   const step = sampleStep > 1 ? sampleStep : 1;
   const sampled = step > 1 ? filtered.filter((_, i) => i % step === 0) : filtered;
   return {

@@ -1852,6 +1852,10 @@
       "loadHdAero": {
         "action": "loadDesign",
         "designDir": "hd_aero"
+      },
+      "togglePeripheralsExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "peripherals"
       }
     },
     "interactiveBreakers": {
@@ -1868,7 +1872,7 @@
     }
   },
   "remoteControlTarget": {
-    "designDir": "p2r_16",
-    "designName": "P2R_16"
+    "designDir": "hd_aero",
+    "designName": "HD_Aero"
   }
 }

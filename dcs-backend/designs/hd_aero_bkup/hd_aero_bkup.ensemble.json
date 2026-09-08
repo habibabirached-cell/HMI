@@ -1,0 +1,729 @@
+{
+  "version": 1,
+  "ensembles": [
+    {
+      "id": "all",
+      "display_name": "all",
+      "member_simulations": [
+        "HD_",
+        "HD-Load",
+        "HD-Aero",
+        "HD-Aero-Load",
+        "HD-Load-Aero"
+      ],
+      "chart_panel": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "chart_card_width": 664,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "chart_card_width": 663,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "conf1": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 1,
+            "axis_range": {
+              "x_threshold": 0,
+              "simulation_start_at": 0.0,
+              "x_min": 0.0,
+              "x_max": 10.8,
+              "x_locked": true,
+              "simulation_end_at": 10.8
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_power (MW)",
+            "title": "HD - Aero_power (MW)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_freq (Hz)",
+            "title": "HD - Aero_freq (Hz)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 1,
+            "ui_drawer": "chart2",
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_power (MW)",
+            "title": "HD - HD_power (MW)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_freq (Hz)",
+            "title": "HD - HD_freq (Hz)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "conf2": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 1,
+            "ui_drawer": "chart2",
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_freq (Hz)",
+            "title": "HD - Aero_freq (Hz)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 1,
+            "ui_drawer": "chart2",
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_power (MW)",
+            "title": "HD - Aero_power (MW)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_power (MW)",
+            "title": "HD - HD_power (MW)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_freq (Hz)",
+            "title": "HD - HD_freq (Hz)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "confAero": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 1,
+            "ui_drawer": "chart2",
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_power (MW)",
+            "title": "HD - Aero_power (MW)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 1,
+            "ui_drawer": "chart2",
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Aero_freq (Hz)",
+            "title": "HD - Aero_freq (Hz)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_power (MW)",
+            "title": "HD - HD_power (MW)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "HD_freq (Hz)",
+            "title": "HD - HD_freq (Hz)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 1,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "HD": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 16,
+            "chart_card_width": 666,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 10.8
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 16,
+            "chart_card_width": 666,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 10.8
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD_",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 10.8,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 10.8
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "HD-L": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "chart_card_width": 664,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "chart_card_width": 663,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Load",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 25.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 25.0
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "HD-A": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 16,
+            "chart_card_width": 670,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 70.415
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 16,
+            "chart_card_width": 670,
+            "x_label": "Time",
+            "legend_position": {
+              "x": 0.4099999999999995,
+              "y": 0.95,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 70.415
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Aero",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 70.415,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 70.415
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "HD-Aero-Load": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Aero-Load",
+            "sample_step": 16,
+            "chart_card_width": 673,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 11.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 11.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Aero-Load",
+            "sample_step": 16,
+            "chart_card_width": 673,
+            "legend_position": {
+              "x": 0.46999999999999953,
+              "y": 0.99,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 11.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 11.0
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Aero-Load",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 11.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 11.0
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 16,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "HD-Load-Aero": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load-Aero",
+            "sample_step": 16,
+            "chart_card_width": 670,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 30.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 30.0
+            }
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "stacked-nd",
+            "x_column": "Time",
+            "y_columns": [
+              "Aero_power (MW)",
+              "HD_power (MW)"
+            ],
+            "split_by": "column",
+            "title": "HD - Stacked nD",
+            "ensemble_sim_id": "HD-Load-Aero",
+            "sample_step": 16,
+            "chart_card_width": 674,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 30.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 30.0
+            },
+            "ui_drawer": "chart2"
+          },
+          {
+            "type": "single",
+            "component_id": "comp-hd-turbine",
+            "chart_type": "2d",
+            "x_column": "Time",
+            "y_column": "Load_Voltage (kV)",
+            "title": "HD - Load_Voltage (kV)",
+            "ensemble_sim_id": "HD-Load-Aero",
+            "sample_step": 16,
+            "axis_range": {
+              "simulation_start_at": 0.0,
+              "simulation_end_at": 30.0,
+              "x_locked": true,
+              "x_min": 0.0,
+              "x_max": 30.0
+            }
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 16,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      }
+    }
+  ]
+}

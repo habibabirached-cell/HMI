@@ -153,6 +153,12 @@
   border-color: #4caf50;
 }
 
+.toolbar-sim-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .btn-sim {
   padding: 8px 20px;
   border: none;
@@ -163,6 +169,21 @@
   font-weight: 700;
   border-radius: 4px;
   transition: all 0.2s;
+}
+
+.btn-sim.btn-sim--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.btn-sim-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .btn-sim.start {

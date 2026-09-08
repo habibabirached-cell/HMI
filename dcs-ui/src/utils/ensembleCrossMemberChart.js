@@ -10,8 +10,18 @@ import {
   DEFAULT_CHART_COLORS,
   getChartXThreshold,
   getChartSimulationStartAt,
+  getChartSimulationEndAt,
+  effectivePlaybackTimeForChart,
   resolveVariableStyle,
 } from './chartVariableStyles';
+import {
+  buildLoopPlaybackSamples,
+  getChartLoopBounds,
+  getChartLoopStartAt,
+  mapDisplayTimeToDataTime,
+  nearestRowIndexForDataTime,
+  buildSortedTimeIndex,
+} from './simulationLoopPlayback';
 
 export function getCrossMemberBindingsForChart(chart) {
   const parts = [chart.xColumn, chart.yColumn, ...(chart.yColumns || [])].filter(
@@ -66,15 +76,20 @@ function buildSteppedRowIndices(
   rigid = false,
   xThreshold = null,
   simulationStartAt = null,
+  simulationEndAt = null,
 ) {
   let rowIdx = Array.from({ length: nMin }, (_, i) => i);
   if (!rigid && simulationRunning && simulationTime !== undefined) {
     const x0 = items[0];
     const rows = memberData[x0.simId];
     const startAt = simulationStartAt ?? 0;
+    const capTime =
+      simulationEndAt != null
+        ? Math.min(simulationTime, simulationEndAt)
+        : simulationTime;
     rowIdx = rowIdx.filter((i) => {
       const v = cellFloat(rows[i], x0.column);
-      return !Number.isNaN(v) && v >= startAt && v <= simulationTime;
+      return !Number.isNaN(v) && v >= startAt && v <= capTime;
     });
   }
   if (xThreshold != null && items[0]) {
@@ -112,6 +127,107 @@ function mapXForIndices(rowIdx, simId, column, memberData) {
  * @param {Set<number>|Set} [params.selectedRowIndices]
  * @param {string} [params.lineColor]
  */
+function sliceCrossMemberColumnLabel(column) {
+  const idx = column.indexOf(ENSEMBLE_COLUMN_SEP);
+  return idx >= 0 ? column.slice(idx + ENSEMBLE_COLUMN_SEP.length).trim() : column;
+}
+
+function chartSimWindow(chart, dataBounds) {
+  return {
+    start: getChartSimulationStartAt(chart, dataBounds),
+    end: getChartSimulationEndAt(chart, dataBounds),
+  };
+}
+
+/** Progressive X/Y series for one Y binding (loop mode uses remapped display time on X). */
+function buildCrossMemberSeries({
+  nMin,
+  items,
+  memberData,
+  xItem,
+  yItem,
+  chart,
+  dataBounds,
+  simulationRunning,
+  simulationTime,
+  sampleStep,
+  rigid,
+  xThreshold,
+  simulationLoopMode,
+  visibleWindow = null,
+  loopPlaybackState = null,
+}) {
+  const xRows = memberData[xItem.simId];
+  const startAt = getChartLoopStartAt(chart, dataBounds);
+
+  if (
+    !rigid &&
+    simulationRunning &&
+    simulationTime !== undefined &&
+    simulationLoopMode
+  ) {
+    const indexed = Array.from({ length: nMin }, (_, i) => ({ row: xRows[i], i }));
+    const bounds = getChartLoopBounds(chart, dataBounds);
+    const displayOrigin = loopPlaybackState?.displayOrigin ?? null;
+    const halted = loopPlaybackState?.halted ?? false;
+
+    let samples;
+    if (halted) {
+      samples = loopPlaybackState?.frozenSamples ?? [];
+    } else {
+      samples = buildLoopPlaybackSamples({
+        indexed,
+        timeCol: xItem.column,
+        displayTime: simulationTime,
+        bounds,
+        simulationLoopMode: true,
+        visibleWindow,
+        displayOrigin,
+      });
+      const frozen = loopPlaybackState?.frozenSamples ?? [];
+      samples = [
+        ...frozen,
+        ...samples.filter(
+          (s) => displayOrigin == null || s.displayX >= displayOrigin - 1e-9,
+        ),
+      ];
+    }
+    samples = samples.filter((s) => s.displayX >= startAt);
+    if (xThreshold != null) {
+      samples = samples.filter((s) => s.displayX > xThreshold);
+    }
+    const step = sampleStep > 1 ? sampleStep : 1;
+    if (step > 1) {
+      samples = samples.filter((_, j) => j % step === 0);
+    }
+    const yRows = memberData[yItem.simId];
+    return {
+      rowIdx: samples.map((s) => s.rowIndex),
+      xValues: samples.map((s) => s.displayX),
+      yValues: samples.map((s) => cellFloat(yRows[s.rowIndex], yItem.column) || 0),
+    };
+  }
+
+  const { start, end } = chartSimWindow(chart, dataBounds);
+  const rowIdx = buildSteppedRowIndices(
+    nMin,
+    items,
+    memberData,
+    simulationRunning,
+    simulationTime,
+    sampleStep,
+    rigid,
+    xThreshold,
+    start,
+    end,
+  );
+  return {
+    rowIdx,
+    xValues: mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData),
+    yValues: mapYForIndices(rowIdx, yItem.simId, yItem.column, memberData),
+  };
+}
+
 export function buildCross2dTraces({
   chart,
   memberData,
@@ -120,6 +236,10 @@ export function buildCross2dTraces({
   simulationTime,
   selectedRowIndices,
   lineColor = '#005E60',
+  dataBounds = null,
+  simulationLoopMode = false,
+  visibleWindow = null,
+  loopPlaybackState = null,
 }) {
   const items = getCrossMemberBindingsForChart(chart);
   if (!items || items.length < 2) {
@@ -135,19 +255,23 @@ export function buildCross2dTraces({
   const style = buildTraceLineStyle(chart, yKey, 0);
   const rigid = resolveVariableStyle(chart, yKey, 0).rigid;
   const xThreshold = getChartXThreshold(chart);
-  const rowIdx = buildSteppedRowIndices(
+  const { rowIdx, xValues, yValues } = buildCrossMemberSeries({
     nMin,
     items,
     memberData,
+    xItem: xb,
+    yItem: yb,
+    chart,
+    dataBounds,
     simulationRunning,
     simulationTime,
     sampleStep,
     rigid,
     xThreshold,
-    getChartSimulationStartAt(chart),
-  );
-  const xValues = mapXForIndices(rowIdx, xb.simId, xb.column, memberData);
-  const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
+    simulationLoopMode,
+    visibleWindow,
+    loopPlaybackState,
+  });
   const hasSelection = selectedRowIndices && selectedRowIndices.size > 0;
   const selectedSet = selectedRowIndices instanceof Set ? selectedRowIndices : new Set(selectedRowIndices || []);
   const traceColor = style.color || lineColor;
@@ -181,6 +305,10 @@ export function buildCrossNdTraces({
   simulationRunning,
   simulationTime,
   selectedRowIndices,
+  dataBounds = null,
+  simulationLoopMode = false,
+  visibleWindow = null,
+  loopPlaybackState = null,
 }) {
   const items = getCrossMemberBindingsForChart(chart);
   if (!items || items.length < 2) return [];
@@ -195,19 +323,23 @@ export function buildCrossNdTraces({
     const yKey = chart.yColumns?.[index] ?? yb.column;
     const style = buildTraceLineStyle(chart, yKey, index);
     const rigid = resolveVariableStyle(chart, yKey, index).rigid;
-    const rowIdx = buildSteppedRowIndices(
+    const { rowIdx, xValues, yValues } = buildCrossMemberSeries({
       nMin,
       items,
       memberData,
+      xItem,
+      yItem: yb,
+      chart,
+      dataBounds,
       simulationRunning,
       simulationTime,
       sampleStep,
       rigid,
       xThreshold,
-      getChartSimulationStartAt(chart),
-    );
-    const xValues = mapXForIndices(rowIdx, xItem.simId, xItem.column, memberData);
-    const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
+      simulationLoopMode,
+      visibleWindow,
+      loopPlaybackState,
+    });
     const yLabel = chart.legendLabels?.[yKey] ?? yKey;
     return {
       x: xValues,
@@ -240,6 +372,10 @@ export function buildCrossStackedNdTraces({
   simulationTime,
   selectedRowIndices,
   groupFn,
+  dataBounds = null,
+  simulationLoopMode = false,
+  visibleWindow = null,
+  loopPlaybackState = null,
 }) {
   const items = getCrossMemberBindingsForChart(chart);
   if (!items || items.length < 2) return [];
@@ -264,19 +400,23 @@ export function buildCrossStackedNdTraces({
       if (!yb) return;
       const style = buildTraceLineStyle(chart, yColKey, colIdx);
       const rigid = resolveVariableStyle(chart, yColKey, colIdx).rigid;
-      const traceRowIdx = buildSteppedRowIndices(
+      const { rowIdx: traceRowIdx, xValues: traceX, yValues } = buildCrossMemberSeries({
         nMin,
         items,
         memberData,
+        xItem,
+        yItem: yb,
+        chart,
+        dataBounds,
         simulationRunning,
         simulationTime,
         sampleStep,
         rigid,
         xThreshold,
-        getChartSimulationStartAt(chart),
-      );
-      const traceX = mapXForIndices(traceRowIdx, xItem.simId, xItem.column, memberData);
-      const yValues = mapYForIndices(traceRowIdx, yb.simId, yb.column, memberData);
+        simulationLoopMode,
+        visibleWindow,
+        loopPlaybackState,
+      });
       const traceName = chart.legendLabels?.[yColKey] ?? yColKey;
       traces.push({
         x: traceX,
@@ -309,6 +449,10 @@ export function buildCrossMultiLineTraces({
   simulationRunning,
   simulationTime,
   selectedRowIndices,
+  dataBounds = null,
+  simulationLoopMode = false,
+  visibleWindow = null,
+  loopPlaybackState = null,
 }) {
   const tq = chart.timeColumn;
   const compCols = (chart.components || []).map((c) => c.columnName).filter(Boolean);
@@ -328,19 +472,23 @@ export function buildCrossMultiLineTraces({
     const colKey = comp.columnName;
     const style = buildTraceLineStyle(chart, colKey, index);
     const rigid = resolveVariableStyle(chart, colKey, index).rigid;
-    const rowIdx = buildSteppedRowIndices(
+    const { rowIdx, xValues, yValues } = buildCrossMemberSeries({
       nMin,
       items,
       memberData,
+      xItem: tItem,
+      yItem: yb,
+      chart,
+      dataBounds,
       simulationRunning,
       simulationTime,
       sampleStep,
       rigid,
       xThreshold,
-      getChartSimulationStartAt(chart),
-    );
-    const xValues = mapXForIndices(rowIdx, tItem.simId, tItem.column, memberData);
-    const yValues = mapYForIndices(rowIdx, yb.simId, yb.column, memberData);
+      simulationLoopMode,
+      visibleWindow,
+      loopPlaybackState,
+    });
     return {
       x: xValues,
       y: yValues,
@@ -360,13 +508,16 @@ export function buildCrossMultiLineTraces({
   }).filter(Boolean);
 }
 
-function sliceCrossMemberColumnLabel(column) {
-  const idx = column.indexOf(ENSEMBLE_COLUMN_SEP);
-  return idx >= 0 ? column.slice(idx + ENSEMBLE_COLUMN_SEP.length).trim() : column;
-}
-
 /** One pie trace: slices from one row across members (aligned by row index); updates with playback time on X. */
-export function buildCrossPieTraces({ chart, memberData, simulationRunning, simulationTime }) {
+export function buildCrossPieTraces({
+  chart,
+  memberData,
+  simulationRunning,
+  simulationTime,
+  dataBounds = null,
+  simulationLoopMode = false,
+  loopPlaybackState = null,
+}) {
   const items = getCrossMemberBindingsForChart(chart);
   if (!items || items.length < 2) return [];
   const lens = items.map(({ simId }) => memberData[simId]?.length ?? 0);
@@ -376,23 +527,49 @@ export function buildCrossPieTraces({ chart, memberData, simulationRunning, simu
   const xItem = items[0];
   const yItems = items.slice(1);
   const xThreshold = getChartXThreshold(chart);
-  const simulationStartAt = getChartSimulationStartAt(chart);
+  const simulationStartAt = getChartLoopStartAt(chart, dataBounds);
+  const capTime = simulationLoopMode
+    ? simulationTime
+    : effectivePlaybackTimeForChart(simulationTime, chart, dataBounds);
 
   let rowIndex = 0;
-  let bestTime = -Infinity;
   const rows = memberData[xItem.simId];
   if (simulationRunning && simulationTime !== undefined) {
-    for (let i = 0; i < nMin; i++) {
-      const xv = cellFloat(rows[i], xItem.column);
-      if (Number.isNaN(xv)) continue;
-      if (xThreshold != null && xv <= xThreshold) continue;
-      if (xv < simulationStartAt) continue;
-      if (xv <= simulationTime && xv >= bestTime) {
-        bestTime = xv;
-        rowIndex = i;
+    if (loopPlaybackState?.halted) {
+      const frozen = loopPlaybackState?.frozenSamples ?? [];
+      if (!frozen.length) return [];
+      rowIndex = frozen[frozen.length - 1].rowIndex;
+    } else if (simulationLoopMode) {
+      const bounds = getChartLoopBounds(chart, dataBounds);
+      const indexed = Array.from({ length: nMin }, (_, i) => ({ row: rows[i], i }));
+      const sorted = buildSortedTimeIndex(indexed, xItem.column);
+      const displayOrigin = loopPlaybackState?.displayOrigin ?? null;
+      const dataT = mapDisplayTimeToDataTime(
+        simulationTime,
+        bounds,
+        sorted,
+        xItem.column,
+        displayOrigin,
+      );
+      if (dataT == null || simulationTime < simulationStartAt) return [];
+      rowIndex = nearestRowIndexForDataTime(rows, xItem.column, dataT);
+      if (rowIndex < 0) return [];
+      const xv = cellFloat(rows[rowIndex], xItem.column);
+      if (xThreshold != null && xv <= xThreshold) return [];
+    } else {
+      let bestTime = -Infinity;
+      for (let i = 0; i < nMin; i++) {
+        const xv = cellFloat(rows[i], xItem.column);
+        if (Number.isNaN(xv)) continue;
+        if (xThreshold != null && xv <= xThreshold) continue;
+        if (xv < simulationStartAt) continue;
+        if (xv <= capTime && xv >= bestTime) {
+          bestTime = xv;
+          rowIndex = i;
+        }
       }
+      if (bestTime === -Infinity) return [];
     }
-    if (bestTime === -Infinity) return [];
   } else if (xThreshold != null) {
     let found = false;
     for (let i = 0; i < nMin; i++) {

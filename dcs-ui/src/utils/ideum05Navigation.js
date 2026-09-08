@@ -41,6 +41,9 @@ export function getIdeum05NavScreen(stack) {
 /** Maingear HD_Aero catalog (cluster loadHdAero). */
 export const IDEUM05_HD_AERO_MAINGEAR_CATALOG = 'hd_aero';
 
+/** Maingear P2R_18 catalog (cluster loadP2R18). */
+export const IDEUM05_P2R18_MAINGEAR_CATALOG = 'p2r_18';
+
 /** Ideum-only HD_Aero copy (Reference 500 MW overlay; pan/zoom saved here). */
 export const IDEUM05_HD_AERO_IDEUM_CATALOG = 'hd_aero_ideum';
 

@@ -455,6 +455,18 @@ class UpdateEnsembleRequest(BaseModel):
     display_name: Optional[str] = Field(None, max_length=400)
     member_simulations: Optional[list[str]] = None
 
+
+class RenameSimulationRequest(BaseModel):
+    """Body for PATCH …/simulations/{sim_name}/rename — change scenario id and update all references."""
+
+    new_sim_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=120,
+        pattern=r"^[a-zA-Z0-9_-]+$",
+        description="New scenario id (letters, digits, underscore, hyphen)",
+    )
+
 # ------------------------------------------------------------------------------------------------------
 # NOTES ON PYDANTIC
 # ------------------------------------------------------------------------------------------------------

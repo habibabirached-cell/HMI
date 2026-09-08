@@ -738,7 +738,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "open",
+      "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -758,7 +758,7 @@
         "height": 130
       },
       "connectionReadout": null,
-      "initialSimStatus": "open"
+      "initialSimStatus": null
     },
     {
       "id": "comp-hd-3d-preview",
@@ -1775,8 +1775,8 @@
     "simulationRunning": false,
     "zoom": 0.88,
     "pan": {
-      "x": 500.533333333331,
-      "y": 89.333333333333
+      "x": 481.46666666666835,
+      "y": 67.46666666666607
     },
     "panTop": {
       "x": 507.7333333333344,
@@ -1799,15 +1799,13 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "open-1788736980239": 1,
-    "open-1788736984260": 1,
-    "open-1788736987620": 1,
-    "open-1788736968366": 1,
-    "open-1788736975451": 1
+    "sim-chart-1788824888594-0": 16,
+    "sim-chart-1788824888595-1": 16,
+    "sim-chart-1788824888595-2": 16
   },
   "playbackTimeRange": {
-    "t1": 8.0,
-    "t2": 60.0
+    "t1": 0.0,
+    "t2": 10.0
   },
   "designUiSession": {
     "ensembleId": "all",
@@ -1821,7 +1819,12 @@
       "withBessandStatCom": true,
       "withBessAlone": true,
       "withStatcomAlone": true
-    }
+    },
+    "hiddenChartPanelNamedConfigs": [
+      "conf1",
+      "conf2",
+      "confAero"
+    ]
   },
   "quickScenarioButtons": [],
   "hiddenDefaultQuickScenarios": [],

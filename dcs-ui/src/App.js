@@ -10,6 +10,7 @@ import ChartPanel from './components/ChartPanel/ChartPanel';
 import ColumnPickerDialog from './components/ColumnPickerDialog/ColumnPickerDialog';
 import ConnectionReadoutDialog from './components/ConnectionReadoutDialog/ConnectionReadoutDialog';
 import ViewDataModal from './components/ViewDataModal/ViewDataModal';
+import EnsembleMemberEditorDialog from './components/EnsembleMemberEditorDialog/EnsembleMemberEditorDialog';
 import SaveSimulationConfigDialog from './components/SaveSimulationConfigDialog/SaveSimulationConfigDialog';
 import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenarioAsDialog';
 import {
@@ -76,14 +77,24 @@ import {
   getIdeum05OverlayDesignDir,
   getIdeum05OverlaySaveTarget,
   isIdeum05ConfiguratorScreen,
+  isIdeum05ControlsScreen,
   isIdeum05DesignName,
   isIdeum05DesignScreen,
   isIdeum05HdAeroScreen,
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
+  IDEUM05_P2R18_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
 import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
+import {
+  HD_AERO_CB_A_ID,
+  HD_AERO_CB_B_ID,
+  HD_AERO_DEFAULT_PRESET,
+  HD_AERO_ENSEMBLE_ID,
+  hdAeroBreakersOpenUpdate,
+  resolveHdAeroPresetFromBreakers,
+} from './utils/hdAeroBreakerPresets';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -107,6 +118,15 @@ import {
   groupColumnsByEnsembleMember,
   ENSEMBLE_COLUMN_SEP,
 } from './utils/simulationLazyApi';
+import {
+  remapCanvasComponentsForSimRename,
+  remapEnsembleColumnGroups,
+  remapEnsembleMemberData,
+  remapOpenChartForSimRename,
+  remapSimulationMetadataForSimRename,
+  remapVariableDrivenPresenceRules,
+} from './utils/ensembleSimRename';
+import { isFormulaParquetScenarioId } from './utils/formulaParquetUi';
 import { FORMULA_PARQUET_DISPLAY_NAME } from './utils/formulaParquetUi';
 import {
   CHART_PANEL_MIN_HEIGHT,
@@ -126,7 +146,7 @@ import {
   normalizePlaybackTimeRange,
   resolvePlaybackLoopBounds,
 } from './utils/playbackTimeRange';
-import { applyPlaybackRangeToCharts, isTimeBasedChart } from './utils/publishPlaybackTimeRange';
+import { applyPlaybackRangeToCharts, applyDataBoundsToCharts, isTimeBasedChart } from './utils/publishPlaybackTimeRange';
 import {
   appendLiveRtdsPoint,
   buildLiveRtdsOpenCharts,
@@ -138,7 +158,15 @@ import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
 import { isLocalClusterDev } from './configurator/utils/conf_configuratorCluster';
-import { normalizeVariableStylesFromDef, normalizeLegendPositionFromDef, compactLegendPositionForSave, resolveEffectiveSimulationStart } from './utils/chartVariableStyles';
+import { resolveChartDataTimeBounds } from './utils/chartSimulationTimeBounds';
+import { resolveLoopPlaybackGlobalStart } from './utils/simulationLoopPlayback';
+import { buildLoopConfigSwitchPlan } from './utils/simulationLoopConfigSwitch';
+import {
+  normalizeVariableStylesFromDef,
+  normalizeLegendPositionFromDef,
+  compactLegendPositionForSave,
+  resolveEffectiveSimulationStart,
+} from './utils/chartVariableStyles';
 import { downsampleRowsForSparklines, arrayFiniteMinMax } from './utils/simulationSparklineData';
 import { copyTextToClipboard } from './utils/clipboard';
 import {
@@ -220,6 +248,26 @@ function isHDAeroDesign(loadedConfig) {
   );
 }
 
+/** Ideum touch-table HD_Aero overlay (pairs with Maingear hd_aero via cluster). */
+function isHDAeroIdeumDesign(loadedConfig) {
+  const name = String(loadedConfig?.name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  const rel = String(
+    loadedConfig?.csv_status?.design_catalog_rel ||
+      loadedConfig?.design_catalog_rel ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+  return (
+    name === 'hd_aero_ideum' ||
+    rel === 'hd_aero_ideum' ||
+    rel.endsWith('/hd_aero_ideum')
+  );
+}
+
 /** Canvas `zoom` scale: 1 = 100%. Toolbar / keyboard zoom is clamped to this range. */
 const CANVAS_ZOOM_MIN = 0.1;
 const CANVAS_ZOOM_MAX = 10;
@@ -285,7 +333,7 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       const pcw = chartCardWidthFromDef(chartDef);
       const drawer = uiDrawerFieldsFromChartDef(chartDef);
       const multiBase = pcw != null ? { ...multi, chartCardWidth: pcw } : multi;
-      return { ...multiBase, ...drawer };
+      return { ...multiBase, ...drawer, presetSlotIndex: index };
     }
     const component = canvasComponents.find((c) => c.id === chartDef.component_id);
     if (!component) return null;
@@ -351,6 +399,13 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
                 Number.isFinite(Number(a.simulation_start_at))
                   ? { simulationStartAt: Number(a.simulation_start_at) }
                   : {}),
+                ...(a.simulation_end_at != null &&
+                Number.isFinite(Number(a.simulation_end_at))
+                  ? { simulationEndAt: Number(a.simulation_end_at) }
+                  : {}),
+                ...(a.t_loop != null && Number.isFinite(Number(a.t_loop)) && Number(a.t_loop) > 0
+                  ? { tLoop: Number(a.t_loop) }
+                  : {}),
                 ...(a.x_reference != null && Number.isFinite(Number(a.x_reference))
                   ? { xReference: Number(a.x_reference) }
                   : {}),
@@ -376,7 +431,7 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
     const pcw = chartCardWidthFromDef(chartDef);
     const drawer = uiDrawerFieldsFromChartDef(chartDef);
     const singleBase = pcw != null ? { ...single, chartCardWidth: pcw } : single;
-    return { ...singleBase, ...drawer };
+    return { ...singleBase, ...drawer, presetSlotIndex: index };
   }).filter(Boolean);
   return { newCharts, initialPerChart };
 }
@@ -637,6 +692,20 @@ function App() {
     ...DEFAULT_PLAYBACK_TIME_RANGE,
   }));
   const playbackTimeRangeRef = useRef({ ...DEFAULT_PLAYBACK_TIME_RANGE });
+  /** True while playback uses open-ended loop cloning (loop play button). */
+  const simulationLoopModeRef = useRef(false);
+  const [simulationLoopMode, setSimulationLoopMode] = useState(false);
+  /** Per-chart frozen history + display origin when switching presets during loop play. */
+  const loopChartPlaybackStateRef = useRef({});
+  const onEnsureEnsembleChartColumnsRef = useRef(async () => {});
+  const simulationTimeRef = useRef(0);
+  const simulationRunningRef = useRef(false);
+  useLayoutEffect(() => {
+    simulationTimeRef.current = simulationTime;
+  }, [simulationTime]);
+  useLayoutEffect(() => {
+    simulationRunningRef.current = simulationRunning;
+  }, [simulationRunning]);
   useLayoutEffect(() => {
     simulationSpeedRef.current = simulationSpeed;
   }, [simulationSpeed]);
@@ -824,6 +893,7 @@ function App() {
   const simulationRawRowsSimIdRef = useRef(null);
   /** Deep link calls the same loader as the dialog but must not also run localStorage session-restore for the same navigation. */
   const loadSkipSessionRestoreRef = useRef(false);
+  const pendingHdAeroInitRef = useRef(false);
   /**
    * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
@@ -899,6 +969,7 @@ function App() {
 
   // View data modal – show first 200 rows of simulation CSV
   const [viewModal, setViewModal] = useState(null); // { simName, displayName, data } | null
+  const [ensembleMemberEditor, setEnsembleMemberEditor] = useState(null); // { simId, columns }
   
   // Panel focus for z-index (click-to-bring-forward)
   const [focusedPanel, setFocusedPanel] = useState(null); // 'canvas' | 'property' | 'simulation' | 'charts' | null
@@ -936,6 +1007,12 @@ function App() {
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const ideum05HdAeroMode = isIdeum05 && isIdeum05HdAeroScreen(ideum05NavScreen);
+  const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
+    name: currentConfigName,
+    csv_status: { design_catalog_rel: designApiPath },
+  });
+  /** Forward CB_a/CB_b clicks from Ideum HD_Aero overlay to Maingear hd_aero. */
+  const mirrorHdAeroBreakersToMaingear = ideum05HdAeroMode || isHdAeroIdeumLoaded;
   const ideum05OverlaySaveTarget = isIdeum05
     ? getIdeum05OverlaySaveTarget(ideum05NavScreen)
     : null;
@@ -1434,8 +1511,13 @@ function App() {
     );
   }, []);
 
-  // Start simulation
+  // Start simulation (plain play — wraps at playback t2)
   const handleStartSimulation = () => {
+    if (simulationIntervalRef.current) {
+      stopSimulationClock();
+    }
+    simulationLoopModeRef.current = false;
+    setSimulationLoopMode(false);
     const start = () => {
       const { loopStart, loopEnd } = getPlaybackLoopBounds();
       const loopStartTime = resolveEffectiveSimulationStart(
@@ -1486,11 +1568,75 @@ function App() {
     start();
   };
 
+  /** Loop play: global clock runs past data end; charts clone last t_loop seconds. */
+  const handleStartSimulationWithLoop = () => {
+    if (simulationIntervalRef.current) {
+      stopSimulationClock();
+    }
+    simulationLoopModeRef.current = true;
+    setSimulationLoopMode(true);
+    const resolveBounds = (chart) =>
+      resolveChartDataTimeBounds(chart, {
+        simulationMetadata: simulationMetadataRef.current,
+        simulationData: simulationDataRef.current,
+        ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+      });
+
+    const start = () => {
+      loopChartPlaybackStateRef.current = {};
+      const loopStartTime = resolveLoopPlaybackGlobalStart(
+        openChartsRef.current,
+        resolveBounds,
+      );
+      setSimulationRunning(true);
+      setSimulationTime(loopStartTime);
+      resetPlaybackVisualsRef.current();
+      startSimulationClock();
+      if (machineRoleRef.current?.isMaingear) {
+        void broadcastClusterMessage({ type: 'simulation_state', running: true }).catch((e) =>
+          console.warn('cluster simulation_state broadcast', e),
+        );
+      }
+    };
+
+    if (simulationMetadata?.isEnsemble) {
+      void (async () => {
+        try {
+          await ensureEnsemblePlaybackPrimedRef.current?.();
+          const members = simulationMetadata.memberSimulations || [];
+          const ok =
+            members.length > 0 &&
+            members.every((id) => (ensembleMemberSimulationDataRef.current?.[id]?.length ?? 0) > 0);
+          if (!ok) {
+            alert(
+              'Could not load ensemble time columns for playback.\n\nCheck the network connection and try Play again.',
+            );
+            simulationLoopModeRef.current = false;
+            setSimulationLoopMode(false);
+            return;
+          }
+          start();
+        } catch (e) {
+          console.warn('ensemble playback prime failed', e);
+          alert(`Could not start ensemble playback:\n\n${e.message || e}`);
+          simulationLoopModeRef.current = false;
+          setSimulationLoopMode(false);
+        }
+      })();
+      return;
+    }
+
+    start();
+  };
+
   const handleStartSimulationRef = useRef(handleStartSimulation);
   handleStartSimulationRef.current = handleStartSimulation;
 
   // Stop simulation
   const handleStopSimulation = () => {
+    simulationLoopModeRef.current = false;
+    setSimulationLoopMode(false);
+    loopChartPlaybackStateRef.current = {};
     setSimulationRunning(false);
     stopSimulationClock();
     if (machineRoleRef.current?.isMaingear) {
@@ -1565,6 +1711,7 @@ function App() {
       setChartStacks([]);
       setPerChartSampleStep({});
       setActiveNamedSimulationConfig(null);
+      activeNamedSimulationConfigRef.current = null;
       setLastNamedPresetForUi(null);
       simulationRawRowsRef.current = null;
       simulationRawRowsSimIdRef.current = null;
@@ -1652,7 +1799,7 @@ function App() {
         ensembleLoadChainsRef.current = {};
         setEnsembleMemberSimulationData({});
 
-        setSimulationMetadata({
+        const ensembleMetadata = {
           id: `__ensemble:${ensemble.id}`,
           displayName: ensemble.display_name || ensemble.id,
           description: '',
@@ -1663,7 +1810,9 @@ function App() {
           isEnsemble: true,
           ensembleId: ensemble.id,
           memberSimulations: [...members],
-        });
+        };
+        simulationMetadataRef.current = ensembleMetadata;
+        setSimulationMetadata(ensembleMetadata);
 
         const cp = ensemble.chart_panel;
         const primary = members[0];
@@ -1789,6 +1938,23 @@ function App() {
         const spd = simulationSpeedRef.current;
         const dt = 0.1 * spd;
         const next = prev + dt;
+
+        if (simulationLoopModeRef.current) {
+          const effectiveStart = resolveLoopPlaybackGlobalStart(
+            openChartsRef.current,
+            (chart) =>
+              resolveChartDataTimeBounds(chart, {
+                simulationMetadata: simulationMetadataRef.current,
+                simulationData: simulationDataRef.current,
+                ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+              }),
+          );
+          if (Number.isFinite(effectiveStart) && next < effectiveStart) {
+            return effectiveStart;
+          }
+          return next;
+        }
+
         const { loopStart, loopEnd } = getPlaybackLoopBounds();
         const effectiveStart = resolveEffectiveSimulationStart(
           openChartsRef.current,
@@ -2929,21 +3095,20 @@ function App() {
    * (no chart-panel teardown); otherwise falls back to a full scenario load.
    */
   const handleActivateNamedSimulationConfig = async (presetName) => {
-    if (!simulationMetadata?.id || !designApiPath) return false;
-    const isEnsembleTab = Boolean(
-      simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId,
-    );
+    const meta = simulationMetadataRef.current;
+    if (!meta?.id || !designApiPath) return false;
+    const isEnsembleTab = Boolean(meta.isEnsemble && meta.ensembleId);
     const t0 = performance.now();
     console.log('[DCS:perf] activateNamedPreset ▶ START', {
       presetName,
-      simId: simulationMetadata.id,
+      simId: meta.id,
       isEnsembleTab,
       note: 'Progress bar is NOT shown for in-place preset apply — only handleRunSimulation sets simulationLoadProgress',
     });
     try {
       const activateUrl = isEnsembleTab
-        ? `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/ensembles/${encodeURIComponent(simulationMetadata.ensembleId)}/named-configurations/${encodeURIComponent(presetName)}/activate`
-        : `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simulationMetadata.id)}/named-configurations/${encodeURIComponent(presetName)}/activate`;
+        ? `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/ensembles/${encodeURIComponent(meta.ensembleId)}/named-configurations/${encodeURIComponent(presetName)}/activate`
+        : `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(meta.id)}/named-configurations/${encodeURIComponent(presetName)}/activate`;
       const res = await fetch(activateUrl, { method: 'POST' });
       console.log('[DCS:perf] activateNamedPreset POST /activate done', {
         ms: Math.round(performance.now() - t0),
@@ -2957,7 +3122,77 @@ function App() {
       const activated = await res.json();
       if (isEnsembleTab) {
         const cp = activated.chart_panel;
-        const primary = simulationMetadata.memberSimulations?.[0];
+        const primary = meta.memberSimulations?.[0];
+
+        if (
+          simulationLoopModeRef.current &&
+          simulationRunningRef.current &&
+          openChartsRef.current?.length
+        ) {
+          const tArrived = simulationTimeRef.current;
+          const resolveBounds = (chart) =>
+            resolveChartDataTimeBounds(chart, {
+              simulationMetadata: simulationMetadataRef.current,
+              simulationData: simulationDataRef.current,
+              ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+            });
+          const resolveIndexed = (chart) => {
+            const rows = chart.ensembleSimId
+              ? ensembleMemberSimulationDataRef.current?.[chart.ensembleSimId]
+              : simulationDataRef.current;
+            return (rows || []).map((row, i) => ({ row, i }));
+          };
+
+          const { updatedCharts, playbackState, sampleStepPatch } = buildLoopConfigSwitchPlan({
+            openCharts: openChartsRef.current,
+            presetCharts: cp?.charts_to_display || [],
+            primaryMemberId: primary,
+            tArrived,
+            resolveIndexed,
+            resolveBounds,
+            prevPlaybackState: loopChartPlaybackStateRef.current,
+          });
+
+          loopChartPlaybackStateRef.current = {
+            ...loopChartPlaybackStateRef.current,
+            ...playbackState,
+          };
+
+          setOpenCharts(updatedCharts);
+          if (Object.keys(sampleStepPatch).length) {
+            setPerChartSampleStep((prev) => {
+              const next = { ...prev };
+              for (const [chartId, step] of Object.entries(sampleStepPatch)) {
+                next[chartId] = normalizeSampleStep(step);
+              }
+              return next;
+            });
+          }
+
+          await Promise.all(
+            updatedCharts.filter(Boolean).map((chart) =>
+              onEnsureEnsembleChartColumnsRef.current?.(chart),
+            ),
+          );
+
+          setNamedSimulationConfigs(activated.named_configuration_keys || []);
+          setDesignEnsembles((prev) =>
+            prev.map((ent) =>
+              ent.id === meta.ensembleId
+                ? {
+                    ...ent,
+                    chart_panel: cp,
+                    named_configuration_keys: activated.named_configuration_keys || [],
+                  }
+                : ent,
+            ),
+          );
+          setActiveNamedSimulationConfig(presetName);
+          activeNamedSimulationConfigRef.current = presetName;
+          setLastNamedPresetForUi(presetName);
+          return true;
+        }
+
         if (primary) {
           applyEnsembleChartPanelCp(cp, primary);
           await preloadEnsembleChartPanelColumnsRef.current?.(cp, primary);
@@ -2965,7 +3200,7 @@ function App() {
         setNamedSimulationConfigs(activated.named_configuration_keys || []);
         setDesignEnsembles((prev) =>
           prev.map((ent) =>
-            ent.id === simulationMetadata.ensembleId
+            ent.id === meta.ensembleId
               ? {
                   ...ent,
                   chart_panel: cp,
@@ -2975,15 +3210,16 @@ function App() {
           ),
         );
         setActiveNamedSimulationConfig(presetName);
+        activeNamedSimulationConfigRef.current = presetName;
         setLastNamedPresetForUi(presetName);
         return true;
       }
-      await mergeCachedSimulationAfterActivate(designApiPath, simulationMetadata.id, activated);
+      await mergeCachedSimulationAfterActivate(designApiPath, meta.id, activated);
       console.log('[DCS:perf] activateNamedPreset after mergeCachedSimulationAfterActivate', {
         ms: Math.round(performance.now() - t0),
       });
       const tApply = performance.now();
-      const applied = await applyActivatedNamedPresetInPlace(simulationMetadata.id, activated);
+      const applied = await applyActivatedNamedPresetInPlace(meta.id, activated);
       console.log('[DCS:perf] activateNamedPreset applyActivatedNamedPresetInPlace', {
         applied,
         applyMs: Math.round(performance.now() - tApply),
@@ -2995,7 +3231,7 @@ function App() {
           try {
             await setCachedSimulationPayload(
               designApiPath,
-              simulationMetadata.id,
+              meta.id,
               {
                 data: snap,
                 sim_config: activated.sim_config,
@@ -3017,18 +3253,19 @@ function App() {
         console.log('[DCS:perf] activateNamedPreset → fallback handleRunSimulation (no raw rows for in-place)', {
           ms: Math.round(performance.now() - t0),
         });
-        await handleRunSimulation(simulationMetadata.id, { cachePresetName: presetName });
+        await handleRunSimulation(meta.id, { cachePresetName: presetName });
         console.log('[DCS:perf] activateNamedPreset ✓ after fallback handleRunSimulation', {
           totalMs: Math.round(performance.now() - t0),
         });
       }
       setActiveNamedSimulationConfig(presetName);
+      activeNamedSimulationConfigRef.current = presetName;
       setLastNamedPresetForUi(presetName);
       try {
         if (designApiPath) {
           localStorage.setItem(
             lastScenarioSessionStorageKey(designApiPath),
-            JSON.stringify({ simId: simulationMetadata.id, namedConfig: presetName }),
+            JSON.stringify({ simId: meta.id, namedConfig: presetName }),
           );
         }
       } catch (_) {
@@ -3433,6 +3670,8 @@ function App() {
     if (drillTarget) {
       if (isIdeum05HdAeroScreen(drillTarget)) {
         void sendIdeumClusterCommand('loadHdAero');
+      } else if (isIdeum05ControlsScreen(drillTarget)) {
+        void sendIdeumClusterCommand('loadP2R18');
       }
       setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
@@ -3552,16 +3791,108 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isIdeum05, ideum05NavScreen]);
 
+  useEffect(() => {
+    if (!isHdAeroIdeumLoaded) return;
+    void sendIdeumClusterCommand('loadHdAero');
+  }, [isHdAeroIdeumLoaded, sendIdeumClusterCommand]);
+
+  useEffect(() => {
+    if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;
+    void sendIdeumClusterCommand('loadP2R18');
+  }, [isIdeum05, ideum05NavScreen, sendIdeumClusterCommand]);
+
+  const applyHdAeroBreakerPreset = useCallback(
+    async (presetName) => {
+      if (!presetName || !designApiPath) return;
+      if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+        return;
+      }
+      const ens =
+        designEnsembles.find((e) => e.id === HD_AERO_ENSEMBLE_ID) ||
+        null;
+      if (!ens) {
+        console.warn('HD_Aero preset skipped — ensemble "all" not found');
+        return;
+      }
+
+      setRightRailCollapsed(false);
+      setRightRailGridPeek(true);
+
+      if (simulationMetadataRef.current?.ensembleId !== HD_AERO_ENSEMBLE_ID) {
+        await handleSelectEnsemble(ens);
+      }
+      await handleActivateNamedSimulationConfig(presetName);
+    },
+    [
+      designApiPath,
+      currentConfigName,
+      designEnsembles,
+      handleSelectEnsemble,
+    ],
+  );
+
+  const maybeApplyHdAeroBreakerPreset = useCallback(
+    (componentId, updates) => {
+      if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+        return;
+      }
+      if (updates?.status == null && updates?.initialSimStatus === undefined) return;
+
+      const comp = canvasComponentsRef.current.find((c) => c.id === componentId);
+      if (comp?.type !== INTERACTIVE_STUB_BREAKER_TYPE) return;
+      if (componentId !== HD_AERO_CB_A_ID && componentId !== HD_AERO_CB_B_ID) return;
+
+      const nextComponents = canvasComponentsRef.current.map((c) =>
+        c.id === componentId ? { ...c, ...updates } : c,
+      );
+      const preset = resolveHdAeroPresetFromBreakers(nextComponents, componentId);
+      if (preset) {
+        void applyHdAeroBreakerPreset(preset);
+      }
+    },
+    [applyHdAeroBreakerPreset, currentConfigName, designApiPath],
+  );
+
+  useEffect(() => {
+    if (!pendingHdAeroInitRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return;
+    }
+    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
+    if (!designEnsembles.length) return;
+
+    const ens = designEnsembles.find((e) => e.id === HD_AERO_ENSEMBLE_ID);
+    if (!ens) return;
+
+    pendingHdAeroInitRef.current = false;
+
+    void (async () => {
+      setCanvasComponents((prev) => hdAeroBreakersOpenUpdate(prev));
+      await handleSelectEnsemble(ens);
+      await handleActivateNamedSimulationConfig(HD_AERO_DEFAULT_PRESET);
+      setRightRailCollapsed(false);
+      setRightRailGridPeek(true);
+    })();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    handleSelectEnsemble,
+  ]);
+
   const handleCanvasUpdateComponent = useCallback((componentId, updates) => {
     handleUpdateComponent(componentId, updates);
-    if (!ideum05HdAeroMode || updates?.status == null) return;
+    maybeApplyHdAeroBreakerPreset(componentId, updates);
+    if (!mirrorHdAeroBreakersToMaingear || updates?.status == null) return;
     const comp = canvasComponentsRef.current.find((c) => c.id === componentId);
     if (comp?.type !== INTERACTIVE_STUB_BREAKER_TYPE) return;
     void sendIdeumClusterCommand('toggleInteractiveBreaker', {
       componentId,
       status: updates.status,
     });
-  }, [handleUpdateComponent, ideum05HdAeroMode, sendIdeumClusterCommand]);
+  }, [handleUpdateComponent, maybeApplyHdAeroBreakerPreset, mirrorHdAeroBreakersToMaingear, sendIdeumClusterCommand]);
 
   const handleDesignExpansionChange = useCallback((key, expanded) => {
     setDesignExpansion((prev) => {
@@ -3867,6 +4198,29 @@ function App() {
       }
       return;
     }
+    if (command === 'loadP2R18') {
+      if (
+        isP2R18Design({
+          name: currentConfigName,
+          design_catalog_rel: designApiPath,
+          csv_status: { design_catalog_rel: designApiPath },
+        })
+      ) {
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(IDEUM05_P2R18_MAINGEAR_CATALOG)}/load`,
+        );
+        if (!res.ok) return;
+        const loadedConfig = await res.json();
+        loadSkipSessionRestoreRef.current = true;
+        handleConfigurationLoadedRef.current?.(loadedConfig);
+      } catch (e) {
+        console.warn('loadP2R18 remote command failed', e);
+      }
+      return;
+    }
     if (command === 'toggleInteractiveBreaker') {
       const componentId = payload?.componentId;
       const status = payload?.status;
@@ -3875,19 +4229,16 @@ function App() {
         console.warn('toggleInteractiveBreaker ignored — HD_Aero not loaded on Maingear');
         return;
       }
-      handleUpdateComponent(componentId, { status });
+      const updates = {
+        status,
+        initialSimStatus: status === 'open' ? 'open' : null,
+      };
+      handleUpdateComponent(componentId, updates);
+      maybeApplyHdAeroBreakerPreset(componentId, updates);
       const breakerSpec = remoteControlProfile?.interactiveBreakers?.[componentId];
       if (breakerSpec?.revealCharts) {
         setRightRailCollapsed(false);
         setRightRailGridPeek(true);
-      }
-      if (breakerSpec?.startSimulation && !simulationRunning) {
-        const simId = breakerSpec.simulationId;
-        if (simId && availableSimulations.includes(simId)) {
-          await handleRunSimulationRef.current?.(simId);
-        } else if (availableSimulations.includes('all')) {
-          await handleRunSimulationRef.current?.('all');
-        }
       }
       return;
     }
@@ -4725,7 +5076,7 @@ function App() {
           base.variable_styles = c.variableStyles;
         }
         if (c.axisRange != null) {
-          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, xReference, simulationStartAt } =
+          const { xMin, xMax, yMin, yMax, xLocked, yLocked, xThreshold, dangerYThreshold, xReference, simulationStartAt, simulationEndAt, tLoop } =
             c.axisRange;
           const rangeObj = {};
           if (xThreshold != null && !Number.isNaN(xThreshold)) {
@@ -4736,6 +5087,12 @@ function App() {
           }
           if (simulationStartAt != null && !Number.isNaN(simulationStartAt)) {
             rangeObj.simulation_start_at = simulationStartAt;
+          }
+          if (simulationEndAt != null && !Number.isNaN(simulationEndAt)) {
+            rangeObj.simulation_end_at = simulationEndAt;
+          }
+          if (tLoop != null && !Number.isNaN(tLoop) && tLoop > 0) {
+            rangeObj.t_loop = tLoop;
           }
           if (xReference != null && !Number.isNaN(xReference)) {
             rangeObj.x_reference = xReference;
@@ -5365,7 +5722,10 @@ function App() {
     [collectEnsembleChartLoadPlan, ensureEnsembleMemberColumnsLoaded],
   );
 
-  /** Preload all CSV columns referenced by an ensemble chart_panel before playback. */
+  useLayoutEffect(() => {
+    onEnsureEnsembleChartColumnsRef.current = onEnsureEnsembleChartColumns;
+  }, [onEnsureEnsembleChartColumns]);
+
   const preloadEnsembleChartPanelColumnsRef = useRef(async () => {});
 
   const preloadEnsembleChartPanelColumns = useCallback(
@@ -6211,6 +6571,146 @@ function App() {
     [designApiPath, currentConfigName, useLazySimulationData],
   );
 
+  /** Open editor dialog for one ensemble member (rename + CSV replace). */
+  const handleEditEnsembleMember = useCallback(
+    (simId) => {
+      if (!simId || !designApiPath || !currentConfigName) return;
+      if (isFormulaParquetScenarioId(simId)) return;
+      const group = ensembleColumnGroups.find((g) => g.simId === simId);
+      setEnsembleMemberEditor({ simId, columns: group?.columns || [] });
+    },
+    [designApiPath, currentConfigName, ensembleColumnGroups],
+  );
+
+  /** Rename one ensemble member scenario id (updates disk refs + in-memory charts/readouts). */
+  const applyEnsembleMemberRename = useCallback(
+    async (oldSimId, newSimId) => {
+      if (!oldSimId || !newSimId || oldSimId === newSimId || !designApiPath) return;
+
+      const url = `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(oldSimId)}/rename`;
+      let res;
+      try {
+        res = await fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_sim_name: newSimId }),
+        });
+      } catch (e) {
+        throw new Error(e.message || String(e));
+      }
+      if (!res.ok) {
+        try {
+          const err = await res.json();
+          throw new Error(err.detail || `Rename failed (${res.status})`);
+        } catch (e) {
+          if (e.message?.startsWith('Rename failed')) throw e;
+          throw new Error(`Rename failed (${res.status})`);
+        }
+      }
+
+      setEnsembleColumnGroups((prev) => remapEnsembleColumnGroups(prev, oldSimId, newSimId));
+      setOpenCharts((prev) => prev.map((c) => remapOpenChartForSimRename(c, oldSimId, newSimId)));
+      setCanvasComponents((prev) => remapCanvasComponentsForSimRename(prev, oldSimId, newSimId));
+      setVariableDrivenPresence((prev) => remapVariableDrivenPresenceRules(prev, oldSimId, newSimId));
+      setSimulationMetadata((prev) => remapSimulationMetadataForSimRename(prev, oldSimId, newSimId));
+
+      setEnsembleMemberSimulationData((prev) => {
+        const next = remapEnsembleMemberData(prev, oldSimId, newSimId);
+        ensembleMemberSimulationDataRef.current = next;
+        return next;
+      });
+
+      if (ensembleMemberDerivedBySimIdRef.current?.[oldSimId]) {
+        ensembleMemberDerivedBySimIdRef.current = {
+          ...ensembleMemberDerivedBySimIdRef.current,
+          [newSimId]: ensembleMemberDerivedBySimIdRef.current[oldSimId],
+        };
+        delete ensembleMemberDerivedBySimIdRef.current[oldSimId];
+      }
+      if (ensembleMemberMetaCacheRef.current?.[oldSimId]) {
+        ensembleMemberMetaCacheRef.current = {
+          ...ensembleMemberMetaCacheRef.current,
+          [newSimId]: ensembleMemberMetaCacheRef.current[oldSimId],
+        };
+        delete ensembleMemberMetaCacheRef.current[oldSimId];
+      }
+      if (ensembleLoadChainsRef.current?.[oldSimId]) {
+        ensembleLoadChainsRef.current = {
+          ...ensembleLoadChainsRef.current,
+          [newSimId]: ensembleLoadChainsRef.current[oldSimId],
+        };
+        delete ensembleLoadChainsRef.current[oldSimId];
+      }
+
+      await refreshSimulationsList();
+      if (csvStatus?.use_design_dir) await refreshDesignEnsembles();
+    },
+    [designApiPath, refreshSimulationsList, refreshDesignEnsembles, csvStatus?.use_design_dir],
+  );
+
+  const handleReplaceEnsembleMemberCsv = useCallback(
+    async (simId, file) => {
+      if (!designApiPath || !file || !simId) {
+        throw new Error('Missing upload file or scenario id.');
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(
+        `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/simulations/${encodeURIComponent(simId)}/data`,
+        { method: 'POST', body: formData },
+      );
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const detail = errData.detail;
+        throw new Error(
+          typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : response.statusText,
+        );
+      }
+      const result = await response.json();
+      await deleteCachedSimulationPayload(designApiPath, simId);
+      setEnsembleMemberSimulationData((prev) => {
+        if (!prev?.[simId]) return prev;
+        const next = { ...prev };
+        delete next[simId];
+        ensembleMemberSimulationDataRef.current = next;
+        return next;
+      });
+      if (ensembleMemberMetaCacheRef.current) {
+        delete ensembleMemberMetaCacheRef.current[simId];
+      }
+      if (ensembleLoadChainsRef.current) {
+        delete ensembleLoadChainsRef.current[simId];
+      }
+      if (simulationRawRowsSimIdRef.current === simId) {
+        simulationRawRowsRef.current = null;
+        simulationRawRowsSimIdRef.current = null;
+      }
+      if (loopChartPlaybackStateRef.current) {
+        for (const chart of openChartsRef.current || []) {
+          if (chart.ensembleSimId === simId) {
+            delete loopChartPlaybackStateRef.current[chart.id];
+          }
+        }
+      }
+      await refreshSimulationsList();
+      if (result.row_count != null) {
+        setSimulationMetadata((prev) => {
+          if (!prev?.isEnsemble) return prev;
+          return {
+            ...prev,
+            rowCount: Math.max(prev.rowCount ?? 0, Number(result.row_count) || 0),
+          };
+        });
+      }
+      return {
+        row_count: result.row_count,
+        column_count: result.column_count,
+        message: `Replaced ${result.row_count} rows (${result.column_count} columns). Eye preview will show the new data.`,
+      };
+    },
+    [designApiPath, refreshSimulationsList],
+  );
+
   const handleRemoveEnsembleLiveDerived = useCallback(
     async (variableName) => {
       const vn = (variableName ?? '').trim();
@@ -6497,12 +6997,17 @@ function App() {
     // Save the configuration name for future quick saves
     setCurrentConfigName(loadedConfig.name);
 
-    if (isP2R18Design(loadedConfig) || isHDAeroDesign(loadedConfig)) {
+    if (isP2R18Design(loadedConfig) || isHDAeroDesign(loadedConfig) || isHDAeroIdeumDesign(loadedConfig)) {
       // Same as pressing Hide on Simulation Controls — tuck property panel, keep scenario strip.
       setRightRailCollapsed(false);
       setRightRailGridPeek(true);
     } else {
       setRightRailGridPeek(false);
+    }
+
+    if (isHDAeroDesign(loadedConfig)) {
+      pendingHdAeroInitRef.current = true;
+      loadSkipSessionRestoreRef.current = true;
     }
     
     // Store CSV status and fetch available simulations
@@ -6533,7 +7038,11 @@ function App() {
     const dus = data.designUiSession;
     const loadedExpansion = normalizeDesignExpansion(dus?.designExpansion);
     setDesignExpansion(loadedExpansion);
-    setIdeumExpansionMirror({ ...DEFAULT_DESIGN_EXPANSION });
+    setIdeumExpansionMirror(
+      isHDAeroIdeumDesign(loadedConfig)
+        ? { ...loadedExpansion }
+        : { ...DEFAULT_DESIGN_EXPANSION },
+    );
     setIdeumSimulationMirror(false);
     setIdeum05NavStack([IDEUM05_NAV_ROOT]);
     
@@ -6896,6 +7405,86 @@ function App() {
     currentConfigName,
     designApiPath,
     simulationMetadata?.id,
+    persistChartsToSimJson,
+  ]);
+
+  const handleResetAllConf = useCallback(async () => {
+    if (!designApiPath || !csvStatus?.use_design_dir) {
+      alert('Load a design-folder scenario first.');
+      return;
+    }
+    if (
+      !window.confirm(
+        'Reset Start simulation at / End simulation at on ALL saved configurations?\n\nEach chart will use the first and last time value from its data file (Parquet). Saved presets (HD, HD-A, etc.) will be updated on disk.',
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/designs/${encodeURIComponent(designApiPath)}/reset-all-config-simulation-bounds`,
+        { method: 'POST' },
+      );
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `Reset failed (${res.status})`);
+      }
+      const summary = await res.json();
+
+      await refreshSimulationsList();
+      await refreshDesignEnsembles();
+
+      ensembleMemberSimulationDataRef.current = {};
+      setEnsembleMemberSimulationData({});
+      ensembleMemberMetaCacheRef.current = {};
+      await deleteCachedSimulationPayload(designApiPath, simulationMetadata?.id);
+
+      const activePreset = activeNamedSimulationConfigRef.current;
+      if (simulationMetadata?.isEnsemble && activePreset) {
+        await handleActivateNamedSimulationConfig(activePreset);
+      } else {
+        const resolveBounds = (chart) =>
+          resolveChartDataTimeBounds(chart, {
+            simulationMetadata: simulationMetadataRef.current,
+            simulationData: simulationDataRef.current,
+            ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+          });
+        const { charts: nextCharts } = applyDataBoundsToCharts(openChartsRef.current, resolveBounds);
+        setOpenCharts(nextCharts);
+        if (simulationMetadata?.id && currentConfigName) {
+          await persistChartsToSimJson(nextCharts);
+        }
+      }
+
+      if (currentConfigName) {
+        const saveRes = await fetch(`${API_BASE_URL}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentConfigName,
+            data: getCurrentConfiguration(),
+          }),
+        });
+        if (!saveRes.ok) {
+          throw new Error((await saveRes.text()) || `Design save failed (${saveRes.status})`);
+        }
+      }
+
+      alert(
+        `Reset complete: ${summary.charts_updated ?? 0} chart(s) in ${summary.configs_updated ?? 0} saved configuration(s).`,
+      );
+    } catch (e) {
+      console.warn(e);
+      alert(e.message || 'Failed to reset all configurations');
+    }
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    refreshSimulationsList,
+    refreshDesignEnsembles,
+    simulationMetadata?.isEnsemble,
+    simulationMetadata?.id,
+    currentConfigName,
     persistChartsToSimJson,
   ]);
 
@@ -7315,6 +7904,7 @@ function App() {
       playbackTimeRange={playbackTimeRange}
       onPlaybackTimeRangeChange={handleSetPlaybackTimeRange}
       onPublishPlaybackTimeRange={handlePublishPlaybackTimeRange}
+      onResetAllConf={handleResetAllConf}
       availableSimulations={availableSimulations}
       simConfig={simConfig}
       onRunSimulation={handleRunSimulation}
@@ -7419,6 +8009,7 @@ function App() {
             onAddDerivedVariable={handleAddDerivedVariable}
             onRemoveScenarioColumn={handleRemoveScenarioColumn}
             onRemoveEnsembleLiveDerived={handleRemoveEnsembleLiveDerived}
+            onRenameEnsembleMember={handleEditEnsembleMember}
             canvasComponents={canvasComponents}
             onUpdateComponent={handleUpdateComponent}
             onUpdateConnection={handleUpdateConnection}
@@ -7528,7 +8119,9 @@ function App() {
           onToggleMode={handleToggleMode}
           viewMode={viewMode}
           simulationRunning={simulationRunning}
+          simulationLoopMode={simulationLoopMode}
           onStartSimulation={handleStartSimulation}
+          onStartSimulationWithLoop={handleStartSimulationWithLoop}
           onStopSimulation={handleStopSimulation}
           zoom={zoom}
           onZoomIn={() => setZoom((prev) => Math.min(prev + CANVAS_ZOOM_STEP, CANVAS_ZOOM_MAX))}
@@ -7771,6 +8364,8 @@ function App() {
           onPerChartCardWidthChange={handlePerChartCardWidthChange}
           simulationTime={simulationTime}
           simulationRunning={simulationRunning}
+          simulationLoopMode={simulationLoopMode}
+          loopChartPlaybackStateRef={loopChartPlaybackStateRef}
           selectedComponentId={selectedComponent?.id}
           simulationData={simulationData}
           ensembleMemberSimulationData={ensembleMemberSimulationData}
@@ -7906,6 +8501,17 @@ function App() {
           data={viewModal.data}
           loading={viewModal.loading}
           onClose={() => setViewModal(null)}
+        />
+      )}
+
+      {ensembleMemberEditor && (
+        <EnsembleMemberEditorDialog
+          open
+          simId={ensembleMemberEditor.simId}
+          columns={ensembleMemberEditor.columns}
+          onClose={() => setEnsembleMemberEditor(null)}
+          onRename={applyEnsembleMemberRename}
+          onReplaceCsv={handleReplaceEnsembleMemberCsv}
         />
       )}
     </div>

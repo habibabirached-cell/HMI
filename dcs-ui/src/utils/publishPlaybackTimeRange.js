@@ -63,8 +63,38 @@ export function applyPlaybackRangeToCharts(charts, rawRange) {
         xLocked: true,
         xMin: range.t1,
         xMax: range.t2,
+        simulationStartAt: range.t1,
+        simulationEndAt: range.t2,
       },
     };
   });
   return { range, charts: next };
+}
+
+/** Set simulationStartAt / simulationEndAt from resolved data file bounds per chart. */
+export function applyDataBoundsToCharts(charts, resolveBounds) {
+  let updated = 0;
+  const next = (charts || []).map((chart) => {
+    if (!isTimeBasedChart(chart)) return chart;
+    const bounds = resolveBounds?.(chart);
+    if (!bounds || !Number.isFinite(bounds.min) || !Number.isFinite(bounds.max)) {
+      return chart;
+    }
+    updated += 1;
+    const prev = chart.axisRange || {};
+    const axisRange = {
+      ...prev,
+      simulationStartAt: bounds.min,
+      simulationEndAt: bounds.max,
+    };
+    if (prev.xLocked) {
+      axisRange.xMin = bounds.min;
+      axisRange.xMax = bounds.max;
+    }
+    return {
+      ...chart,
+      axisRange,
+    };
+  });
+  return { charts: next, updatedCount: updated };
 }

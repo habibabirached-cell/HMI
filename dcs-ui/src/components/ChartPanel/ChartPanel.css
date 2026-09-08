@@ -412,6 +412,38 @@
   text-transform: uppercase;
 }
 
+.chart-panel-title-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-panel-named-configs-eye {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(0, 94, 96, 0.45);
+  border-radius: 4px;
+  background: rgba(0, 94, 96, 0.12);
+  color: #00d4a8;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  line-height: 1;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.chart-panel-named-configs-eye:hover {
+  background: rgba(0, 94, 96, 0.28);
+  border-color: rgba(0, 212, 168, 0.55);
+}
+
+.chart-panel-named-configs-eye[aria-pressed='false'] {
+  opacity: 0.65;
+}
+
 /* Sticky so Sample / Pane / Width / close stay reachable when the header scrolls horizontally */
 .chart-panel-header-right {
   display: flex;
