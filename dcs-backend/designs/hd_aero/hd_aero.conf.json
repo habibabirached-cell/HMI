@@ -738,7 +738,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "open",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -758,7 +758,7 @@
         "height": 130
       },
       "connectionReadout": null,
-      "initialSimStatus": "open"
+      "initialSimStatus": null
     },
     {
       "id": "comp-hd-3d-preview",
@@ -1773,10 +1773,10 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.88,
+    "zoom": 1.05,
     "pan": {
-      "x": 481.46666666666835,
-      "y": 67.46666666666607
+      "x": 577.4666666666683,
+      "y": 91.46666666666607
     },
     "panTop": {
       "x": 507.7333333333344,
@@ -1797,10 +1797,10 @@
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
-  "globalSampleStep": 128,
+  "globalSampleStep": 16,
   "perChartSampleStep": {
-    "sim-chart-1788886022503-0": 16,
-    "sim-chart-1788886022503-1": 16
+    "sim-chart-1788888487565-0": 16,
+    "sim-chart-1788888487565-1": 16
   },
   "playbackTimeRange": {
     "t1": 0.0,

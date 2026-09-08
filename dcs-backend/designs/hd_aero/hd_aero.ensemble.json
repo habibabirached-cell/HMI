@@ -26,7 +26,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1526,
+            "chart_card_width": 1702,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Frequency (Hz)",
@@ -57,7 +57,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1527,
+            "chart_card_width": 1704,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Power (MW)",
@@ -366,7 +366,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1526,
+            "chart_card_width": 1702,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Frequency (Hz)",
@@ -397,7 +397,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1527,
+            "chart_card_width": 1704,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Power (MW)",
@@ -450,7 +450,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Load",
             "sample_step": 16,
-            "chart_card_width": 1525,
+            "chart_card_width": 1706,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Power (MW)",
@@ -482,7 +482,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Load",
             "sample_step": 16,
-            "chart_card_width": 1523,
+            "chart_card_width": 1702,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Frequency (Hz)",
@@ -525,7 +525,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Aero",
             "sample_step": 16,
-            "chart_card_width": 1530,
+            "chart_card_width": 1707,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero   Power (MW)",
@@ -572,7 +572,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Aero",
             "sample_step": 16,
-            "chart_card_width": 1512,
+            "chart_card_width": 1706,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero  Frequency (Hz)",
@@ -621,7 +621,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Aero-Load",
             "sample_step": 16,
-            "chart_card_width": 1518,
+            "chart_card_width": 1708,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero   Frequency (Hz)",
@@ -661,7 +661,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Aero-Load",
             "sample_step": 16,
-            "chart_card_width": 1529,
+            "chart_card_width": 1717,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero  Power (MW)",
@@ -720,7 +720,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Load-Aero",
             "sample_step": 16,
-            "chart_card_width": 1525,
+            "chart_card_width": 1711,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero  Fequency (Hz)",
@@ -760,7 +760,7 @@
             "title": "HD - Stacked nD",
             "ensemble_sim_id": "HD-Load-Aero",
             "sample_step": 16,
-            "chart_card_width": 1522,
+            "chart_card_width": 1722,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero  Power (MW)",
