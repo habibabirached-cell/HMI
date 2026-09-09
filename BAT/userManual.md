@@ -18,6 +18,8 @@ This starts:
 
 Wait until the script finishes and the DCS wall is visible.
 
+If something fails, the script prints **`BAT\debug.txt`** at the end. Push that file to git and pull on another machine for diagnosis.
+
 ## Switch displays manually (test)
 
 | Action | Double-click |

@@ -26,6 +26,9 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `kiosk-windows.ps1` | Window registry, HWND save/restore, port wait helpers |
 | `_paths.bat` | Sets `BAT_DIR` and `REPO_ROOT` for other scripts |
 | `kiosk-windows.json` | Auto-generated window handles (gitignored) |
+| `debug.txt` | Full startup log from `maingear-kiosk-start.bat` (commit & share for remote diagnosis) |
+| `vernova-dev.log` | Vernova `npm run dev` output (also appended into `debug.txt`) |
+| `_debug-log.bat` | Internal logging helpers |
 | `userManual.md` | Short operator instructions |
 
 **Repo root** (not in `BAT/`):
@@ -77,9 +80,11 @@ Grid Connected will add cluster commands such as `showVernova` / `showDcs` that 
 
 ## Troubleshooting
 
+If startup fails (Docker OK but no Chrome / no Vernova), re-run `maingear-kiosk-start.bat`, then open **`BAT/debug.txt`**. It captures every step, docker output, port waits, Chrome launch errors, and the Vernova dev log. Commit and push `debug.txt` so it can be reviewed off-machine.
+
 | Problem | Check |
 |---|---|
-| Vernova port timeout | Minimized “Vernova dev” cmd for errors; run `python3 -m pip install -r api/requirements.txt` in `vernova-spark-engine_new` |
+| Vernova port timeout | `BAT/debug.txt` and `BAT/vernova-dev.log`; run `npm run api:install` in `vernova-spark-engine_new` |
 | Chrome permission denied | Run `npm install` inside `vernova-spark-engine_new` |
 | Focus finds wrong window | Re-run `maingear-kiosk-start.bat`; close extra Chrome windows |
 | Docker fails | Docker Desktop running; `.env` present at repo root |
