@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 46">
+  <defs>
+    <style>
+      .cls-1 { fill: #359ea4; }
+      .cls-6 { stroke: #fff; stroke-width: 1.5px; fill: none; }
+      .cls-8 { stroke: #fafafa; stroke-width: 2.25px; fill: none; stroke-miterlimit: 8; }
+      .cls-9 { fill: #fff; font-family: Calibri-Italic, Calibri; font-size: 15.96px; font-style: italic; }
+      .cls-13 { fill: #fafafa; fill-rule: evenodd; }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <rect class="cls-1" x="3.32" y="2.78" width="45.36" height="40.44" rx="6.74" ry="6.74"/>
+    <line class="cls-8" x1="15.65" y1="10.38" x2="15.8" y2="39.4"/>
+    <polygon class="cls-13" points="12.28 11.53 15.62 4.76 19.03 11.49 12.28 11.53"/>
+    <line class="cls-8" x1="39.92" y1="32.96" x2="8.42" y2="32.96"/>
+    <polygon class="cls-13" points="38.79 36.33 45.54 32.96 38.79 29.58 38.79 36.33"/>
+    <line class="cls-6" x1="15.86" y1="15.44" x2="24.37" y2="15.44"/>
+    <line class="cls-6" x1="25.1" y1="14.84" x2="25.1" y2="28.17"/>
+    <line class="cls-6" x1="25.82" y1="27.32" x2="36.42" y2="27.32"/>
+    <text class="cls-9" transform="translate(34.25 15.91)"><tspan x="0" y="0">ø</tspan></text>
+  </g>
+</svg>

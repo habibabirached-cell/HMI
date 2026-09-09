@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="GroundResistor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 38">
+  <style>
+    .gr-line {
+      fill: none;
+      stroke: #c8ff00;
+      stroke-width: 1.5px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .gr-fill {
+      fill: #c8ff00;
+    }
+    .gr-bar {
+      fill: none;
+      stroke: #c8ff00;
+      stroke-width: 1.2px;
+      stroke-linecap: round;
+    }
+  </style>
+  <polyline class="gr-line" points="0 0.14 19.82 0 19.82 11.71 16.75 16.02 20.92 18.05 17.47 21.53 21.99 23.40 17.83 26.74 21.99 31.55"/>
+  <polygon class="gr-fill" points="23.07 32.70 20.63 32.17 21.55 31.11 22.67 29.98 23.07 32.70"/>
+  <line class="gr-bar" x1="13.86" y1="33.79" x2="31.90" y2="33.79"/>
+  <line class="gr-bar" x1="16.93" y1="36.09" x2="29.21" y2="36.09"/>
+</svg>

@@ -1,0 +1,288 @@
+{
+  "CFG1": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 13.2,
+      "peakKa": 0.312
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 5.75,
+      "riseTimeMs": 732,
+      "peakKa": 0.691
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 15,
+      "peakKa": 4.19
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 321,
+      "peakKa": 0.212
+    }
+  },
+  "CFG2": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 14,
+      "peakKa": 0.314
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 668,
+      "peakKa": 0.357
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 15,
+      "peakKa": 3.27
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "peakKa": 0.147
+    }
+  },
+  "CFG3": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 19,
+      "peakKa": 0.493
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 692,
+      "peakKa": 0.461
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 16,
+      "peakKa": 2.44
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "peakKa": 0.168
+    }
+  },
+  "CFG4": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 13.2,
+      "peakKa": 0.275
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 5.75,
+      "riseTimeMs": 350,
+      "peakKa": 0.075
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 15,
+      "peakKa": 2.99
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 388,
+      "peakKa": 0.188
+    }
+  },
+  "CFG5": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 15,
+      "peakKa": 0.481
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 635,
+      "peakKa": 0.777
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 16.3,
+      "peakKa": 3.43
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 809,
+      "peakKa": 0.253
+    }
+  },
+  "CFG6": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 18.8,
+      "peakKa": 0.506
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 376,
+      "peakKa": 0.394
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 18.8,
+      "peakKa": 2.02
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 526,
+      "peakKa": 0.241
+    }
+  },
+  "CFG7": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 14.4,
+      "peakKa": 0.17
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 153,
+      "peakKa": 0.004
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 15.1,
+      "peakKa": 0.819
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 27.6,
+      "peakKa": 0.303
+    }
+  },
+  "CFG8": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 21.3,
+      "peakKa": 0.415
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1.3,
+      "riseTimeMs": 388,
+      "peakKa": 0.389
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 23.2,
+      "peakKa": 0.882
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 483,
+      "peakKa": 0.205
+    }
+  },
+  "CFG9": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1.0,
+      "riseTimeMs": 49.0,
+      "peakKa": -0.118
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.5,
+      "riseTimeMs": 179,
+      "peakKa": -0.232
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1.0,
+      "riseTimeMs": 27.6,
+      "peakKa": 0.303
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1.0,
+      "riseTimeMs": 26.0,
+      "peakKa": 0.153
+    }
+  },
+  "CFG10": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 21.3,
+      "peakKa": 0.813
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 721,
+      "peakKa": 0.535
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 25.7,
+      "peakKa": 1.39
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 164,
+      "peakKa": 0.303
+    }
+  },
+  "CFG11": {
+    "phase_jump": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "peakKa": 0.473
+    },
+    "rocof": {
+      "signal": "Ip_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 372,
+      "peakKa": 0.16
+    },
+    "fault": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 17,
+      "peakKa": 1.39
+    },
+    "voltage_step": {
+      "signal": "Iq_GEP",
+      "responseTimeMs": 1,
+      "riseTimeMs": 707,
+      "peakKa": 0.278
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "description": "Wind Farm Status Configuration extracted from windfarm status.xlsx",
+  "scenarios": {
+    "load_0.4_scr_20_1.6": {
+      "start": {
+        "left": "Normal",
+        "right": "Normal"
+      },
+      "scr_change": [
+        {
+          "minTime": 0,
+          "maxTime": 0.6,
+          "left": "Weak Grid Detected",
+          "right": "Weak Grid Detected"
+        },
+        {
+          "minTime": 0.6,
+          "maxTime": 1.4,
+          "left": "Weak Grid Detected",
+          "right": "Anchoring",
+          "rightWithoutSolution": "Weak Grid Detected"
+        },
+        {
+          "minTime": 1.4,
+          "maxTime": null,
+          "left": "Stable",
+          "right": "Stable",
+          "rightWithoutSolution": "Stable"
+        }
+      ],
+      "fault": [
+        {
+          "minTime": 0,
+          "maxTime": 0.4,
+          "left": "Fault Detected",
+          "right": "Fault Detected"
+        },
+        {
+          "minTime": 0.4,
+          "maxTime": 1.4,
+          "left": "Unstable",
+          "right": "Anchoring",
+          "rightWithoutSolution": "Unstable"
+        },
+        {
+          "minTime": 1.4,
+          "maxTime": null,
+          "left": "Unstable",
+          "right": "Stable",
+          "rightWithoutSolution": "Unstable"
+        }
+      ]
+    },
+    "load_1.0_scr_20_1.6": {
+      "start": {
+        "left": "Normal",
+        "right": "Normal"
+      },
+      "scr_change": [
+        {
+          "minTime": 0,
+          "maxTime": 0.6,
+          "left": "Weak Grid Detected",
+          "right": "Weak Grid Detected"
+        },
+        {
+          "minTime": 0.6,
+          "maxTime": 1.4,
+          "left": "Unstable",
+          "right": "Anchoring",
+          "rightWithoutSolution": "Unstable"
+        },
+        {
+          "minTime": 1.4,
+          "maxTime": null,
+          "left": "Unstable",
+          "right": "Stable",
+          "rightWithoutSolution": "Unstable"
+        }
+      ]
+    },
+    "load_1.0_scr_20_1.0": {
+      "start": {
+        "left": "Normal",
+        "right": "Normal"
+      },
+      "scr_change": [
+        {
+          "minTime": 0,
+          "maxTime": 0.6,
+          "left": "Weak Grid Detected",
+          "right": "Weak Grid Detected"
+        },
+        {
+          "minTime": 0.6,
+          "maxTime": 1.4,
+          "left": "Unstable",
+          "right": "Anchoring",
+          "rightWithoutSolution": "Unstable"
+        },
+        {
+          "minTime": 1.4,
+          "maxTime": null,
+          "left": "Unstable",
+          "right": "Stable",
+          "rightWithoutSolution": "Unstable"
+        }
+      ]
+    }
+  }
+}

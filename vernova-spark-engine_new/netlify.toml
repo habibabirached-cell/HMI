@@ -1,0 +1,25 @@
+[build]
+  # Nitro must use netlify preset so SSR lands in .netlify/functions-internal and assets in dist/
+  command = "npx cross-env NITRO_PRESET=netlify npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[context.production.environment]
+  NODE_VERSION = "18"
+  NITRO_PRESET = "netlify"
+
+# Databank API (mirrors local FastAPI paths). force=true so Nitro SSR does not swallow /api.
+[[redirects]]
+  from = "/api/v1/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/v1/series/:cfg/:event"
+  to = "/.netlify/functions/series?cfg=:cfg&event=:event"
+  status = 200
+  force = true

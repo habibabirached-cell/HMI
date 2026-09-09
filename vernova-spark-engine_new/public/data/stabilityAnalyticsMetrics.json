@@ -1,0 +1,299 @@
+{
+  "CFG1": {
+    "cfgId": "CFG1",
+    "label": "CFG1",
+    "scPu": 3.758965,
+    "inertiaMWs": 3371.635948844043,
+    "td": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 321,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.212,
+      "peakTimeMs": 321
+    },
+    "tdIp": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 13.2,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.312,
+      "peakTimeMs": 13.2
+    },
+    "tdIq": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 321,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.212,
+      "peakTimeMs": 321
+    }
+  },
+  "CFG2": {
+    "cfgId": "CFG2",
+    "label": "CFG2",
+    "scPu": 2.941305,
+    "inertiaMWs": 1837.3329493256745,
+    "td": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.147,
+      "peakTimeMs": 20
+    },
+    "tdIp": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 14,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.314,
+      "peakTimeMs": 14
+    },
+    "tdIq": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.147,
+      "peakTimeMs": 20
+    }
+  },
+  "CFG3": {
+    "cfgId": "CFG3",
+    "label": "CFG3",
+    "scPu": 2.390577,
+    "inertiaMWs": 2404.7032678321693,
+    "td": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.168,
+      "peakTimeMs": 20
+    },
+    "tdIp": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 19,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.493,
+      "peakTimeMs": 19
+    },
+    "tdIq": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.168,
+      "peakTimeMs": 20
+    }
+  },
+  "CFG4": {
+    "cfgId": "CFG4",
+    "label": "CFG4",
+    "scPu": 2.913626,
+    "inertiaMWs": 455.5285353411654,
+    "td": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 388,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.188,
+      "peakTimeMs": 388
+    },
+    "tdIp": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 13.2,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.275,
+      "peakTimeMs": 13.2
+    },
+    "tdIq": {
+      "responseTimeMs": 0.75,
+      "riseTimeMs": 388,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.188,
+      "peakTimeMs": 388
+    }
+  },
+  "CFG5": {
+    "cfgId": "CFG5",
+    "label": "CFG5",
+    "scPu": 3.186119,
+    "inertiaMWs": 4514.515470282961,
+    "td": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 809,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.253,
+      "peakTimeMs": 809
+    },
+    "tdIp": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 15,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.481,
+      "peakTimeMs": 15
+    },
+    "tdIq": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 809,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.253,
+      "peakTimeMs": 809
+    }
+  },
+  "CFG6": {
+    "cfgId": "CFG6",
+    "label": "CFG6",
+    "scPu": 1.834948,
+    "inertiaMWs": 2809.898664918517,
+    "td": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 526,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.241,
+      "peakTimeMs": 526
+    },
+    "tdIp": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 18.8,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.506,
+      "peakTimeMs": 18.8
+    },
+    "tdIq": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 526,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.241,
+      "peakTimeMs": 526
+    }
+  },
+  "CFG7": {
+    "cfgId": "CFG7",
+    "label": "CFG7",
+    "scPu": 0.77,
+    "inertiaMWs": 63.6,
+    "td": {
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 27.6,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.303,
+      "peakTimeMs": 27.6
+    },
+    "tdIp": {
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 14.4,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.17,
+      "peakTimeMs": 14.4
+    },
+    "tdIq": {
+      "responseTimeMs": 0.1,
+      "riseTimeMs": 27.6,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.303,
+      "peakTimeMs": 27.6
+    }
+  },
+  "CFG8": {
+    "cfgId": "CFG8",
+    "label": "CFG8",
+    "scPu": 0.864551,
+    "inertiaMWs": 2699.1805370387838,
+    "td": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 483,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.205,
+      "peakTimeMs": 483
+    },
+    "tdIp": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 21.3,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.415,
+      "peakTimeMs": 21.3
+    },
+    "tdIq": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 483,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.205,
+      "peakTimeMs": 483
+    }
+  },
+  "CFG9": {
+    "cfgId": "CFG9",
+    "label": "CFG9",
+    "scPu": 0.848345,
+    "inertiaMWs": 0.521,
+    "td": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 26.0,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.153,
+      "peakTimeMs": 26.0
+    },
+    "tdIp": {
+      "responseTimeMs": 1.0,
+      "riseTimeMs": 49.0,
+      "settlingTimeMs": null,
+      "peakOvershootPu": -0.118,
+      "peakTimeMs": 49.0
+    },
+    "tdIq": {
+      "responseTimeMs": 1.0,
+      "riseTimeMs": 26.0,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.153,
+      "peakTimeMs": 26.0
+    }
+  },
+  "CFG10": {
+    "cfgId": "CFG10",
+    "label": "CFG10",
+    "scPu": 1.381627,
+    "inertiaMWs": 3426.8126944380583,
+    "td": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 164,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.303,
+      "peakTimeMs": 164
+    },
+    "tdIp": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 21.3,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.813,
+      "peakTimeMs": 21.3
+    },
+    "tdIq": {
+      "responseTimeMs": 0.7,
+      "riseTimeMs": 164,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.303,
+      "peakTimeMs": 164
+    }
+  },
+  "CFG11": {
+    "cfgId": "CFG11",
+    "label": "CFG11",
+    "scPu": 1.329215,
+    "inertiaMWs": 1120.2290823926073,
+    "td": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 707,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.278,
+      "peakTimeMs": 707
+    },
+    "tdIp": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 20,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.473,
+      "peakTimeMs": 20
+    },
+    "tdIq": {
+      "responseTimeMs": 1,
+      "riseTimeMs": 707,
+      "settlingTimeMs": null,
+      "peakOvershootPu": 0.278,
+      "peakTimeMs": 707
+    }
+  }
+}

@@ -89,11 +89,24 @@ param(
 
     [switch] $App,
 
-    [string] $ChromePath
+    [string] $ChromePath,
+
+    [ValidateSet("", "Dcs", "Vernova")]
+    [string] $SaveKioskTarget = "",
+
+    [switch] $NoActivate
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ($SaveKioskTarget -or $NoActivate) {
+    $kioskScript = Join-Path $PSScriptRoot "BAT\kiosk-windows.ps1"
+    if (-not (Test-Path -LiteralPath $kioskScript)) {
+        throw "Kiosk helpers not found at $kioskScript (expected BAT\kiosk-windows.ps1)."
+    }
+    . $kioskScript
+}
 
 Add-Type @"
 using System;
@@ -511,11 +524,25 @@ $args = @(
     $launchUrl
 )
 
+if ($SaveKioskTarget) {
+    $profileDir = Get-KioskChromeProfileDir -Target $SaveKioskTarget
+    New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
+    $args = @("--user-data-dir=$profileDir") + $args
+}
+
 $existingWindows = Get-ChromeWindowHandles
 $null = Start-Process -FilePath $chrome -ArgumentList $args -PassThru
 $hwnd = Wait-ForNewChromeWindow -ExistingHandles $existingWindows
 
 $finalRect = Set-ChromeWindowBounds -Handle $hwnd -X $X -Y $Y -Width $Width -Height $Height
+
+if ($NoActivate) {
+    Show-KioskWindow -Handle $hwnd -NoActivate
+}
+
+if ($SaveKioskTarget) {
+    Write-KioskWindowRegistryEntry -Target $SaveKioskTarget -Handle $hwnd -Url $Url
+}
 
 if ($PSCmdlet.ParameterSetName -eq "Display") {
     Write-Host "Chrome opened on display $Display ($displayRole) at ($X, $Y) size ${Width}x${Height}"
