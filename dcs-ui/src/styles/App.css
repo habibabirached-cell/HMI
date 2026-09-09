@@ -19,6 +19,10 @@
    - Nature-inspired palette reflecting green energy transition
    ============================================================================ */
    
+html {
+  color-scheme: dark;
+}
+
 :root {
   --vernova-primary: #005E60;      /* Urgency Green */
   --vernova-secondary: #1a8b8d;    /* Lighter Teal */

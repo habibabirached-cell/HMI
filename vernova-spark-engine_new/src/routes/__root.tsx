@@ -85,6 +85,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "FLEXIQsim" },
       { name: "mobile-web-app-capable", content: "yes" },
+      { name: "theme-color", content: "#004745", media: "(prefers-color-scheme: dark)" },
+      { name: "theme-color", content: "#004745", media: "(prefers-color-scheme: light)" },
       { name: "theme-color", content: "#004745" },
       { name: "format-detection", content: "telephone=no" },
       { title: "GE Vernova FLEXIQsim" },
@@ -119,9 +121,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const KIOSK_THEME_COLOR = "#004745";
+
+function applyKioskThemeColor() {
+  if (typeof document === "undefined") return;
+  let meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", KIOSK_THEME_COLOR);
+  document.documentElement.style.colorScheme = "dark";
+}
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ colorScheme: "dark" }}>
       <head>
         <HeadContent />
       </head>
@@ -137,7 +153,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    if (NoFullScreen) return undefined;
+    applyKioskThemeColor();
+    const themeTimer = window.setInterval(applyKioskThemeColor, 1000);
+    const themeStop = window.setTimeout(() => window.clearInterval(themeTimer), 20000);
+
+    if (NoFullScreen) {
+      return () => {
+        window.clearInterval(themeTimer);
+        window.clearTimeout(themeStop);
+      };
+    }
 
     // Attempt auto-fullscreen on application launch and on first user interaction anywhere
     const triggerFullscreen = () => {
@@ -152,6 +177,8 @@ function RootComponent() {
     events.forEach((ev) => window.addEventListener(ev, triggerFullscreen, { passive: true }));
 
     return () => {
+      window.clearInterval(themeTimer);
+      window.clearTimeout(themeStop);
       events.forEach((ev) => window.removeEventListener(ev, triggerFullscreen));
     };
   }, []);
