@@ -295,7 +295,19 @@ export default function Ideum05NavLayer({
                       modelUrl={slot.card.modelUrl}
                       fitScale={slot.card.modelFitScale}
                       modelYOffset={slot.card.modelYOffset}
+                      shiftUP={slot.card.YShiftParalellToTheScreen ?? slot.card.modelShiftUP}
                       cameraPitchLift={slot.card.cameraPitchLift}
+                      rotationMode={slot.card.modelRotationMode}
+                      pendulumAmplitudeDeg={slot.card.modelPendulumAmplitudeDeg}
+                      pendulumPeriodMs={slot.card.modelPendulumPeriodMs}
+                      pendulumOffsetDeg={slot.card.modelPendulumOffsetDeg}
+                      faceYawDeg={slot.card.modelFaceYawDeg}
+                      faceTriggerWindowDeg={slot.card.modelFaceTriggerWindowDeg}
+                      flybyTravelScale={slot.card.modelFlybyTravelScale}
+                      flybyDurationMs={slot.card.modelFlybyDurationMs}
+                      flybyRepeatCount={slot.card.modelFlybyRepeatCount}
+                      turntableSpeedScale={slot.card.modelTurntableSpeedScale}
+                      showYawDebug={slot.card.modelShowYawDebug}
                     />
                   </div>
                 </>
@@ -306,7 +318,19 @@ export default function Ideum05NavLayer({
                   modelUrl={slot.card.modelUrl}
                   fitScale={slot.card.modelFitScale}
                   modelYOffset={slot.card.modelYOffset}
+                  shiftUP={slot.card.YShiftParalellToTheScreen ?? slot.card.modelShiftUP}
                   cameraPitchLift={slot.card.cameraPitchLift}
+                  rotationMode={slot.card.modelRotationMode}
+                  pendulumAmplitudeDeg={slot.card.modelPendulumAmplitudeDeg}
+                  pendulumPeriodMs={slot.card.modelPendulumPeriodMs}
+                  pendulumOffsetDeg={slot.card.modelPendulumOffsetDeg}
+                  faceYawDeg={slot.card.modelFaceYawDeg}
+                  faceTriggerWindowDeg={slot.card.modelFaceTriggerWindowDeg}
+                  flybyTravelScale={slot.card.modelFlybyTravelScale}
+                  flybyDurationMs={slot.card.modelFlybyDurationMs}
+                  flybyRepeatCount={slot.card.modelFlybyRepeatCount}
+                  turntableSpeedScale={slot.card.modelTurntableSpeedScale}
+                  showYawDebug={slot.card.modelShowYawDebug}
                 />
               ) : slot.card.previewImageUrl ? (
                 <img

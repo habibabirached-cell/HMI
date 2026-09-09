@@ -28,6 +28,11 @@ function easeOutBack(t) {
   return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
 }
 
+function upstreamBreakerPort(ptA, ptB) {
+  if (Math.abs(ptA.y - ptB.y) > 2) return ptA.y < ptB.y ? ptA : ptB;
+  return ptA.x < ptB.x ? ptA : ptB;
+}
+
 /**
  * Two-port breaker: closed = oblique A↔B (green + flow);
  * open = hinge at A or B, blade tip at box center (amber after swing).
@@ -120,7 +125,10 @@ function SchematicInteractiveBreaker({
 
   const atClosed =
     Math.hypot(bladeTip.x - door.closedTip.x, bladeTip.y - door.closedTip.y) < 1.5;
+  const upstreamPort = upstreamBreakerPort(ptA, ptB);
   const showFlow = !linkOpen && atClosed;
+  const flowReverse =
+    Math.hypot(door.hinge.x - upstreamPort.x, door.hinge.y - upstreamPort.y) > 1.5;
 
   return (
     <>
@@ -206,7 +214,11 @@ function SchematicInteractiveBreaker({
         strokeWidth={linkStroke}
         strokeLinecap="round"
         filter={`url(#ib-glow-${uid})`}
-        className={showFlow ? 'interactive-breaker-link interactive-breaker-link--flow' : undefined}
+        className={
+          showFlow
+            ? `interactive-breaker-link interactive-breaker-link--flow${flowReverse ? ' interactive-breaker-link--flow-reverse' : ''}`
+            : undefined
+        }
         pointerEvents="none"
         style={{ transition: 'stroke 0.35s ease' }}
       />

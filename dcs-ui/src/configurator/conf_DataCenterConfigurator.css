@@ -238,6 +238,9 @@
 .conf-page-header--ideum h1 {
   font-size: clamp(22px, 2.2vw, 28px);
   margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--conf-evergreen);
 }
 
 .conf-input-panel--ideum {
@@ -411,18 +414,12 @@
 }
 
 .conf-ideum-title-3d {
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.03em;
-  line-height: 1.05;
+  line-height: 1.15;
   text-transform: uppercase;
-  color: #007578;
-  text-shadow:
-    1px 1px 0 rgba(0, 68, 70, 0.95),
-    2px 2px 0 rgba(0, 58, 60, 0.9),
-    3px 3px 0 rgba(0, 48, 50, 0.84),
-    4px 4px 0 rgba(0, 38, 40, 0.74),
-    5px 6px 14px rgba(0, 42, 44, 0.48);
-  -webkit-text-stroke: 0.45px rgba(0, 38, 40, 0.5);
+  color: var(--conf-evergreen);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 .conf-ideum-corridor-label--diagonal {
@@ -430,7 +427,7 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  font-size: clamp(16px, 10.5cqi, 28px);
+  font-size: clamp(22px, 13cqi, 36px);
   text-align: center;
   writing-mode: horizontal-tb;
   transform: none;
@@ -1150,27 +1147,24 @@
 }
 
 .conf-ideum-tech-card__category {
-  font-size: clamp(11px, 1.15vw, 15px);
+  font-size: clamp(26px, 2.75vw, 36px);
   font-weight: 800;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--conf-evergreen);
-  line-height: 1.15;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.conf-ideum-tech-card__model {
-  font-size: clamp(10px, 1.05vw, 13px);
-  font-weight: 700;
-  color: #1a6b6d;
-  line-height: 1.15;
-  margin-top: 2px;
+  line-height: 1.12;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.conf-ideum-tech-card__model {
+  font-size: clamp(22px, 2.35vw, 30px);
+  font-weight: 700;
+  color: #1a6b6d;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 .conf-ideum-tech-card__body {
@@ -1330,6 +1324,7 @@
 .conf-ideum-tech-card__titles {
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .conf-ideum-tech-card__media-viewer {
@@ -1391,7 +1386,7 @@
 
 .conf-ideum-tech-hub__center-eyebrow {
   display: block;
-  font-size: clamp(14px, 7.5cqi, 24px);
+  font-size: clamp(20px, 10cqi, 32px);
   text-align: center;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -1416,7 +1411,7 @@
   flex: 0 0 auto;
   margin-bottom: 0;
   text-align: left;
-  font-size: clamp(12px, 6cqi, 20px);
+  font-size: clamp(18px, 8.5cqi, 28px);
 }
 
 .conf-ideum-hub-load-slider-wrap {
@@ -1941,15 +1936,38 @@
 
 .conf-ideum-configure-btn {
   flex: 1;
-  border: none;
+  border: 2px solid rgba(0, 0, 0, 0.88);
   border-radius: 12px;
   padding: 16px 20px;
   font-size: clamp(18px, 2vw, 24px);
   font-weight: 800;
   letter-spacing: 0.06em;
-  background: var(--conf-evergreen);
+  background: linear-gradient(
+    180deg,
+    #58dcc8 0%,
+    #007876 45%,
+    #004e50 100%
+  );
   color: #fff;
   cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 2px 0 rgba(0, 0, 0, 0.16),
+    0 4px 10px rgba(0, 78, 80, 0.28);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  transition: filter 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.conf-ideum-configure-btn:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.conf-ideum-configure-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 1px 0 rgba(0, 0, 0, 0.14),
+    0 2px 6px rgba(0, 78, 80, 0.22);
 }
 
 .conf-ideum-configure-btn:disabled {

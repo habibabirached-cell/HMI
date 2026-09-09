@@ -10,6 +10,8 @@ export const IDEUM05_NAV_MODEL_URLS = {
   industrialPlantComp: `${PUBLIC}/models/industrial-plant-comp/model.gltf`,
   ref200Mw: `${PUBLIC}/models/200MWglb/model.gltf`,
   ref500Mw: `${PUBLIC}/models/500MW/model.gltf`,
+  gridConnected: `${PUBLIC}/models/GridConnected/model.gltf`,
+  submarine: `${PUBLIC}/models/Submareen/model.gltf`,
 };
 
 /** Upper share cap when image + 3D are stacked (aspect ratio usually sets the actual split). */
@@ -19,6 +21,7 @@ export const IDEUM05_NAV_IMAGE_URLS = {
   ref300Mw: `${PUBLIC}/models/300MW.png`,
   ref500Mw: `${PUBLIC}/models/500MW.png`,
   dataCenterConfiguration: `${PUBLIC}/models/DataCenterConfiguration.png`,
+  configurator: `${PUBLIC}/models/configurator.png`,
 };
 
 /** Shared diagram aspect for data-centers row previews (PNG assets are 1448×1086). */
@@ -85,11 +88,13 @@ export function getIdeum05OverlayDesignDir(screenId) {
   return target?.catalogDir ?? null;
 }
 
-/** Root landing: two small cards left, featured card right (index maps to IDEUM05_NAV_CARD_LAYOUT). */
+/** Root landing: three equal left cards + Data Centers + Grid Connected. */
 export const IDEUM05_ROOT_NAV_LAYOUT = [
-  { x: 80, y: 120, width: 720, height: 480 },
-  { x: 80, y: 640, width: 720, height: 380 },
-  { x: 900, y: 120, width: 1080, height: 900 },
+  { x: 80, y: 89, width: 347, height: 348 },
+  { x: 80, y: 457, width: 347, height: 348 },
+  { x: 80, y: 825, width: 347, height: 348 },
+  { x: 447, y: 89, width: 1333, height: 1089 },
+  { x: 1800, y: 89, width: 520, height: 1089 },
 ];
 
 /** Default canvas positions for up to 3 nav cards (root + placeholder sub-screens). */
@@ -130,15 +135,85 @@ export function computeIdeum05EqualCardLayout(
   }));
 }
 
+/** Padding for root screen (left stack + two right tiles). */
+export const IDEUM05_ROOT_LAYOUT_PAD = {
+  marginX: 80,
+  marginY: 120,
+  marginBottom: 40,
+  gap: 20,
+  leftCardCount: 3,
+  /** Left stack width as a fraction of Grid Connected width (2/3 = one-third thinner). */
+  leftColumnWidthShare: 2 / 3,
+  /** Grid Connected width as a share of the right-hand pair (Data Centers gets the rest). */
+  gridConnectedWidthShare: 0.38,
+  /** Scale pane height relative to the prior full-bleed layout (1.1 = 10% taller). */
+  paneHeightScale: 1.21,
+};
+
+/** Root: three equal left tiles (2/3 Grid Connected width) + Data Centers + Grid Connected. */
+export function computeIdeum05RootCardLayout(
+  viewportWidth,
+  viewportHeight,
+  zoom = 1,
+  pad = IDEUM05_ROOT_LAYOUT_PAD,
+) {
+  const z = Math.max(Number(zoom) || 1, 0.01);
+  const canvasW = viewportWidth / z;
+  const canvasH = viewportHeight / z;
+  const {
+    marginX,
+    marginY,
+    marginBottom,
+    gap,
+    gridConnectedWidthShare,
+    leftCardCount,
+    leftColumnWidthShare,
+    paneHeightScale,
+  } = pad;
+  const baseMarginTotal = marginY + marginBottom;
+  const availForPanes = canvasH - baseMarginTotal;
+  const mainHeight = Math.max(400, Math.floor(availForPanes * paneHeightScale));
+  const marginTotal = Math.max(0, Math.floor(canvasH - mainHeight));
+  const marginYAdj = baseMarginTotal > 0
+    ? Math.floor(marginY * marginTotal / baseMarginTotal)
+    : Math.floor(marginTotal / 2);
+  const leftGaps = Math.max(0, leftCardCount - 1) * gap;
+  const leftCardH = Math.max(160, Math.floor((mainHeight - leftGaps) / leftCardCount));
+
+  const innerW = canvasW - 2 * marginX;
+  const alpha = gridConnectedWidthShare;
+  const rightPairW = Math.max(600, Math.floor((innerW - gap) / (1 + 1 / alpha)));
+  const gridW = Math.max(480, Math.floor(rightPairW * alpha));
+  const leftW = Math.max(320, Math.floor(gridW * leftColumnWidthShare));
+  const dataCentersW = Math.max(640, rightPairW - gridW - gap + (gridW - leftW));
+  const rightX = marginX + leftW + gap;
+
+  const leftLayouts = Array.from({ length: leftCardCount }, (_, i) => ({
+    x: marginX,
+    y: marginYAdj + i * (leftCardH + gap),
+    width: leftW,
+    height: leftCardH,
+  }));
+
+  return [
+    ...leftLayouts,
+    { x: rightX, y: marginYAdj, width: dataCentersW, height: mainHeight },
+    { x: rightX + dataCentersW + gap, y: marginYAdj, width: gridW, height: mainHeight },
+  ];
+}
+
 export function getIdeum05NavCardLayout(screenId, viewport = null) {
+  const vw =
+    viewport?.width ??
+    (typeof window !== 'undefined' ? window.innerWidth : 1920);
+  const vh =
+    viewport?.height ??
+    (typeof window !== 'undefined' ? window.innerHeight : 1080);
+  const z = viewport?.zoom ?? 1;
+  if (screenId === IDEUM05_NAV_ROOT) {
+    return computeIdeum05RootCardLayout(vw, vh, z);
+  }
   if (screenId === 'data-centers') {
-    const vw =
-      viewport?.width ??
-      (typeof window !== 'undefined' ? window.innerWidth : 1920);
-    const vh =
-      viewport?.height ??
-      (typeof window !== 'undefined' ? window.innerHeight : 1080);
-    const z = viewport?.zoom ?? 1;
     return computeIdeum05EqualCardLayout(vw, vh, z, 3);
   }
   return IDEUM05_NAV_SCREEN_LAYOUTS[screenId] || IDEUM05_NAV_CARD_LAYOUT;
@@ -165,13 +240,43 @@ const SCREENS = {
       navDisabled: true,
     },
     {
+      id: 'submarine',
+      label: 'Submarine',
+      preview: 'Submarine power system',
+      modelUrl: IDEUM05_NAV_MODEL_URLS.submarine,
+      modelFitScale: 0.4,
+      modelYOffset: 0.54,
+      YShiftParalellToTheScreen: 0.051,
+      cameraPitchLift: 0.06,
+      modelRotationMode: 'faceFlyby',
+      modelFaceYawDeg: 120,
+      modelTurntableSpeedScale: 3,
+      modelFlybyTravelScale: 0.9,
+      modelFlybyDurationMs: 28800,
+      modelFlybyRepeatCount: 1,
+      modelShowYawDebug: false,
+    },
+    {
       id: 'data-centers',
       label: 'Data Centers',
       preview: 'Data center applications',
       modelUrl: IDEUM05_NAV_MODEL_URLS.outdoorDataCenter,
-      modelFitScale: 0.74,
+      modelFitScale: 0.8,
       modelYOffset: 0.54,
+      cameraPitchLift: 1.06,
       navFeatured: true,
+    },
+    {
+      id: 'grid-connected',
+      label: 'Grid Connected',
+      preview: 'Grid-connected power system',
+      modelUrl: IDEUM05_NAV_MODEL_URLS.gridConnected,
+      modelFitScale: 0.7,
+      modelYOffset: 2.14,
+      cameraPitchLift: 1.06,
+      modelRotationMode: 'pendulum',
+      modelPendulumAmplitudeDeg: 10,
+      modelPendulumOffsetDeg: 241,
     },
   ],
   'data-centers': [
@@ -191,9 +296,9 @@ const SCREENS = {
     },
     {
       id: 'controls',
-      label: 'DC Configurator Ideum',
+      label: 'Data Center Configurator',
       preview: 'Interactive configuration',
-      previewImageUrl: IDEUM05_NAV_IMAGE_URLS.dataCenterConfiguration,
+      previewImageUrl: IDEUM05_NAV_IMAGE_URLS.configurator,
       previewImageMatchGroup: IDEUM05_DATA_CENTERS_PREVIEW_MATCH_GROUP,
       previewImageFill: true,
       previewImageHeightShare: IDEUM05_STACKED_PREVIEW_IMAGE_SHARE,

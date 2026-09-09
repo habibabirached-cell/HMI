@@ -106,7 +106,7 @@ export default function ConfResultsPanel({
             <h2>Ready — waiting for Ideum</h2>
             <p>
               This wall display is loaded and listening. On the Ideum touch table, open{' '}
-              <strong>DC Configurator Ideum</strong>, set requirements, and press{' '}
+              <strong>Data Center Configurator</strong>, set requirements, and press{' '}
               <strong>CONFIGURE</strong>.
             </p>
             <p className="conf-empty-state__hint">

@@ -201,8 +201,12 @@ function HubTechCard({
     >
       <div className="conf-ideum-tech-card__head">
         <div className="conf-ideum-tech-card__titles">
-          <span className="conf-ideum-tech-card__category">{meta.category}</span>
-          <span className="conf-ideum-tech-card__model">{meta.modelName}</span>
+          <span className="conf-ideum-tech-card__category">
+            {meta.category}
+            {meta.modelName ? (
+              <span className="conf-ideum-tech-card__model"> - ({meta.modelName})</span>
+            ) : null}
+          </span>
         </div>
         {elevated && <span className="conf-ideum-tech-card__integrated-badge">Integrated</span>}
       </div>

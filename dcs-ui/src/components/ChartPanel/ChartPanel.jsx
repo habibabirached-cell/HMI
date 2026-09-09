@@ -188,6 +188,59 @@ function buildStackedYLabelsForEditor(chart) {
   );
 }
 
+function buildLegendLabelEditorState(chart) {
+  const rawYKeys = getChartVariableKeys(chart);
+  const useQualifiedKeys = !!chart?.ensembleCrossMember;
+  const yKeys = useQualifiedKeys
+    ? rawYKeys
+    : rawYKeys.map((k) => editorKeyForChartColumn(chart, k));
+  return {
+    yKeys,
+    rawYKeys,
+    labels: Object.fromEntries(
+      yKeys.map((k, i) => [k, chart.legendLabels?.[k] ?? chart.legendLabels?.[rawYKeys[i]] ?? '']),
+    ),
+    legendTitle: chart.legendTitle ?? '',
+  };
+}
+
+function resolveChartTitlePlaceholder(chart) {
+  if (!chart) return 'Chart';
+  if (chart.isMultiComponent) return chart.title || 'Multi-Component Chart';
+  if (chart.chartType === 'stacked-nd') {
+    return `${chart.componentName || ''} - Stacked nD`.trim() || 'Stacked nD';
+  }
+  if (chart.chartType === 'nd') return `${chart.componentName || ''} - nD`.trim() || 'nD';
+  if (chart.chartType === 'pie') return `${chart.componentName || ''} - Pie`.trim() || 'Pie';
+  if (chart.yColumn) return `${chart.componentName || ''} - ${chart.yColumn}`.trim() || chart.yColumn;
+  return chart.componentName || 'Chart';
+}
+
+function resolveChartTitleForEditor(chart) {
+  return chart?.title ?? '';
+}
+
+function plotlyYAxisTitleIndex(className) {
+  if (!className) return null;
+  for (const cls of className.trim().split(/\s+/)) {
+    if (cls === 'ytitle') return 0;
+    const match = cls.match(/^y(\d+)title$/);
+    if (match) return Number(match[1]) - 1;
+  }
+  return null;
+}
+
+function queryPlotlyYAxisTitleElements(gd) {
+  if (!gd) return [];
+  const found = [];
+  gd.querySelectorAll('.yaxislayer-above text, .yaxislayer-below text').forEach((el) => {
+    const idx = plotlyYAxisTitleIndex(el.getAttribute('class'));
+    if (idx != null) found.push({ el, idx });
+  });
+  found.sort((a, b) => a.idx - b.idx);
+  return found;
+}
+
 function normalizeStackedYRangeEntry(entry) {
   if (!entry || typeof entry !== 'object') {
     return { yLocked: false, yMin: undefined, yMax: undefined };
@@ -392,7 +445,7 @@ function syncLegendMoveOutline(gd, armed) {
     'title',
     armed
       ? 'Arrow keys move this legend · Esc when done · Click series to show/hide'
-      : 'Click a series to show/hide',
+      : 'Right-click to edit legend labels · Click a series to show/hide',
   );
 }
 
@@ -597,6 +650,8 @@ const ChartPanel = ({
   /** Right-click axis label popup: { chartId, kind, yIndex?, value, left, top } */
   const [inlineLabelEdit, setInlineLabelEdit] = useState(null);
   const axisTitleMenuCleanupRef = useRef({});
+  const legendMenuCleanupRef = useRef({});
+  const chartTitleMenuCleanupRef = useRef({});
   const [variablePicker, setVariablePicker] = useState(null);
   /** Per-chart last known Plotly axis ranges, for pre-populating the axis range editor. */
   const plotlyRangesRef = useRef({});
@@ -609,6 +664,12 @@ const ChartPanel = ({
   const [legendMoveChartId, setLegendMoveChartId] = useState(null);
   /** Right-click on a named preset tab (HD, HD-A, …). */
   const [namedPresetContextMenu, setNamedPresetContextMenu] = useState(null);
+  /** Right-click legend → edit trace names. */
+  const [legendContextMenu, setLegendContextMenu] = useState(null);
+  const [legendLabelEditor, setLegendLabelEditor] = useState(null);
+  /** Right-click chart title → edit title. */
+  const [chartTitleContextMenu, setChartTitleContextMenu] = useState(null);
+  const [chartTitleEditor, setChartTitleEditor] = useState(null);
 
   const chartPlaybackCtx = useMemo(
     () => ({ simulationMetadata, simulationData, ensembleMemberSimulationData }),
@@ -875,6 +936,8 @@ const ChartPanel = ({
   const attachPlotlyChartListeners = (chart, gd) => {
     plotlyGdByChartRef.current[chart.id] = gd;
     bindPlotlyAxisTitleContextMenus(chart, gd);
+    bindPlotlyLegendContextMenu(chart, gd);
+    bindPlotlyChartTitleContextMenu(chart, gd);
     if (chartHasMultiTraceLegend(chart)) {
       syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
     }
@@ -1290,12 +1353,14 @@ const ChartPanel = ({
     setVariablePicker(null);
   };
 
-  const openInlineAxisLabelEditor = useCallback((chart, { kind, yIndex, current, clientX, clientY }) => {
+  const openInlineAxisLabelEditor = useCallback((chart, { kind, yIndex, current, placeholder, hint, clientX, clientY }) => {
     setInlineLabelEdit({
       chartId: chart.id,
       kind,
       yIndex: yIndex ?? undefined,
       value: current ?? '',
+      placeholder: placeholder ?? '',
+      hint: hint ?? '',
       left: clientX,
       top: clientY,
     });
@@ -1347,35 +1412,48 @@ const ChartPanel = ({
         });
       };
 
-      bindTitle(gd.querySelector('.xaxislayer-above text.xtitle'), (e) => {
+      bindTitle(gd.querySelector('.xaxislayer-above text.xtitle, .xaxislayer-below text.xtitle'), (e) => {
         e.preventDefault();
         e.stopPropagation();
         openInlineAxisLabelEditor(chart, {
           kind: 'x',
           current: chart.xLabel ?? chart.xColumn ?? e.target?.textContent ?? '',
+          placeholder: chart.xColumn ?? '',
+          hint: 'X axis label',
           clientX: e.clientX,
           clientY: e.clientY,
         });
       });
 
-      gd.querySelectorAll('.yaxislayer-above text.ytitle').forEach((el, idx) => {
+      queryPlotlyYAxisTitleElements(gd).forEach(({ el, idx }) => {
         bindTitle(el, (e) => {
           e.preventDefault();
           e.stopPropagation();
           const groups = getStackedNdGroups(chart);
-          const current =
-            chart.chartType === 'stacked-nd' && groups[idx]
-              ? resolveStackedYLabel(chart, groups[idx], idx)
-              : chart.yLabel ?? chart.yColumn ?? e.target?.textContent ?? '';
+          const isStackedY = chart.chartType === 'stacked-nd' && groups[idx];
+          const current = isStackedY
+            ? resolveStackedYLabel(chart, groups[idx], idx)
+            : chart.yLabel ?? chart.yColumn ?? e.target?.textContent ?? '';
+          const placeholder = isStackedY
+            ? defaultStackedYLabel(chart, groups[idx])
+            : chart.yColumn ?? '';
           openInlineAxisLabelEditor(chart, {
             kind: 'y',
-            yIndex: chart.chartType === 'stacked-nd' ? idx : undefined,
+            yIndex: isStackedY ? idx : undefined,
             current,
+            placeholder,
+            hint: isStackedY
+              ? stackedYRangeRowLabel(idx, groups.length)
+              : 'Y axis label',
             clientX: e.clientX,
             clientY: e.clientY,
           });
         });
+        el.setAttribute('title', 'Right-click to edit Y axis label');
       });
+
+      const xTitleEl = gd.querySelector('.xaxislayer-above text.xtitle, .xaxislayer-below text.xtitle');
+      if (xTitleEl) xTitleEl.setAttribute('title', 'Right-click to edit X axis label');
 
       axisTitleMenuCleanupRef.current[chart.id] = () => {
         cleanups.forEach((fn) => fn());
@@ -1385,12 +1463,168 @@ const ChartPanel = ({
     [openInlineAxisLabelEditor],
   );
 
+  const openLegendLabelEditor = useCallback((chart, clientX, clientY) => {
+    if (!chartHasMultiTraceLegend(chart)) return;
+    setLegendLabelEditor({
+      chartId: chart.id,
+      left: clientX,
+      top: clientY,
+      ...buildLegendLabelEditorState(chart),
+    });
+  }, []);
+
+  const commitLegendLabelEdit = useCallback(() => {
+    if (!legendLabelEditor) return;
+    const chart = chartsRef.current.find((c) => c.id === legendLabelEditor.chartId);
+    if (!chart) {
+      setLegendLabelEditor(null);
+      return;
+    }
+    const isEnsemble = simulationMetadata?.isEnsemble;
+    const xColumnKey = chart.ensembleCrossMember
+      ? chart.xColumn
+      : editorKeyForChartColumn(chart, chart.xColumn);
+    const colCommit = buildColumnCommitFromEditor(
+      chart,
+      xColumnKey,
+      legendLabelEditor.yKeys,
+      isEnsemble,
+    );
+    const { yStorage } = colCommit;
+    const legendLabels = Object.fromEntries(
+      legendLabelEditor.yKeys
+        .map((editorKey, i) => {
+          const label = legendLabelEditor.labels[editorKey]?.trim();
+          if (!label) return null;
+          return [yStorage[i], label];
+        })
+        .filter(Boolean),
+    );
+    onUpdateChart?.(legendLabelEditor.chartId, {
+      ...(Object.keys(legendLabels).length ? { legendLabels } : { legendLabels: undefined }),
+      ...(chartHasMultiTraceLegend(chart)
+        ? legendLabelEditor.legendTitle?.trim()
+          ? { legendTitle: legendLabelEditor.legendTitle.trim() }
+          : { legendTitle: undefined }
+        : {}),
+    });
+    setLegendLabelEditor(null);
+  }, [legendLabelEditor, onUpdateChart, simulationMetadata?.isEnsemble]);
+
+  const openChartTitleEditor = useCallback((chart, clientX, clientY) => {
+    if (!chart) return;
+    setChartTitleEditor({
+      chartId: chart.id,
+      left: clientX,
+      top: clientY,
+      title: resolveChartTitleForEditor(chart),
+      placeholder: resolveChartTitlePlaceholder(chart),
+    });
+  }, []);
+
+  const commitChartTitleEdit = useCallback(() => {
+    if (!chartTitleEditor) return;
+    const trimmed = chartTitleEditor.title.trim();
+    const chart = chartsRef.current.find((c) => c.id === chartTitleEditor.chartId);
+    const placeholder = chart ? resolveChartTitlePlaceholder(chart) : '';
+    onUpdateChart?.(chartTitleEditor.chartId, {
+      title: trimmed && trimmed !== placeholder ? trimmed : undefined,
+    });
+    setChartTitleEditor(null);
+  }, [chartTitleEditor, onUpdateChart]);
+
+  const openChartTitleContextMenu = useCallback((chart, clientX, clientY) => {
+    setChartTitleContextMenu({
+      chartId: chart.id,
+      x: clientX,
+      y: clientY,
+    });
+  }, []);
+
+  const bindPlotlyChartTitleContextMenu = useCallback(
+    (chart, gd) => {
+      const prevCleanup = chartTitleMenuCleanupRef.current[chart.id];
+      if (prevCleanup) prevCleanup();
+      if (!gd || !onUpdateChart) return;
+
+      const titleEl =
+        gd.querySelector('.infolayer .g-gtitle text')
+        || gd.querySelector('.infolayer text.gtitle');
+      if (!titleEl) return;
+
+      const handler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openChartTitleContextMenu(chart, e.clientX, e.clientY);
+      };
+
+      titleEl.style.cursor = 'context-menu';
+      titleEl.addEventListener('contextmenu', handler);
+      titleEl.setAttribute('title', 'Right-click to edit chart title');
+      chartTitleMenuCleanupRef.current[chart.id] = () => {
+        titleEl.removeEventListener('contextmenu', handler);
+        titleEl.style.cursor = '';
+        titleEl.removeAttribute('title');
+        delete chartTitleMenuCleanupRef.current[chart.id];
+      };
+    },
+    [onUpdateChart, openChartTitleContextMenu],
+  );
+
+  const bindPlotlyLegendContextMenu = useCallback(
+    (chart, gd) => {
+      const prevCleanup = legendMenuCleanupRef.current[chart.id];
+      if (prevCleanup) prevCleanup();
+      if (!gd || !chartHasMultiTraceLegend(chart)) return;
+
+      const legend = gd.querySelector('.infolayer .legend');
+      if (!legend) return;
+
+      const handler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLegendContextMenu({
+          chartId: chart.id,
+          x: e.clientX,
+          y: e.clientY,
+        });
+      };
+
+      legend.style.cursor = 'context-menu';
+      legend.addEventListener('contextmenu', handler);
+      legendMenuCleanupRef.current[chart.id] = () => {
+        legend.removeEventListener('contextmenu', handler);
+        legend.style.cursor = '';
+        delete legendMenuCleanupRef.current[chart.id];
+      };
+    },
+    [],
+  );
+
   useEffect(
     () => () => {
       Object.values(axisTitleMenuCleanupRef.current).forEach((fn) => fn?.());
       axisTitleMenuCleanupRef.current = {};
+      Object.values(legendMenuCleanupRef.current).forEach((fn) => fn?.());
+      legendMenuCleanupRef.current = {};
+      Object.values(chartTitleMenuCleanupRef.current).forEach((fn) => fn?.());
+      chartTitleMenuCleanupRef.current = {};
     },
     [],
+  );
+
+  const refreshPlotlyContextMenus = useCallback(
+    (chart, gd) => {
+      if (!gd) return;
+      plotlyGdByChartRef.current[chart.id] = gd;
+      bindPlotlyAxisTitleContextMenus(chart, gd);
+      bindPlotlyLegendContextMenu(chart, gd);
+      bindPlotlyChartTitleContextMenu(chart, gd);
+      if (chartHasMultiTraceLegend(chart)) {
+        syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
+      }
+    },
+    [bindPlotlyAxisTitleContextMenus, bindPlotlyLegendContextMenu, bindPlotlyChartTitleContextMenu],
   );
 
   const openVariablePicker = (role, replaceKey = null) => {
@@ -2203,7 +2437,7 @@ const ChartPanel = ({
         customdata: sampledRowIndices,
         type: 'scatter',
         mode: 'lines+markers',
-        name: comp.name,
+        name: chart.legendLabels?.[colKey] ?? comp.name,
         line: style.line,
         marker: buildScatterMarkerStyle({
           lineColor: style.color,
@@ -4645,7 +4879,16 @@ const ChartPanel = ({
                   {!chart.isMultiComponent && chart.chartType === 'heatmap' && '🔥'}
                   {!chart.isMultiComponent && chart.chartType === 'box' && '📦'}
                 </span>
-                <span className="chart-panel-chart-name">
+                <span
+                  className="chart-panel-chart-name"
+                  onContextMenu={(e) => {
+                    if (!onUpdateChart) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openChartTitleContextMenu(chart, e.clientX, e.clientY);
+                  }}
+                  title="Right-click to edit chart title"
+                >
                   {chart.isMultiComponent ? chart.title : (chart.title || chart.componentName)}
                 </span>
                 {onUpdateChart && (
@@ -4731,13 +4974,7 @@ const ChartPanel = ({
                     onRelayout={(rd) => handlePlotlyRelayout(chart, rd)}
                     {...(chart.isMultiComponent && chart.chartType === 'multi-bar-chart' ? plotlyTransition : {})}
                     onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
-                    onUpdate={(fig, gd) => {
-                      plotlyGdByChartRef.current[chart.id] = gd;
-                      bindPlotlyAxisTitleContextMenus(chart, gd);
-                      if (chartHasMultiTraceLegend(chart)) {
-                        syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
-                      }
-                    }}
+                    onUpdate={(fig, gd) => refreshPlotlyContextMenus(chart, gd)}
                   />
                   </>
                 );
@@ -4800,7 +5037,16 @@ const ChartPanel = ({
                         {!chart.isMultiComponent && chart.chartType === 'heatmap' && '🔥'}
                         {!chart.isMultiComponent && chart.chartType === 'box' && '📦'}
                       </span>
-                      <span className="chart-panel-chart-name">
+                      <span
+                        className="chart-panel-chart-name"
+                        onContextMenu={(e) => {
+                          if (!onUpdateChart) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openChartTitleContextMenu(chart, e.clientX, e.clientY);
+                        }}
+                        title="Right-click to edit chart title"
+                      >
                         {chart.isMultiComponent ? chart.title : (chart.title || chart.componentName)}
                       </span>
                       {onUpdateChart && (
@@ -4851,13 +5097,7 @@ const ChartPanel = ({
                           onRelayout={(rd) => handlePlotlyRelayout(chart, rd)}
                           {...(chart.isMultiComponent && chart.chartType === 'multi-bar-chart' ? plotlyTransition : {})}
                           onInitialized={(fig, gd) => attachPlotlyChartListeners(chart, gd)}
-                          onUpdate={(fig, gd) => {
-                            plotlyGdByChartRef.current[chart.id] = gd;
-                            bindPlotlyAxisTitleContextMenus(chart, gd);
-                            if (chartHasMultiTraceLegend(chart)) {
-                              syncLegendMoveOutline(gd, legendMoveChartIdRef.current === chart.id);
-                            }
-                          }}
+                          onUpdate={(fig, gd) => refreshPlotlyContextMenus(chart, gd)}
                         />
                         </>
                       );
@@ -4899,9 +5139,13 @@ const ChartPanel = ({
           style={{ left: inlineLabelEdit.left, top: inlineLabelEdit.top }}
           onClick={(e) => e.stopPropagation()}
         >
+          {inlineLabelEdit.hint ? (
+            <div className="chart-inline-label-edit-hint">{inlineLabelEdit.hint}</div>
+          ) : null}
           <input
             className="chart-inline-label-edit-input"
             value={inlineLabelEdit.value}
+            placeholder={inlineLabelEdit.placeholder || undefined}
             autoFocus
             onChange={(e) => setInlineLabelEdit((p) => ({ ...p, value: e.target.value }))}
             onKeyDown={(e) => {
@@ -4942,6 +5186,219 @@ const ChartPanel = ({
             >
               Save as “{namedPresetContextMenu.presetName}”
             </button>
+          </div>
+        </div>
+      )}
+      {legendContextMenu && (
+        <div
+          className="chart-panel-preset-context-overlay"
+          onClick={() => setLegendContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setLegendContextMenu(null);
+          }}
+        >
+          <div
+            className="chart-panel-preset-context-menu"
+            style={{
+              left: `${legendContextMenu.x}px`,
+              top: `${legendContextMenu.y}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="menu"
+          >
+            <button
+              type="button"
+              className="chart-panel-preset-context-item"
+              role="menuitem"
+              onClick={() => {
+                const chart = chartsRef.current.find((c) => c.id === legendContextMenu.chartId);
+                const { x, y } = legendContextMenu;
+                setLegendContextMenu(null);
+                if (chart) openLegendLabelEditor(chart, x, y);
+              }}
+            >
+              Edit legend labels…
+            </button>
+          </div>
+        </div>
+      )}
+      {legendLabelEditor && (
+        <div
+          className="chart-panel-preset-context-overlay"
+          onClick={() => setLegendLabelEditor(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setLegendLabelEditor(null);
+          }}
+        >
+          <div
+            className="chart-legend-label-editor"
+            style={{
+              left: `${Math.min(Math.max(16, legendLabelEditor.left), window.innerWidth - 320)}px`,
+              top: `${Math.min(Math.max(16, legendLabelEditor.top), window.innerHeight - 280)}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="chart-legend-label-editor-title"
+          >
+            <div id="chart-legend-label-editor-title" className="chart-legend-label-editor-title">
+              Legend labels
+            </div>
+            <p className="chart-legend-label-editor-hint">
+              Custom names are saved with the chart configuration.
+            </p>
+            {chartHasMultiTraceLegend(chartsRef.current.find((c) => c.id === legendLabelEditor.chartId)) && (
+              <label className="chart-legend-label-editor-row">
+                <span>Legend title</span>
+                <input
+                  className="chart-legend-label-editor-input"
+                  value={legendLabelEditor.legendTitle}
+                  onChange={(e) =>
+                    setLegendLabelEditor((p) => ({ ...p, legendTitle: e.target.value }))
+                  }
+                  placeholder="Optional box title"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setLegendLabelEditor(null);
+                  }}
+                />
+              </label>
+            )}
+            {legendLabelEditor.yKeys.map((editorKey, i) => (
+              <label key={editorKey} className="chart-legend-label-editor-row">
+                <span title={editorKey}>{shortColumnLabel(editorKey)}</span>
+                <input
+                  className="chart-legend-label-editor-input"
+                  value={legendLabelEditor.labels[editorKey] ?? ''}
+                  onChange={(e) =>
+                    setLegendLabelEditor((p) => ({
+                      ...p,
+                      labels: { ...p.labels, [editorKey]: e.target.value },
+                    }))
+                  }
+                  placeholder={
+                    legendLabelEditor.rawYKeys[i]
+                      ? shortColumnLabel(legendLabelEditor.rawYKeys[i])
+                      : shortColumnLabel(editorKey)
+                  }
+                  autoFocus={i === 0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitLegendLabelEdit();
+                    if (e.key === 'Escape') setLegendLabelEditor(null);
+                  }}
+                />
+              </label>
+            ))}
+            <div className="chart-legend-label-editor-actions">
+              <button
+                type="button"
+                className="chart-legend-label-editor-btn chart-legend-label-editor-btn--apply"
+                onClick={commitLegendLabelEdit}
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                className="chart-legend-label-editor-btn"
+                onClick={() => setLegendLabelEditor(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {chartTitleContextMenu && (
+        <div
+          className="chart-panel-preset-context-overlay"
+          onClick={() => setChartTitleContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setChartTitleContextMenu(null);
+          }}
+        >
+          <div
+            className="chart-panel-preset-context-menu"
+            style={{
+              left: `${chartTitleContextMenu.x}px`,
+              top: `${chartTitleContextMenu.y}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="menu"
+          >
+            <button
+              type="button"
+              className="chart-panel-preset-context-item"
+              role="menuitem"
+              onClick={() => {
+                const chart = chartsRef.current.find((c) => c.id === chartTitleContextMenu.chartId);
+                const { x, y } = chartTitleContextMenu;
+                setChartTitleContextMenu(null);
+                if (chart) openChartTitleEditor(chart, x, y);
+              }}
+            >
+              Edit chart title…
+            </button>
+          </div>
+        </div>
+      )}
+      {chartTitleEditor && (
+        <div
+          className="chart-panel-preset-context-overlay"
+          onClick={() => setChartTitleEditor(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setChartTitleEditor(null);
+          }}
+        >
+          <div
+            className="chart-legend-label-editor"
+            style={{
+              left: `${Math.min(Math.max(16, chartTitleEditor.left), window.innerWidth - 320)}px`,
+              top: `${Math.min(Math.max(16, chartTitleEditor.top), window.innerHeight - 180)}px`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="chart-title-editor-title"
+          >
+            <div id="chart-title-editor-title" className="chart-legend-label-editor-title">
+              Chart title
+            </div>
+            <p className="chart-legend-label-editor-hint">
+              Saved with the chart configuration. Leave blank to use the default title.
+            </p>
+            <label className="chart-legend-label-editor-row">
+              <span>Title</span>
+              <input
+                className="chart-legend-label-editor-input"
+                value={chartTitleEditor.title}
+                onChange={(e) =>
+                  setChartTitleEditor((p) => ({ ...p, title: e.target.value }))
+                }
+                placeholder={chartTitleEditor.placeholder}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitChartTitleEdit();
+                  if (e.key === 'Escape') setChartTitleEditor(null);
+                }}
+              />
+            </label>
+            <div className="chart-legend-label-editor-actions">
+              <button
+                type="button"
+                className="chart-legend-label-editor-btn chart-legend-label-editor-btn--apply"
+                onClick={commitChartTitleEdit}
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                className="chart-legend-label-editor-btn"
+                onClick={() => setChartTitleEditor(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

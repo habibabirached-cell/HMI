@@ -408,6 +408,94 @@
   outline: none;
 }
 
+.chart-legend-label-editor {
+  position: fixed;
+  z-index: 4001;
+  width: min(320px, calc(100vw - 32px));
+  max-height: min(420px, calc(100vh - 32px));
+  overflow: auto;
+  padding: 12px 14px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 183, 77, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+.chart-legend-label-editor-title {
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  color: #ffb74d;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+
+.chart-legend-label-editor-hint {
+  margin: 0 0 10px;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  color: #888;
+  line-height: 1.35;
+}
+
+.chart-legend-label-editor-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.chart-legend-label-editor-row > span {
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  color: #00d4a8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-legend-label-editor-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 183, 77, 0.3);
+  border-radius: 4px;
+  color: #e8e8e8;
+  font-size: calc(12px + var(--ui-font-px-shift, 0px));
+  padding: 6px 8px;
+}
+
+.chart-legend-label-editor-input:focus {
+  outline: none;
+  border-color: rgba(255, 183, 77, 0.75);
+}
+
+.chart-legend-label-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chart-legend-label-editor-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chart-legend-label-editor-btn--apply {
+  border-color: rgba(0, 212, 168, 0.55);
+  background: rgba(0, 94, 96, 0.35);
+  color: #00d4a8;
+}
+
+.chart-legend-label-editor-btn:hover {
+  filter: brightness(1.08);
+}
+
 .chart-panel-header button,
 .chart-panel-header select {
   cursor: pointer;
@@ -1273,6 +1361,7 @@
   color: #e0e0e0;
   font-size: calc(12px + var(--ui-font-px-shift, 0px));
   font-weight: 600;
+  cursor: context-menu;
 }
 
 .chart-panel-chart-type {
@@ -1649,6 +1738,16 @@
   border-radius: 6px;
   padding: 4px 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+.chart-inline-label-edit-hint {
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 700;
+  color: #00d4a8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .chart-inline-label-edit-input {

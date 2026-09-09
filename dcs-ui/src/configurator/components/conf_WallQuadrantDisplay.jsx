@@ -245,7 +245,7 @@ export default function ConfWallQuadrantDisplay({
         <WallOverlayState className="conf-wall-overlay-state--idle">
           <h2>Ready — waiting for Ideum</h2>
           <p>
-            Open <strong>DC Configurator Ideum</strong> on the touch table, set requirements, and press{' '}
+            Open <strong>Data Center Configurator</strong> on the touch table, set requirements, and press{' '}
             <strong>CONFIGURE</strong>.
           </p>
           <p className="conf-wall-overlay-state__status">

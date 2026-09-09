@@ -336,6 +336,7 @@ def save_config_to_design_dir(
         _ikm = data.get("ideumKioskMode")
         _rcp = data.get("remoteControlProfile")
         _rct = data.get("remoteControlTarget")
+        _bts = data.get("busTransferSegments")
         conf_data = {
             "name": config_name,
             "description": description or "",
@@ -356,6 +357,7 @@ def save_config_to_design_dir(
             "ideumKioskMode": bool(_ikm),
             "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
             "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
+            "busTransferSegments": _bts if isinstance(_bts, list) else [],
         }
         conf_data = {
             k: v
@@ -388,6 +390,7 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _ikm = conf.get("ideumKioskMode")
     _rcp = conf.get("remoteControlProfile")
     _rct = conf.get("remoteControlTarget")
+    _bts = conf.get("busTransferSegments")
     return {
         "canvasComponents": conf.get("canvasComponents", []),
         "connections": conf.get("connections", []),
@@ -409,6 +412,7 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         "ideumKioskMode": bool(_ikm),
         "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
         "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
+        "busTransferSegments": _bts if isinstance(_bts, list) else [],
     }
 
 

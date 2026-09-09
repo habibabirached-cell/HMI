@@ -13,6 +13,7 @@ import ViewDataModal from './components/ViewDataModal/ViewDataModal';
 import EnsembleMemberEditorDialog from './components/EnsembleMemberEditorDialog/EnsembleMemberEditorDialog';
 import SaveSimulationConfigDialog from './components/SaveSimulationConfigDialog/SaveSimulationConfigDialog';
 import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenarioAsDialog';
+import { normalizeBusTransferSegments } from './utils/busTransferSegments';
 import {
   normalizeQuickScenarioButtons,
   normalizeHiddenDefaultQuickScenarios,
@@ -659,6 +660,8 @@ function App() {
   const [connections, setConnections] = useState([]);
   /** Design-time rules: CSV variable + component set → forced offline / de-energized branch during playback. */
   const [variableDrivenPresence, setVariableDrivenPresence] = useState([]);
+  /** Conditional animated segments along a bus between named tap points (design config). */
+  const [busTransferSegments, setBusTransferSegments] = useState([]);
   /** Multi-select context menu → column picker for variable-driven offline */
   const [variablePresencePicker, setVariablePresencePicker] = useState(null);
   const [selectedComponent, setSelectedComponent] = useState(null);
@@ -3854,6 +3857,7 @@ function App() {
     if (data.connections) {
       setConnections(data.connections);
     }
+    setBusTransferSegments(normalizeBusTransferSegments(data.busTransferSegments));
     if (dus?.designSectionVisibility) {
       setDesignSectionVisibility(normalizeDesignSectionVisibility(dus.designSectionVisibility));
     }
@@ -7361,6 +7365,8 @@ function App() {
     } else {
       setVariableDrivenPresence([]);
     }
+
+    setBusTransferSegments(normalizeBusTransferSegments(data.busTransferSegments));
     
     if (data.systemState) {
       setSystemState(data.systemState);
@@ -7535,6 +7541,7 @@ function App() {
       canvasComponents: componentsForSave,
       connections: saveConnections,
       variableDrivenPresence,
+      busTransferSegments,
       canvasBlockTypeScale: saveBlockTypeScale,
       globalSampleStep,
       perChartSampleStep,
@@ -8452,6 +8459,7 @@ function App() {
               presenceForcedOfflineConnectionIds={presenceForcedOfflineConnectionIds}
               designSectionVisibility={designSectionVisibility}
               variableDrivenPresence={variableDrivenPresence}
+              busTransferSegments={busTransferSegments}
               onOpenVariablePresenceDialog={handleOpenVariablePresenceDialog}
               onOpenVariablePresenceDialogConnections={handleOpenVariablePresenceDialogConnections}
               canvasBlockTypeScale={canvasBlockTypeScale}

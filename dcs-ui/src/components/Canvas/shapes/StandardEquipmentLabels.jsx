@@ -12,6 +12,8 @@ export default function StandardEquipmentLabels({
   width,
   height,
   centerX,
+  primaryLabelX = null,
+  hideEquipmentIcon = false,
   visualConfig,
   canvasPrimaryText,
   canvasSecondaryText,
@@ -30,6 +32,7 @@ export default function StandardEquipmentLabels({
     hideSupplementary && canvasSecondaryText
       ? `${canvasPrimaryText ?? ''}${canvasSecondaryText ? ` · ${canvasSecondaryText}` : ''}`.trim()
       : null;
+  const titleX = primaryLabelX ?? centerX;
 
   /** Tall narrow slots: horizontal title at top (reads left → right inside the cell). */
   if (visualConfig.canvasPrimaryLabelHorizontalAtTop && !framedTextureLayout) {
@@ -178,7 +181,7 @@ export default function StandardEquipmentLabels({
 
   return (
     <>
-      {!framedTextureLayout && (
+      {!framedTextureLayout && !hideEquipmentIcon && (
         <text
           x={centerX}
           y={height * 0.28}
@@ -193,7 +196,7 @@ export default function StandardEquipmentLabels({
         </text>
       )}
       <text
-        x={centerX}
+        x={titleX}
         y={height * 0.42}
         textAnchor="middle"
         dominantBaseline="hanging"
@@ -203,11 +206,11 @@ export default function StandardEquipmentLabels({
         pointerEvents="none"
       >
         {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
-        <tspan x={centerX} dy={0}>
+        <tspan x={titleX} dy={0}>
           {canvasPrimaryText}
         </tspan>
         {!hideSupplementary && canvasSecondaryText ? (
-          <tspan x={centerX} dy={lineGap} fill="#999" fontSize={fsS} fontWeight="400">
+          <tspan x={titleX} dy={lineGap} fill="#999" fontSize={fsS} fontWeight="400">
             {canvasSecondaryText}
           </tspan>
         ) : null}

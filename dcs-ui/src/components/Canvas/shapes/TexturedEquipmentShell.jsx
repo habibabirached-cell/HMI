@@ -27,6 +27,12 @@ export default function TexturedEquipmentShell({
   const textureUrl = resolveTextureUrl(visualConfig);
   const textureOpacity = getTextureOpacity(visualConfig);
   const centerX = width / 2;
+  const labelAnchorXRatio = Number(component.visualOverrides?.labelAnchorXRatio);
+  const primaryLabelX = Number.isFinite(labelAnchorXRatio)
+    ? width * Math.min(1, Math.max(0, labelAnchorXRatio))
+    : centerX;
+  const hideIconForShiftedLabel =
+    Number.isFinite(labelAnchorXRatio) && Math.abs(primaryLabelX - centerX) > 1;
   const canvasPrimaryText = primaryLabelText(component, visualConfig);
   const canvasSecondaryText = secondaryLabelText(component, visualConfig);
 
@@ -59,6 +65,8 @@ export default function TexturedEquipmentShell({
           width={width}
           height={height}
           centerX={centerX}
+          primaryLabelX={primaryLabelX}
+          hideEquipmentIcon={hideIconForShiftedLabel}
           visualConfig={visualConfig}
           canvasPrimaryText={canvasPrimaryText}
           canvasSecondaryText={canvasSecondaryText}
@@ -76,6 +84,8 @@ export default function TexturedEquipmentShell({
         width={width}
         height={height}
         centerX={centerX}
+        primaryLabelX={primaryLabelX}
+        hideEquipmentIcon={hideIconForShiftedLabel}
         visualConfig={visualConfig}
         canvasPrimaryText={canvasPrimaryText}
         canvasSecondaryText={canvasSecondaryText}

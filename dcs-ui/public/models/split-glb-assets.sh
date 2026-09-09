@@ -25,6 +25,15 @@ split_glb() {
     exit 1
   fi
 
+  local cleanup_src=""
+  if [[ "$(cd "$(dirname "$src_glb")" && pwd)" == "$(cd "$out_dir" && pwd)" ]]; then
+    local tmp_src
+    tmp_src="$(mktemp "${TMPDIR:-/tmp}/split-glb-XXXXXX.glb")"
+    cp "$src_glb" "$tmp_src"
+    src_glb="$tmp_src"
+    cleanup_src="$tmp_src"
+  fi
+
   echo "==> Splitting $(basename "$src_glb") → $out_dir"
   rm -rf "$out_dir"
   mkdir -p "$out_dir/textures"
@@ -84,6 +93,7 @@ split_glb() {
   echo "    geometry.bin: $(du -h "$out_dir/geometry.bin" | cut -f1)"
   echo "    textures:     $(du -sh "$out_dir/textures" | cut -f1)"
   echo "    total:        $(du -sh "$out_dir" | cut -f1)"
+  [[ -n "$cleanup_src" ]] && rm -f "$cleanup_src"
 }
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -99,6 +109,14 @@ split_glb \
 split_glb \
   "$ROOT/Meshy_AI_Windward_Island_Homes_0619195728_texture.glb" \
   "$ROOT/windward-island-homes"
+
+split_glb \
+  "$ROOT/GridConnected/Meshy_AI_Grid_Connected_System_0908225417_texture.glb" \
+  "$ROOT/GridConnected"
+
+split_glb \
+  "$ROOT/Submareen/submareen.glb" \
+  "$ROOT/Submareen"
 
 # 200MW reference model (single baseColor texture; geometry.bin stays under 50 MB after Draco).
 split_glb_200mw() {

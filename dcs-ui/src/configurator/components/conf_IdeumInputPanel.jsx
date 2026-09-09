@@ -248,7 +248,7 @@ export default function ConfIdeumInputPanel({
     right: (
       <IdeumCorridorRail
         side="right"
-        label="Min CFE"
+        label="Carbon Free"
         min={0}
         max={100}
         step={1}
@@ -257,7 +257,7 @@ export default function ConfIdeumInputPanel({
         presets={CFE_PRESETS}
         formatDisplay={(v) => `${Math.round(v)}%`}
         isPresetActive={(presetValue) => Math.round(minCfe) === presetValue}
-        ariaLabel="Min CFE fine adjust"
+        ariaLabel="Carbon Free fine adjust"
       />
     ),
   };

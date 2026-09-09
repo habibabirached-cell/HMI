@@ -594,7 +594,7 @@ function SaveLoadDialog({
                       onClick={() => onOpenConfigurator('ideum')}
                     >
                       <div className="config-item-header">
-                        <h3>DC Configurator Ideum</h3>
+                        <h3>Data Center Configurator</h3>
                       </div>
                       <p className="config-description">
                         Touch-table inputs only — sends configuration to Maingear over Ethernet.

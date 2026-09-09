@@ -26,6 +26,7 @@ import {
   toggleInteractiveStubBreakerUpdate,
 } from '../../utils/openBreakerConnections';
 import { buildInteractiveBreakerPortsById } from '../../utils/interactiveBreakerPorts';
+import { resolveBusTransferSegments } from '../../utils/busTransferSegments';
 import { playIdeumClick } from '../../utils/ideumClickSound';
 import { NO_PRESENCE_FORCED_IDS } from '../../utils/variableDrivenPresence';
 import {
@@ -296,6 +297,7 @@ const Canvas = forwardRef(({
   presenceForcedOfflineConnectionIds = NO_PRESENCE_FORCED_IDS,
   designSectionVisibility = DEFAULT_DESIGN_SECTION_VISIBILITY,
   variableDrivenPresence = [],
+  busTransferSegments = [],
   onOpenVariablePresenceDialog,
   onOpenVariablePresenceDialogConnections,
   canvasBlockTypeScale = {},
@@ -823,6 +825,18 @@ const Canvas = forwardRef(({
       };
     }).filter(Boolean);
   }, [connections, renderComponents, components, presenceForcedOfflineIds, presenceForcedOfflineConnectionIds, canvasBlockTypeScale]);
+
+  const busTransferRenderList = useMemo(
+    () =>
+      resolveBusTransferSegments({
+        busTransferSegments,
+        components,
+        renderComponents,
+        connectionRenderList,
+        canvasBlockTypeScale,
+      }),
+    [busTransferSegments, components, renderComponents, connectionRenderList, canvasBlockTypeScale],
+  );
 
   const interactiveBreakerPortsById = useMemo(
     () => buildInteractiveBreakerPortsById(connectionRenderList, renderComponents, canvasBlockTypeScale),
@@ -2377,9 +2391,9 @@ const Canvas = forwardRef(({
               : 'rgba(0, 220, 210, 0.9)';
             const strokeW = resolved.strokeWidth;
             const flowClass =
-              resolved.animation === 'forward'
+              isEnergized && resolved.animation === 'forward'
                 ? 'connection-line--flow-forward'
-                : resolved.animation === 'reverse'
+                : isEnergized && resolved.animation === 'reverse'
                   ? 'connection-line--flow-reverse'
                   : '';
 
@@ -2440,7 +2454,6 @@ const Canvas = forwardRef(({
                     strokeWidth={strokeW}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeDasharray={resolved.animation !== 'none' ? '12 8' : undefined}
                     className={`connection-line ${flowClass}${isConnHighlighted ? ' connection-line--selected' : ''}`}
                     pointerEvents="stroke"
                   />
@@ -2603,8 +2616,41 @@ const Canvas = forwardRef(({
               interactiveBreakerPorts={interactiveBreakerPortsById.get(component.id) ?? null}
             />
           ))}
+
         </g>
         </g>
+          );
+        })}
+
+        {/* Bus transfer overlays — last in SVG so they paint above bus blocks */}
+        {scenePanes.map(({ suffix, panePan, canvasPane }) => {
+          const paneBusTransfers = splitView
+            ? busTransferRenderList.filter(
+                (seg) => componentPaneById.get(seg.busId) === canvasPane,
+              )
+            : busTransferRenderList;
+          if (!paneBusTransfers.length) return null;
+          return (
+            <g
+              key={`bus-transfer-${suffix || 'single'}`}
+              transform={`translate(${panePan.x},${panePan.y}) scale(${zoom})`}
+              className="canvas-bus-transfer-layer"
+            >
+              {paneBusTransfers.map((seg) => (
+                <line
+                  key={seg.key}
+                  x1={seg.x1}
+                  y1={seg.y1}
+                  x2={seg.x2}
+                  y2={seg.y2}
+                  stroke={seg.color}
+                  strokeWidth={seg.strokeWidth}
+                  strokeLinecap="round"
+                  pointerEvents="none"
+                  className={`connection-line connection-line--bus-transfer ${seg.flowForward ? 'connection-line--flow-forward' : 'connection-line--flow-reverse'}`}
+                />
+              ))}
+            </g>
           );
         })}
       </svg>

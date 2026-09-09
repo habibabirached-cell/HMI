@@ -693,7 +693,8 @@
       "isTripped": false,
       "visualOverrides": {
         "width": 1200,
-        "height": 40
+        "height": 40,
+        "labelAnchorXRatio": 0.75
       },
       "canvasPane": "upper",
       "connectionReadout": null
@@ -1601,7 +1602,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "forward",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1625,7 +1626,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "reverse",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1648,7 +1649,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "forward",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1670,7 +1671,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "forward",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1692,7 +1693,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "forward",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1714,7 +1715,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "reverse",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1736,7 +1737,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "reverse",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1758,7 +1759,7 @@
         "useAuto": false,
         "color": "#2d7a32",
         "thickness": 5,
-        "animation": "none",
+        "animation": "reverse",
         "depth3d": 38,
         "glossiness": 18,
         "shadow": {
@@ -1768,6 +1769,34 @@
           "opacity": 0.35,
           "color": "#000000"
         }
+      }
+    }
+  ],
+  "busTransferSegments": [
+    {
+      "id": "bus-transfer-hd-aero-column",
+      "busId": "comp-bus-main",
+      "endpointA": "comp-hd-3d-preview",
+      "endpointB": "comp-aero-stub-cb",
+      "rules": [
+        {
+          "when": {
+            "comp-aero-stub-cb": "open",
+            "comp-load2-stub-cb": "closed"
+          },
+          "direction": "AtoB"
+        },
+        {
+          "when": {
+            "comp-aero-stub-cb": "closed",
+            "comp-load2-stub-cb": "open"
+          },
+          "direction": "BtoA"
+        }
+      ],
+      "style": {
+        "color": "#2d7a32",
+        "thickness": 5
       }
     }
   ],
