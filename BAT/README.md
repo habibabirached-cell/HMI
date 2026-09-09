@@ -18,7 +18,7 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 
 | File | Purpose |
 |---|---|
-| `maingear-kiosk-start.bat` | One-click startup: Docker + Vernova dev + both Chrome walls |
+| `z_genesis.start.bat` | **Double-click this** — Docker + Vernova dev + both Chrome walls |
 | `maingear-kiosk-focus-vernova.bat` | Bring Vernova wall to front |
 | `maingear-kiosk-focus-dcs.bat` | Bring DataCenter wall to front |
 | `open-vernova-chrome-4displays.bat` | Open Vernova Chrome only (optional `-NoActivate`) |
@@ -31,6 +31,7 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `ports-wait.log` | TCP port wait output |
 | `chrome-launch.log` | Chrome launcher output |
 | `vernova-dev.log` | Vernova `npm run dev` output |
+| `start-vernova-dev.bat` | Helper that runs Vernova dev with logging |
 | `_debug-log.bat` | Internal logging helpers |
 | `userManual.md` | Short operator instructions |
 
@@ -41,7 +42,7 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `open-chrome-window.ps1` | Core Chrome launcher (position, span displays, app mode) |
 | `open-hmi-chrome-4displays.bat` | Legacy DCS-only launcher |
 
-## Startup sequence (`maingear-kiosk-start.bat`)
+## Startup sequence (`z_genesis.start.bat`)
 
 1. `docker compose up -d` — DCS UI `:3003`, backend `:5000`
 2. `npm run dev` in `vernova-spark-engine_new` (minimized cmd)
@@ -83,13 +84,13 @@ Grid Connected will add cluster commands such as `showVernova` / `showDcs` that 
 
 ## Troubleshooting
 
-If startup fails (Docker OK but no Chrome / no Vernova), re-run `maingear-kiosk-start.bat`, then open **`BAT/debug.txt`**. It captures every step, docker output, port waits, Chrome launch errors, and the Vernova dev log. Commit and push `debug.txt` so it can be reviewed off-machine.
+If startup fails (Docker OK but no Chrome / no Vernova), re-run `z_genesis.start.bat`, then open **`BAT/debug.txt`**. It captures every step, docker output, port waits, Chrome launch errors, and the Vernova dev log. Commit and push `debug.txt` so it can be reviewed off-machine.
 
 | Problem | Check |
 |---|---|
 | Vernova port timeout | `BAT/debug.txt` and `BAT/vernova-dev.log`; run `npm run api:install` in `vernova-spark-engine_new` |
 | Chrome permission denied | Run `npm install` inside `vernova-spark-engine_new` |
-| Focus finds wrong window | Re-run `maingear-kiosk-start.bat`; close extra Chrome windows |
+| Focus finds wrong window | Re-run `z_genesis.start.bat`; close extra Chrome windows |
 | Docker fails | Docker Desktop running; `.env` present at repo root |
 | Display layout wrong | Run `open-chrome-window.bat -ListDisplays` from repo root |
 

@@ -1,5 +1,5 @@
 @echo off
-REM Logging helpers for maingear-kiosk-start.bat (requires BAT_DIR from _paths.bat).
+REM Logging helpers for z_genesis.start.bat (requires BAT_DIR from _paths.bat).
 REM   call "%BAT_DIR%_debug-log.bat" init
 REM   call "%BAT_DIR%_debug-log.bat" line your message here
 REM   call "%BAT_DIR%_debug-log.bat" section Section title here

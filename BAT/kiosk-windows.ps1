@@ -262,7 +262,7 @@ function Focus-KioskWindow {
     }
 
     if ($handle -eq [IntPtr]::Zero) {
-        throw "Could not find a Chrome kiosk window for '$Target'. Run BAT\maingear-kiosk-start.bat first."
+        throw "Could not find a Chrome kiosk window for '$Target'. Run BAT\z_genesis.start.bat first."
     }
 
     Show-KioskWindow -Handle $handle
@@ -277,19 +277,38 @@ function Wait-ForTcpPort {
 
         [int] $TimeoutSeconds = 180,
 
-        [string] $Label = "port $Port"
+        [string] $Label = "port $Port",
+
+        [int] $ProgressIntervalSeconds = 15
     )
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    Write-Host "Waiting for $Label on 127.0.0.1:$Port ..."
+    $started = Get-Date
+    $lastProgressBucket = 0
+
+    Write-Host ""
+    Write-Host "Waiting for $Label on 127.0.0.1:$Port (timeout ${TimeoutSeconds}s) ..."
+    if ($Port -eq 5173) {
+        Write-Host "  Vernova npm run dev can take 1-3 minutes on a cold start — please wait."
+    }
+
     while ((Get-Date) -lt $deadline) {
+        $elapsedSeconds = [int][math]::Floor(((Get-Date) - $started).TotalSeconds)
+        if ($ProgressIntervalSeconds -gt 0 -and $elapsedSeconds -ge $ProgressIntervalSeconds) {
+            $bucket = [int][math]::Floor($elapsedSeconds / $ProgressIntervalSeconds) * $ProgressIntervalSeconds
+            if ($bucket -gt $lastProgressBucket) {
+                Write-Host "  ... still waiting for $Label (${bucket}s elapsed, ${TimeoutSeconds}s max)"
+                $lastProgressBucket = $bucket
+            }
+        }
+
         try {
             $client = New-Object System.Net.Sockets.TcpClient
             $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
             $ok = $async.AsyncWaitHandle.WaitOne(500)
             if ($ok -and $client.Connected) {
                 $client.Close()
-                Write-Host "$Label is ready."
+                Write-Host "$Label is ready after ${elapsedSeconds}s."
                 return
             }
             $client.Close()
@@ -299,5 +318,5 @@ function Wait-ForTcpPort {
         Start-Sleep -Milliseconds 500
     }
 
-    throw "Timed out waiting for $Label on port $Port"
+    throw "Timed out waiting for $Label on port $Port after ${TimeoutSeconds}s"
 }

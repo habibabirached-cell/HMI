@@ -7,7 +7,7 @@ Run these on the **Maingear** PC (4×4K wall).
 Double-click:
 
 ```
-BAT\maingear-kiosk-start.bat
+BAT\z_genesis.start.bat
 ```
 
 This starts:
@@ -49,5 +49,5 @@ Default Vernova URL is `http://localhost:5173`. To use another port:
 
 ```bat
 set VERNOVA_KIOSK_URL=http://localhost:5174
-BAT\maingear-kiosk-start.bat
+BAT\z_genesis.start.bat
 ```
