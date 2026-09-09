@@ -1,5 +1,5 @@
 === Maingear kiosk debug log ===
-Started: Wed 09/09/2026 17:06:56.75
+Started: Wed 09/09/2026 17:26:53.78
 Computer: DATACENTER
 User: GEVer
 BAT_DIR=C:\Users\GEVer\Documents\HMI\BAT\
@@ -55,14 +55,14 @@ The process cannot access the file because it is being used by another process.
 [1/5] Starting DataCenterSmartPower Docker stack...
 Step 1: docker compose up -d
 The process cannot access the file because it is being used by another process.
-time="2026-09-09T17:06:57-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+time="2026-09-09T17:26:54-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
  Container hmi-dcs-ui-1 Starting 
  Container hmi-dcs-ui-1 Started 
  Container hmi-dcs-backend-1 Starting 
  Container hmi-dcs-backend-1 Started 
  
 --- docker compose ps --- 
-time="2026-09-09T17:06:58-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+time="2026-09-09T17:26:54-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
 NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS                  PORTS
 hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --h…"   dcs-backend   31 hours ago   Up Less than a second   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
 hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.s…"   dcs-ui        31 hours ago   Up Less than a second   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
@@ -76,65 +76,3 @@ The process cannot access the file because it is being used by another process.
 [3/5] Waiting for ports 5000, 3003, 5173...
 Step 3: wait for TCP ports
 The process cannot access the file because it is being used by another process.
-=== Port wait log ===
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:197 char:40
-+         if ($titleMatches -or $area -gt 3_000_000) {
-+                                        ~
-You must provide a value expression following the '-gt' operator.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:197 char:41
-+         if ($titleMatches -or $area -gt 3_000_000) {
-+                                         ~~~~~~~~~
-Unexpected token '3_000_000' in expression or statement.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:197 char:41
-+         if ($titleMatches -or $area -gt 3_000_000) {
-+                                         ~~~~~~~~~
-Missing closing ')' after expression in 'if' statement.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:184 char:69
-+     foreach ($hwnd in [KioskWindowApi]::FindVisibleChromeWindows()) {
-+                                                                     ~
-Missing closing '}' in statement block or type definition.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:171 char:33
-+ function Find-KioskChromeWindow {
-+                                 ~
-Missing closing '}' in statement block or type definition.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:197 char:50
-+         if ($titleMatches -or $area -gt 3_000_000) {
-+                                                  ~
-Unexpected token ')' in expression or statement.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:201 char:5
-+     }
-+     ~
-Unexpected token '}' in expression or statement.
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:216 char:1
-+ }
-+ ~
-Unexpected token '}' in expression or statement.
-    + CategoryInfo          : ParserError: (:) [], ParseException
-    + FullyQualifiedErrorId : ExpectedValueExpression
- 
- . 'C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1'; try { Wait-ForTcpPort -Port 5000 -Label 'DCS backend'; 
-Wait-ForTcpPort -Port 3003 -Label 'DCS UI'; Wait-ForTcpPort -Port 5173 -Label 'Vernova UI'; exit 0 } catch { 
-Write-Error $_; exit 1 }  : The term 'Wait-ForTcpPort' is not recognized as the name of a cmdlet, function, script 
-file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct 
-and try again.
-At line:1 char:1
-+ & { . 'C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1'; try { Wai ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
-    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException
- 
-port wait exit code: 1
-The process cannot access the file because it is being used by another process.
-ERROR: port wait failed - see ports-wait.log
-The process cannot access the file because it is being used by another process.
-The process cannot access the file because it is being used by another process.
-End of run exit code 1
-The process cannot access the file because it is being used by another process.
-
-============================================================
-  Startup FAILED.
-  Summary: C:\Users\GEVer\Documents\HMI\BAT\debug.txt
-  Docker:  C:\Users\GEVer\Documents\HMI\BAT\docker-compose.log
-============================================================
-
-Press any key to close...
