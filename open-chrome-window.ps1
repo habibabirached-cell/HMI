@@ -527,7 +527,10 @@ $args = @(
 if ($SaveKioskTarget) {
     $profileDir = Get-KioskChromeProfileDir -Target $SaveKioskTarget
     New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
-    $args = @("--user-data-dir=$profileDir") + $args
+    $args = @(
+        "--user-data-dir=$profileDir",
+        (Get-KioskChromeThemeArg -Target $SaveKioskTarget)
+    ) + $args
 }
 
 $existingWindows = Get-ChromeWindowHandles
