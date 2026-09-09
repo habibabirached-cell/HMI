@@ -22,6 +22,7 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `maingear-kiosk-focus-vernova.bat` | Bring Vernova wall to front |
 | `maingear-kiosk-focus-dcs.bat` | Bring DataCenter wall to front |
 | `open-vernova-chrome-4displays.bat` | Open Vernova Chrome only (optional `-NoActivate`) |
+| `open-dcs-chrome-4displays.bat` | Open DCS Chrome only (foreground) |
 | `focus-kiosk-window.bat` / `.ps1` | Generic focus: `Dcs` or `Vernova` |
 | `kiosk-windows.ps1` | Window registry, HWND save/restore, port wait helpers |
 | `_paths.bat` | Sets `BAT_DIR` and `REPO_ROOT` for other scripts |

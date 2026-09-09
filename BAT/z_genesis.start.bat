@@ -82,7 +82,7 @@ if !STEP_ERR! neq 0 goto :err_vernova_chrome
 call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[5/5] Opening DCS Chrome (foreground)..."
 call "%BAT_DIR%_debug-log.bat" line "Step 5: DCS Chrome foreground"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-tee-exec.ps1" -LogPath "%CHROME_LOG%" -DebugLog "%DEBUG_LOG%" -CommandPath "%REPO_ROOT%\open-chrome-window.ps1" -CommandArgs "-SpanAllDisplays","-App","-Url","%DCS_URL%","-SaveKioskTarget","Dcs"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-tee-exec.ps1" -LogPath "%CHROME_LOG%" -DebugLog "%DEBUG_LOG%" -CommandPath "%BAT_DIR%open-dcs-chrome-4displays.bat"
 set "STEP_ERR=!errorlevel!"
 call "%BAT_DIR%_debug-log.bat" line "DCS Chrome exit code: !STEP_ERR!"
 if !STEP_ERR! neq 0 goto :err_dcs_chrome
