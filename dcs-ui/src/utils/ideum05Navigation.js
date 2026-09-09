@@ -50,18 +50,15 @@ export const IDEUM05_P2R18_MAINGEAR_CATALOG = 'p2r_18';
 /** Ideum-only HD_Aero copy (Reference 500 MW overlay; pan/zoom saved here). */
 export const IDEUM05_HD_AERO_IDEUM_CATALOG = 'hd_aero_ideum';
 
-/** Ideum-only P2R_18 copy (Reference 200 MW overlay; pan/zoom saved here). */
-export const IDEUM05_P2R18_IDEUM_CATALOG = 'p2r_18_ideum';
-
 /** @deprecated use IDEUM05_HD_AERO_IDEUM_CATALOG */
 export const IDEUM05_HD_AERO_DESIGN_DIR = IDEUM05_HD_AERO_IDEUM_CATALOG;
 
-/** Per Ideum05 drill screen: catalog folder + conf display name for Save to Ideum. */
+/**
+ * Drill screens that swap in a separate catalog design (Reference 500 MW only).
+ * Reference 200 MW keeps the Ideum05 touch-control surface; its zoom/pan is stored
+ * in ideum05NavViewports on the main Ideum05 save — not via a loaded overlay.
+ */
 export const IDEUM05_OVERLAY_SAVE_TARGETS = {
-  'ref-200-mw': {
-    catalogDir: IDEUM05_P2R18_IDEUM_CATALOG,
-    saveName: 'Reference 200',
-  },
   'ref-500-mw': {
     catalogDir: IDEUM05_HD_AERO_IDEUM_CATALOG,
     saveName: 'HD_Aero Ideum',
@@ -76,26 +73,30 @@ export function isIdeum05OverlayScreen(screenId) {
   return getIdeum05OverlaySaveTarget(screenId) != null;
 }
 
-/** Maingear cluster command when entering an overlay drill screen. */
+/** Maingear cluster command when entering a catalog overlay drill screen. */
 export function getIdeum05OverlayClusterCommand(screenId) {
   if (screenId === 'ref-500-mw') return 'loadHdAero';
+  return null;
+}
+
+/** Cluster command for Reference 200 MW (touch controls, no design overlay). */
+export function getIdeum05ControlsClusterCommand(screenId) {
   if (screenId === 'ref-200-mw') return 'loadP2R18';
   return null;
 }
 
-/** @deprecated use isIdeum05OverlayScreen — ref-200-mw is now a loaded design overlay. */
+/** Reference 200 MW — Ideum touch preset buttons (Reset / Live RTDS). */
 export function isIdeum05ControlsScreen(screenId) {
   return screenId === 'ref-200-mw';
 }
 
-/** @deprecated use isIdeum05OverlayScreen */
 export function isIdeum05HdAeroScreen(screenId) {
   return screenId === 'ref-500-mw';
 }
 
-/** Any drill target that hides the nav cards and shows a loaded design overlay. */
+/** Hides nav cards: either touch controls (200 MW) or loaded overlay (500 MW). */
 export function isIdeum05DesignScreen(screenId) {
-  return isIdeum05OverlayScreen(screenId);
+  return isIdeum05ControlsScreen(screenId) || isIdeum05OverlayScreen(screenId);
 }
 
 export function isIdeum05ConfiguratorScreen(screenId) {

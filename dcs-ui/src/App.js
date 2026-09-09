@@ -75,17 +75,18 @@ import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
+  getIdeum05ControlsClusterCommand,
   getIdeum05OverlayClusterCommand,
   getIdeum05OverlayDesignDir,
   getIdeum05OverlaySaveTarget,
   isIdeum05ConfiguratorScreen,
+  isIdeum05ControlsScreen,
   isIdeum05DesignName,
   isIdeum05DesignScreen,
   isIdeum05OverlayScreen,
   normalizeIdeum05NavViewports,
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
-  IDEUM05_P2R18_IDEUM_CATALOG,
   IDEUM05_P2R18_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
@@ -3909,9 +3910,12 @@ function App() {
       if (isIdeum05) {
         captureIdeum05ViewportForScreen(screenId);
       }
-      const clusterCmd = getIdeum05OverlayClusterCommand(drillTarget);
-      if (clusterCmd) {
-        void sendIdeumClusterCommand(clusterCmd);
+      const overlayCmd = getIdeum05OverlayClusterCommand(drillTarget);
+      const controlsCmd = getIdeum05ControlsClusterCommand(drillTarget);
+      if (overlayCmd) {
+        void sendIdeumClusterCommand(overlayCmd);
+      } else if (controlsCmd) {
+        void sendIdeumClusterCommand(controlsCmd);
       }
       setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
@@ -4085,6 +4089,11 @@ function App() {
     if (!isHdAeroIdeumLoaded) return;
     void sendIdeumClusterCommand('loadHdAero');
   }, [isHdAeroIdeumLoaded, sendIdeumClusterCommand]);
+
+  useEffect(() => {
+    if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;
+    void sendIdeumClusterCommand('loadP2R18');
+  }, [isIdeum05, ideum05NavScreen, sendIdeumClusterCommand]);
 
   useEffect(() => {
     if (!isP2R18IdeumLoaded) return;
