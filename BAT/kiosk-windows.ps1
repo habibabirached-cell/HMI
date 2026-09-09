@@ -194,7 +194,7 @@ function Find-KioskChromeWindow {
             $titleMatches = ($title -match "Spark|Vernova|VERNOVA|localhost:5173") -or ($title -match "5173")
         }
 
-        if ($titleMatches -or $area -gt 3_000_000) {
+        if ($titleMatches -or $area -gt 3000000) {
             $bestHandle = $hwnd
             $bestArea = $area
         }
