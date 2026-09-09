@@ -26,8 +26,11 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `kiosk-windows.ps1` | Window registry, HWND save/restore, port wait helpers |
 | `_paths.bat` | Sets `BAT_DIR` and `REPO_ROOT` for other scripts |
 | `kiosk-windows.json` | Auto-generated window handles (gitignored) |
-| `debug.txt` | Full startup log from `maingear-kiosk-start.bat` (commit & share for remote diagnosis) |
-| `vernova-dev.log` | Vernova `npm run dev` output (also appended into `debug.txt`) |
+| `debug.txt` | Startup summary (commit & share for remote diagnosis) |
+| `docker-compose.log` | `docker compose up` + `docker compose ps` output |
+| `ports-wait.log` | TCP port wait output |
+| `chrome-launch.log` | Chrome launcher output |
+| `vernova-dev.log` | Vernova `npm run dev` output |
 | `_debug-log.bat` | Internal logging helpers |
 | `userManual.md` | Short operator instructions |
 
