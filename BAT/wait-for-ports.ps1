@@ -17,12 +17,14 @@ Add-Content -LiteralPath $DebugLog -Value "----- port wait -----" -ErrorAction S
 
 try {
     . $KioskWindowsScript
-    $script:GenesisTeeLogs = @($PortsLog, $DebugLog)
+    $global:GenesisTeeLogs = @($PortsLog, $DebugLog)
     Wait-ForTcpPort -Port 5000 -Label 'DCS backend (Docker)'
     Wait-ForTcpPort -Port 3003 -Label 'DCS UI (Docker)'
     Wait-ForTcpPort -Port 5173 -Label 'Vernova npm run dev (Vite on port 5173)' -TimeoutSeconds 300
     exit 0
 } catch {
-    Write-WaitMsg $_.Exception.Message
+    Write-Host $_.Exception.Message
+    Add-Content -LiteralPath $PortsLog -Value $_.Exception.Message -ErrorAction SilentlyContinue
+    Add-Content -LiteralPath $DebugLog -Value $_.Exception.Message -ErrorAction SilentlyContinue
     exit 1
 }

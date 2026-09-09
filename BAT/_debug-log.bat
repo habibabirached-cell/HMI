@@ -27,7 +27,7 @@ echo.
 echo --- %* ---
 >> "%DEBUG_LOG%" echo.
 >> "%DEBUG_LOG%" echo --- %* ---
-%* > "%TEMP%\genesis-debug.out" 2>&1
+call %* > "%TEMP%\genesis-debug.out" 2>&1
 type "%TEMP%\genesis-debug.out"
 type "%TEMP%\genesis-debug.out" >> "%DEBUG_LOG%"
 del "%TEMP%\genesis-debug.out" 2>nul
@@ -47,21 +47,24 @@ call :mirror "User: %USERNAME%"
 call :mirror "BAT_DIR=%BAT_DIR%"
 call :mirror "REPO_ROOT=%REPO_ROOT%"
 call :mirror "CD=%CD%"
-call :mirror ""
+echo.
+>> "%DEBUG_LOG%" echo.
 call :mirror "--- Tool paths ---"
 call :mirror_run where docker
 call :mirror_run where npm
 call :mirror_run where node
 call :mirror_run where python
 call :mirror_run where powershell
-call :mirror ""
+echo.
+>> "%DEBUG_LOG%" echo.
 call :mirror "--- Tool versions (errors below are OK if tool missing) ---"
 call :mirror_run docker version
 call :mirror_run npm -v
 call :mirror_run node -v
 call :mirror_run python --version
 call :mirror_run powershell -NoProfile -Command "Write-Output $PSVersionTable.PSVersion"
-call :mirror ""
+echo.
+>> "%DEBUG_LOG%" echo.
 exit /b 0
 
 :line
