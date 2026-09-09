@@ -241,8 +241,9 @@ const SCREENS = {
     },
     {
       id: 'submarine',
-      label: 'Submarine',
-      preview: 'Submarine power system',
+      label: 'Marine Power/Propulsion',
+      preview: 'Coming soon',
+      navDisabled: true,
       modelUrl: IDEUM05_NAV_MODEL_URLS.submarine,
       modelFitScale: 0.4,
       modelYOffset: 0.54,
@@ -369,4 +370,64 @@ export function isIdeum05NavCardDisabled(card) {
 
 export function isIdeum05NavCardFeatured(card) {
   return card?.navFeatured === true;
+}
+
+function isFiniteViewportPoint(point) {
+  return (
+    point &&
+    typeof point.x === 'number' &&
+    typeof point.y === 'number' &&
+    Number.isFinite(point.x) &&
+    Number.isFinite(point.y)
+  );
+}
+
+/** @typedef {{ zoom?: number, pan?: { x: number, y: number }, panTop?: { x: number, y: number }, panBottom?: { x: number, y: number } }} Ideum05NavViewport */
+
+/** Clone a single Ideum05 nav screen viewport for persistence. */
+export function cloneIdeum05NavViewport(viewport) {
+  if (!viewport || typeof viewport !== 'object') return null;
+  /** @type {Ideum05NavViewport} */
+  const out = {};
+  const zoom = Number(viewport.zoom);
+  if (Number.isFinite(zoom)) out.zoom = zoom;
+  if (isFiniteViewportPoint(viewport.pan)) out.pan = { x: viewport.pan.x, y: viewport.pan.y };
+  if (isFiniteViewportPoint(viewport.panTop)) {
+    out.panTop = { x: viewport.panTop.x, y: viewport.panTop.y };
+  }
+  if (isFiniteViewportPoint(viewport.panBottom)) {
+    out.panBottom = { x: viewport.panBottom.x, y: viewport.panBottom.y };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** Build a viewport object from legacy `systemState` (root screen). */
+export function ideum05NavViewportFromSystemState(systemState) {
+  if (!systemState || typeof systemState !== 'object') return null;
+  return cloneIdeum05NavViewport({
+    zoom: systemState.zoom,
+    pan: systemState.pan,
+    panTop: systemState.panTop,
+    panBottom: systemState.panBottom,
+  });
+}
+
+/**
+ * Normalize saved per-screen viewports; seed `root` from legacy systemState when missing.
+ * @returns {Record<string, Ideum05NavViewport>}
+ */
+export function normalizeIdeum05NavViewports(raw, legacySystemState = null) {
+  /** @type {Record<string, Ideum05NavViewport>} */
+  const out = {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    for (const [screenId, viewport] of Object.entries(raw)) {
+      const normalized = cloneIdeum05NavViewport(viewport);
+      if (normalized) out[screenId] = normalized;
+    }
+  }
+  if (!out[IDEUM05_NAV_ROOT] && legacySystemState) {
+    const rootVp = ideum05NavViewportFromSystemState(legacySystemState);
+    if (rootVp) out[IDEUM05_NAV_ROOT] = rootVp;
+  }
+  return out;
 }

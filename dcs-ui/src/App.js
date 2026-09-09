@@ -82,6 +82,7 @@ import {
   isIdeum05DesignName,
   isIdeum05DesignScreen,
   isIdeum05HdAeroScreen,
+  normalizeIdeum05NavViewports,
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
   IDEUM05_P2R18_MAINGEAR_CATALOG,
@@ -677,6 +678,22 @@ function App() {
   /** conf3: independent pan per split canvas half (shared zoom). */
   const [panTop, setPanTop] = useState({ x: 0, y: 0 });
   const [panBottom, setPanBottom] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
+  const panTopRef = useRef({ x: 0, y: 0 });
+  const panBottomRef = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+  useEffect(() => {
+    panRef.current = pan;
+  }, [pan]);
+  useEffect(() => {
+    panTopRef.current = panTop;
+  }, [panTop]);
+  useEffect(() => {
+    panBottomRef.current = panBottom;
+  }, [panBottom]);
   /** One-shot: center UpperCanvas after loading stacked H-family designs in conf3. */
   const [autoFitUpperPane, setAutoFitUpperPane] = useState(false);
   const [quadBottomRowShare, setQuadBottomRowShare] = useState(() => {
@@ -978,6 +995,10 @@ function App() {
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
   const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
+  /** Per-screen zoom/pan for Ideum05 nav drill stack (root, data-centers, ref-500-mw, …). */
+  const ideum05NavViewportsRef = useRef({});
+  const ideum05PrevNavScreenRef = useRef(null);
+  const ideum05SkipViewportApplyRef = useRef(false);
   /** Saved Ideum05 canvas while HD_Aero overlay is active (Reference 500 MW). */
   const ideum05BaseSnapshotRef = useRef(null);
   /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
@@ -3810,10 +3831,58 @@ function App() {
     }
   }, [machineRole]);
 
+  const clampCanvasZoom = useCallback((value) => {
+    const z = Number(value);
+    return Number.isFinite(z)
+      ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
+      : 1;
+  }, []);
+
+  const readIdeum05ViewportFromState = useCallback(() => ({
+    zoom: zoomRef.current,
+    pan: { ...panRef.current },
+    panTop: { ...panTopRef.current },
+    panBottom: { ...panBottomRef.current },
+  }), []);
+
+  const captureIdeum05ViewportForScreen = useCallback((screenId) => {
+    if (!screenId) return;
+    ideum05NavViewportsRef.current = {
+      ...ideum05NavViewportsRef.current,
+      [screenId]: readIdeum05ViewportFromState(),
+    };
+  }, [readIdeum05ViewportFromState]);
+
+  const applyIdeum05ViewportForScreen = useCallback((screenId, viewportOverride = null) => {
+    const viewport = viewportOverride ?? ideum05NavViewportsRef.current[screenId];
+    if (!viewport) return false;
+    if (viewport.zoom != null) {
+      setZoom(clampCanvasZoom(viewport.zoom));
+    }
+    if (isSavedViewportPoint(viewport.pan)) {
+      setPan({ ...viewport.pan });
+    }
+    if (isSavedViewportPoint(viewport.panTop)) {
+      setPanTop({ ...viewport.panTop });
+    } else if (isSavedViewportPoint(viewport.pan)) {
+      setPanTop({ ...viewport.pan });
+    }
+    if (isSavedViewportPoint(viewport.panBottom)) {
+      setPanBottom({ ...viewport.panBottom });
+    } else {
+      setPanBottom({ x: 0, y: 0 });
+    }
+    setAutoFitUpperPane(false);
+    return true;
+  }, [clampCanvasZoom]);
+
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
     if (drillTarget) {
+      if (isIdeum05) {
+        captureIdeum05ViewportForScreen(screenId);
+      }
       if (isIdeum05HdAeroScreen(drillTarget)) {
         void sendIdeumClusterCommand('loadHdAero');
       } else if (isIdeum05ControlsScreen(drillTarget)) {
@@ -3821,11 +3890,19 @@ function App() {
       }
       setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
-  }, [ideum05NavStack, sendIdeumClusterCommand]);
+  }, [
+    ideum05NavStack,
+    isIdeum05,
+    captureIdeum05ViewportForScreen,
+    sendIdeumClusterCommand,
+  ]);
 
   const handleIdeum05NavBack = useCallback(() => {
+    if (isIdeum05) {
+      captureIdeum05ViewportForScreen(getIdeum05NavScreen(ideum05NavStack));
+    }
     setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-  }, []);
+  }, [isIdeum05, ideum05NavStack, captureIdeum05ViewportForScreen]);
 
   const applyIdeum05HdAeroOverlay = useCallback((loadedConfig) => {
     const { data } = loadedConfig || {};
@@ -3882,6 +3959,19 @@ function App() {
       isSavedViewportPoint(ss.panBottom)
     ) {
       setAutoFitUpperPane(false);
+      ideum05NavViewportsRef.current = {
+        ...ideum05NavViewportsRef.current,
+        'ref-500-mw': {
+          zoom: ss.zoom != null ? clampCanvasZoom(ss.zoom) : zoomRef.current,
+          pan: isSavedViewportPoint(ss.pan) ? { ...ss.pan } : { ...panRef.current },
+          panTop: isSavedViewportPoint(ss.panTop)
+            ? { ...ss.panTop }
+            : { ...panTopRef.current },
+          panBottom: isSavedViewportPoint(ss.panBottom)
+            ? { ...ss.panBottom }
+            : { ...panBottomRef.current },
+        },
+      };
     }
     if (
       data.canvasBlockTypeScale != null &&
@@ -3890,17 +3980,13 @@ function App() {
     ) {
       setCanvasBlockTypeScale(data.canvasBlockTypeScale);
     }
-  }, []);
+  }, [clampCanvasZoom]);
 
   const restoreIdeum05BaseSnapshot = useCallback(() => {
     const snap = ideum05BaseSnapshotRef.current;
     if (!snap) return;
     setCanvasComponents(snap.canvasComponents);
     setConnections(snap.connections);
-    setPan(snap.pan);
-    setPanTop(snap.panTop);
-    setPanBottom(snap.panBottom);
-    setZoom(snap.zoom);
     setDesignExpansion(snap.designExpansion);
     setDesignSectionVisibility(snap.designSectionVisibility);
     setIdeumExpansionMirror({ ...snap.designExpansion });
@@ -3920,10 +4006,6 @@ function App() {
         ideum05BaseSnapshotRef.current = {
           canvasComponents: canvasComponentsRef.current,
           connections,
-          pan,
-          panTop,
-          panBottom,
-          zoom,
           designExpansion,
           designSectionVisibility,
           canvasBlockTypeScale,
@@ -3952,6 +4034,24 @@ function App() {
     // Only react to nav screen changes — snapshot uses refs for latest canvas state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isIdeum05, ideum05NavScreen]);
+
+  useEffect(() => {
+    if (!isIdeum05) {
+      ideum05PrevNavScreenRef.current = null;
+      return;
+    }
+    const screen = ideum05NavScreen;
+    if (ideum05SkipViewportApplyRef.current) {
+      ideum05SkipViewportApplyRef.current = false;
+      ideum05PrevNavScreenRef.current = screen;
+      return;
+    }
+    const prev = ideum05PrevNavScreenRef.current;
+    if (prev !== null && prev !== screen) {
+      applyIdeum05ViewportForScreen(screen);
+    }
+    ideum05PrevNavScreenRef.current = screen;
+  }, [isIdeum05, ideum05NavScreen, applyIdeum05ViewportForScreen]);
 
   useEffect(() => {
     if (!isHdAeroIdeumLoaded) return;
@@ -7248,9 +7348,19 @@ function App() {
     setIdeumSimulateLoopMirror(false);
     setIdeumSimulationSpeedMirror(1);
     setIdeum05NavStack([IDEUM05_NAV_ROOT]);
-    if (!isIdeum05DesignName(loadedConfig.name)) {
+    const loadedIsIdeum05 = isIdeum05DesignName(loadedConfig.name);
+    if (loadedIsIdeum05) {
+      ideum05NavViewportsRef.current = normalizeIdeum05NavViewports(
+        data.ideum05NavViewports ?? dus?.ideum05NavViewports,
+        data.systemState,
+      );
+      ideum05SkipViewportApplyRef.current = true;
+      ideum05PrevNavScreenRef.current = IDEUM05_NAV_ROOT;
+    } else {
+      ideum05NavViewportsRef.current = {};
       ideum05BaseSnapshotRef.current = null;
       ideum05OverlayLoadedMetaRef.current = null;
+      ideum05PrevNavScreenRef.current = null;
     }
     
     // Apply the loaded state to the application
@@ -7372,47 +7482,54 @@ function App() {
       setSystemState(data.systemState);
       
       let restoredViewport = false;
-      // Apply zoom and pan if they exist
-      if (data.systemState.zoom !== undefined) {
-        const z = Number(data.systemState.zoom);
-        setZoom(
-          Number.isFinite(z)
-            ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
-            : 1,
+      if (loadedIsIdeum05) {
+        restoredViewport = applyIdeum05ViewportForScreen(
+          IDEUM05_NAV_ROOT,
+          ideum05NavViewportsRef.current[IDEUM05_NAV_ROOT],
         );
-        restoredViewport = true;
-      }
-      if (isSavedViewportPoint(data.systemState.pan)) {
-        setPan(data.systemState.pan);
-        restoredViewport = true;
-      }
-      // conf3 stacked designs: restore saved UpperCanvas pan; auto-fit only on first load.
-      if (designHasStackedSections(data.canvasComponents)) {
-        const savedTop = data.systemState.panTop;
-        if (isSavedViewportPoint(savedTop)) {
-          setPanTop(savedTop);
+      } else {
+        // Apply zoom and pan if they exist
+        if (data.systemState.zoom !== undefined) {
+          const z = Number(data.systemState.zoom);
+          setZoom(
+            Number.isFinite(z)
+              ? Math.min(CANVAS_ZOOM_MAX, Math.max(CANVAS_ZOOM_MIN, z))
+              : 1,
+          );
+          restoredViewport = true;
+        }
+        if (isSavedViewportPoint(data.systemState.pan)) {
+          setPan(data.systemState.pan);
+          restoredViewport = true;
+        }
+        // conf3 stacked designs: restore saved UpperCanvas pan; auto-fit only on first load.
+        if (designHasStackedSections(data.canvasComponents)) {
+          const savedTop = data.systemState.panTop;
+          if (isSavedViewportPoint(savedTop)) {
+            setPanTop(savedTop);
+            restoredViewport = true;
+          } else {
+            setPanTop({ x: 0, y: 0 });
+            setAutoFitUpperPane(true);
+          }
+        } else if (isSavedViewportPoint(data.systemState.panTop)) {
+          setPanTop(data.systemState.panTop);
+          restoredViewport = true;
+        } else if (isSavedViewportPoint(data.systemState.pan)) {
+          setPanTop(data.systemState.pan);
           restoredViewport = true;
         } else {
           setPanTop({ x: 0, y: 0 });
-          setAutoFitUpperPane(true);
         }
-      } else if (isSavedViewportPoint(data.systemState.panTop)) {
-        setPanTop(data.systemState.panTop);
-        restoredViewport = true;
-      } else if (isSavedViewportPoint(data.systemState.pan)) {
-        setPanTop(data.systemState.pan);
-        restoredViewport = true;
-      } else {
-        setPanTop({ x: 0, y: 0 });
-      }
-      if (isSavedViewportPoint(data.systemState.panBottom)) {
-        setPanBottom(data.systemState.panBottom);
-        restoredViewport = true;
-      } else {
-        setPanBottom({ x: 0, y: 0 });
-      }
-      if (restoredViewport) {
-        setAutoFitUpperPane(false);
+        if (isSavedViewportPoint(data.systemState.panBottom)) {
+          setPanBottom(data.systemState.panBottom);
+          restoredViewport = true;
+        } else {
+          setPanBottom({ x: 0, y: 0 });
+        }
+        if (restoredViewport) {
+          setAutoFitUpperPane(false);
+        }
       }
       if (data.systemState.quadBottomRowShare !== undefined) {
         const share = Number(data.systemState.quadBottomRowShare);
@@ -7503,10 +7620,21 @@ function App() {
    * Get current configuration for saving
    */
   const getCurrentConfiguration = () => {
+    const saveIsIdeum05 = isIdeum05DesignName(currentConfigName);
+    if (saveIsIdeum05) {
+      captureIdeum05ViewportForScreen(getIdeum05NavScreen(ideum05NavStack));
+    }
+    const ideum05NavViewports = saveIsIdeum05
+      ? { ...ideum05NavViewportsRef.current }
+      : undefined;
+    const rootViewport = saveIsIdeum05
+      ? (ideum05NavViewportsRef.current[IDEUM05_NAV_ROOT] ?? readIdeum05ViewportFromState())
+      : null;
+
     // Ideum05 Reference 500 MW loads HD_Aero as a temporary overlay — never persist overlay canvas into Ideum05.
     const ideum05OverlaySnap = ideum05BaseSnapshotRef.current;
     const preserveIdeum05BaseOnSave =
-      isIdeum05DesignName(currentConfigName) &&
+      saveIsIdeum05 &&
       ideum05OverlaySnap &&
       isIdeum05HdAeroScreen(getIdeum05NavScreen(ideum05NavStack));
     const saveComponents = preserveIdeum05BaseOnSave
@@ -7524,10 +7652,18 @@ function App() {
     const saveDesignSectionVisibility = preserveIdeum05BaseOnSave
       ? ideum05OverlaySnap.designSectionVisibility
       : designSectionVisibility;
-    const savePan = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.pan : pan;
-    const savePanTop = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.panTop : panTop;
-    const savePanBottom = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.panBottom : panBottom;
-    const saveZoom = preserveIdeum05BaseOnSave ? ideum05OverlaySnap.zoom : zoom;
+    const savePan = saveIsIdeum05
+      ? (rootViewport?.pan ?? pan)
+      : pan;
+    const savePanTop = saveIsIdeum05
+      ? (rootViewport?.panTop ?? panTop)
+      : panTop;
+    const savePanBottom = saveIsIdeum05
+      ? (rootViewport?.panBottom ?? panBottom)
+      : panBottom;
+    const saveZoom = saveIsIdeum05
+      ? (rootViewport?.zoom ?? zoom)
+      : zoom;
 
     const componentsForSave =
       quadChartDrawers && designHasStackedSections(saveComponents)
@@ -7546,6 +7682,7 @@ function App() {
       globalSampleStep,
       perChartSampleStep,
       playbackTimeRange,
+      ...(ideum05NavViewports ? { ideum05NavViewports } : {}),
       designUiSession: {
         ensembleId:
           simulationMetadata?.isEnsemble && simulationMetadata?.ensembleId
@@ -7555,6 +7692,7 @@ function App() {
         quickScenarioBranchCollapsed,
         designExpansion: saveDesignExpansion,
         hiddenChartPanelNamedConfigs,
+        ...(ideum05NavViewports ? { ideum05NavViewports } : {}),
       },
       quickScenarioButtons,
       hiddenDefaultQuickScenarios,

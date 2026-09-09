@@ -1,10 +1,12 @@
 import { Power } from "lucide-react";
+import { NoFullScreen } from "@/lib/appConfig";
 import { cn } from "@/lib/utils";
 
 /**
  * Attempts to request F11 fullscreen on the whole document (with Safari/iPad webkit support).
  */
 export function requestAppFullscreen() {
+  if (NoFullScreen) return;
   if (typeof document !== "undefined") {
     const docEl = document.documentElement as any;
     const isFullscreen = Boolean(document.fullscreenElement || docEl.webkitFullscreenElement);

@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { NoFullScreen } from "../lib/appConfig";
+import { requestAppFullscreen } from "@/components/scada/AppWindowControls";
 import { BackendStatusBanner } from "@/components/scada/BackendStatusBanner";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -135,21 +137,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    if (NoFullScreen) return undefined;
+
     // Attempt auto-fullscreen on application launch and on first user interaction anywhere
     const triggerFullscreen = () => {
-      if (typeof document !== "undefined") {
-        const docEl = document.documentElement as any;
-        const isAlreadyFullscreen = Boolean(
-          document.fullscreenElement || docEl.webkitFullscreenElement
-        );
-        if (!isAlreadyFullscreen) {
-          if (docEl.requestFullscreen) {
-            docEl.requestFullscreen().catch(() => {});
-          } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen().catch?.(() => {});
-          }
-        }
-      }
+      requestAppFullscreen();
     };
 
     // Immediate attempt on load/mount
