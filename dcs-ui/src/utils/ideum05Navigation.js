@@ -50,33 +50,52 @@ export const IDEUM05_P2R18_MAINGEAR_CATALOG = 'p2r_18';
 /** Ideum-only HD_Aero copy (Reference 500 MW overlay; pan/zoom saved here). */
 export const IDEUM05_HD_AERO_IDEUM_CATALOG = 'hd_aero_ideum';
 
+/** Ideum-only P2R_18 copy (Reference 200 MW overlay; pan/zoom saved here). */
+export const IDEUM05_P2R18_IDEUM_CATALOG = 'p2r_18_ideum';
+
 /** @deprecated use IDEUM05_HD_AERO_IDEUM_CATALOG */
 export const IDEUM05_HD_AERO_DESIGN_DIR = IDEUM05_HD_AERO_IDEUM_CATALOG;
 
 /** Per Ideum05 drill screen: catalog folder + conf display name for Save to Ideum. */
 export const IDEUM05_OVERLAY_SAVE_TARGETS = {
+  'ref-200-mw': {
+    catalogDir: IDEUM05_P2R18_IDEUM_CATALOG,
+    saveName: 'Reference 200',
+  },
   'ref-500-mw': {
     catalogDir: IDEUM05_HD_AERO_IDEUM_CATALOG,
     saveName: 'HD_Aero Ideum',
   },
-  // ref-200-mw: add p2r_16_ideum (or similar) when 200 MW loads a schematic overlay on Ideum.
 };
 
 export function getIdeum05OverlaySaveTarget(screenId) {
   return IDEUM05_OVERLAY_SAVE_TARGETS[screenId] ?? null;
 }
 
+export function isIdeum05OverlayScreen(screenId) {
+  return getIdeum05OverlaySaveTarget(screenId) != null;
+}
+
+/** Maingear cluster command when entering an overlay drill screen. */
+export function getIdeum05OverlayClusterCommand(screenId) {
+  if (screenId === 'ref-500-mw') return 'loadHdAero';
+  if (screenId === 'ref-200-mw') return 'loadP2R18';
+  return null;
+}
+
+/** @deprecated use isIdeum05OverlayScreen — ref-200-mw is now a loaded design overlay. */
 export function isIdeum05ControlsScreen(screenId) {
   return screenId === 'ref-200-mw';
 }
 
+/** @deprecated use isIdeum05OverlayScreen */
 export function isIdeum05HdAeroScreen(screenId) {
   return screenId === 'ref-500-mw';
 }
 
-/** Any drill target that hides the nav cards and shows a touch control surface. */
+/** Any drill target that hides the nav cards and shows a loaded design overlay. */
 export function isIdeum05DesignScreen(screenId) {
-  return isIdeum05ControlsScreen(screenId) || isIdeum05HdAeroScreen(screenId);
+  return isIdeum05OverlayScreen(screenId);
 }
 
 export function isIdeum05ConfiguratorScreen(screenId) {

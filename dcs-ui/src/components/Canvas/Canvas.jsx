@@ -317,7 +317,7 @@ const Canvas = forwardRef(({
   onIdeumSimulationSpeedClick,
   isIdeum05 = false,
   ideum05ShowControls = true,
-  ideum05HdAeroMode = false,
+  ideum05OverlayMode = false,
   ideum05NavScreen = 'root',
   ideum05NavStack = ['root'],
   onIdeum05NavSelect,
@@ -574,7 +574,7 @@ const Canvas = forwardRef(({
           />
         );
       }
-      if (isIdeum05 && ideum05HdAeroMode) {
+      if (isIdeum05 && ideum05OverlayMode) {
         if (!primaryPane) return null;
         const showIdeum05Back = (ideum05NavStack?.length ?? 0) > 1;
         return (
@@ -606,7 +606,7 @@ const Canvas = forwardRef(({
       const showIdeum05Back = isIdeum05 && (ideum05NavStack?.length ?? 0) > 1;
       return (
         <div className="ideum05-nav-layer" aria-hidden={false}>
-          {isIdeum05 && ideum05ShowControls && !ideum05HdAeroMode && primaryPane && (
+          {isIdeum05 && ideum05ShowControls && !ideum05OverlayMode && primaryPane && (
             <div className="ideum05-nav-top-actions">
               {showIdeum05Back ? (
                 <Ideum05BackButton onBack={onIdeum05NavBack} />
@@ -642,7 +642,7 @@ const Canvas = forwardRef(({
       ideumKioskMode,
       isIdeum05,
       ideum05ShowControls,
-      ideum05HdAeroMode,
+      ideum05OverlayMode,
       ideum05NavScreen,
       ideum05NavStack,
       zoom,
@@ -1115,7 +1115,7 @@ const Canvas = forwardRef(({
     e.preventDefault();
     e.stopPropagation();
 
-    if (ideum05HdAeroMode) {
+    if (ideum05OverlayMode) {
       return;
     }
 

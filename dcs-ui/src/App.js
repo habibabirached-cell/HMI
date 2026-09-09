@@ -75,16 +75,17 @@ import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
+  getIdeum05OverlayClusterCommand,
   getIdeum05OverlayDesignDir,
   getIdeum05OverlaySaveTarget,
   isIdeum05ConfiguratorScreen,
-  isIdeum05ControlsScreen,
   isIdeum05DesignName,
   isIdeum05DesignScreen,
-  isIdeum05HdAeroScreen,
+  isIdeum05OverlayScreen,
   normalizeIdeum05NavViewports,
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
+  IDEUM05_P2R18_IDEUM_CATALOG,
   IDEUM05_P2R18_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
@@ -267,6 +268,27 @@ function isHDAeroIdeumDesign(loadedConfig) {
     name === 'hd_aero_ideum' ||
     rel === 'hd_aero_ideum' ||
     rel.endsWith('/hd_aero_ideum')
+  );
+}
+
+/** Ideum touch-table Reference 200 overlay (pairs with Maingear p2r_18 via cluster). */
+function isP2R18IdeumDesign(loadedConfig) {
+  const name = String(loadedConfig?.name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  const rel = String(
+    loadedConfig?.csv_status?.design_catalog_rel ||
+      loadedConfig?.design_catalog_rel ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+  return (
+    name === 'reference_200' ||
+    name === 'p2r_18_ideum' ||
+    rel === 'p2r_18_ideum' ||
+    rel.endsWith('/p2r_18_ideum')
   );
 }
 
@@ -1067,13 +1089,17 @@ function App() {
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
-  const ideum05HdAeroMode = isIdeum05 && isIdeum05HdAeroScreen(ideum05NavScreen);
+  const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
     csv_status: { design_catalog_rel: designApiPath },
   });
-  /** Forward CB_a/CB_b clicks from Ideum HD_Aero overlay to Maingear hd_aero. */
-  const mirrorHdAeroBreakersToMaingear = ideum05HdAeroMode || isHdAeroIdeumLoaded;
+  const isP2R18IdeumLoaded = isP2R18IdeumDesign({
+    name: currentConfigName,
+    csv_status: { design_catalog_rel: designApiPath },
+  });
+  /** Forward CB clicks from Ideum overlay designs to Maingear wall display. */
+  const mirrorHdAeroBreakersToMaingear = ideum05OverlayMode || isHdAeroIdeumLoaded || isP2R18IdeumLoaded;
   const ideum05OverlaySaveTarget = isIdeum05
     ? getIdeum05OverlaySaveTarget(ideum05NavScreen)
     : null;
@@ -3883,10 +3909,9 @@ function App() {
       if (isIdeum05) {
         captureIdeum05ViewportForScreen(screenId);
       }
-      if (isIdeum05HdAeroScreen(drillTarget)) {
-        void sendIdeumClusterCommand('loadHdAero');
-      } else if (isIdeum05ControlsScreen(drillTarget)) {
-        void sendIdeumClusterCommand('loadP2R18');
+      const clusterCmd = getIdeum05OverlayClusterCommand(drillTarget);
+      if (clusterCmd) {
+        void sendIdeumClusterCommand(clusterCmd);
       }
       setIdeum05NavStack((prev) => [...prev, drillTarget]);
     }
@@ -3904,9 +3929,9 @@ function App() {
     setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   }, [isIdeum05, ideum05NavStack, captureIdeum05ViewportForScreen]);
 
-  const applyIdeum05HdAeroOverlay = useCallback((loadedConfig) => {
+  const applyIdeum05DesignOverlay = useCallback((loadedConfig, overlayScreenId) => {
     const { data } = loadedConfig || {};
-    if (!data) return;
+    if (!data || !overlayScreenId) return;
     ideum05OverlayLoadedMetaRef.current = {
       remoteControlProfile: data.remoteControlProfile,
       remoteControlTarget: data.remoteControlTarget,
@@ -3961,7 +3986,7 @@ function App() {
       setAutoFitUpperPane(false);
       ideum05NavViewportsRef.current = {
         ...ideum05NavViewportsRef.current,
-        'ref-500-mw': {
+        [overlayScreenId]: {
           zoom: ss.zoom != null ? clampCanvasZoom(ss.zoom) : zoomRef.current,
           pan: isSavedViewportPoint(ss.pan) ? { ...ss.pan } : { ...panRef.current },
           panTop: isSavedViewportPoint(ss.panTop)
@@ -4001,7 +4026,10 @@ function App() {
     const loadGen = ++ideum05OverlayLoadGenRef.current;
 
     if (overlayDir) {
-      void sendIdeumClusterCommand('loadHdAero');
+      const clusterCmd = getIdeum05OverlayClusterCommand(ideum05NavScreen);
+      if (clusterCmd) {
+        void sendIdeumClusterCommand(clusterCmd);
+      }
       if (!ideum05BaseSnapshotRef.current) {
         ideum05BaseSnapshotRef.current = {
           canvasComponents: canvasComponentsRef.current,
@@ -4019,9 +4047,9 @@ function App() {
           if (!res.ok || loadGen !== ideum05OverlayLoadGenRef.current) return;
           const loadedConfig = await res.json();
           if (loadGen !== ideum05OverlayLoadGenRef.current) return;
-          applyIdeum05HdAeroOverlay(loadedConfig);
+          applyIdeum05DesignOverlay(loadedConfig, ideum05NavScreen);
         } catch (e) {
-          console.warn('Ideum05 HD_Aero overlay load failed', e);
+          console.warn('Ideum05 design overlay load failed', e);
         }
       })();
       return undefined;
@@ -4059,9 +4087,9 @@ function App() {
   }, [isHdAeroIdeumLoaded, sendIdeumClusterCommand]);
 
   useEffect(() => {
-    if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;
+    if (!isP2R18IdeumLoaded) return;
     void sendIdeumClusterCommand('loadP2R18');
-  }, [isIdeum05, ideum05NavScreen, sendIdeumClusterCommand]);
+  }, [isP2R18IdeumLoaded, sendIdeumClusterCommand]);
 
   const applyHdAeroBreakerPreset = useCallback(
     async (presetName) => {
@@ -7636,7 +7664,7 @@ function App() {
     const preserveIdeum05BaseOnSave =
       saveIsIdeum05 &&
       ideum05OverlaySnap &&
-      isIdeum05HdAeroScreen(getIdeum05NavScreen(ideum05NavStack));
+      isIdeum05OverlayScreen(getIdeum05NavScreen(ideum05NavStack));
     const saveComponents = preserveIdeum05BaseOnSave
       ? ideum05OverlaySnap.canvasComponents
       : canvasComponents;
@@ -8619,7 +8647,7 @@ function App() {
               disableCanvasGestureZoom={isIdeum05}
               isIdeum05={isIdeum05}
               ideum05ShowControls={ideum05ShowControls}
-              ideum05HdAeroMode={ideum05HdAeroMode}
+              ideum05OverlayMode={ideum05OverlayMode}
               ideum05NavScreen={ideum05NavScreen}
               ideum05NavStack={ideum05NavStack}
               onIdeum05NavSelect={handleIdeum05NavSelect}
@@ -8698,7 +8726,7 @@ function App() {
       )}
 
       {/* Chart Panel */}
-      {openCharts.length > 0 && ideum05ShowControls && !ideum05HdAeroMode && !showConfigurator && (
+      {openCharts.length > 0 && ideum05ShowControls && !ideum05OverlayMode && !showConfigurator && (
         <ChartPanel
           charts={openCharts}
           chartStacks={chartStacks}

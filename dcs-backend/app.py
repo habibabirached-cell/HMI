@@ -254,6 +254,33 @@ def copy_design_dir(source_name: str, dest_name: str) -> bool:
         return False
 
 
+def _ideum05_nav_viewports_for_disk(raw) -> dict:
+    """Normalize per-screen Ideum05 nav zoom/pan map for .conf.json round-trip."""
+    if not isinstance(raw, dict):
+        return {}
+    out: dict = {}
+    for screen_id, viewport in raw.items():
+        if not isinstance(screen_id, str) or not isinstance(viewport, dict):
+            continue
+        sid = screen_id.strip()
+        if not sid:
+            continue
+        entry: dict = {}
+        zoom = viewport.get("zoom")
+        if isinstance(zoom, (int, float)) and not isinstance(zoom, bool):
+            entry["zoom"] = float(zoom)
+        for key in ("pan", "panTop", "panBottom"):
+            point = viewport.get(key)
+            if not isinstance(point, dict):
+                continue
+            x, y = point.get("x"), point.get("y")
+            if isinstance(x, (int, float)) and not isinstance(x, bool) and isinstance(y, (int, float)) and not isinstance(y, bool):
+                entry[key] = {"x": float(x), "y": float(y)}
+        if entry:
+            out[sid] = entry
+    return out
+
+
 def _design_ui_session_for_disk(raw) -> dict:
     """Persist designUiSession fields that should round-trip through .conf.json."""
     out: dict = {}
@@ -273,6 +300,9 @@ def _design_ui_session_for_disk(raw) -> dict:
         cleaned = [str(x).strip() for x in hidden_named if str(x).strip()]
         if cleaned:
             out["hiddenChartPanelNamedConfigs"] = cleaned
+    ideum05_nav_viewports = _ideum05_nav_viewports_for_disk(raw.get("ideum05NavViewports"))
+    if ideum05_nav_viewports:
+        out["ideum05NavViewports"] = ideum05_nav_viewports
     return out
 
 
@@ -337,6 +367,10 @@ def save_config_to_design_dir(
         _rcp = data.get("remoteControlProfile")
         _rct = data.get("remoteControlTarget")
         _bts = data.get("busTransferSegments")
+        _inv = _ideum05_nav_viewports_for_disk(
+            data.get("ideum05NavViewports")
+            or (isinstance(_dus, dict) and _dus.get("ideum05NavViewports"))
+        )
         conf_data = {
             "name": config_name,
             "description": description or "",
@@ -359,6 +393,8 @@ def save_config_to_design_dir(
             "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
             "busTransferSegments": _bts if isinstance(_bts, list) else [],
         }
+        if _inv:
+            conf_data["ideum05NavViewports"] = _inv
         conf_data = {
             k: v
             for k, v in conf_data.items()
@@ -391,7 +427,14 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _rcp = conf.get("remoteControlProfile")
     _rct = conf.get("remoteControlTarget")
     _bts = conf.get("busTransferSegments")
-    return {
+    _inv = _ideum05_nav_viewports_for_disk(
+        conf.get("ideum05NavViewports")
+        or (isinstance(_dus, dict) and _dus.get("ideum05NavViewports"))
+    )
+    dus_out = _design_ui_session_for_disk(_dus)
+    if _inv and "ideum05NavViewports" not in dus_out:
+        dus_out = {**dus_out, "ideum05NavViewports": _inv}
+    payload = {
         "canvasComponents": conf.get("canvasComponents", []),
         "connections": conf.get("connections", []),
         "systemState": conf.get(
@@ -405,7 +448,7 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         else 128,
         "perChartSampleStep": _pcs if isinstance(_pcs, dict) else {},
         "playbackTimeRange": _playback_time_range_for_disk(_ptr),
-        "designUiSession": _design_ui_session_for_disk(_dus),
+        "designUiSession": dus_out,
         "quickScenarioButtons": _qsb if isinstance(_qsb, list) else [],
         "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
         "ideumControlButtons": _icb if isinstance(_icb, list) else [],
@@ -414,6 +457,9 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
         "busTransferSegments": _bts if isinstance(_bts, list) else [],
     }
+    if _inv:
+        payload["ideum05NavViewports"] = _inv
+    return payload
 
 
 def _designs_root_abs() -> str:
