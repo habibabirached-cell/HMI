@@ -1,0 +1,390 @@
+================================================================================
+HANDOFF FOR CURSOR AGENT ON MAINGEAR
+================================================================================
+Read this entire file before changing anything. You are continuing work on the
+Maingear 4×4K demo wall startup scripts. The human operator double-clicks one
+file to start everything. Your job if startup still fails: diagnose from logs,
+fix the BAT/ PowerShell scripts, and verify end-to-end on this machine.
+
+Last updated: 2026-09-09 (after several failed runs; latest fixes may not yet
+have been tested successfully on Maingear — that is why you are here).
+
+================================================================================
+1. PURPOSE — WHY WE ARE DOING THIS
+================================================================================
+
+This is a CEO demo setup with TWO machines:
+
+  IDEUM (touch table)                    MAINGEAR (4×4K wall display)
+  -------------------                    ---------------------------
+  Static IP: 192.168.50.2                Static IP: 192.168.50.1
+  Runs simplified touch UI (Ideum05)     Runs full DataCenter HMI + Vernova
+  Sends HTTP commands to Maingear        Shows what the audience sees
+
+When someone taps "Grid Connected" (or similar) on the Ideum touch table, the
+Maingear wall must INSTANTLY switch from the DataCenterSmartPower HMI to the
+Vernova Spark Engine dashboard. Reloading a single browser tab is too slow
+(several seconds). 
+
+SOLUTION: Preload BOTH apps in two separate fullscreen Chrome windows:
+  - Vernova (http://localhost:5173) opens FIRST, spans all 4 displays, stays BEHIND
+  - DCS (http://localhost:3003) opens SECOND, on top (what audience sees initially)
+  - Switching = bring the other window to front (~milliseconds, like Alt+Tab)
+
+Ideum will eventually trigger showVernova / showDcs via the existing cluster
+link (HTTP POST Ideum → Maingear backend :5000 → WebSocket → browser). That
+Ideum integration is NOT wired yet. Right now we are proving the Maingear side
+works standalone with batch scripts.
+
+See also: BAT/README.md, BAT/userManual.md, ideum.md (repo root).
+
+================================================================================
+2. MEASURE OF SUCCESS
+================================================================================
+
+A successful run of z_genesis.start.bat means ALL of the following:
+
+  [1] Docker containers running:
+        hmi-dcs-ui-1       → localhost:3003
+        hmi-dcs-backend-1  → localhost:5000
+
+  [2] Vernova dev server running:
+        npm run dev in vernova-spark-engine_new → localhost:5173
+        (FastAPI backend also on :8001 — that is normal for Vernova dev)
+
+  [3] Two Chrome kiosk windows open, each spanning all 4 displays:
+        - DCS visible on top (foreground)
+        - Vernova loaded behind (not visible until focused)
+
+  [4] Manual focus switch works:
+        Double-click BAT\maingear-kiosk-focus-vernova.bat → Vernova wall appears
+        Double-click BAT\maingear-kiosk-focus-dcs.bat     → DCS wall appears again
+        Switch should feel instant (no page reload).
+
+  [5] CMD window showed live progress during startup (not blank).
+        debug.txt in BAT\ should mirror what appeared on console.
+
+If all 5 pass, the Maingear kiosk side is ready. Next future step (not your
+immediate blocker): wire Ideum cluster commands to call focus-kiosk-window.ps1.
+
+================================================================================
+3. MAINGEAR PATHS AND ONE-CLICK START
+================================================================================
+
+Repo root on Maingear:
+  C:\Users\GEVer\Documents\HMI\
+
+BAT folder:
+  C:\Users\GEVer\Documents\HMI\BAT\
+
+THE FILE TO DOUBLE-CLICK:
+  BAT\z_genesis.start.bat
+
+Prerequisites (must be true before running):
+  - Docker Desktop is running
+  - Node.js + npm in PATH
+  - Google Chrome installed
+  - Folder exists: vernova-spark-engine_new\  (with package.json)
+  - File exists: .env at repo root (for docker compose)
+  - CLOSE debug.txt in any editor before running (file lock causes errors)
+
+================================================================================
+4. STARTUP SEQUENCE (5 STEPS IN z_genesis.start.bat)
+================================================================================
+
+On each run, the script FIRST deletes old BAT\debug.txt and BAT\*.log files.
+
+  Step 1/5  docker compose up -d
+            → DCS UI :3003, backend :5000
+            → via run-docker-compose.ps1 (tees output to console + logs)
+
+  Step 2/5  Start Vernova npm run dev
+            → minimized CMD window titled "Vernova dev"
+            → via start-vernova-dev.bat
+            → output in vernova-dev.log
+            → 3 second pause before port checks
+
+  Step 3/5  Wait for TCP ports 5000, 3003, 5173
+            → via wait-for-ports.ps1 + Wait-ForTcpPort in kiosk-windows.ps1
+            → prints progress every 15 seconds to console AND debug.txt
+            → Vernova timeout: 300 seconds (5 min)
+
+  Step 4/5  Open Vernova Chrome (behind, -NoActivate)
+            → via open-vernova-chrome-4displays.bat
+            → saves window handle as "Vernova" in kiosk-windows.json
+
+  Step 5/5  Open DCS Chrome (foreground)
+            → via repo-root open-chrome-window.ps1
+            → saves window handle as "Dcs" in kiosk-windows.json
+
+On success: CMD window closes (exit 0).
+On failure: "Press any key to close..." so operator can read errors.
+
+================================================================================
+5. KEY FILES (BAT FOLDER)
+================================================================================
+
+  z_genesis.start.bat       ← ONE-CLICK START (operator entry point)
+  _paths.bat                Sets BAT_DIR and REPO_ROOT (no trailing backslash!)
+  _debug-log.bat            Echo to console AND append debug.txt
+  start-vernova-dev.bat     npm run dev with logging
+  wait-for-ports.ps1        Port wait wrapper
+  run-docker-compose.ps1    Docker with tee logging
+  run-tee-exec.ps1          Run bat/ps1 with tee logging
+  kiosk-windows.ps1         Window registry, focus, Wait-ForTcpPort
+  focus-kiosk-window.ps1    Generic focus: Dcs or Vernova
+  maingear-kiosk-focus-vernova.bat
+  maingear-kiosk-focus-dcs.bat
+  open-vernova-chrome-4displays.bat
+
+  LOG FILES (regenerated each run, safe to commit for remote diagnosis):
+  debug.txt                 Master summary — READ THIS FIRST when debugging
+  docker-compose.log
+  ports-wait.log
+  vernova-dev.log
+  chrome-launch.log
+  kiosk-windows.json        Auto-generated HWND registry (gitignored)
+
+  REPO ROOT (not in BAT/):
+  open-chrome-window.ps1    Core Chrome launcher
+  docker-compose-dev.yml
+  .env
+
+  Chrome profiles (separate per app):
+  %LOCALAPPDATA%\DataCenterSmartPower\chrome-kiosk-dcs
+  %LOCALAPPDATA%\DataCenterSmartPower\chrome-kiosk-vernova
+
+================================================================================
+6. WHAT WENT WRONG (HISTORY OF FAILURES)
+================================================================================
+
+The operator ran z_genesis.start.bat multiple times. Docker and Vernova usually
+work; Chrome never opened because step 3 or earlier steps crashed.
+
+Failure A — Silent CMD, lots in debug.txt
+  Output was written only to log files, not live to console. Fixed by tee
+  helpers (_debug-log.bat, run-docker-compose.ps1, Write-WaitMsg).
+
+Failure B — PowerShell inline command in bat (Start-Transcript ^|)
+  CMD passed literal ^| to PowerShell instead of pipe. Fixed by moving port
+  wait to wait-for-ports.ps1 (separate -File invocation).
+
+Failure C — PowerShell 5.1 parse error: $($bucket)s in double-quoted strings
+  Maingear runs PowerShell 5.1 (build 26100). Syntax like:
+    "$($bucket)s elapsed"
+  crashes at parse time with "Unexpected token 's'".
+  FIXED (latest): use -f format strings:
+    ('... {0}s elapsed ...' -f $Label, $bucket, $TimeoutSeconds)
+  If you see this error again, search kiosk-windows.ps1 for "$(" followed by
+  "s" immediately after closing paren in a double-quoted string — replace ALL
+  with -f format strings or string concatenation.
+
+Failure D — $script:GenesisTeeLogs wrong scope after dot-sourcing
+  wait-for-ports.ps1 set $script:GenesisTeeLogs but Write-WaitMsg in
+  kiosk-windows.ps1 read a different script scope → StrictMode crash.
+  FIXED: use $global:GenesisTeeLogs.
+
+Failure E — REPO_ROOT trailing backslash broke PowerShell args
+  "C:\...\HMI\" escapes the closing quote in CMD → PowerShell prompts for
+  EnvFile interactively.
+  FIXED: _paths.bat sets REPO_ROOT without trailing backslash; paths use
+  %REPO_ROOT%\subdir everywhere.
+
+Failure F — _debug-log.bat mirror_run broke on npm.cmd / node.cmd
+  Running npm without "call" in a batch subroutine loses return address.
+  FIXED: call %* in mirror_run.
+
+Failure G — debug.txt file lock
+  Operator had debug.txt open in editor → "The process cannot access the file
+  because it is being used by another process." Tell operator to close it.
+
+Failure H — Port wait exits in <1 second
+  Not a timeout — script parse/runtime error before polling. Check ports-wait.log
+  and debug.txt "----- port wait -----" section for PowerShell errors.
+
+Failure I — vernova-dev.log "not found" at error dump time
+  Race: Vernova minimized window hadn't created the file yet. Added 3s timeout
+  before port checks. Vernova typically ready in ~1 second once npm run dev runs.
+
+CONFIRMED WORKING manually on Maingear:
+  - docker compose up (containers start)
+  - cd vernova-spark-engine_new && npm run dev (Vite on :5173, FastAPI on :8001)
+  - Operator confirmed manual npm run dev works
+
+NOT YET CONFIRMED on Maingear after all fixes:
+  - Full z_genesis.start.bat end-to-end through step 5 with Chrome on wall
+
+================================================================================
+7. LATEST CHANGES (MOST RECENT — TEST THESE FIRST)
+================================================================================
+
+If the operator just pulled, these should be present:
+
+  kiosk-windows.ps1
+    - Wait-ForTcpPort uses -f format strings (PS 5.1 safe)
+    - Write-WaitMsg uses $global:GenesisTeeLogs
+    - Progress message every 15s while waiting
+
+  wait-for-ports.ps1
+    - Sets $global:GenesisTeeLogs after dot-sourcing kiosk-windows.ps1
+    - Catch block uses Write-Host (not Write-WaitMsg) for errors
+
+  z_genesis.start.bat
+    - 3 second timeout after launching Vernova before port wait
+    - All PowerShell invoked with -File (not inline -Command)
+    - REPO_ROOT paths use backslash join (%REPO_ROOT%\.env etc.)
+
+  _paths.bat
+    - REPO_ROOT has NO trailing backslash
+
+  _debug-log.bat
+    - init mirrors to console; mirror_run uses "call %*"
+
+  run-docker-compose.ps1, run-tee-exec.ps1
+    - Tee output to console + log files in real time
+
+================================================================================
+8. IF STARTUP STILL FAILS — DEBUG PLAYBOOK
+================================================================================
+
+STEP 0 — Before running again:
+  - Close debug.txt and all *.log files if open in editors
+  - Kill stray "Vernova dev" CMD windows from previous runs
+  - Optional: close all Chrome windows to avoid focus confusion
+  - Ensure Docker Desktop is running
+
+STEP 1 — Run and read logs:
+  Double-click BAT\z_genesis.start.bat
+  Then read in order:
+    BAT\debug.txt          (master — shows which step failed)
+    BAT\ports-wait.log     (if step 3 failed)
+    BAT\vernova-dev.log    (if 5173 never ready)
+    BAT\docker-compose.log (if step 1 failed)
+    BAT\chrome-launch.log  (if steps 4-5 failed)
+
+STEP 2 — Identify failed step from debug.txt:
+  "docker compose exit code: N"     → step 1
+  "port wait exit code: N"          → step 3
+  "Vernova Chrome exit code: N"     → step 4
+  "DCS Chrome exit code: N"         → step 5
+
+STEP 3 — Step-specific fixes:
+
+  STEP 1 (Docker):
+    Run manually from repo root:
+      docker compose --env-file .env -f docker-compose-dev.yml up -d
+      docker compose ps
+    Check Docker Desktop is running and .env exists.
+
+  STEP 2/3 (Vernova / port 5173):
+    Run manually:
+      cd vernova-spark-engine_new
+      npm run api:install     (first time / if Python deps missing)
+      npm install             (if node_modules missing)
+      npm run dev
+    Wait for "Local: http://localhost:5173" in output.
+    If port 5173 never appears, fix Vernova before fixing bat scripts.
+
+    Test port wait alone (after Vernova is running):
+      powershell -NoProfile -ExecutionPolicy Bypass -File BAT\wait-for-ports.ps1 `
+        -PortsLog BAT\ports-wait.log `
+        -KioskWindowsScript BAT\kiosk-windows.ps1 `
+        -DebugLog BAT\debug.txt
+
+    If wait-for-ports.ps1 crashes immediately, test dot-source:
+      powershell -NoProfile -Command "& { . 'BAT\kiosk-windows.ps1'; Write-Host OK }"
+    Any parse error → fix kiosk-windows.ps1 (likely PS 5.1 string syntax).
+
+  STEP 4/5 (Chrome):
+    Test Vernova Chrome alone:
+      BAT\open-vernova-chrome-4displays.bat -NoActivate
+    Test DCS Chrome alone from repo root:
+      powershell -File open-chrome-window.ps1 -SpanAllDisplays -App `
+        -Url http://localhost:3003 -SaveKioskTarget Dcs
+    List displays if geometry wrong:
+      powershell -File open-chrome-window.ps1 -ListDisplays
+
+  STEP 3 instant crash (<1 sec, empty ports-wait.log except header):
+    Almost certainly PowerShell parse error in kiosk-windows.ps1.
+    Run dot-source test above. Fix strings. Do NOT use $($var)s in double quotes
+    on PS 5.1 — use -f format operator.
+
+  PowerShell prompts for parameters (EnvFile etc.):
+    Trailing backslash in quoted path — check _paths.bat and bat -File args.
+
+STEP 4 — After fixing, verify focus switch:
+  BAT\maingear-kiosk-focus-vernova.bat
+  BAT\maingear-kiosk-focus-dcs.bat
+
+STEP 5 — Commit debug.txt + logs and push so remote dev can review if stuck.
+
+================================================================================
+9. MANUAL QUICK TEST (BYPASS z_genesis)
+================================================================================
+
+If z_genesis is broken but you want to prove the demo works manually:
+
+  1. docker compose --env-file .env -f docker-compose-dev.yml up -d
+  2. start cmd /k "cd vernova-spark-engine_new && npm run dev"
+  3. Wait for :5173
+  4. BAT\open-vernova-chrome-4displays.bat -NoActivate
+  5. powershell -File open-chrome-window.ps1 -SpanAllDisplays -App `
+       -Url http://localhost:3003 -SaveKioskTarget Dcs
+  6. Test focus bats
+
+If manual works but z_genesis doesn't, the bug is purely in BAT orchestration
+/logging/port-wait — not in Docker/Vernova/Chrome themselves.
+
+================================================================================
+10. WINDOWS / POWERSHELL GOTCHAS (DO NOT REINTRODUCE)
+================================================================================
+
+  1. PS 5.1 on Maingear — NOT PowerShell 7. Test all .ps1 under 5.1.
+  2. Never use $($variable)s inside "double quotes" — use -f format strings.
+  3. Never pass paths ending in \ inside quotes to PowerShell from CMD
+     (e.g. BAD: -RepoRoot "C:\HMI\"  GOOD: -RepoRoot "C:\HMI")
+  4. Never use inline powershell -Command with ^| pipe escapes in bat — use -File.
+  5. Never run npm.cmd/node.cmd from batch subroutines without "call".
+  6. goto inside if (...) blocks in batch — fragile; z_genesis uses labels.
+  7. Start-Transcript on PS 5.1 may not show output on console — we use
+     Write-WaitMsg / Write-TeeLine instead.
+  8. kiosk-windows.ps1 line 197 had 3_000_000 — PS 5.1 rejects numeric separators
+     (must be 3000000). Check if reintroduced.
+  9. Do not commit: .env, kiosk-windows.json, node_modules
+
+================================================================================
+11. RELATED WORK (NOT THE IMMEDIATE PROBLEM)
+================================================================================
+
+These were done in the same project but are separate from genesis startup:
+
+  Vernova NoFullScreen:
+    vernova-spark-engine_new/src/lib/appConfig.ts → NoFullScreen = true
+    Gated in AppWindowControls.tsx and __root.tsx
+
+  Ideum05 per-screen zoom/pan persistence:
+    dcs-ui/src/utils/ideum05Navigation.js + dcs-backend/app.py
+    (ideum05NavViewports save/load)
+
+  Future — Ideum → Maingear cluster for Grid Connected:
+    Add showVernova / showDcs cluster commands that call focus-kiosk-window.ps1
+    on Maingear (same as manual focus bats). Not wired yet.
+
+================================================================================
+12. YOUR IMMEDIATE TASK
+================================================================================
+
+  1. Pull latest git on Maingear (C:\Users\GEVer\Documents\HMI\).
+  2. Close debug.txt if open.
+  3. Run BAT\z_genesis.start.bat.
+  4. If it fails, follow section 8 debug playbook.
+  5. Fix scripts in BAT\ (minimal diff, match existing style).
+  6. Re-run until success criteria in section 2 are all met.
+  7. Confirm maingear-kiosk-focus-vernova.bat and focus-dcs.bat work.
+
+The operator will paste this file into your prompt. Start by reading BAT\debug.txt
+from the most recent run if one exists.
+
+Good luck.
+
+================================================================================

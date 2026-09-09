@@ -59,6 +59,8 @@ call "%BAT_DIR%_debug-log.bat" line "  This may take 1-3 minutes before port 517
 >> "%VERNOVA_DEV_LOG%" echo Directory: %VERNOVA_DIR%
 start "Vernova dev" /MIN cmd /c ""%BAT_DIR%start-vernova-dev.bat" "%VERNOVA_DIR%" "%VERNOVA_DEV_LOG%""
 call "%BAT_DIR%_debug-log.bat" line "Vernova dev launched in minimized window (title: Vernova dev)."
+call "%BAT_DIR%_debug-log.bat" line "Giving Vernova 3 seconds to start before port checks..."
+timeout /t 3 /nobreak >nul
 
 call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[3/5] Waiting for services (watch this window — progress every 15s)..."

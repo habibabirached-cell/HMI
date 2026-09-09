@@ -297,9 +297,9 @@ function Wait-ForTcpPort {
     $lastProgressBucket = 0
 
     Write-WaitMsg ""
-    Write-WaitMsg "Waiting for $Label on 127.0.0.1:$Port (timeout $($TimeoutSeconds)s) ..."
+    Write-WaitMsg ('Waiting for {0} on 127.0.0.1:{1} (timeout {2}s) ...' -f $Label, $Port, $TimeoutSeconds)
     if ($Port -eq 5173) {
-        Write-WaitMsg "  Vernova npm run dev can take 1-3 minutes on a cold start — please wait."
+        Write-WaitMsg '  Vernova npm run dev can take 1-3 minutes on a cold start — please wait.'
     }
 
     while ((Get-Date) -lt $deadline) {
@@ -307,18 +307,18 @@ function Wait-ForTcpPort {
         if ($ProgressIntervalSeconds -gt 0 -and $elapsedSeconds -ge $ProgressIntervalSeconds) {
             $bucket = [int][math]::Floor($elapsedSeconds / $ProgressIntervalSeconds) * $ProgressIntervalSeconds
             if ($bucket -gt $lastProgressBucket) {
-                Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapsed, $($TimeoutSeconds)s max)"
+                Write-WaitMsg ('  ... still waiting for {0} ({1}s elapsed, {2}s max)' -f $Label, $bucket, $TimeoutSeconds)
                 $lastProgressBucket = $bucket
             }
         }
 
         try {
             $client = New-Object System.Net.Sockets.TcpClient
-            $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
+            $async = $client.BeginConnect('127.0.0.1', $Port, $null, $null)
             $ok = $async.AsyncWaitHandle.WaitOne(500)
             if ($ok -and $client.Connected) {
                 $client.Close()
-                Write-WaitMsg "$Label is ready after $($elapsedSeconds)s."
+                Write-WaitMsg ('{0} is ready after {1}s.' -f $Label, $elapsedSeconds)
                 return
             }
             $client.Close()
@@ -328,5 +328,5 @@ function Wait-ForTcpPort {
         Start-Sleep -Milliseconds 500
     }
 
-    throw "Timed out waiting for $Label on port $Port after $($TimeoutSeconds)s"
+    throw ('Timed out waiting for {0} on port {1} after {2}s' -f $Label, $Port, $TimeoutSeconds)
 }
