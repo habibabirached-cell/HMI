@@ -536,12 +536,6 @@ $hwnd = Wait-ForNewChromeWindow -ExistingHandles $existingWindows
 
 $finalRect = Set-ChromeWindowBounds -Handle $hwnd -X $X -Y $Y -Width $Width -Height $Height
 
-if ($SaveKioskTarget) {
-    if (Set-KioskTitleBarColors -Handle $hwnd -Target $SaveKioskTarget) {
-        Write-Host "Title bar color applied for $SaveKioskTarget."
-    }
-}
-
 if ($NoActivate) {
     Show-KioskWindow -Handle $hwnd -NoActivate
 }
