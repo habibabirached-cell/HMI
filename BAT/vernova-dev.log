@@ -1,39 +1,5 @@
 === Vernova dev server log ===
-Started: Wed 09/09/2026 18:05:43.60
+Started: Wed 09/09/2026 18:11:12.39
 Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
-
-> dev
-> node scripts/dev.mjs
-
-════════════════════════════════════════════════════════════
-  GE VERNOVA - SPARK ENGINE DASHBOARD (DEV RUNNER)
-  Determining available backend port...
-════════════════════════════════════════════════════════════
-
-[INFO] Bound FastAPI backend to fixed port: 8001
-
-(node:26844) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-[36m[FastAPI][0m =======================================================
-[36m[FastAPI][0m  [FastAPI] Verona Spark Databank API running on:
-[36m[FastAPI][0m            http://127.0.0.1:8001
-[36m[FastAPI][0m =======================================================
-[33m[FastAPI][0m INFO:     Will watch for changes in these directories: ['C:\\Users\\GEVer\\Documents\\HMI\\vernova-spark-engine_new']
-[33m[FastAPI][0m INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[33m[FastAPI][0m INFO:     Started reloader process [11320] using WatchFiles
-[33m[FastAPI][0m INFO:     Started server process [27780]
-[33m[FastAPI][0m INFO:     Waiting for application startup.
-[33m[FastAPI][0m INFO:     Application startup complete.
-[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
-
-  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m916[22m[2m[0m ms[22m
-
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.29.48.1:[1m5173[22m/[39m    [2mvEthernet (WSL (Hyp…[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.50.1:[1m5173[22m/[39m   [2mEthernet[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://190.168.13.5:[1m5173[22m/[39m   [2mEthernet 2[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.168.1:[1m5173[22m/[39m  [2mEthernet 3[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.2.87:[1m5173[22m/[39m    [2mWi-Fi[22m
-[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m

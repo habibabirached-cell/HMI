@@ -1,1 +1,49 @@
 ﻿=== Port wait log ===
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:74
++ ...    Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapsed ...
++                                                                 ~
+Unexpected token 's' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:74
++ ...     Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapse ...
++                                                                  ~
+Missing closing ')' in expression.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:301 char:25
++     if ($Port -eq 5173) {
++                         ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:283 char:26
++ function Wait-ForTcpPort {
++                          ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:108
++ ... ll waiting for $Label ($($bucket)s elapsed, $($TimeoutSeconds)s max)"
++                                                                        ~
+Unexpected token ')' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:317 char:44
++ ...       $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token '127.0.0.1", $Port, $null, $null)
+            $ok = $async.AsyncWaitHandle.WaitOne(500)
+            if ($ok -and $client.Connected) {
+                $client.Close()
+                Write-WaitMsg "$Label' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:317 char:50
++             $async = $client.BeginConnect("127.0.0.1", $Port, $null,  ...
++                                                  ~
+Missing property name after reference operator.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:321 char:39
++                 Write-WaitMsg "$Label is ready after $($elapsedSecond ...
++                                       ~~
+Unexpected token 'is' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:331 char:80
++ ... Timed out waiting for $Label on port $Port after $($TimeoutSeconds)s"
++                                                                         ~
+The string is missing the terminator: ".
