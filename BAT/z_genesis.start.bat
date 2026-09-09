@@ -21,7 +21,7 @@ call "%BAT_DIR%_debug-log.bat" init
 call "%BAT_DIR%_debug-log.bat" line "Genesis startup (Docker + Vernova + Chrome walls)..."
 if errorlevel 1 goto :init_failed
 
-set "VERNOVA_DIR=%REPO_ROOT%vernova-spark-engine_new"
+set "VERNOVA_DIR=%REPO_ROOT%\vernova-spark-engine_new"
 set "VERNOVA_URL=http://localhost:5173"
 set "DCS_URL=http://localhost:3003"
 
@@ -37,14 +37,14 @@ if errorlevel 1 goto :err_npm
 
 if not exist "%VERNOVA_DIR%\package.json" goto :err_vernova_dir
 
-if not exist "%REPO_ROOT%.env" (
-  call "%BAT_DIR%_debug-log.bat" line "WARN: .env not found at %REPO_ROOT%.env"
+if not exist "%REPO_ROOT%\.env" (
+  call "%BAT_DIR%_debug-log.bat" line "WARN: .env not found at %REPO_ROOT%\.env"
 )
 
 call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[1/5] Starting DataCenterSmartPower Docker stack..."
 call "%BAT_DIR%_debug-log.bat" line "Step 1: docker compose up -d"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-docker-compose.ps1" -RepoRoot "%REPO_ROOT%" -EnvFile "%REPO_ROOT%.env" -ComposeFile "%REPO_ROOT%docker-compose-dev.yml" -DockerLog "%DOCKER_LOG%" -DebugLog "%DEBUG_LOG%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-docker-compose.ps1" -RepoRoot "%REPO_ROOT%" -EnvFile "%REPO_ROOT%\.env" -ComposeFile "%REPO_ROOT%\docker-compose-dev.yml" -DockerLog "%DOCKER_LOG%" -DebugLog "%DEBUG_LOG%"
 set "STEP_ERR=!errorlevel!"
 call "%BAT_DIR%_debug-log.bat" line "docker compose exit code: !STEP_ERR!"
 if !STEP_ERR! neq 0 goto :err_docker_compose
@@ -80,7 +80,7 @@ if !STEP_ERR! neq 0 goto :err_vernova_chrome
 call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[5/5] Opening DCS Chrome (foreground)..."
 call "%BAT_DIR%_debug-log.bat" line "Step 5: DCS Chrome foreground"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-tee-exec.ps1" -LogPath "%CHROME_LOG%" -DebugLog "%DEBUG_LOG%" -CommandPath "%REPO_ROOT%open-chrome-window.ps1" -CommandArgs "-SpanAllDisplays","-App","-Url","%DCS_URL%","-SaveKioskTarget","Dcs"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-tee-exec.ps1" -LogPath "%CHROME_LOG%" -DebugLog "%DEBUG_LOG%" -CommandPath "%REPO_ROOT%\open-chrome-window.ps1" -CommandArgs "-SpanAllDisplays","-App","-Url","%DCS_URL%","-SaveKioskTarget","Dcs"
 set "STEP_ERR=!errorlevel!"
 call "%BAT_DIR%_debug-log.bat" line "DCS Chrome exit code: !STEP_ERR!"
 if !STEP_ERR! neq 0 goto :err_dcs_chrome
