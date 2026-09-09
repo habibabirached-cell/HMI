@@ -49,6 +49,14 @@ public static class KioskWindowApi {
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    public const int DWMWA_BORDER_COLOR = 34;
+    public const int DWMWA_CAPTION_COLOR = 35;
+    public const int DWMWA_TEXT_COLOR = 36;
+
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT {
         public int Left;
@@ -91,6 +99,84 @@ public static class KioskWindowApi {
 
 function Get-KioskRegistryPath {
     return $script:KioskRegistryPath
+}
+
+function ConvertTo-ColorRef {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $HexColor
+    )
+
+    $hex = $HexColor.Trim().TrimStart('#')
+    if ($hex.Length -ne 6) {
+        throw "Invalid hex color: $HexColor"
+    }
+
+    $r = [Convert]::ToInt32($hex.Substring(0, 2), 16)
+    $g = [Convert]::ToInt32($hex.Substring(2, 2), 16)
+    $b = [Convert]::ToInt32($hex.Substring(4, 2), 16)
+    return [int](($b -shl 16) -bor ($g -shl 8) -bor $r)
+}
+
+function Set-KioskTitleBarColors {
+    param(
+        [Parameter(Mandatory = $true)]
+        [IntPtr] $Handle,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Dcs", "Vernova")]
+        [string] $Target
+    )
+
+    if (-not (Test-KioskWindowHandle -Handle $Handle)) {
+        return $false
+    }
+
+    # Vernova page theme-color / body green; DCS app-header uses --vernova-grey.
+    $palette = @{
+        Vernova = @{ Background = '#004745'; Text = '#FFFFFF' }
+        Dcs     = @{ Background = '#1a1a1a'; Text = '#e0e0e0' }
+    }
+    $colors = $palette[$Target]
+
+    try {
+        $darkMode = 1
+        [void][KioskWindowApi]::DwmSetWindowAttribute(
+            $Handle,
+            [KioskWindowApi]::DWMWA_USE_IMMERSIVE_DARK_MODE,
+            [ref]$darkMode,
+            4
+        )
+
+        $captionColor = ConvertTo-ColorRef -HexColor $colors.Background
+        [void][KioskWindowApi]::DwmSetWindowAttribute(
+            $Handle,
+            [KioskWindowApi]::DWMWA_CAPTION_COLOR,
+            [ref]$captionColor,
+            4
+        )
+
+        $textColor = ConvertTo-ColorRef -HexColor $colors.Text
+        [void][KioskWindowApi]::DwmSetWindowAttribute(
+            $Handle,
+            [KioskWindowApi]::DWMWA_TEXT_COLOR,
+            [ref]$textColor,
+            4
+        )
+
+        $borderColor = ConvertTo-ColorRef -HexColor $colors.Background
+        [void][KioskWindowApi]::DwmSetWindowAttribute(
+            $Handle,
+            [KioskWindowApi]::DWMWA_BORDER_COLOR,
+            [ref]$borderColor,
+            4
+        )
+
+        return $true
+    } catch {
+        Write-Verbose ("Title bar colors not applied for {0}: {1}" -f $Target, $_.Exception.Message)
+        return $false
+    }
 }
 
 function Get-KioskChromeProfileDir {
@@ -276,6 +362,9 @@ function Focus-KioskWindow {
     }
 
     Show-KioskWindow -Handle $handle
+    if (Set-KioskTitleBarColors -Handle $handle -Target $Target) {
+        Write-Host "Title bar color applied for $Target."
+    }
     Write-KioskWindowRegistryEntry -Target $Target -Handle $handle -Url ($(if ($entry -and $entry.url) { [string]$entry.url } else { if ($Target -eq "Dcs") { "http://localhost:3003" } else { "http://localhost:5173" } }))
     Write-Host "Focused kiosk window: $Target (hwnd=$handle)"
 }

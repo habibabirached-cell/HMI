@@ -1,0 +1,4 @@
+[submodule "FLEXSim"]
+	path = FLEXSim
+	url = git@github.apps.gevernova.net:gev-siar/FLEXSim.git
+	ignore = untracked

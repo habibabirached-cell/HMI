@@ -16,6 +16,8 @@ dcs-backend/.pydeps/
 
 # misc
 .DS_Store
+ACDC_voiceover.aiff
+FLEXSim/
 BAT/kiosk-windows.json
 .env.local
 .env.development.local
