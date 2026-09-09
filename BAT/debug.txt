@@ -1,5 +1,5 @@
 === Maingear kiosk debug log ===
-Started: Wed 09/09/2026 17:26:53.78
+Started: Wed 09/09/2026 17:43:18.53
 Computer: DATACENTER
 User: GEVer
 BAT_DIR=C:\Users\GEVer\Documents\HMI\BAT\
@@ -55,24 +55,324 @@ The process cannot access the file because it is being used by another process.
 [1/5] Starting DataCenterSmartPower Docker stack...
 Step 1: docker compose up -d
 The process cannot access the file because it is being used by another process.
-time="2026-09-09T17:26:54-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+--- docker-compose.log ---
+time="2026-09-09T17:43:19-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
  Container hmi-dcs-ui-1 Starting 
  Container hmi-dcs-ui-1 Started 
  Container hmi-dcs-backend-1 Starting 
  Container hmi-dcs-backend-1 Started 
  
 --- docker compose ps --- 
-time="2026-09-09T17:26:54-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+time="2026-09-09T17:43:19-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
 NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS                  PORTS
-hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --h…"   dcs-backend   31 hours ago   Up Less than a second   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
-hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.s…"   dcs-ui        31 hours ago   Up Less than a second   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
-docker compose exit code: 0 (full output in docker-compose.log)
+hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --h…"   dcs-backend   32 hours ago   Up Less than a second   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.s…"   dcs-ui        32 hours ago   Up Less than a second   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
+---
+docker compose exit code: 0
 The process cannot access the file because it is being used by another process.
 
-[2/5] Starting Vernova dev server...
+[2/5] Starting Vernova dev server (npm run dev)...
 Step 2: npm run dev in vernova-spark-engine_new
 The process cannot access the file because it is being used by another process.
-
-[3/5] Waiting for ports 5000, 3003, 5173...
-Step 3: wait for TCP ports
+  Output log: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+  This may take 1-3 minutes before port 5173 is ready.
+Vernova dev launched in minimized window (title: Vernova dev).
 The process cannot access the file because it is being used by another process.
+
+[3/5] Waiting for services (watch this window — progress every 15s)...
+Step 3: wait for TCP ports 5000, 3003, 5173
+The process cannot access the file because it is being used by another process.
+Start-Transcript : A positional parameter cannot be found that accepts argument '^'.
+At line:1 char:57
++ ... \ports-wait.log'; Start-Transcript -LiteralPath $log -Force ^| Out-Nu ...
++                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Start-Transcript], ParameterBindingException
+    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.StartTranscriptCommand
+ 
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:70
++ ...        Write-Host "  ... still waiting for $Label (${bucket}s elapsed ...
++                                                                 ~
+Unexpected token 's' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:70
++ ...         Write-Host "  ... still waiting for $Label (${bucket}s elapse ...
++                                                                  ~
+Missing closing ')' in expression.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:291 char:25
++     if ($Port -eq 5173) {
++                         ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:273 char:26
++ function Wait-ForTcpPort {
++                          ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:103
++ ... till waiting for $Label (${bucket}s elapsed, ${TimeoutSeconds}s max)"
++                                                                        ~
+Unexpected token ')' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:307 char:44
++ ...       $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token '127.0.0.1", $Port, $null, $null)
+            $ok = $async.AsyncWaitHandle.WaitOne(500)
+            if ($ok -and $client.Connected) {
+                $client.Close()
+                Write-Host "$Label' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:307 char:50
++             $async = $client.BeginConnect("127.0.0.1", $Port, $null,  ...
++                                                  ~
+Missing property name after reference operator.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:311 char:36
++                 Write-Host "$Label is ready after ${elapsedSeconds}s. ...
++                                    ~~
+Unexpected token 'is' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:321 char:79
++ ... "Timed out waiting for $Label on port $Port after ${TimeoutSeconds}s"
++                                                                         ~
+The string is missing the terminator: ".
+Stop-Transcript : A positional parameter cannot be found that accepts argument '^'.
+At line:1 char:466
++ ... t $_.Exception.Message; exit 1 }  finally { Stop-Transcript ^| Out-Nu ...
++                                                 ~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Stop-Transcript], ParameterBindingException
+    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.StopTranscriptCommand
+ 
+port wait exit code: 1
+The process cannot access the file because it is being used by another process.
+ERROR: port wait failed - see ports-wait.log and vernova-dev.log
+The process cannot access the file because it is being used by another process.
+
+--- vernova-dev.log (tail) ---
+=== Vernova dev server log ===
+Started: Wed 09/09/2026 17:43:19.66
+Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+
+
+> dev
+> node scripts/dev.mjs
+
+════════════════════════════════════════════════════════════
+  GE VERNOVA - SPARK ENGINE DASHBOARD (DEV RUNNER)
+  Determining available backend port...
+════════════════════════════════════════════════════════════
+
+[INFO] Bound FastAPI backend to fixed port: 8001
+
+(node:21716) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+---
+The process cannot access the file because it is being used by another process.
+End of run exit code 1
+The process cannot access the file because it is being used by another process.
+
+============================================================
+  Startup FAILED.
+  Summary: C:\Users\GEVer\Documents\HMI\BAT\debug.txt
+  Docker:  C:\Users\GEVer\Documents\HMI\BAT\docker-compose.log
+  Vernova: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+============================================================
+
+--- debug.txt summary ---
+=== Maingear kiosk debug log ===
+Started: Wed 09/09/2026 17:43:18.53
+Computer: DATACENTER
+User: GEVer
+BAT_DIR=C:\Users\GEVer\Documents\HMI\BAT\
+REPO_ROOT=C:\Users\GEVer\Documents\HMI\
+CD=C:\Users\GEVer\Documents\HMI\BAT
+
+--- Tool paths ---
+C:\Program Files\Docker\Docker\resources\bin\docker
+C:\Program Files\Docker\Docker\resources\bin\docker.exe
+C:\Program Files\nodejs\npm
+C:\Program Files\nodejs\npm.cmd
+C:\Program Files\nodejs\node.exe
+C:\Users\GEVer\AppData\Local\Microsoft\WindowsApps\python.exe
+C:\Users\GEVer\AppData\Local\Python\bin\python.exe
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+
+--- Tool versions (errors below are OK if tool missing) ---
+Client:
+ Version:           29.4.1
+ API version:       1.54
+ Go version:        go1.26.2
+ Git commit:        055a478
+ Built:             Mon Apr 20 16:35:45 2026
+ OS/Arch:           windows/amd64
+ Context:           desktop-linux
+
+Server: Docker Desktop 4.71.0 (225177)
+ Engine:
+  Version:          29.4.1
+  API version:      1.54 (minimum version 1.40)
+  Go version:       go1.26.2
+  Git commit:       6c91b92
+  Built:            Mon Apr 20 16:32:41 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.3
+  GitCommit:        77c84241c7cbdd9b4eca2591793e3d4f4317c590
+ runc:
+  Version:          1.3.5
+  GitCommit:        v1.3.5-0-g488fc13e
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+11.17.0
+VERNOVA_DIR=C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+The process cannot access the file because it is being used by another process.
+DCS_URL=http://localhost:3003
+The process cannot access the file because it is being used by another process.
+Sub-logs: docker-compose.log ports-wait.log chrome-launch.log vernova-dev.log
+The process cannot access the file because it is being used by another process.
+
+[1/5] Starting DataCenterSmartPower Docker stack...
+Step 1: docker compose up -d
+The process cannot access the file because it is being used by another process.
+--- docker-compose.log ---
+time="2026-09-09T17:43:19-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+ Container hmi-dcs-ui-1 Starting 
+ Container hmi-dcs-ui-1 Started 
+ Container hmi-dcs-backend-1 Starting 
+ Container hmi-dcs-backend-1 Started 
+ 
+--- docker compose ps --- 
+time="2026-09-09T17:43:19-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS                  PORTS
+hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --h…"   dcs-backend   32 hours ago   Up Less than a second   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.s…"   dcs-ui        32 hours ago   Up Less than a second   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
+---
+docker compose exit code: 0
+The process cannot access the file because it is being used by another process.
+
+[2/5] Starting Vernova dev server (npm run dev)...
+Step 2: npm run dev in vernova-spark-engine_new
+The process cannot access the file because it is being used by another process.
+  Output log: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+  This may take 1-3 minutes before port 5173 is ready.
+Vernova dev launched in minimized window (title: Vernova dev).
+The process cannot access the file because it is being used by another process.
+
+[3/5] Waiting for services (watch this window — progress every 15s)...
+Step 3: wait for TCP ports 5000, 3003, 5173
+The process cannot access the file because it is being used by another process.
+Start-Transcript : A positional parameter cannot be found that accepts argument '^'.
+At line:1 char:57
++ ... \ports-wait.log'; Start-Transcript -LiteralPath $log -Force ^| Out-Nu ...
++                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Start-Transcript], ParameterBindingException
+    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.StartTranscriptCommand
+ 
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:70
++ ...        Write-Host "  ... still waiting for $Label (${bucket}s elapsed ...
++                                                                 ~
+Unexpected token 's' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:70
++ ...         Write-Host "  ... still waiting for $Label (${bucket}s elapse ...
++                                                                  ~
+Missing closing ')' in expression.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:291 char:25
++     if ($Port -eq 5173) {
++                         ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:273 char:26
++ function Wait-ForTcpPort {
++                          ~
+Missing closing '}' in statement block or type definition.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:300 char:103
++ ... till waiting for $Label (${bucket}s elapsed, ${TimeoutSeconds}s max)"
++                                                                        ~
+Unexpected token ')' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:307 char:44
++ ...       $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unexpected token '127.0.0.1", $Port, $null, $null)
+            $ok = $async.AsyncWaitHandle.WaitOne(500)
+            if ($ok -and $client.Connected) {
+                $client.Close()
+                Write-Host "$Label' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:307 char:50
++             $async = $client.BeginConnect("127.0.0.1", $Port, $null,  ...
++                                                  ~
+Missing property name after reference operator.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:311 char:36
++                 Write-Host "$Label is ready after ${elapsedSeconds}s. ...
++                                    ~~
+Unexpected token 'is' in expression or statement.
+
+At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:321 char:79
++ ... "Timed out waiting for $Label on port $Port after ${TimeoutSeconds}s"
++                                                                         ~
+The string is missing the terminator: ".
+Stop-Transcript : A positional parameter cannot be found that accepts argument '^'.
+At line:1 char:466
++ ... t $_.Exception.Message; exit 1 }  finally { Stop-Transcript ^| Out-Nu ...
++                                                 ~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Stop-Transcript], ParameterBindingException
+    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.StopTranscriptCommand
+ 
+port wait exit code: 1
+The process cannot access the file because it is being used by another process.
+ERROR: port wait failed - see ports-wait.log and vernova-dev.log
+The process cannot access the file because it is being used by another process.
+
+--- vernova-dev.log (tail) ---
+=== Vernova dev server log ===
+Started: Wed 09/09/2026 17:43:19.66
+Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+
+
+> dev
+> node scripts/dev.mjs
+
+════════════════════════════════════════════════════════════
+  GE VERNOVA - SPARK ENGINE DASHBOARD (DEV RUNNER)
+  Determining available backend port...
+════════════════════════════════════════════════════════════
+
+[INFO] Bound FastAPI backend to fixed port: 8001
+
+(node:21716) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+---
+The process cannot access the file because it is being used by another process.
+End of run exit code 1
+The process cannot access the file because it is being used by another process.
+
+============================================================
+  Startup FAILED.
+  Summary: C:\Users\GEVer\Documents\HMI\BAT\debug.txt
+  Docker:  C:\Users\GEVer\Documents\HMI\BAT\docker-compose.log
+  Vernova: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+============================================================
+
+--- debug.txt summary ---
+=== Maingear kiosk debug log ===
+Started: Wed 09/09/2026 17:43:18.53
+Computer: DATACENTER
+User: GEVer
+BAT_DIR=C:\Users\GEVer\Documents\HMI\BAT\
+REPO_ROOT=C:\Users\GEVer\Documents\HMI\
+CD--- end debug.txt ---
+
+Press any key to close...
+Terminate batch job (Y/N)? 
+^CTerminate batch job (Y/N)? 
+^C

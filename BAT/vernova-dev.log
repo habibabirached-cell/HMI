@@ -1,3 +1,18 @@
 === Vernova dev server log ===
-Started: Wed 09/09/2026 17:26:54.92
+Started: Wed 09/09/2026 17:43:19.66
 Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+
+
+> dev
+> node scripts/dev.mjs
+
+════════════════════════════════════════════════════════════
+  GE VERNOVA - SPARK ENGINE DASHBOARD (DEV RUNNER)
+  Determining available backend port...
+════════════════════════════════════════════════════════════
+
+[INFO] Bound FastAPI backend to fixed port: 8001
+
+(node:21716) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
