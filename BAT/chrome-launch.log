@@ -1,0 +1,6 @@
+=== Chrome launch log ===
+Saved kiosk window 'Vernova' (hwnd=68160) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
+Chrome opened spanning all displays at (-1280, -720) size 2560x1440
+Actual window: (-1280, -720) size 2560x1440, bottom=720
+Mode: app (no tabs/address bar)
+URL: http://localhost:5173

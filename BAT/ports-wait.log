@@ -1,49 +1,11 @@
 ﻿=== Port wait log ===
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:74
-+ ...    Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapsed ...
-+                                                                 ~
-Unexpected token 's' in expression or statement.
 
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:74
-+ ...     Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapse ...
-+                                                                  ~
-Missing closing ')' in expression.
+Waiting for DCS backend (Docker) on 127.0.0.1:5000 (timeout 180s) ...
+DCS backend (Docker) is ready after 0s.
 
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:301 char:25
-+     if ($Port -eq 5173) {
-+                         ~
-Missing closing '}' in statement block or type definition.
+Waiting for DCS UI (Docker) on 127.0.0.1:3003 (timeout 180s) ...
+DCS UI (Docker) is ready after 0s.
 
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:283 char:26
-+ function Wait-ForTcpPort {
-+                          ~
-Missing closing '}' in statement block or type definition.
-
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:310 char:108
-+ ... ll waiting for $Label ($($bucket)s elapsed, $($TimeoutSeconds)s max)"
-+                                                                        ~
-Unexpected token ')' in expression or statement.
-
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:317 char:44
-+ ...       $async = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
-+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Unexpected token '127.0.0.1", $Port, $null, $null)
-            $ok = $async.AsyncWaitHandle.WaitOne(500)
-            if ($ok -and $client.Connected) {
-                $client.Close()
-                Write-WaitMsg "$Label' in expression or statement.
-
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:317 char:50
-+             $async = $client.BeginConnect("127.0.0.1", $Port, $null,  ...
-+                                                  ~
-Missing property name after reference operator.
-
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:321 char:39
-+                 Write-WaitMsg "$Label is ready after $($elapsedSecond ...
-+                                       ~~
-Unexpected token 'is' in expression or statement.
-
-At C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.ps1:331 char:80
-+ ... Timed out waiting for $Label on port $Port after $($TimeoutSeconds)s"
-+                                                                         ~
-The string is missing the terminator: ".
+Waiting for Vernova npm run dev (Vite on port 5173) on 127.0.0.1:5173 (timeout 300s) ...
+  Vernova npm run dev can take 1-3 minutes on a cold start â€” please wait.
+Vernova npm run dev (Vite on port 5173) is ready after 0s.
