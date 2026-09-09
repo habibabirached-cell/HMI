@@ -5,6 +5,16 @@ Set-StrictMode -Version Latest
 
 $script:KioskRegistryPath = Join-Path $PSScriptRoot "kiosk-windows.json"
 
+function Write-WaitMsg {
+    param([string] $Message)
+    Write-Host $Message
+    foreach ($path in @($script:GenesisTeeLogs)) {
+        if ($path) {
+            Add-Content -LiteralPath $path -Value $Message -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 if (-not ("KioskWindowApi" -as [type])) {
     Add-Type @"
 using System;
@@ -286,10 +296,10 @@ function Wait-ForTcpPort {
     $started = Get-Date
     $lastProgressBucket = 0
 
-    Write-Host ""
-    Write-Host "Waiting for $Label on 127.0.0.1:$Port (timeout ${TimeoutSeconds}s) ..."
+    Write-WaitMsg ""
+    Write-WaitMsg "Waiting for $Label on 127.0.0.1:$Port (timeout $($TimeoutSeconds)s) ..."
     if ($Port -eq 5173) {
-        Write-Host "  Vernova npm run dev can take 1-3 minutes on a cold start — please wait."
+        Write-WaitMsg "  Vernova npm run dev can take 1-3 minutes on a cold start — please wait."
     }
 
     while ((Get-Date) -lt $deadline) {
@@ -297,7 +307,7 @@ function Wait-ForTcpPort {
         if ($ProgressIntervalSeconds -gt 0 -and $elapsedSeconds -ge $ProgressIntervalSeconds) {
             $bucket = [int][math]::Floor($elapsedSeconds / $ProgressIntervalSeconds) * $ProgressIntervalSeconds
             if ($bucket -gt $lastProgressBucket) {
-                Write-Host "  ... still waiting for $Label (${bucket}s elapsed, ${TimeoutSeconds}s max)"
+                Write-WaitMsg "  ... still waiting for $Label ($($bucket)s elapsed, $($TimeoutSeconds)s max)"
                 $lastProgressBucket = $bucket
             }
         }
@@ -308,7 +318,7 @@ function Wait-ForTcpPort {
             $ok = $async.AsyncWaitHandle.WaitOne(500)
             if ($ok -and $client.Connected) {
                 $client.Close()
-                Write-Host "$Label is ready after ${elapsedSeconds}s."
+                Write-WaitMsg "$Label is ready after $($elapsedSeconds)s."
                 return
             }
             $client.Close()
@@ -318,5 +328,5 @@ function Wait-ForTcpPort {
         Start-Sleep -Milliseconds 500
     }
 
-    throw "Timed out waiting for $Label on port $Port after ${TimeoutSeconds}s"
+    throw "Timed out waiting for $Label on port $Port after $($TimeoutSeconds)s"
 }

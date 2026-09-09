@@ -1,5 +1,6 @@
 @echo off
 REM Logging helpers for z_genesis.start.bat (requires BAT_DIR from _paths.bat).
+REM Every write goes to the console AND debug.txt.
 REM   call "%BAT_DIR%_debug-log.bat" init
 REM   call "%BAT_DIR%_debug-log.bat" line your message here
 REM   call "%BAT_DIR%_debug-log.bat" section Section title here
@@ -16,6 +17,22 @@ goto :bad
 echo [_debug-log.bat] Unknown command: %~1>&2
 exit /b 1
 
+:mirror
+echo %~1
+>> "%DEBUG_LOG%" echo %~1
+exit /b 0
+
+:mirror_run
+echo.
+echo --- %* ---
+>> "%DEBUG_LOG%" echo.
+>> "%DEBUG_LOG%" echo --- %* ---
+%* > "%TEMP%\genesis-debug.out" 2>&1
+type "%TEMP%\genesis-debug.out"
+type "%TEMP%\genesis-debug.out" >> "%DEBUG_LOG%"
+del "%TEMP%\genesis-debug.out" 2>nul
+exit /b 0
+
 :init
 if not defined BAT_DIR (
   echo [_debug-log.bat] BAT_DIR is not set. Call _paths.bat first.>&2
@@ -24,27 +41,27 @@ if not defined BAT_DIR (
 set "DEBUG_LOG=%BAT_DIR%debug.txt"
 set "VERNOVA_DEV_LOG=%BAT_DIR%vernova-dev.log"
 > "%DEBUG_LOG%" echo === Maingear kiosk debug log ===
->> "%DEBUG_LOG%" echo Started: %date% %time%
->> "%DEBUG_LOG%" echo Computer: %COMPUTERNAME%
->> "%DEBUG_LOG%" echo User: %USERNAME%
->> "%DEBUG_LOG%" echo BAT_DIR=%BAT_DIR%
->> "%DEBUG_LOG%" echo REPO_ROOT=%REPO_ROOT%
->> "%DEBUG_LOG%" echo CD=%CD%
->> "%DEBUG_LOG%" echo.
->> "%DEBUG_LOG%" echo --- Tool paths ---
-where docker >> "%DEBUG_LOG%" 2>&1
-where npm >> "%DEBUG_LOG%" 2>&1
-where node >> "%DEBUG_LOG%" 2>&1
-where python >> "%DEBUG_LOG%" 2>&1
-where powershell >> "%DEBUG_LOG%" 2>&1
->> "%DEBUG_LOG%" echo.
->> "%DEBUG_LOG%" echo --- Tool versions (errors below are OK if tool missing) ---
-docker version >> "%DEBUG_LOG%" 2>&1
-npm -v >> "%DEBUG_LOG%" 2>&1
-node -v >> "%DEBUG_LOG%" 2>&1
-python --version >> "%DEBUG_LOG%" 2>&1
-powershell -NoProfile -Command "Write-Output $PSVersionTable.PSVersion" >> "%DEBUG_LOG%" 2>&1
->> "%DEBUG_LOG%" echo.
+call :mirror "Started: %date% %time%"
+call :mirror "Computer: %COMPUTERNAME%"
+call :mirror "User: %USERNAME%"
+call :mirror "BAT_DIR=%BAT_DIR%"
+call :mirror "REPO_ROOT=%REPO_ROOT%"
+call :mirror "CD=%CD%"
+call :mirror ""
+call :mirror "--- Tool paths ---"
+call :mirror_run where docker
+call :mirror_run where npm
+call :mirror_run where node
+call :mirror_run where python
+call :mirror_run where powershell
+call :mirror ""
+call :mirror "--- Tool versions (errors below are OK if tool missing) ---"
+call :mirror_run docker version
+call :mirror_run npm -v
+call :mirror_run node -v
+call :mirror_run python --version
+call :mirror_run powershell -NoProfile -Command "Write-Output $PSVersionTable.PSVersion"
+call :mirror ""
 exit /b 0
 
 :line
@@ -68,11 +85,16 @@ exit /b 0
 if not defined DEBUG_LOG set "DEBUG_LOG=%BAT_DIR%debug.txt"
 set "SRC=%~2"
 if not exist "%SRC%" (
+  echo (file not found: %SRC%)
   >> "%DEBUG_LOG%" echo (file not found: %SRC%)
   exit /b 0
 )
+echo.
+echo ----- contents of %SRC% -----
 >> "%DEBUG_LOG%" echo.
 >> "%DEBUG_LOG%" echo ----- contents of %SRC% -----
+type "%SRC%"
 type "%SRC%" >> "%DEBUG_LOG%" 2>&1
+echo ----- end %SRC% -----
 >> "%DEBUG_LOG%" echo ----- end %SRC% -----
 exit /b 0

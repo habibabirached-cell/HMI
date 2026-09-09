@@ -11,6 +11,9 @@
 # production
 /build
 
+# Python local vendored deps (not committed)
+dcs-backend/.pydeps/
+
 # misc
 .DS_Store
 BAT/kiosk-windows.json
