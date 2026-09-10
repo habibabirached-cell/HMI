@@ -4,7 +4,7 @@ import './IdeumRemoteControlOverlay.css';
 
 /**
  * Full-screen Ideum wall-control mode after Grid Connected.
- * Left: Back | Center: trackpad | Bottom: Click
+ * Left: Back | Center: relative trackpad | Bottom: Click
  */
 export default function IdeumRemoteControlOverlay({
   machineRole,
@@ -14,6 +14,7 @@ export default function IdeumRemoteControlOverlay({
   const clientRef = useRef(null);
   const boundsRef = useRef({ left: 0, top: 0, width: 1920, height: 1080 });
   const activePointerRef = useRef(null);
+  const lastPointerRef = useRef({ x: 0, y: 0 });
   const [status, setStatus] = useState('connecting');
   const [statusDetail, setStatusDetail] = useState('');
   const moveCountRef = useRef(0);
@@ -45,20 +46,17 @@ export default function IdeumRemoteControlOverlay({
     };
   }, [machineRole]);
 
-  const mapTouchToDesktop = useCallback((clientX, clientY) => {
+  const pointerScale = useCallback(() => {
     const el = trackpadRef.current;
-    if (!el) return null;
+    if (!el) return { scaleX: 1, scaleY: 1 };
     const rect = el.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return null;
-
-    const nx = (clientX - rect.left) / rect.width;
-    const ny = (clientY - rect.top) / rect.height;
-    if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
-
     const b = boundsRef.current;
+    if (rect.width <= 0 || rect.height <= 0) {
+      return { scaleX: 1, scaleY: 1 };
+    }
     return {
-      x: b.left + nx * b.width,
-      y: b.top + ny * b.height,
+      scaleX: b.width / rect.width,
+      scaleY: b.height / rect.height,
     };
   }, []);
 
@@ -66,25 +64,26 @@ export default function IdeumRemoteControlOverlay({
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointerRef.current = e.pointerId;
-    const pos = mapTouchToDesktop(e.clientX, e.clientY);
-    if (pos) {
-      clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
-      moveCountRef.current += 1;
-    }
-  }, [mapTouchToDesktop]);
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
 
   const onTrackpadPointerMove = useCallback((e) => {
     if (activePointerRef.current !== e.pointerId) return;
     e.preventDefault();
-    const pos = mapTouchToDesktop(e.clientX, e.clientY);
-    if (pos) {
-      clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
-      moveCountRef.current += 1;
-      if (moveCountRef.current % 8 === 0) {
-        setStatusDetail(`${resolveMaingearMouseWebSocketUrl(machineRole)} · moves ${moveCountRef.current}`);
-      }
+
+    const dx = e.clientX - lastPointerRef.current.x;
+    const dy = e.clientY - lastPointerRef.current.y;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+
+    if (dx === 0 && dy === 0) return;
+
+    const { scaleX, scaleY } = pointerScale();
+    clientRef.current?.sendMoveRelative(dx * scaleX, dy * scaleY);
+    moveCountRef.current += 1;
+    if (moveCountRef.current % 8 === 0) {
+      setStatusDetail(`${resolveMaingearMouseWebSocketUrl(machineRole)} · moves ${moveCountRef.current}`);
     }
-  }, [mapTouchToDesktop, machineRole]);
+  }, [pointerScale, machineRole]);
 
   const onTrackpadPointerUp = useCallback((e) => {
     if (activePointerRef.current === e.pointerId) {
@@ -121,7 +120,7 @@ export default function IdeumRemoteControlOverlay({
           onPointerUp={onTrackpadPointerUp}
           onPointerCancel={onTrackpadPointerUp}
           role="application"
-          aria-label="Trackpad — move Maingear mouse"
+          aria-label="Trackpad — relative move (Maingear mouse)"
         >
           <span className="ideum-remote-control__trackpad-label">Trackpad</span>
         </div>

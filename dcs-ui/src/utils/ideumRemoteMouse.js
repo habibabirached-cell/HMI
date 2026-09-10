@@ -23,8 +23,6 @@ export class IdeumRemoteMouseClient {
     this.url = url;
     this.ws = null;
     this.connected = false;
-    this._pendingMove = null;
-    this._raf = null;
   }
 
   connect() {
@@ -78,11 +76,6 @@ export class IdeumRemoteMouseClient {
   }
 
   disconnect() {
-    if (this._raf) {
-      cancelAnimationFrame(this._raf);
-      this._raf = null;
-    }
-    this._pendingMove = null;
     if (this.ws) {
       try {
         this.ws.close();
@@ -94,22 +87,13 @@ export class IdeumRemoteMouseClient {
     this.connected = false;
   }
 
-  _flushMove() {
-    this._raf = null;
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this._pendingMove) return;
-    const payload = this._pendingMove;
-    this._pendingMove = null;
-    this.ws.send(JSON.stringify(payload));
-  }
-
-  /** Absolute virtual-desktop coordinates (from trackpad mapping). */
-  sendMoveAbsolute(x, y) {
+  /** Relative move in virtual-desktop pixels (trackpad drag — no jump on finger down). */
+  sendMoveRelative(dx, dy) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    this.ws.send(JSON.stringify({
-      type: 'move',
-      x: Math.round(x),
-      y: Math.round(y),
-    }));
+    const rdx = Math.round(dx);
+    const rdy = Math.round(dy);
+    if (rdx === 0 && rdy === 0) return;
+    this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
   }
 
   sendClick() {

@@ -19,13 +19,13 @@ Last updated: 2026-09-09
                                               - KioskMouseServer (port 8767)
 
 When operator taps **Grid Connected** on Ideum:
-  A) Ideum sends HTTP POST to Maingear :5000 → showVernova → Vernova wall in front  ✅ WORKING
+  A) Direct HTTP POST to Maingear :8766 /kiosk/focus/Vernova (NOT Docker :5000)   ✅ FAST PATH
   B) Ideum UI shows black screen + Back + Trackpad + Click                        ✅ UI WORKING
-  C) Trackpad should move Maingear mouse over 4 displays via WebSocket            ❌ NOT WORKING YET
+  C) Trackpad: RELATIVE motion only via WebSocket :8767 (no jump on finger down)  ✅ FIXED
 
 When operator taps **Back** on Ideum:
-  A) showDcs → DCS wall in front on Maingear                                    ✅ WORKING
-  B) Ideum should return to Ideum05 root (Data Centers / Grid Connected cards)  ✅ FIX IN LATEST PULL
+  A) Direct HTTP POST to Maingear :8766 /kiosk/focus/Dcs (same speed as Click)    ✅ FAST PATH
+  B) Ideum returns to Ideum05 root immediately (ideumWallControlActive=false)     ✅ FIXED
 
 ================================================================================
 2. MOUSE PATH (LOW LATENCY — BYPASSES DOCKER)
@@ -41,8 +41,10 @@ When operator taps **Back** on Ideum:
        v
   Windows cursor on 4-display virtual desktop
 
-Docker backend (:5000) is ONLY used for showVernova / showDcs focus commands.
-Mouse does NOT go through Docker — same pattern as RTDS bridge on :8765.
+Focus (showVernova / showDcs) and mouse BOTH bypass Docker when possible:
+  Focus → direct HTTP :8766 (ideumRemoteFocus.js)
+  Mouse → direct WebSocket :8767 (ideumRemoteMouse.js)
+Docker :5000 is fallback only if :8766 is unreachable.
 
 ================================================================================
 3. REPO PATHS ON MAINGEAR
@@ -59,8 +61,9 @@ Mouse does NOT go through Docker — same pattern as RTDS bridge on :8765.
     debug/test_maingear_mouse_ws.py      — WebSocket move/click test
 
   Ideum-side (for reference only — you are on Maingear):
-    dcs-ui/src/components/IdeumKiosk/IdeumRemoteControlOverlay.jsx
-    dcs-ui/src/utils/ideumRemoteMouse.js
+    dcs-ui/src/components/IdeumKiosk/IdeumRemoteControlOverlay.jsx  — relative trackpad
+    dcs-ui/src/utils/ideumRemoteMouse.js                             — ws :8767
+    dcs-ui/src/utils/ideumRemoteFocus.js                             — http :8766
 
 ================================================================================
 4. MEASURE OF SUCCESS (MOUSE BRIDGE)
@@ -97,6 +100,8 @@ Mouse does NOT go through Docker — same pattern as RTDS bridge on :8765.
   | Ideum shows "Mouse bridge offline" | Can't reach ws://192.168.50.1:8767 | Firewall + cable + server running |
   | Connected but no cursor move | Bridge running but SetCursorPos blocked | Run debug bat step 3; check admin/session |
   | Back brings DCS but Ideum stays black | Old Ideum UI without latest App.js | Ideum: pull + hard refresh; Back must set ideumWallControlActive=false |
+  | Back / Grid Connected slow vs Click fast | Focus went through Docker :5000 relay | Use direct :8766; allow firewall TCP 8766 Private |
+  | Trackpad jumps when finger lands elsewhere | Absolute x,y mapping on touch down | Relative dx/dy only — hard refresh Ideum UI |
 
 ================================================================================
 7. FIREWALL (IF IDEUM CAN'T CONNECT)
@@ -105,10 +110,12 @@ Mouse does NOT go through Docker — same pattern as RTDS bridge on :8765.
   Run once as Administrator on Maingear:
 
     netsh advfirewall firewall add rule name="DCS Kiosk Mouse 8767" dir=in action=allow protocol=TCP localport=8767 profile=private
+    netsh advfirewall firewall add rule name="DCS Kiosk Focus 8766" dir=in action=allow protocol=TCP localport=8766 profile=private
 
   Test from Ideum (192.168.50.2) CMD:
 
     python debug\test_maingear_mouse_ws.py 192.168.50.1 8767
+    curl -X POST http://192.168.50.1:8766/kiosk/focus/Dcs -H "Content-Type: application/json" -d "{}"
 
 ================================================================================
 8. DO NOT CONFUSE WITH FOCUS SERVER

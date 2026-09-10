@@ -72,6 +72,11 @@ import {
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
 import { installIdeumClickSound } from './utils/ideumClickSound';
+import {
+  isDirectKioskFocusCommand,
+  KIOSK_FOCUS_BY_COMMAND,
+  sendKioskFocusDirect,
+} from './utils/ideumRemoteFocus';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
@@ -3843,6 +3848,20 @@ function App() {
     }
   };
 
+  /** Fire-and-forget focus switch — direct HTTP :8766, same latency as mouse click. */
+  const fireKioskFocusFast = useCallback((command) => {
+    const target = KIOSK_FOCUS_BY_COMMAND[command];
+    if (!target) return;
+    sendKioskFocusDirect(machineRole, target)
+      .then((result) => console.info('[cluster] kiosk focus direct ok', command, result))
+      .catch((e) => {
+        console.warn('[cluster] kiosk focus direct failed, trying backend relay', command, e);
+        void sendRemoteCommandToMaingear(machineRole, command).catch((err) => {
+          console.warn('[cluster] remote command failed', command, err);
+        });
+      });
+  }, [machineRole]);
+
   const sendIdeumClusterCommand = useCallback(async (command, payload) => {
     let role = machineRole;
     try {
@@ -3861,6 +3880,17 @@ function App() {
       alert(msg);
       return null;
     }
+
+    if (isDirectKioskFocusCommand(command)) {
+      try {
+        const result = await sendKioskFocusDirect(role, KIOSK_FOCUS_BY_COMMAND[command]);
+        console.info('[cluster] kiosk focus direct ok', command, result);
+        return { ok: true, command, direct: true, ...result };
+      } catch (e) {
+        console.warn('[cluster] kiosk focus direct failed, trying backend relay', command, e);
+      }
+    }
+
     try {
       const result = await sendRemoteCommandToMaingear(role, command, payload);
       console.info('[cluster] remote command ok', command, result);
@@ -3918,19 +3948,22 @@ function App() {
   }, [clampCanvasZoom]);
 
   const handleIdeumWallControlBack = useCallback(() => {
-    // UI first — restore Ideum05 landing (Data Centers / Grid Connected cards).
     setIdeumWallControlActive(false);
     setIdeum05NavStack([IDEUM05_NAV_ROOT]);
-    void sendIdeumClusterCommand('showDcs');
-  }, [sendIdeumClusterCommand]);
+    fireKioskFocusFast('showDcs');
+  }, [fireKioskFocusFast]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const navClusterCmd = getIdeum05NavClusterCommand(screenId, cardId);
     if (navClusterCmd) {
-      void sendIdeumClusterCommand(navClusterCmd);
       if (navClusterCmd === 'showVernova') {
         setIdeumWallControlActive(true);
+      }
+      if (isDirectKioskFocusCommand(navClusterCmd)) {
+        fireKioskFocusFast(navClusterCmd);
+      } else {
+        void sendIdeumClusterCommand(navClusterCmd);
       }
     }
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
@@ -3951,6 +3984,7 @@ function App() {
     ideum05NavStack,
     isIdeum05,
     captureIdeum05ViewportForScreen,
+    fireKioskFocusFast,
     sendIdeumClusterCommand,
   ]);
 
