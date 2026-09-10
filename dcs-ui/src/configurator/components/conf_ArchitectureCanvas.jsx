@@ -137,11 +137,48 @@ function ArchitectureModelPreview({ spec }) {
   );
 }
 
-function ArchitectureAssetCard({ asset, slot }) {
-  const spec = getArchitectureModelSpec(asset.id);
+function compactMW(mw, decimals = 0) {
+  const n = Number(mw);
+  if (!Number.isFinite(n)) return '—';
+  return `${n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}MW`;
+}
+
+function capacityFactorForAsset(capacityFactors, assetId) {
+  return (capacityFactors || []).find((row) => row.id === assetId) ?? null;
+}
+
+function formatAssetCapacityLine(asset) {
   const share = asset.capacitySharePercent ?? asset.percent ?? 0;
+  const mwText = compactMW(asset.installedMW);
+  const shareText = formatPercent(share, 2);
+  if (asset.batteryMWh) {
+    const mwhText = Math.round(asset.batteryMWh).toLocaleString();
+    return `capacity: ${mwText} (${shareText}) / ${mwhText} MWh`;
+  }
+  return `capacity: ${mwText} (${shareText})`;
+}
+
+function formatAssetUtilizationLine(asset, cfRow) {
+  if (!cfRow) return 'Utilization: —';
+
+  if (cfRow.utilization != null) {
+    const avgMw = asset.installedMW * cfRow.utilization * 2.5 / 24;
+    return `Utilization: ${compactMW(avgMw)} (${cfRow.utilization.toFixed(1)} cycles/day)`;
+  }
+
+  if (cfRow.capacityFactor != null) {
+    const utilMw = asset.installedMW * cfRow.capacityFactor;
+    return `Utilization: ${compactMW(utilMw)} (${formatPercent(cfRow.capacityFactor * 100, 0)})`;
+  }
+
+  return 'Utilization: —';
+}
+
+function ArchitectureAssetCard({ asset, slot, capacityFactors }) {
+  const spec = getArchitectureModelSpec(asset.id);
   const isStorage = isStorageTechnology(asset.id);
   const title = asset.fullLabel || asset.label;
+  const cfRow = capacityFactorForAsset(capacityFactors, asset.id);
 
   return (
     <article
@@ -155,14 +192,11 @@ function ArchitectureAssetCard({ asset, slot }) {
     >
       <header className="conf-arch-canvas__asset-head">
         <span className="conf-arch-canvas__asset-title">{title}</span>
-        <span className="conf-arch-canvas__asset-share">{formatPercent(share, 2)} capacity</span>
+        <span className="conf-arch-canvas__asset-capacity">{formatAssetCapacityLine(asset)}</span>
       </header>
       <ArchitectureModelPreview spec={spec} />
       <footer className="conf-arch-canvas__asset-foot">
-        <strong>{formatMWExact(asset.installedMW)}</strong>
-        {asset.batteryMWh ? (
-          <span>{` / ${Math.round(asset.batteryMWh).toLocaleString()} MWh`}</span>
-        ) : null}
+        {formatAssetUtilizationLine(asset, cfRow)}
       </footer>
     </article>
   );
@@ -275,6 +309,7 @@ function HvWire({ line }) {
 
 export default function ConfArchitectureCanvas({
   supplyMix,
+  capacityFactors,
   loadMW,
   gridConnectionMode,
   variant = 'wall',
@@ -334,6 +369,7 @@ export default function ConfArchitectureCanvas({
             key={asset.id}
             asset={asset}
             slot={layout[asset.id]}
+            capacityFactors={capacityFactors}
           />
         ))}
       </div>

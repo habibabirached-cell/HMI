@@ -2775,6 +2775,32 @@
   color: var(--conf-text-dim);
 }
 
+.conf-bar-chunk__grid {
+  display: grid;
+  grid-template-columns: minmax(100px, 22%) 1fr auto minmax(110px, 28%);
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.conf-bar-chunk__wheel {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+}
+
+.conf-bar-row__value--after-wheel {
+  grid-column: 4;
+}
+
+.conf-chunk-donut {
+  width: 88px;
+  height: auto;
+  display: block;
+}
+
 .conf-metrics-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3462,10 +3488,11 @@
   color: var(--conf-text);
 }
 
-.conf-arch-canvas__asset-share {
+.conf-arch-canvas__asset-capacity {
   font-size: clamp(10px, 0.92vw, 13px);
   font-weight: 700;
   color: var(--conf-evergreen);
+  line-height: 1.2;
 }
 
 .conf-arch-canvas__model,
@@ -3483,16 +3510,11 @@
   padding: 5px 8px 6px;
   font-size: clamp(10px, 0.95vw, 13px);
   font-weight: 700;
-  color: var(--conf-text-dim);
+  color: var(--conf-text);
   border-top: 1px solid var(--conf-border);
   background: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.conf-arch-canvas__asset-foot strong {
-  color: var(--conf-text);
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .conf-arch-canvas__grid-badge {
@@ -3547,7 +3569,7 @@
   font-size: clamp(13px, 1.35vw, 20px);
 }
 
-.conf-arch-canvas--wall .conf-arch-canvas__asset-share {
+.conf-arch-canvas--wall .conf-arch-canvas__asset-capacity {
   font-size: clamp(12px, 1.15vw, 17px);
 }
 
@@ -4202,6 +4224,75 @@ body.conf-wall-bezel-dragging-both {
   flex-direction: column;
   align-items: stretch;
   gap: clamp(16px, 1.6vw, 24px);
+}
+
+.conf-wall-quadrant--supply .conf-supply-table th:last-child,
+.conf-wall-quadrant--supply .conf-supply-table td:last-child {
+  padding-right: clamp(20px, 2vw, 36px);
+}
+
+.conf-wall-quadrant--supply .conf-wall-quadrant__body {
+  container-type: size;
+  overflow: hidden;
+}
+
+.conf-wall-quadrant--supply .conf-capacity-bars {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.6cqi, 10px);
+  padding-right: clamp(12px, 1.2vw, 24px);
+}
+
+.conf-wall-quadrant--supply .conf-capacity-bars .conf-result-section,
+.conf-wall-quadrant--supply .conf-bar-chunk {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.conf-wall-quadrant--supply .conf-bar-chunk__grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(72px, 14cqi) 1fr minmax(140px, 26cqi) minmax(84px, 20cqi);
+  gap: clamp(2px, 0.25cqi, 5px) clamp(6px, 0.6cqi, 10px);
+}
+
+.conf-wall-quadrant--supply .conf-bar-chunk__wheel {
+  align-self: stretch;
+  justify-self: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.conf-wall-quadrant--supply .conf-chunk-donut {
+  width: min(100%, 26cqi, 48cqh, 220px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.conf-wall-quadrant--supply .conf-bar-row__value {
+  padding-right: clamp(8px, 0.8vw, 14px);
+}
+
+.conf-wall-quadrant--supply .conf-capacity-bars .conf-result-section > h3,
+.conf-wall-quadrant--supply .conf-bar-chunk > h3 {
+  flex-shrink: 0;
+  margin-bottom: clamp(2px, 0.25cqi, 4px);
+  font-size: clamp(14px, 1.35cqi, 20px);
+}
+
+.conf-wall-quadrant--supply .conf-bar-row__label,
+.conf-wall-quadrant--supply .conf-bar-row__value {
+  font-size: clamp(13px, 1.15cqi, 18px);
+  line-height: 1.15;
+}
+
+.conf-wall-quadrant--supply .conf-bar-row__track {
+  height: clamp(10px, 1cqi, 14px);
 }
 
 .conf-wall-quadrant .conf-supply-mix__chart {

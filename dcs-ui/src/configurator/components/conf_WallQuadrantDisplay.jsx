@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ConfKpiStrip from './conf_KpiStrip';
-import ConfSupplyMixChart from './conf_SupplyMixChart';
 import ConfCapacityBars from './conf_CapacityBars';
 import ConfMetricsPanel from './conf_MetricsPanel';
 import ConfArchitectureCanvas from './conf_ArchitectureCanvas';
@@ -279,6 +278,7 @@ export default function ConfWallQuadrantDisplay({
       >
         <ConfArchitectureCanvas
           supplyMix={result.supplyMix}
+          capacityFactors={result.capacityFactors}
           loadMW={inputs.loadMW}
           gridConnectionMode={result.gridConnectionMode || inputs.gridConnectionMode}
           variant="wall"
@@ -297,8 +297,11 @@ export default function ConfWallQuadrantDisplay({
         title="Optimal Supply Mix — capacity allocation by technology"
         className="conf-wall-quadrant--supply"
       >
-        <ConfSupplyMixChart mix={result.supplyMix} />
-        <ConfCapacityBars mix={result.supplyMix} capacityFactors={result.capacityFactors} />
+        <ConfCapacityBars
+          mix={result.supplyMix}
+          capacityFactors={result.capacityFactors}
+          variant="wall"
+        />
       </WallQuadrant>
 
       <WallQuadrant
