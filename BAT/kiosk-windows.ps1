@@ -46,6 +46,24 @@ public static class KioskWindowApi {
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    [DllImport("user32.dll")]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsIconic(IntPtr hWnd);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
@@ -241,6 +259,84 @@ function Find-KioskChromeWindow {
     return $bestHandle
 }
 
+function Get-KioskSiblingWindowHandle {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("Dcs", "Vernova")]
+        [string] $Target
+    )
+
+    $otherKey = if ($Target -eq "Dcs") { "vernova" } else { "dcs" }
+    $registry = Read-KioskWindowRegistry
+    $entry = $registry.$otherKey
+    if (-not ($entry -and $entry.hwnd)) {
+        return [IntPtr]::Zero
+    }
+
+    $sibling = [IntPtr]::new([int64]$entry.hwnd)
+    if (Test-KioskWindowHandle -Handle $sibling) {
+        return $sibling
+    }
+    return [IntPtr]::Zero
+}
+
+function Send-KioskWindowToBack {
+    param([Parameter(Mandatory = $true)] [IntPtr] $Handle)
+
+    if (-not (Test-KioskWindowHandle -Handle $Handle)) { return }
+
+    $HWND_BOTTOM = [IntPtr]::new(1)
+    $flags = [uint32]0x0003 -bor 0x0010  # SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+    [void][KioskWindowApi]::SetWindowPos($Handle, $HWND_BOTTOM, 0, 0, 0, 0, $flags)
+}
+
+function Activate-KioskWindow {
+    param(
+        [Parameter(Mandatory = $true)]
+        [IntPtr] $Handle,
+
+        [IntPtr] $SendOtherToBack = [IntPtr]::Zero
+    )
+
+    if (-not (Test-KioskWindowHandle -Handle $Handle)) {
+        throw "Invalid window handle $Handle"
+    }
+
+    if ([KioskWindowApi]::IsIconic($Handle)) {
+        [void][KioskWindowApi]::ShowWindow($Handle, 9)
+        Start-Sleep -Milliseconds 60
+    }
+
+    if ($SendOtherToBack -ne [IntPtr]::Zero) {
+        Send-KioskWindowToBack -Handle $SendOtherToBack
+    }
+
+    $HWND_TOPMOST = [IntPtr]::new(-1)
+    $HWND_NOTOPMOST = [IntPtr]::new(-2)
+    $swpShow = [uint32]0x0043  # SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
+
+    [void][KioskWindowApi]::SetWindowPos($Handle, $HWND_TOPMOST, 0, 0, 0, 0, $swpShow)
+    [void][KioskWindowApi]::SetWindowPos($Handle, $HWND_NOTOPMOST, 0, 0, 0, 0, $swpShow)
+    [void][KioskWindowApi]::BringWindowToTop($Handle)
+
+    $foreground = [KioskWindowApi]::GetForegroundWindow()
+    $fgPid = [uint32]0
+    $fgThread = [KioskWindowApi]::GetWindowThreadProcessId($foreground, [ref]$fgPid)
+    $targetPid = [uint32]0
+    $targetThread = [KioskWindowApi]::GetWindowThreadProcessId($Handle, [ref]$targetPid)
+
+    if ($fgThread -ne 0 -and $targetThread -ne 0 -and $fgThread -ne $targetThread) {
+        [void][KioskWindowApi]::AttachThreadInput($fgThread, $targetThread, $true)
+        [void][KioskWindowApi]::SetForegroundWindow($Handle)
+        [void][KioskWindowApi]::AttachThreadInput($fgThread, $targetThread, $false)
+    } else {
+        [void][KioskWindowApi]::SetForegroundWindow($Handle)
+    }
+
+    [KioskWindowApi]::SwitchToThisWindow($Handle, $true)
+    [void][KioskWindowApi]::SetForegroundWindow($Handle)
+}
+
 function Show-KioskWindow {
     param(
         [Parameter(Mandatory = $true)]
@@ -258,9 +354,7 @@ function Show-KioskWindow {
         return
     }
 
-    [void][KioskWindowApi]::ShowWindow($Handle, 9)
-    Start-Sleep -Milliseconds 80
-    [void][KioskWindowApi]::SetForegroundWindow($Handle)
+    Activate-KioskWindow -Handle $Handle
 }
 
 function Focus-KioskWindow {
@@ -291,7 +385,8 @@ function Focus-KioskWindow {
         throw "Could not find a Chrome kiosk window for '$Target'. Run BAT\z_genesis.start.bat first."
     }
 
-    Show-KioskWindow -Handle $handle
+    $sibling = Get-KioskSiblingWindowHandle -Target $Target
+    Activate-KioskWindow -Handle $handle -SendOtherToBack $sibling
     Write-KioskWindowRegistryEntry -Target $Target -Handle $handle -Url ($(if ($entry -and $entry.url) { [string]$entry.url } else { if ($Target -eq "Dcs") { "http://localhost:3003" } else { "http://localhost:5173" } }))
     Write-Host "Focused kiosk window: $Target (hwnd=$handle)"
 }
