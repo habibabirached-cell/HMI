@@ -131,8 +131,10 @@ import {
   HD_AERO_DEFAULT_PRESET,
   HD_AERO_ENSEMBLE_ID,
   hdAeroBreakersOpenUpdate,
+  isHdAeroBreakerClosing,
   resolveHdAeroPresetFromBreakers,
 } from './utils/hdAeroBreakerPresets';
+import { labelForHdAeroCbEvent } from './utils/chartHdAeroCbEvents';
 import { BREAKER_TYPES } from './data/componentVisuals';
 import {
   API_BASE_URL,
@@ -198,7 +200,10 @@ import DataCenterConfigurator from './configurator/DataCenterConfigurator';
 import { isLocalClusterDev } from './configurator/utils/conf_configuratorCluster';
 import { resolveChartDataTimeBounds } from './utils/chartSimulationTimeBounds';
 import { resolveLoopPlaybackGlobalStart } from './utils/simulationLoopPlayback';
-import { buildLoopConfigSwitchPlan } from './utils/simulationLoopConfigSwitch';
+import {
+  buildLoopConfigSwitchPlan,
+  buildRunningPresetSwitchPlan,
+} from './utils/simulationLoopConfigSwitch';
 import {
   normalizeVariableStylesFromDef,
   normalizeLegendPositionFromDef,
@@ -797,6 +802,8 @@ function App() {
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [systemState, setSystemState] = useState({});
   const [simulationTime, setSimulationTime] = useState(0); // Current simulation time in seconds
+  /** Vertical timeline markers when HD_Aero stub CBs close during playback. */
+  const [hdAeroChartEvents, setHdAeroChartEvents] = useState([]);
   const [simulationSpeed, setSimulationSpeed] = useState(1); // Speed multiplier: 0.1× … 20×
   const simulationSpeedRef = useRef(1);
   const [playbackTimeRange, setPlaybackTimeRange] = useState(() => ({
@@ -1773,6 +1780,7 @@ function App() {
     simulationLoopModeRef.current = false;
     setSimulationLoopMode(false);
     loopChartPlaybackStateRef.current = {};
+    setHdAeroChartEvents([]);
     setSimulationRunning(false);
     stopSimulationClock();
     if (machineRoleRef.current?.isMaingear) {
@@ -3263,39 +3271,49 @@ function App() {
         const cp = activated.chart_panel;
         const primary = meta.memberSimulations?.[0];
 
-        if (
-          simulationLoopModeRef.current &&
-          simulationRunningRef.current &&
-          openChartsRef.current?.length
-        ) {
-          const tArrived = simulationTimeRef.current;
-          const resolveBounds = (chart) =>
-            resolveChartDataTimeBounds(chart, {
-              simulationMetadata: simulationMetadataRef.current,
-              simulationData: simulationDataRef.current,
-              ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+        if (simulationRunningRef.current && openChartsRef.current?.length) {
+          let updatedCharts;
+          let sampleStepPatch = {};
+
+          if (simulationLoopModeRef.current) {
+            const tArrived = simulationTimeRef.current;
+            const resolveBounds = (chart) =>
+              resolveChartDataTimeBounds(chart, {
+                simulationMetadata: simulationMetadataRef.current,
+                simulationData: simulationDataRef.current,
+                ensembleMemberSimulationData: ensembleMemberSimulationDataRef.current,
+              });
+            const resolveIndexed = (chart) => {
+              const rows = chart.ensembleSimId
+                ? ensembleMemberSimulationDataRef.current?.[chart.ensembleSimId]
+                : simulationDataRef.current;
+              return (rows || []).map((row, i) => ({ row, i }));
+            };
+
+            const plan = buildLoopConfigSwitchPlan({
+              openCharts: openChartsRef.current,
+              presetCharts: cp?.charts_to_display || [],
+              primaryMemberId: primary,
+              tArrived,
+              resolveIndexed,
+              resolveBounds,
+              prevPlaybackState: loopChartPlaybackStateRef.current,
             });
-          const resolveIndexed = (chart) => {
-            const rows = chart.ensembleSimId
-              ? ensembleMemberSimulationDataRef.current?.[chart.ensembleSimId]
-              : simulationDataRef.current;
-            return (rows || []).map((row, i) => ({ row, i }));
-          };
-
-          const { updatedCharts, playbackState, sampleStepPatch } = buildLoopConfigSwitchPlan({
-            openCharts: openChartsRef.current,
-            presetCharts: cp?.charts_to_display || [],
-            primaryMemberId: primary,
-            tArrived,
-            resolveIndexed,
-            resolveBounds,
-            prevPlaybackState: loopChartPlaybackStateRef.current,
-          });
-
-          loopChartPlaybackStateRef.current = {
-            ...loopChartPlaybackStateRef.current,
-            ...playbackState,
-          };
+            updatedCharts = plan.updatedCharts;
+            sampleStepPatch = plan.sampleStepPatch;
+            loopChartPlaybackStateRef.current = {
+              ...loopChartPlaybackStateRef.current,
+              ...plan.playbackState,
+            };
+          } else {
+            const plan = buildRunningPresetSwitchPlan({
+              openCharts: openChartsRef.current,
+              presetCharts: cp?.charts_to_display || [],
+              primaryMemberId: primary,
+            });
+            updatedCharts = plan.updatedCharts;
+            sampleStepPatch = plan.sampleStepPatch;
+          }
 
           setOpenCharts(updatedCharts);
           if (Object.keys(sampleStepPatch).length) {
@@ -4298,6 +4316,18 @@ function App() {
       if (comp?.type !== INTERACTIVE_STUB_BREAKER_TYPE) return;
       if (componentId !== HD_AERO_CB_A_ID && componentId !== HD_AERO_CB_B_ID) return;
 
+      if (isHdAeroBreakerClosing(comp, updates)) {
+        setHdAeroChartEvents((prev) => [
+          ...prev,
+          {
+            id: `${componentId}-${simulationTimeRef.current}-${prev.length}`,
+            cbId: componentId,
+            time: simulationTimeRef.current,
+            label: labelForHdAeroCbEvent(componentId),
+          },
+        ]);
+      }
+
       const nextComponents = canvasComponentsRef.current.map((c) =>
         c.id === componentId ? { ...c, ...updates } : c,
       );
@@ -4324,6 +4354,7 @@ function App() {
     pendingHdAeroInitRef.current = false;
 
     void (async () => {
+      setHdAeroChartEvents([]);
       setCanvasComponents((prev) => hdAeroBreakersOpenUpdate(prev));
       await handleSelectEnsemble(ens);
       await handleActivateNamedSimulationConfig(HD_AERO_DEFAULT_PRESET);
@@ -9306,6 +9337,11 @@ function App() {
           ensembleColumnGroups={ensembleColumnGroups}
           derivedVariables={simulationMetadata?.derivedVariables || []}
           eventMarkers={simConfig?.simulations?.[simulationMetadata?.id]?.event_markers}
+          hdAeroChartEvents={
+            isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })
+              ? hdAeroChartEvents
+              : null
+          }
           globalSampleStep={globalSampleStep}
           perChartSampleStep={perChartSampleStep}
           onGlobalSampleStepChange={(step) => {

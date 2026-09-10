@@ -71,6 +71,7 @@ import {
   applyFrequencyGoodnessBandsLayout,
   chartSupportsFrequencyGoodnessBands,
 } from '../../utils/chartFrequencyGoodnessBands';
+import { applyHdAeroCbEventMarkersLayout } from '../../utils/chartHdAeroCbEvents';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
@@ -507,6 +508,7 @@ const ChartPanel = ({
   ensembleColumnGroups = [],
   derivedVariables = [],
   eventMarkers,
+  hdAeroChartEvents = null,
   globalSampleStep = 1,
   perChartSampleStep = {},
   onGlobalSampleStepChange,
@@ -3091,7 +3093,8 @@ const ChartPanel = ({
   const getPlotlyUiRevision = (chart, data) => {
     const step = getSampleStep(chart.id);
     const sid = simulationMetadata?.id ?? '';
-    const csv = chart.csvName ?? '';
+    const csv =
+      chart.axisRange?.xLocked && simulationRunning ? '' : (chart.csvName ?? '');
     // Locked time axes must not bump uirevision as rows stream in during playback.
     const n =
       chart.axisRange?.xLocked && isTimeBasedChart(chart)
@@ -3309,6 +3312,9 @@ const ChartPanel = ({
       let next = layout;
       if (chartSupportsFrequencyGoodnessBands(chart)) {
         next = applyFrequencyGoodnessBandsLayout(next, chart);
+      }
+      if (hdAeroChartEvents?.length) {
+        next = applyHdAeroCbEventMarkersLayout(next, chart, hdAeroChartEvents);
       }
       if (chartSupportsDangerYThreshold(chart)) {
         next = applyDangerYThresholdLayout(next, chart);

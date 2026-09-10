@@ -40,6 +40,14 @@ export function resolveHdAeroPresetFromBreakers(components, clickedId) {
   return null;
 }
 
+/** True when an interactive stub breaker is transitioning from open → closed. */
+export function isHdAeroBreakerClosing(component, updates) {
+  if (!component || updates?.status == null) return false;
+  if (!isInteractiveBreakerOpen(component)) return false;
+  const merged = { ...component, ...updates };
+  return isHdAeroBreakerClosed(merged);
+}
+
 /** Force both HD_Aero stub breakers open (orange/off). */
 export function hdAeroBreakersOpenUpdate(components) {
   return (components || []).map((c) =>

@@ -124,7 +124,8 @@ function axisRangeFromDef(chartDef) {
 }
 
 /** Update data binding fields from a preset chart def; preserve chart card id and layout. */
-export function patchChartFromPresetDef(openChart, chartDef, primaryMemberId) {
+export function patchChartFromPresetDef(openChart, chartDef, primaryMemberId, options = {}) {
+  const { preserveAxisRange = false } = options;
   if (!chartDef || !openChart) return openChart;
   const csvName = chartDef.ensemble_sim_id
     ? `${chartDef.ensemble_sim_id}.data.csv`
@@ -159,12 +160,44 @@ export function patchChartFromPresetDef(openChart, chartDef, primaryMemberId) {
     }
   }
 
-  const axisRange = axisRangeFromDef(chartDef);
-  if (axisRange) {
-    patch.axisRange = axisRange;
+  if (preserveAxisRange && openChart.axisRange) {
+    patch.axisRange = openChart.axisRange;
+  } else {
+    const axisRange = axisRangeFromDef(chartDef);
+    if (axisRange) {
+      patch.axisRange = axisRange;
+    }
   }
 
   return { ...openChart, ...patch };
+}
+
+/** In-play preset switch (non-loop): rebind CSV columns, keep axis/time window as-is. */
+export function buildRunningPresetSwitchPlan({
+  openCharts,
+  presetCharts,
+  primaryMemberId,
+}) {
+  const updatedCharts = [];
+  const sampleStepPatch = {};
+
+  for (let index = 0; index < openCharts.length; index++) {
+    const chart = openCharts[index];
+    const slotIndex = chart.presetSlotIndex ?? index;
+    const matchDef = findMatchingPresetChartDef(chart, presetCharts, slotIndex);
+    if (!matchDef) {
+      updatedCharts.push(chart);
+      continue;
+    }
+    updatedCharts.push(
+      patchChartFromPresetDef(chart, matchDef, primaryMemberId, { preserveAxisRange: true }),
+    );
+    if (matchDef.sample_step != null) {
+      sampleStepPatch[chart.id] = matchDef.sample_step;
+    }
+  }
+
+  return { updatedCharts, sampleStepPatch };
 }
 
 /** Freeze samples drawn up to tArrived before rebinding to a new preset member. */
@@ -244,7 +277,9 @@ export function buildLoopConfigSwitchPlan({
     }
 
     playbackState[chart.id] = snap;
-    updatedCharts.push(patchChartFromPresetDef(chart, matchDef, primaryMemberId));
+    updatedCharts.push(
+      patchChartFromPresetDef(chart, matchDef, primaryMemberId, { preserveAxisRange: true }),
+    );
     if (matchDef.sample_step != null) {
       sampleStepPatch[chart.id] = matchDef.sample_step;
     }
