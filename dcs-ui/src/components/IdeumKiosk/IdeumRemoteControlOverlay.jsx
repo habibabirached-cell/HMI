@@ -32,7 +32,10 @@ export default function IdeumRemoteControlOverlay({
         if (bounds?.width && bounds?.height) {
           boundsRef.current = bounds;
         }
-        if (!cancelled) setStatus('connected');
+        if (!cancelled) {
+          setStatus('connected');
+          client.sendFocus('Vernova');
+        }
       } catch (e) {
         console.warn('[ideum-mouse]', e);
         if (!cancelled) setStatus('error');
@@ -106,7 +109,11 @@ export default function IdeumRemoteControlOverlay({
       <button
         type="button"
         className="ideum-remote-control__back"
-        onClick={onBack}
+        onClick={(e) => {
+          e.preventDefault();
+          clientRef.current?.sendFocus('Dcs');
+          onBack?.();
+        }}
       >
         Back
       </button>

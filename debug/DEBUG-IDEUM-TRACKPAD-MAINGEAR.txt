@@ -101,6 +101,8 @@ Docker :5000 is fallback only if :8766 is unreachable.
   | Connected but no cursor move | Bridge running but SetCursorPos blocked | Run debug bat step 3; check admin/session |
   | Back brings DCS but Ideum stays black | Old Ideum UI without latest App.js | Ideum: pull + hard refresh; Back must set ideumWallControlActive=false |
   | Back / Grid Connected slow vs Click fast | Focus went through Docker :5000 relay | Use direct :8766; allow firewall TCP 8766 Private |
+  | Grid Connected does not raise Vernova | Browser CORS blocked :8766 fetch | Restart KioskFocusServer (CORS fix); WS focus on :8767 backup |
+  | Trackpad stuck while Vernova loads | SetCursorPos synthetic cursor | Bridge uses mouse_event relative (restart KioskMouseServer) |
   | Trackpad jumps when finger lands elsewhere | Absolute x,y mapping on touch down | Relative dx/dy only — hard refresh Ideum UI |
 
 ================================================================================

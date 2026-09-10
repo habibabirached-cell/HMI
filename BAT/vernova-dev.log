@@ -1,5 +1,5 @@
 === Vernova dev server log ===
-Started: Wed 09/09/2026 23:27:50.33
+Started: Wed 09/09/2026 23:46:47.16
 Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
@@ -14,7 +14,7 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
 [INFO] Bound FastAPI backend to fixed port: 8001
 
-(node:17292) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(node:25804) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [36m[FastAPI][0m =======================================================
 [36m[FastAPI][0m  [FastAPI] Verona Spark Databank API running on:
@@ -22,13 +22,13 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 [36m[FastAPI][0m =======================================================
 [33m[FastAPI][0m INFO:     Will watch for changes in these directories: ['C:\\Users\\GEVer\\Documents\\HMI\\vernova-spark-engine_new']
 [33m[FastAPI][0m INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[33m[FastAPI][0m INFO:     Started reloader process [9808] using WatchFiles
-[33m[FastAPI][0m INFO:     Started server process [27936]
+[33m[FastAPI][0m INFO:     Started reloader process [25648] using WatchFiles
+[33m[FastAPI][0m INFO:     Started server process [36816]
 [33m[FastAPI][0m INFO:     Waiting for application startup.
 [33m[FastAPI][0m INFO:     Application startup complete.
 [33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
 
-  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m903[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m951[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.29.48.1:[1m5173[22m/[39m    [2mvEthernet (WSL (Hyp…[22m
@@ -37,25 +37,29 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.168.1:[1m5173[22m/[39m  [2mEthernet 3[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.2.87:[1m5173[22m/[39m    [2mWi-Fi[22m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m11:27:54 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
-[36m[FastAPI][0m INFO:     127.0.0.1:50190 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59431 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61621 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60226 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56626 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53501 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62382 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57351 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57110 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59878 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58378 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55207 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52553 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62476 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55655 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52131 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55454 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51641 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56902 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54775 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54519 - "GET /api/v1/health HTTP/1.1" 200 OK
+[2m11:46:51 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
+[36m[FastAPI][0m INFO:     127.0.0.1:56236 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:59845 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51879 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51880 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51881 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51882 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51883 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63760 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63762 - "GET /api/v1/series/CFG5/VSTEP?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63761 - "GET /api/v1/series/CFG5/ROCOF?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:60233 - "GET /api/v1/series/CFG5/PHJUMP?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:60234 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:62661 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:60707 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:58413 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:58628 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:55497 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:64545 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:53532 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:62587 - "GET /api/v1/health HTTP/1.1" 200 OK
+[Vite] Process exited with code 3221225786
+
+[INFO] Stopping development servers...
+^C^C

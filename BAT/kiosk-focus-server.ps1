@@ -57,6 +57,14 @@ foreach ($prefix in $activePrefixes) {
 Write-Host "(Leave this window open. Ideum Grid Connected -> showVernova uses port $Port.)"
 Write-Host ""
 
+function Add-CorsHeaders {
+    param([System.Net.HttpListenerResponse] $Response)
+
+    $Response.Headers.Add("Access-Control-Allow-Origin", "*")
+    $Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    $Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type")
+}
+
 function Write-JsonResponse {
     param(
         [System.Net.HttpListenerResponse] $Response,
@@ -65,6 +73,7 @@ function Write-JsonResponse {
     )
     $json = ($Body | ConvertTo-Json -Compress)
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+    Add-CorsHeaders -Response $Response
     $Response.StatusCode = $StatusCode
     $Response.ContentType = "application/json; charset=utf-8"
     $Response.ContentLength64 = $bytes.Length
@@ -77,6 +86,13 @@ while ($listener.IsListening) {
         $context = $listener.GetContext()
         $request = $context.Request
         $response = $context.Response
+
+        if ($request.HttpMethod -eq 'OPTIONS') {
+            Add-CorsHeaders -Response $response
+            $response.StatusCode = 204
+            $response.ContentLength64 = 0
+            continue
+        }
 
         $path = ($request.Url.AbsolutePath.Trim('/') -replace '\\', '/')
         if ($request.HttpMethod -eq 'POST' -and $path -match '^kiosk/focus/(Dcs|Vernova)$') {

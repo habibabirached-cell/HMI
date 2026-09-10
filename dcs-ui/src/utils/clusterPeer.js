@@ -4,6 +4,8 @@
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
 const BACKEND_PORT = '5000';
+/** Maingear Docker backend on cluster Ethernet (Ideum fallback when role not loaded yet). */
+export const MAINGEAR_CLUSTER_BACKEND = 'http://192.168.50.1:5000';
 
 /** Two browser tabs on one laptop (localhost UI + local backend). */
 export function isLocalClusterDev() {
@@ -34,6 +36,13 @@ export function resolveMaingearPeerPostBase(role) {
 
   if (isLocalClusterDev()) {
     return envUrl || API_BASE || '';
+  }
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === '192.168.50.2' || host.startsWith('192.168.50.')) {
+      return peerUrl || envUrl || MAINGEAR_CLUSTER_BACKEND;
+    }
   }
 
   return peerUrl || envUrl || API_BASE || `http://${window.location.hostname}:${BACKEND_PORT}`;

@@ -69,6 +69,7 @@ import {
   connectClusterWebSocket,
   connectPeerClusterWebSocket,
   fetchMachineRole,
+  MAINGEAR_CLUSTER_BACKEND,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
 import { installIdeumClickSound } from './utils/ideumClickSound';
@@ -3848,18 +3849,19 @@ function App() {
     }
   };
 
-  /** Fire-and-forget focus switch — direct HTTP :8766, same latency as mouse click. */
+  /** Fire-and-forget focus — direct :8766 + Docker relay (CORS-safe backup). */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
-    sendKioskFocusDirect(machineRole, target)
+
+    void sendKioskFocusDirect(machineRole, target)
       .then((result) => console.info('[cluster] kiosk focus direct ok', command, result))
-      .catch((e) => {
-        console.warn('[cluster] kiosk focus direct failed, trying backend relay', command, e);
-        void sendRemoteCommandToMaingear(machineRole, command).catch((err) => {
-          console.warn('[cluster] remote command failed', command, err);
-        });
-      });
+      .catch((e) => console.warn('[cluster] kiosk focus direct failed', command, e));
+
+    const relayBase = machineRole?.peerBackendUrl || MAINGEAR_CLUSTER_BACKEND;
+    void sendRemoteCommandToMaingear(relayBase, command)
+      .then((result) => console.info('[cluster] kiosk focus relay ok', command, result))
+      .catch((err) => console.warn('[cluster] kiosk focus relay failed', command, err));
   }, [machineRole]);
 
   const sendIdeumClusterCommand = useCallback(async (command, payload) => {
