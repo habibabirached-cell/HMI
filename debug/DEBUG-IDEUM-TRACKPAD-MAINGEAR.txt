@@ -1,0 +1,129 @@
+================================================================================
+HANDOFF FOR MAINGEAR AI — DEBUG IDEUM TRACKPAD (VIRGIN CONTEXT)
+================================================================================
+Read this entire file before changing anything.
+
+Last updated: 2026-09-09
+
+================================================================================
+1. WHAT WE ARE BUILDING (CEO DEMO — TWO MACHINES)
+================================================================================
+
+  IDEUM (touch table) 192.168.50.2          MAINGEAR (4×4K wall) 192.168.50.1
+  -----------------------------             ---------------------------------
+  Ideum05 design in browser :3003           z_genesis.start.bat:
+  User taps "Grid Connected"                  - Docker DCS :3003 / backend :5000
+                                              - Vernova dev :5173
+                                              - Two fullscreen Chrome walls
+                                              - KioskFocusServer (port 8766)
+                                              - KioskMouseServer (port 8767)
+
+When operator taps **Grid Connected** on Ideum:
+  A) Ideum sends HTTP POST to Maingear :5000 → showVernova → Vernova wall in front  ✅ WORKING
+  B) Ideum UI shows black screen + Back + Trackpad + Click                        ✅ UI WORKING
+  C) Trackpad should move Maingear mouse over 4 displays via WebSocket            ❌ NOT WORKING YET
+
+When operator taps **Back** on Ideum:
+  A) showDcs → DCS wall in front on Maingear                                    ✅ WORKING
+  B) Ideum should return to Ideum05 root (Data Centers / Grid Connected cards)  ✅ FIX IN LATEST PULL
+
+================================================================================
+2. MOUSE PATH (LOW LATENCY — BYPASSES DOCKER)
+================================================================================
+
+  Ideum browser (touch on trackpad)
+       |
+       |  WebSocket ws://192.168.50.1:8767  (direct Ethernet, NOT port 5000)
+       v
+  Maingear HOST: dcs-backend/kiosk_mouse_bridge.py
+       |
+       |  ctypes user32 SetCursorPos / mouse_event
+       v
+  Windows cursor on 4-display virtual desktop
+
+Docker backend (:5000) is ONLY used for showVernova / showDcs focus commands.
+Mouse does NOT go through Docker — same pattern as RTDS bridge on :8765.
+
+================================================================================
+3. REPO PATHS ON MAINGEAR
+================================================================================
+
+  Repo root: C:\Users\GEVer\Documents\HMI\   (or wherever cloned)
+
+  Key files:
+    BAT/z_genesis.start.bat              — starts everything including mouse server
+    BAT/start-kiosk-mouse-server.bat     — starts mouse bridge only
+    BAT/start-kiosk-mouse-server.ps1     — PowerShell wrapper → python
+    dcs-backend/kiosk_mouse_bridge.py    — WebSocket server :8767
+    debug/debug-maingear-mouse-bridge.bat — RUN THIS FIRST to diagnose
+    debug/test_maingear_mouse_ws.py      — WebSocket move/click test
+
+  Ideum-side (for reference only — you are on Maingear):
+    dcs-ui/src/components/IdeumKiosk/IdeumRemoteControlOverlay.jsx
+    dcs-ui/src/utils/ideumRemoteMouse.js
+
+================================================================================
+4. MEASURE OF SUCCESS (MOUSE BRIDGE)
+================================================================================
+
+  [1] netstat shows LISTENING on 0.0.0.0:8767 (or 8767)
+  [2] Window titled "KioskMouseServer" is open (PowerShell)
+  [3] debug\debug-maingear-mouse-bridge.bat → ws-test OK, cursor jumps
+  [4] From Ideum CMD: debug\test_maingear_mouse_ws.py 192.168.50.1 8767 → OK
+  [5] Ideum trackpad: status line shows "Mouse bridge connected · ws://192.168.50.1:8767"
+      and move count increases when finger drags on trackpad; Maingear cursor moves
+
+================================================================================
+5. RUN DIAGNOSTICS NOW (MAINGEAR)
+================================================================================
+
+  1. Double-click: debug\debug-maingear-mouse-bridge.bat
+  2. If port 8767 NOT LISTENING:
+       BAT\start-kiosk-mouse-server.bat
+     or full: BAT\z_genesis.start.bat
+  3. If websockets missing:
+       pip install "websockets>=12.0,<14"
+  4. Re-run debug bat until ws-test OK
+
+================================================================================
+6. COMMON FAILURES
+================================================================================
+
+  | Symptom | Cause | Fix |
+  |---------|-------|-----|
+  | Port 8767 not listening | Mouse server not started / crashed | start-kiosk-mouse-server.bat |
+  | websockets import error | Python package missing | pip install websockets |
+  | ws-test OK locally, fails from Ideum | Windows Firewall blocking 8767 | Allow inbound TCP 8767 Private |
+  | Ideum shows "Mouse bridge offline" | Can't reach ws://192.168.50.1:8767 | Firewall + cable + server running |
+  | Connected but no cursor move | Bridge running but SetCursorPos blocked | Run debug bat step 3; check admin/session |
+  | Back brings DCS but Ideum stays black | Old Ideum UI without latest App.js | Ideum: pull + hard refresh; Back must set ideumWallControlActive=false |
+
+================================================================================
+7. FIREWALL (IF IDEUM CAN'T CONNECT)
+================================================================================
+
+  Run once as Administrator on Maingear:
+
+    netsh advfirewall firewall add rule name="DCS Kiosk Mouse 8767" dir=in action=allow protocol=TCP localport=8767 profile=private
+
+  Test from Ideum (192.168.50.2) CMD:
+
+    python debug\test_maingear_mouse_ws.py 192.168.50.1 8767
+
+================================================================================
+8. DO NOT CONFUSE WITH FOCUS SERVER
+================================================================================
+
+  Port 8766 = KioskFocusServer (Chrome window focus, HTTP POST)
+  Port 8767 = KioskMouseServer (cursor move, WebSocket)
+
+  Grid Connected uses BOTH. Focus works; mouse is separate.
+
+================================================================================
+9. AFTER FIX
+================================================================================
+
+  Commit only Maingear-side fixes if needed (bridge, firewall bat, genesis).
+  Ideum operator: pull, Ctrl+Shift+R on :3003, test Grid Connected → trackpad → Back.
+
+EOF

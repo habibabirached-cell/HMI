@@ -15,9 +15,12 @@ export default function IdeumRemoteControlOverlay({
   const boundsRef = useRef({ left: 0, top: 0, width: 1920, height: 1080 });
   const activePointerRef = useRef(null);
   const [status, setStatus] = useState('connecting');
+  const [statusDetail, setStatusDetail] = useState('');
+  const moveCountRef = useRef(0);
 
   useEffect(() => {
     const url = resolveMaingearMouseWebSocketUrl(machineRole);
+    setStatusDetail(url);
     const client = new IdeumRemoteMouseClient(url);
     clientRef.current = client;
     let cancelled = false;
@@ -64,15 +67,24 @@ export default function IdeumRemoteControlOverlay({
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointerRef.current = e.pointerId;
     const pos = mapTouchToDesktop(e.clientX, e.clientY);
-    if (pos) clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
+    if (pos) {
+      clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
+      moveCountRef.current += 1;
+    }
   }, [mapTouchToDesktop]);
 
   const onTrackpadPointerMove = useCallback((e) => {
     if (activePointerRef.current !== e.pointerId) return;
     e.preventDefault();
     const pos = mapTouchToDesktop(e.clientX, e.clientY);
-    if (pos) clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
-  }, [mapTouchToDesktop]);
+    if (pos) {
+      clientRef.current?.sendMoveAbsolute(pos.x, pos.y);
+      moveCountRef.current += 1;
+      if (moveCountRef.current % 8 === 0) {
+        setStatusDetail(`${resolveMaingearMouseWebSocketUrl(machineRole)} · moves ${moveCountRef.current}`);
+      }
+    }
+  }, [mapTouchToDesktop, machineRole]);
 
   const onTrackpadPointerUp = useCallback((e) => {
     if (activePointerRef.current === e.pointerId) {
@@ -122,12 +134,12 @@ export default function IdeumRemoteControlOverlay({
           Click
         </button>
 
-        {status !== 'connected' && (
-          <p className={`ideum-remote-control__status ideum-remote-control__status--${status}`}>
-            {status === 'connecting' && 'Connecting mouse bridge…'}
-            {status === 'error' && 'Mouse bridge offline — on Maingear run BAT\\start-kiosk-mouse-server.bat'}
-          </p>
-        )}
+        <p className={`ideum-remote-control__status ideum-remote-control__status--${status}`}>
+          {status === 'connecting' && 'Connecting mouse bridge…'}
+          {status === 'error' && 'Mouse bridge offline — on Maingear run debug\\debug-maingear-mouse-bridge.bat'}
+          {status === 'connected' && 'Mouse bridge connected'}
+          {statusDetail ? ` · ${statusDetail}` : ''}
+        </p>
       </div>
     </div>
   );

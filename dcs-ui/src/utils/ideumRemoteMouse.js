@@ -105,10 +105,11 @@ export class IdeumRemoteMouseClient {
   /** Absolute virtual-desktop coordinates (from trackpad mapping). */
   sendMoveAbsolute(x, y) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    this._pendingMove = { type: 'move', x: Math.round(x), y: Math.round(y) };
-    if (!this._raf) {
-      this._raf = requestAnimationFrame(() => this._flushMove());
-    }
+    this.ws.send(JSON.stringify({
+      type: 'move',
+      x: Math.round(x),
+      y: Math.round(y),
+    }));
   }
 
   sendClick() {

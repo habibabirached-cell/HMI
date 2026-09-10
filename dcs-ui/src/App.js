@@ -3918,8 +3918,10 @@ function App() {
   }, [clampCanvasZoom]);
 
   const handleIdeumWallControlBack = useCallback(() => {
-    void sendIdeumClusterCommand('showDcs');
+    // UI first — restore Ideum05 landing (Data Centers / Grid Connected cards).
     setIdeumWallControlActive(false);
+    setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    void sendIdeumClusterCommand('showDcs');
   }, [sendIdeumClusterCommand]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
