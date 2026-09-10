@@ -25,6 +25,7 @@ import {
 } from '../utils/conf_architectureModels';
 import { formatMWExact, formatPercent } from '../utils/conf_formatters';
 import { getTechnologyColor } from '../utils/conf_technologyColors';
+import { useConf3d } from '../utils/conf_3dContext';
 
 function useElementSize(ref) {
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -97,12 +98,14 @@ function useHubWires(stageRef, hubRef, assets, layout) {
 }
 
 function ArchitectureModelPreview({ spec }) {
+  const { enable3d } = useConf3d();
   const hostRef = useRef(null);
   const size = useElementSize(hostRef);
-  const ready = size.w > 20 && size.h > 20;
+  const ready = enable3d && size.w > 20 && size.h > 20;
 
   return (
     <div ref={hostRef} className="conf-arch-canvas__model">
+      {!enable3d && <div className="conf-arch-canvas__model-placeholder" aria-hidden="true" />}
       {ready && spec.kind === 'bess' && (
         <Bess3DViewer width={size.w} height={size.h} modelUrl={spec.url} />
       )}

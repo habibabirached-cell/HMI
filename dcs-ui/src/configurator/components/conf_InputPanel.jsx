@@ -88,7 +88,7 @@ export default function ConfInputPanel({
 
       <p className="conf-objective-note">
         <strong>Optimization:</strong> Least cost
-        <ConfInfoTooltip text="MVP minimizes portfolio LCOE while meeting reliability and minimum CFE constraints. Future releases will support customer objectives such as lowest carbon or highest reliability." />
+        <ConfInfoTooltip text="MVP minimizes portfolio LCOE while meeting availability and minimum CFE constraints. Future releases will support customer objectives such as lowest carbon or highest availability." />
       </p>
 
       {/* PRIMARY INPUT 1 — Load */}
@@ -115,11 +115,11 @@ export default function ConfInputPanel({
         </div>
       </section>
 
-      {/* PRIMARY INPUT 2 — Reliability (prominent) */}
+      {/* PRIMARY INPUT 2 — Availability (prominent) */}
       <section className="conf-input-section conf-input-section--primary conf-input-section--reliability">
         <div className="conf-field__header">
-          <label className="conf-field__label conf-field__label--primary">Reliability Target</label>
-          <ConfInfoTooltip text="Minimum system availability the optimizer must meet or exceed. Higher reliability may require additional capacity and cost." />
+          <label className="conf-field__label conf-field__label--primary">Availability Target</label>
+          <ConfInfoTooltip text="Minimum system availability the optimizer must meet or exceed. Higher availability may require additional capacity and cost." />
         </div>
         <div className="conf-reliability-grid">
           {RELIABILITY_LEVELS.map((level) => (

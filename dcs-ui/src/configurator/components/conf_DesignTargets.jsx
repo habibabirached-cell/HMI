@@ -8,7 +8,7 @@ export default function ConfDesignTargets({ result, inputs }) {
 
   const rows = [
     {
-      label: 'Reliability',
+      label: 'Availability',
       value: `${formatPercent(kpis.achievedReliability, 3)} achieved (≥ ${formatPercent(kpis.reliabilityTarget, 3)} required)`,
       met: targets.relMet,
     },

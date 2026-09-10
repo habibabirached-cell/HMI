@@ -227,7 +227,7 @@ def run_configurator_engine(inputs: dict[str, Any]) -> dict[str, Any]:
     summary = (
         f"A {total_installed / 1000:.2f} GW portfolio designed to support a "
         f"{inputs['loadMW'] / 1000:.2f} GW {state['label']} data center at a "
-        f"{inputs['reliabilityTarget']}% reliability target and {inputs['cfeTarget']}% CFE target."
+        f"{inputs['reliabilityTarget']}% availability target and {inputs['cfeTarget']}% CFE target."
     )
 
     return {

@@ -15,7 +15,7 @@ export default function ConfKpiStrip({ result }) {
         <strong className="conf-kpi-card__value">{formatMW(kpis.installedCapacityMW)}</strong>
       </div>
       <div className={`conf-kpi-card ${relMet ? 'conf-kpi--met' : 'conf-kpi--miss'}`}>
-        <span className="conf-kpi-card__label">Reliability</span>
+        <span className="conf-kpi-card__label">Availability</span>
         <strong className="conf-kpi-card__value">{formatPercent(kpis.achievedReliability, 3)}</strong>
         <div className="conf-kpi-card__footnote">
           <small>Minimum: {formatPercent(kpis.reliabilityTarget, kpis.reliabilityTarget >= 99.99 ? 3 : 2)}</small>

@@ -29,6 +29,8 @@ import {
 import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { fetchMachineRole } from '../utils/clusterPeer';
 import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
+import Conf3dToggleButton from './components/Conf3dToggleButton';
+import { Conf3dProvider, useConf3d } from './utils/conf_3dContext';
 import '../components/IdeumKiosk/Ideum05NavLayer.css';
 import './conf_DataCenterConfigurator.css';
 
@@ -39,7 +41,7 @@ const MODE_META = {
   full: {
     title: 'Data Center Configurator',
     subtitle:
-      'Given your load, reliability requirement, minimum carbon-free energy, grid connection, and technology options — GE Vernova recommends a least-cost onsite architecture.',
+      'Given your load, availability requirement, minimum carbon-free energy, grid connection, and technology options — GE Vernova recommends a least-cost onsite architecture.',
     badge: 'Basic Mode · Least Cost',
   },
   ideum: {
@@ -55,10 +57,13 @@ const MODE_META = {
   },
 };
 
-export default function DataCenterConfigurator({ mode = 'full', onClose }) {
+function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
+  const { enable3d } = useConf3d();
   const meta = MODE_META[mode] || MODE_META.full;
   const isIdeumMode = mode === 'ideum';
   const isWallMode = mode === 'wall';
+  /** Back arrow — defaults to onClose for legacy full-app overlay usage. */
+  const handleBack = onBack ?? onClose;
 
   useWallDisplayKeepAlive(isWallMode);
 
@@ -267,11 +272,12 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
   const wallStatusMessage = wallGenerating ? 'Generating architecture on Maingear…' : statusMessage;
 
   return (
-    <div className={`conf-page conf-page--${mode}`}>
+    <div className={`conf-page conf-page--${mode}${enable3d ? '' : ' conf-page--no3d'}`}>
       {isWallMode ? (
         onClose ? (
           <header className="conf-page-header conf-page-header--wall-chrome">
             <div className="conf-page-header__actions">
+              <Conf3dToggleButton className="conf-3d-toggle--wall" />
               <button
                 type="button"
                 className="conf-close-btn conf-close-btn--wall"
@@ -282,13 +288,21 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
               </button>
             </div>
           </header>
-        ) : null
+        ) : (
+          <header className="conf-page-header conf-page-header--wall-chrome">
+            <div className="conf-page-header__actions">
+              <Conf3dToggleButton className="conf-3d-toggle--wall" />
+            </div>
+          </header>
+        )
       ) : (
       <header className={`conf-page-header${isIdeumMode ? ' conf-page-header--ideum' : ''}${isIdeumMode && IDEUM_HIDE_HEADER_CHROME ? ' conf-page-header--ideum-snapshot' : ''}`}>
         {isIdeumMode ? (
           <>
             <div className="conf-page-header__ideum-start">
-              {!IDEUM_HIDE_HEADER_CHROME && onClose && <Ideum05BackButton onBack={onClose} />}
+              {!IDEUM_HIDE_HEADER_CHROME && handleBack && (
+                <Ideum05BackButton onBack={handleBack} />
+              )}
               <ConfIdeumPageTabs activeTab={ideumTab} onSelectTab={setIdeumTab} />
             </div>
             <div className="conf-page-header__titles conf-page-header__titles--center">
@@ -296,6 +310,7 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
             </div>
             {!IDEUM_HIDE_HEADER_CHROME && (onClose ? (
               <div className="conf-page-header__actions">
+                <Conf3dToggleButton />
                 <button
                   type="button"
                   className="conf-fullscreen-btn"
@@ -316,7 +331,9 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
                 </button>
               </div>
             ) : (
-              <div className="conf-page-header__actions" aria-hidden="true" />
+              <div className="conf-page-header__actions">
+                <Conf3dToggleButton />
+              </div>
             ))}
           </>
         ) : (
@@ -330,28 +347,31 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
                 <span className="conf-badge conf-badge--synthetic">Synthetic Demonstration Data</span>
               </div>
             </div>
-            {onClose && (
-              <div className="conf-page-header__actions">
-                <button
-                  type="button"
-                  className="conf-fullscreen-btn"
-                  onClick={handleToggleFullscreen}
-                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                  title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
-                >
-                  <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    {isFullscreen ? (
-                      <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
-                    ) : (
-                      <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
-                    )}
-                  </svg>
-                </button>
-                <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
-                  ✕
-                </button>
-              </div>
-            )}
+            <div className="conf-page-header__actions">
+              <Conf3dToggleButton />
+              {onClose && (
+                <>
+                  <button
+                    type="button"
+                    className="conf-fullscreen-btn"
+                    onClick={handleToggleFullscreen}
+                    aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      {isFullscreen ? (
+                        <path d="M14 1a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707l-4.146 4.147a.5.5 0 0 1-.708-.708L13.293 2H10.5a.5.5 0 0 1 0-1H14zm-3 0a.5.5 0 0 1 .5-.5h4.5a1 1 0 0 1 1 1v4.5a.5.5 0 0 1-1 0V2.707L10.854 6.854a.5.5 0 1 1-.708-.708L13.293 2H11.5a.5.5 0 0 1-.5-.5zM2 14a1 1 0 0 1-1-1v-4.5a.5.5 0 0 1 1 0V13.293l4.146-4.147a.5.5 0 0 1 .708.708L2.707 14H5.5a.5.5 0 0 1 0 1H2zm3 0a.5.5 0 0 1-.5.5H.5a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 1 0v2.793l4.146-4.147a.5.5 0 1 1 .708.708L2.707 14H5.5a.5.5 0 0 1-.5.5z" />
+                      ) : (
+                        <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                      )}
+                    </svg>
+                  </button>
+                  <button type="button" className="conf-close-btn" onClick={onClose} aria-label="Close configurator">
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
           </>
         )}
       </header>
@@ -422,5 +442,13 @@ export default function DataCenterConfigurator({ mode = 'full', onClose }) {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DataCenterConfigurator(props) {
+  return (
+    <Conf3dProvider>
+      <DataCenterConfiguratorInner {...props} />
+    </Conf3dProvider>
   );
 }

@@ -146,6 +146,84 @@
   display: block;
 }
 
+.conf-3d-toggle {
+  border: 1px solid var(--conf-border);
+  background: var(--conf-surface);
+  color: var(--conf-text-dim);
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.conf-3d-toggle--on {
+  border-color: var(--conf-evergreen);
+  color: var(--conf-evergreen);
+}
+
+.conf-3d-toggle--off {
+  border-color: #c2410c;
+  color: #c2410c;
+  text-decoration: line-through;
+}
+
+.conf-3d-toggle:hover {
+  filter: brightness(0.96);
+}
+
+.conf-3d-toggle--wall {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.conf-3d-toggle--footer {
+  flex: 0 0 auto;
+  min-width: 96px;
+  height: auto;
+  min-height: 48px;
+  padding: 12px 16px;
+  font-size: clamp(14px, 1.4vw, 18px);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.conf-3d-toggle--ideum-footer {
+  border-width: 2px;
+}
+
+.conf-ideum-floating-tools {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 10050;
+  pointer-events: auto;
+}
+
+.conf-3d-toggle--floating {
+  min-width: 112px;
+  min-height: 52px;
+  padding: 14px 18px;
+  font-size: 18px;
+  font-weight: 800;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(15, 35, 52, 0.22);
+  border-width: 2px;
+}
+
+.conf-ideum-tech-hub__center-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: clamp(28px, 4vw, 48px);
+}
+
 .conf-error-banner {
   margin: 0 28px;
   padding: 10px 14px;
@@ -217,6 +295,8 @@
 
 .conf-page-header--ideum .conf-page-header__actions {
   justify-self: end;
+  position: relative;
+  z-index: 4;
 }
 
 .conf-page-header--ideum-snapshot {

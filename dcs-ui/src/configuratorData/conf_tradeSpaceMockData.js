@@ -53,7 +53,7 @@ export const TRADE_SPACE_VIZ_OPTIONS = [
   {
     id: 'sensitivity-heatmap',
     label: '1 · Sensitivity Heatmap',
-    blurb: 'Reliability × min CFE → LCOE',
+    blurb: 'Availability × min CFE → LCOE',
   },
   {
     id: 'parallel-coordinates',

@@ -34,7 +34,7 @@ export default function ConfTradeSpacePanel({ vizId, inputs }) {
       )}
 
       <p className="conf-trade-space__footer">
-        These views explore how load, reliability, minimum CFE, and portfolio LCOE relate — for
+        These views explore how load, availability, minimum CFE, and portfolio LCOE relate — for
         executive review only, not engineering certification.
       </p>
     </div>

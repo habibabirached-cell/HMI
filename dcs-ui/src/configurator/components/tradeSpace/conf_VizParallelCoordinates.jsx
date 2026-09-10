@@ -8,7 +8,7 @@ const HANDLE_H = 10;
 const AXIS_HIT_W = 40;
 const AXES = [
   { key: 'loadMW', label: 'Load (MW)', step: 50, format: (v) => `${Math.round(v)} MW` },
-  { key: 'reliability', label: 'Reliability (%)', step: 0.001, format: (v) => `${v}%` },
+  { key: 'reliability', label: 'Availability (%)', step: 0.001, format: (v) => `${v}%` },
   { key: 'minCfe', label: 'Min CFE (%)', step: 1, format: (v) => `${Math.round(v)}%` },
   { key: 'lcoe', label: 'LCOE ($/MWh)', step: 1, format: (v) => `$${Math.round(v)}` },
 ];

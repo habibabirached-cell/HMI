@@ -42,3 +42,18 @@
 .ideum-kiosk-hd-aero-shell__top .ideum05-nav-back {
   pointer-events: auto;
 }
+
+/* Configurator — must fully cover DataCenter nav/3D when loaded as isolated design. */
+.ideum-kiosk-configurator-shell {
+  z-index: 20;
+  background: #f6f8f9;
+}
+
+.ideum-kiosk-configurator-shell__content {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

@@ -103,6 +103,7 @@ import {
 } from './utils/ideumShellDesign';
 import IdeumKioskControlsShell from './components/IdeumKiosk/IdeumKioskControlsShell';
 import IdeumHdAeroKioskShell from './components/IdeumKiosk/IdeumHdAeroKioskShell';
+import IdeumKioskConfiguratorShell from './components/IdeumKiosk/IdeumKioskConfiguratorShell';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
@@ -4022,6 +4023,11 @@ function App() {
     void loadDesignFromCatalog(DATA_CENTER_CATALOG);
   }, [loadDesignFromCatalog]);
 
+  /** Configurator ✕ — exit Data Centers flow (unload configurator + DataCenter menu). */
+  const handleConfiguratorShellClose = useCallback(() => {
+    void loadDesignFromCatalog(IDEUM05_CATALOG);
+  }, [loadDesignFromCatalog]);
+
   /** DataCenter card tap — load isolated shell design per card. */
   const handleDataCenterNavSelect = useCallback((cardId) => {
     const loadCatalog = getIdeum05NavLoadDesignCatalog('data-centers', cardId);
@@ -7569,6 +7575,8 @@ function App() {
       setIdeumShellMode('ref200Mw');
     } else if (loadedIsConfiguratorShell) {
       setIdeumShellMode('configurator');
+      setConfiguratorOpen(false);
+      clearConfiguratorViewFromUrl();
     } else if (loadedIsHdAeroShell) {
       setIdeumShellMode('hdAero');
     } else if (loadedIsIdeum06Shell) {
@@ -8787,9 +8795,13 @@ function App() {
         setCanvasFontPxShift={setCanvasFontPxShift}
         setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
       >
-        <div className="app-container app-container--configurator-ideum app-container--ideum-mode">
-          <DataCenterConfigurator mode="ideum" onClose={handleDataCenterChildBack} />
-        </div>
+        <IdeumKioskConfiguratorShell>
+          <DataCenterConfigurator
+            mode="ideum"
+            onBack={handleDataCenterChildBack}
+            onClose={handleConfiguratorShellClose}
+          />
+        </IdeumKioskConfiguratorShell>
         {showDialog && (
           <SaveLoadDialog
             mode={dialogMode}

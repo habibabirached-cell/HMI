@@ -24,7 +24,7 @@ export default function ConfVizSensitivityHeatmap({ initialLoad, buildGrid }) {
         <table className="conf-heatmap">
           <thead>
             <tr>
-              <th>Reliability ↓ / Min CFE →</th>
+              <th>Availability ↓ / Min CFE →</th>
               {MOCK_MIN_CFE.map((c) => (
                 <th key={c}>{c}%</th>
               ))}
@@ -38,7 +38,7 @@ export default function ConfVizSensitivityHeatmap({ initialLoad, buildGrid }) {
                   <td
                     key={cell.minCfe}
                     style={{ background: lcoeColor(cell.lcoe), color: cell.lcoe > 95 ? '#fff' : '#1f2933' }}
-                    title={`${row.reliability}% rel, ≥${cell.minCfe}% CFE, ${loadMW} MW`}
+                    title={`${row.reliability}% avail, ≥${cell.minCfe}% CFE, ${loadMW} MW`}
                   >
                     ${cell.lcoe}
                   </td>
@@ -48,7 +48,7 @@ export default function ConfVizSensitivityHeatmap({ initialLoad, buildGrid }) {
           </tbody>
         </table>
       </div>
-      <p className="conf-viz__legend">Higher reliability and minimum CFE drive higher LCOE (warmer cells).</p>
+      <p className="conf-viz__legend">Higher availability and minimum CFE drive higher LCOE (warmer cells).</p>
     </div>
   );
 }

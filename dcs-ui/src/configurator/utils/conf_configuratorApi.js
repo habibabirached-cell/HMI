@@ -40,7 +40,7 @@ export { loadTrainingRecords, getTrainingRecordCount } from './conf_recordProvid
 
 export const GENERATION_STATUS_MESSAGES = [
   'Evaluating technology portfolio…',
-  'Checking reliability constraint…',
+  'Checking availability constraint…',
   'Balancing minimum carbon-free energy…',
   'Running least-cost sizing…',
 ];

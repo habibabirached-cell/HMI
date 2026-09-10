@@ -418,7 +418,7 @@ export function runConsolidatedEngine(rawInputs) {
       windResource: profile.windResource,
     },
     gridConnectionMode: inputs.gridConnectionMode,
-    summary: `Consolidated study portfolio for a ${(inputs.loadMW / 1000).toFixed(2)} GW ${gridLabel} data center — ${inputs.reliabilityTarget}% reliability (minimum)${inputs.minCfePercent > 0 ? `, ≥${inputs.minCfePercent}% CFE` : ''}.`,
+    summary: `Consolidated study portfolio for a ${(inputs.loadMW / 1000).toFixed(2)} GW ${gridLabel} data center — ${inputs.reliabilityTarget}% availability (minimum)${inputs.minCfePercent > 0 ? `, ≥${inputs.minCfePercent}% CFE` : ''}.`,
     totalInstalledMW: totalInstalled,
     supplyMix: metrics.rows.map((r) => ({
       ...r,

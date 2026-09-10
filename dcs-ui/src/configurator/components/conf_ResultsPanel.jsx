@@ -124,12 +124,12 @@ export default function ConfResultsPanel({
           <>
             <h2>Configure your data-center requirements</h2>
             <p>
-              Set load, reliability, minimum CFE, grid mode, and technology options — then generate a
+              Set load, availability, minimum CFE, grid mode, and technology options — then generate a
               least-cost recommended architecture.
             </p>
             <p className="conf-empty-state__hint">
               Or pick a <strong>Trade space idea</strong> below Generate Architecture to preview how
-              load, reliability, CFE, and cost relate.
+              load, availability, CFE, and cost relate.
             </p>
           </>
         )}

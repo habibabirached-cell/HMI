@@ -332,7 +332,7 @@ export function runConfiguratorEngine(rawInputs) {
     ? 'islanded'
     : 'grid-connected';
 
-  const summary = `Least-cost ${(totalInstalled / 1000).toFixed(2)} GW onsite portfolio for a ${(inputs.loadMW / 1000).toFixed(2)} GW ${gridLabel} data center — ${inputs.reliabilityTarget}% reliability (minimum)${inputs.minCfePercent > 0 ? `, ≥${inputs.minCfePercent}% CFE` : ''}.`;
+  const summary = `Least-cost ${(totalInstalled / 1000).toFixed(2)} GW onsite portfolio for a ${(inputs.loadMW / 1000).toFixed(2)} GW ${gridLabel} data center — ${inputs.reliabilityTarget}% availability (minimum)${inputs.minCfePercent > 0 ? `, ≥${inputs.minCfePercent}% CFE` : ''}.`;
 
   return {
     ok: true,

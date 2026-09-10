@@ -14,6 +14,7 @@ import {
   setTechnologyPreference,
   TECH_PREFERENCE,
 } from '../utils/conf_technologyPreferences';
+import { useConf3d } from '../utils/conf_3dContext';
 
 const HUB_MODEL_URLS = {
   battery: getBess3DModelUrl(),
@@ -120,6 +121,7 @@ function TechPlaceholderArt({ icon }) {
 }
 
 function TechCard3DPreview({ tech, meta }) {
+  const { enable3d } = useConf3d();
   const hostRef = useRef(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -136,10 +138,11 @@ function TechCard3DPreview({ tech, meta }) {
     return () => ro.disconnect();
   }, []);
 
-  const ready = size.w > 24 && size.h > 24;
+  const ready = enable3d && size.w > 24 && size.h > 24;
 
   return (
     <div ref={hostRef} className="conf-ideum-tech-card__media-viewer">
+      {!enable3d && <TechPlaceholderArt icon={tech.icon} />}
       {ready && meta.model3d === 'bess' && (
         <Bess3DViewer width={size.w} height={size.h} modelUrl={HUB_MODEL_URLS.battery} />
       )}
@@ -160,7 +163,7 @@ function TechCard3DPreview({ tech, meta }) {
           modelUrl={meta.model3dUrl || HUB_MODEL_URLS.wind}
         />
       )}
-      {!meta.model3d && <TechPlaceholderArt icon={tech.icon} />}
+      {enable3d && !meta.model3d && <TechPlaceholderArt icon={tech.icon} />}
     </div>
   );
 }
@@ -242,6 +245,7 @@ function HubTechCard({
 }
 
 function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flash }) {
+  const { enable3d } = useConf3d();
   const hostRef = useRef(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -280,7 +284,12 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
         ref={setStageRef}
         className={`conf-ideum-tech-hub__center-stage${flash ? ' conf-ideum-tech-hub__center-stage--flash' : ''}`}
       >
-        {size.w > 40 && size.h > 40 && (
+        {!enable3d && (
+          <div className="conf-ideum-tech-hub__center-placeholder" aria-hidden="true">
+            <span>◆</span>
+          </div>
+        )}
+        {enable3d && size.w > 40 && size.h > 40 && (
           <Ideum05Nav3DViewer
             width={size.w}
             height={size.h}

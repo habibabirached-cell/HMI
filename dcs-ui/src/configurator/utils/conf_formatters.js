@@ -49,5 +49,5 @@ export function formatInputSummary(inputs) {
   const grid = formatGridMode(inputs.gridConnectionMode);
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
   const cfeLabel = minCfe > 0 ? `≥${Math.round(minCfe)}% min CFE` : 'No min CFE';
-  return `${load} • ${grid} • ${formatPercent(inputs.reliabilityTarget, inputs.reliabilityTarget >= 99.99 ? 3 : 2)} Reliability • ${cfeLabel} • ${techCount} options`;
+  return `${load} • ${grid} • ${formatPercent(inputs.reliabilityTarget, inputs.reliabilityTarget >= 99.99 ? 3 : 2)} Availability • ${cfeLabel} • ${techCount} options`;
 }

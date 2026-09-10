@@ -34,7 +34,7 @@ export const CONFIGURATOR_PRESET_SCENARIOS = [
   },
   {
     id: 'high-reliability-virginia',
-    label: 'High Reliability / Virginia',
+    label: 'High Availability / Virginia',
     inputs: {
       loadMW: 1000,
       stateId: 'virginia',
@@ -83,7 +83,7 @@ export const CONFIGURATOR_PRESET_SCENARIOS = [
   },
   {
     id: 'ny-reliability',
-    label: 'Northeast Reliability / NY',
+    label: 'Northeast Availability / NY',
     inputs: {
       loadMW: 450,
       stateId: 'new_york',

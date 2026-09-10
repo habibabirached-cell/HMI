@@ -140,7 +140,7 @@ export default function ConfTechnologyTiles({ selectedIds, onChange, ideumMode =
       />
       <TechSection
         title="Energy Storage"
-        helper="Storage supports reliability and renewables — it is not a generation source."
+        helper="Storage supports availability and renewables — it is not a generation source."
         technologies={getStorageTechnologies()}
         selectedIds={selectedIds}
         onChange={onChange}

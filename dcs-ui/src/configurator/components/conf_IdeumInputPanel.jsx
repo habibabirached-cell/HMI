@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ConfIdeumTechnologyHub from './conf_IdeumTechnologyHub';
+import Conf3dToggleButton from './Conf3dToggleButton';
 import IdeumCorridorRail from './conf_IdeumCorridorRail';
 import { CONFIGURATOR_PRESET_SCENARIOS } from '../../configuratorData/conf_scenarios';
 import {
@@ -232,7 +233,7 @@ export default function ConfIdeumInputPanel({
     left: (
       <IdeumCorridorRail
         side="left"
-        label="Reliability"
+        label="Availability"
         min={99}
         max={99.9999}
         step={0.0001}
@@ -241,7 +242,7 @@ export default function ConfIdeumInputPanel({
         presets={RELIABILITY_PRESETS}
         formatDisplay={formatReliabilityDisplay}
         isPresetActive={(presetValue) => reliabilityPresetActive(reliabilityTarget, presetValue)}
-        ariaLabel="Reliability fine adjust"
+        ariaLabel="Availability fine adjust"
         presetSizing="reliability"
       />
     ),
@@ -302,6 +303,7 @@ export default function ConfIdeumInputPanel({
           >
             {isGenerating ? 'Sending…' : generateLabel}
           </button>
+          <Conf3dToggleButton variant="footer" className="conf-3d-toggle--ideum-footer" />
           <button type="button" className="conf-ideum-reset-btn" onClick={onReset}>
             Reset
           </button>
