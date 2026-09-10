@@ -1,10 +1,10 @@
 ﻿=== docker compose log ===
-time="2026-09-10T00:57:53-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+time="2026-09-10T01:06:44-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
  Container hmi-dcs-ui-1 Running 
  Container hmi-dcs-backend-1 Running 
 
 --- docker compose ps ---
-time="2026-09-10T00:57:53-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+time="2026-09-10T01:06:44-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
 NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS          PORTS
-hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --hΓÇª"   dcs-backend   2 hours ago    Up 14 minutes   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
-hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.sΓÇª"   dcs-ui        39 hours ago   Up 14 minutes   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
+hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --hΓÇª"   dcs-backend   2 hours ago    Up 23 minutes   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.sΓÇª"   dcs-ui        39 hours ago   Up 23 minutes   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp

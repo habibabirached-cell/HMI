@@ -52,18 +52,24 @@ export default function IdeumRemoteControlOverlay({
     if (activePointerRef.current !== e.pointerId) return;
     e.preventDefault();
 
-    const dx = e.clientX - lastPointerRef.current.x;
-    const dy = e.clientY - lastPointerRef.current.y;
-    lastPointerRef.current = { x: e.clientX, y: e.clientY };
-
-    if (dx === 0 && dy === 0) return;
+    const client = getClient();
+    if (!client) return;
 
     const { scaleX, scaleY } = pointerScale();
-    getClient()?.sendMoveRelative(dx * scaleX, dy * scaleY);
-    moveCountRef.current += 1;
+    // Browser merges many touch samples into one event — coalesced list has the real path.
+    const samples = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+    for (const sample of samples) {
+      const dx = sample.clientX - lastPointerRef.current.x;
+      const dy = sample.clientY - lastPointerRef.current.y;
+      lastPointerRef.current = { x: sample.clientX, y: sample.clientY };
+      if (dx === 0 && dy === 0) continue;
+      client.sendMoveRelative(dx * scaleX, dy * scaleY);
+      moveCountRef.current += 1;
+    }
   }, [pointerScale, getClient]);
 
   const onTrackpadPointerUp = useCallback((e) => {
+    getClient()?.flushMoves();
     if (activePointerRef.current === e.pointerId) {
       activePointerRef.current = null;
     }
@@ -72,7 +78,7 @@ export default function IdeumRemoteControlOverlay({
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [getClient]);
 
   const onClickButton = useCallback((e) => {
     e.preventDefault();

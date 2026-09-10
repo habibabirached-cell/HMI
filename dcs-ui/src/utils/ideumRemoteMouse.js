@@ -23,6 +23,9 @@ export class IdeumRemoteMouseClient {
     this.url = url;
     this.ws = null;
     this.connected = false;
+    this._pendingDx = 0;
+    this._pendingDy = 0;
+    this._flushRaf = null;
   }
 
   connect() {
@@ -94,13 +97,40 @@ export class IdeumRemoteMouseClient {
     this.connected = false;
   }
 
-  /** Relative move in virtual-desktop pixels (trackpad drag — no jump on finger down). */
-  sendMoveRelative(dx, dy) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    const rdx = Math.round(dx);
-    const rdy = Math.round(dy);
+  _flushPendingMove() {
+    this._flushRaf = null;
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this._pendingDx = 0;
+      this._pendingDy = 0;
+      return;
+    }
+    const rdx = Math.round(this._pendingDx);
+    const rdy = Math.round(this._pendingDy);
+    this._pendingDx = 0;
+    this._pendingDy = 0;
     if (rdx === 0 && rdy === 0) return;
-    this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
+    try {
+      this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
+    } catch (e) {
+      console.warn('[ideum-mouse] move send failed', e);
+    }
+  }
+
+  /** Queue relative move — never blocks the pointer handler (avoids touch coalescing stalls). */
+  sendMoveRelative(dx, dy) {
+    this._pendingDx += dx;
+    this._pendingDy += dy;
+    if (this._flushRaf != null) return;
+    this._flushRaf = requestAnimationFrame(() => this._flushPendingMove());
+  }
+
+  /** Send any queued deltas immediately (call on pointer up). */
+  flushMoves() {
+    if (this._flushRaf != null) {
+      cancelAnimationFrame(this._flushRaf);
+      this._flushRaf = null;
+    }
+    this._flushPendingMove();
   }
 
   sendClick() {
