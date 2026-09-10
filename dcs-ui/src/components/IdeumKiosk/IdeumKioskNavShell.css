@@ -1,0 +1,19 @@
+.ideum-kiosk-nav-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  touch-action: none;
+  user-select: none;
+}
+
+.ideum-kiosk-nav-shell__viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.ideum-kiosk-nav-shell__canvas-anchor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}

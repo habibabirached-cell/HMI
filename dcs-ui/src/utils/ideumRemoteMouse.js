@@ -26,7 +26,6 @@ export class IdeumRemoteMouseClient {
     this._pendingDx = 0;
     this._pendingDy = 0;
     this._flushTimer = null;
-    this._wsSendCount = 0;
   }
 
   connect() {
@@ -112,7 +111,6 @@ export class IdeumRemoteMouseClient {
     if (rdx === 0 && rdy === 0) return;
     try {
       this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
-      this._wsSendCount += 1;
     } catch (e) {
       console.warn('[ideum-mouse] move send failed', e);
     }
@@ -132,14 +130,6 @@ export class IdeumRemoteMouseClient {
     this._pendingDx += dx;
     this._pendingDy += dy;
     this._scheduleFlush();
-  }
-
-  getWsSendCount() {
-    return this._wsSendCount;
-  }
-
-  getPendingDelta() {
-    return { dx: this._pendingDx, dy: this._pendingDy };
   }
 
   /** Push any coalesced pending deltas (call on pointer up). */

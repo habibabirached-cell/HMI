@@ -122,10 +122,6 @@ export function connectPeerClusterWebSocket(peerBackendUrl, onMessage) {
       return;
     }
 
-    ws.onopen = () => {
-      console.info('[cluster] Peer WebSocket connected', url);
-    };
-
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
@@ -192,10 +188,6 @@ export function connectClusterWebSocket(onMessage) {
       retryTimer = setTimeout(connect, 3000);
       return;
     }
-
-    ws.onopen = () => {
-      console.info('[cluster] WebSocket connected', url);
-    };
 
     ws.onmessage = (event) => {
       try {

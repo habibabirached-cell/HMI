@@ -1,0 +1,22 @@
+{
+  "name": "DataCenter",
+  "description": "Data Centers menu only — three panes (200 MW, Configurator, 500 MW). Loaded from Ideum05.",
+  "ideumKioskMode": true,
+  "ideumDataCenterOnly": true,
+  "canvasComponents": [],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 1,
+    "pan": { "x": 0, "y": 0 },
+    "mode": "design"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "designUiSession": {},
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": []
+}

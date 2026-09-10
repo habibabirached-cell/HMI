@@ -295,6 +295,7 @@ const SCREENS = {
       id: 'data-centers',
       label: 'Data Centers',
       preview: 'Data center applications',
+      navLoadDesignCatalog: 'dataCenter',
       modelUrl: IDEUM05_NAV_MODEL_URLS.outdoorDataCenter,
       modelFitScale: 0.8,
       modelYOffset: 0.54,

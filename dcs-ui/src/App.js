@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect, startTransition } from 'react';
 import ComponentLibrary from './components/ComponentLibrary';
 import IdeumRemoteControlOverlay from './components/IdeumKiosk/IdeumRemoteControlOverlay';
+import IdeumKioskNavShell from './components/IdeumKiosk/IdeumKioskNavShell';
 import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
 import SimulationControls from './components/SimulationControls';
@@ -84,6 +85,10 @@ import {
   IDEUM06_CATALOG,
   isIdeum06DesignName,
 } from './utils/ideum06Design';
+import {
+  DATA_CENTER_CATALOG,
+  isDataCenterDesignName,
+} from './utils/ideumDataCenterDesign';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
@@ -1043,6 +1048,8 @@ function App() {
   /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
   const ideum05OverlayLoadedMetaRef = useRef(null);
   const ideum05OverlayLoadGenRef = useRef(0);
+  /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
+  const pendingIdeum05NavStackRef = useRef(null);
   const initialConfigurator = resolveConfiguratorFromUrl();
   const [configuratorOpen, setConfiguratorOpen] = useState(initialConfigurator.open);
   const [configuratorMode, setConfiguratorMode] = useState(initialConfigurator.mode);
@@ -1107,6 +1114,7 @@ function App() {
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const isIdeum06 = isIdeum06DesignName(currentConfigName);
+  const isDataCenter = isDataCenterDesignName(currentConfigName);
   const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
@@ -3869,10 +3877,7 @@ function App() {
     }
 
     void client.sendFocusAsync(target).then((ok) => {
-      if (ok) {
-        console.info('[cluster] kiosk focus sent via ws :8767', command, target);
-        return;
-      }
+      if (ok) return;
       console.warn('[cluster] ws focus failed, trying http :8766', command);
       void sendKioskFocusDirect(machineRole, target).catch((e) => {
         console.warn('[cluster] http focus failed', command, e);
@@ -3902,7 +3907,6 @@ function App() {
     if (isDirectKioskFocusCommand(command)) {
       try {
         const result = await sendKioskFocusDirect(role, KIOSK_FOCUS_BY_COMMAND[command]);
-        console.info('[cluster] kiosk focus direct ok', command, result);
         return { ok: true, command, direct: true, ...result };
       } catch (e) {
         console.warn('[cluster] kiosk focus direct failed, trying backend relay', command, e);
@@ -3910,9 +3914,7 @@ function App() {
     }
 
     try {
-      const result = await sendRemoteCommandToMaingear(role, command, payload);
-      console.info('[cluster] remote command ok', command, result);
-      return result;
+      return await sendRemoteCommandToMaingear(role, command, payload);
     } catch (e) {
       console.warn('[cluster] remote command failed', command, e);
       alert(e.message || `Failed to send "${command}" to Maingear.`);
@@ -3991,12 +3993,34 @@ function App() {
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [fireKioskFocusFast, loadDesignFromCatalog]);
 
+  /** DataCenter Back — return to Ideum05 root landing (unloads this isolated menu). */
+  const handleDataCenterBack = useCallback(() => {
+    void loadDesignFromCatalog(IDEUM05_CATALOG);
+  }, [loadDesignFromCatalog]);
+
+  /** DataCenter card tap — deeper screens still use full Ideum05 for now. */
+  const handleDataCenterNavSelect = useCallback((cardId) => {
+    const drillTarget = getIdeum05NavDrillTarget('data-centers', cardId);
+    if (!drillTarget) return;
+    const overlayCmd = getIdeum05OverlayClusterCommand(drillTarget);
+    const controlsCmd = getIdeum05ControlsClusterCommand(drillTarget);
+    if (overlayCmd) {
+      void sendIdeumClusterCommand(overlayCmd);
+    } else if (controlsCmd) {
+      void sendIdeumClusterCommand(controlsCmd);
+    }
+    pendingIdeum05NavStackRef.current = [IDEUM05_NAV_ROOT, 'data-centers', drillTarget];
+    void loadDesignFromCatalog(IDEUM05_CATALOG);
+  }, [loadDesignFromCatalog, sendIdeumClusterCommand]);
+
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const loadCatalog = getIdeum05NavLoadDesignCatalog(screenId, cardId);
     if (loadCatalog) {
       if (loadCatalog === IDEUM06_CATALOG) {
         fireKioskFocusFast('showVernova');
+      } else if (loadCatalog === DATA_CENTER_CATALOG) {
+        pendingIdeum05NavStackRef.current = null;
       }
       void loadDesignFromCatalog(loadCatalog);
       return;
@@ -7490,9 +7514,20 @@ function App() {
     setIdeumSimulateMirror(false);
     setIdeumSimulateLoopMirror(false);
     setIdeumSimulationSpeedMirror(1);
-    setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    const pendingNavStack = pendingIdeum05NavStackRef.current;
+    pendingIdeum05NavStackRef.current = null;
+    setIdeum05NavStack(
+      Array.isArray(pendingNavStack) && pendingNavStack.length
+        ? pendingNavStack
+        : [IDEUM05_NAV_ROOT],
+    );
     const loadedIsIdeum05 = isIdeum05DesignName(loadedConfig.name);
-    if (loadedIsIdeum05) {
+    const loadedIsDataCenter = isDataCenterDesignName(loadedConfig.name);
+    if (loadedIsDataCenter) {
+      setIdeum05NavStack(['data-centers']);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+    } else if (loadedIsIdeum05) {
       ideum05NavViewportsRef.current = normalizeIdeum05NavViewports(
         data.ideum05NavViewports ?? dus?.ideum05NavViewports,
         data.systemState,
@@ -8087,13 +8122,13 @@ function App() {
   }, [machineRole?.isMaingear]);
 
   useEffect(() => {
-    if (isIdeum06 || !machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
+    if (isIdeum06 || isDataCenter || !machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
     return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
         setIdeumSimulationMirror(msg.running);
       }
     });
-  }, [isIdeum06, machineRole?.isIdeum, machineRole?.peerBackendUrl]);
+  }, [isIdeum06, isDataCenter, machineRole?.isIdeum, machineRole?.peerBackendUrl]);
 
   useEffect(() => {
     const onClusterLan = typeof window !== 'undefined'
@@ -8107,9 +8142,7 @@ function App() {
     const url = resolveMaingearMouseWebSocketUrl(machineRole);
     const client = new IdeumRemoteMouseClient(url);
     ideumMouseClientRef.current = client;
-    client.connect()
-      .then(() => console.info('[ideum-mouse] preconnected', url))
-      .catch((e) => console.warn('[ideum-mouse] preconnect failed', url, e));
+    client.connect().catch((e) => console.warn('[ideum-mouse] preconnect failed', url, e));
     return () => {
       client.disconnect();
       if (ideumMouseClientRef.current === client) {
@@ -8582,6 +8615,54 @@ function App() {
       {renderSimulationControls(true)}
     </div>
   );
+
+  if (isDataCenter) {
+    return (
+      <FontScaleProvider
+        uiFontPxShift={uiFontPxShift}
+        canvasFontPxShift={canvasFontPxShift}
+        collapsedComponentFontPxShift={collapsedComponentFontPxShift}
+        setUiFontPxShift={setUiFontPxShift}
+        setCanvasFontPxShift={setCanvasFontPxShift}
+        setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
+      >
+        <div className="app-container app-container--ideum-mode">
+          <IdeumKioskNavShell
+            screenId="data-centers"
+            onSelectCard={handleDataCenterNavSelect}
+            onBack={handleDataCenterBack}
+            showBack
+            zoom={zoom}
+            pan={pan}
+          />
+        </div>
+        {showDialog && (
+          <SaveLoadDialog
+            mode={dialogMode}
+            onClose={handleCloseDialog}
+            onSave={handleConfigurationSaved}
+            onLoad={handleConfigurationLoaded}
+            onOpenConfigurator={handleOpenConfigurator}
+            onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+            destinationDesignDir={designApiPath}
+            getCurrentConfiguration={getCurrentConfiguration}
+            currentConfiguration={getCurrentConfiguration()}
+            currentConfigName={currentConfigName}
+            setSavingOverlay={setIsSaving}
+          />
+        )}
+        {isSaving && (
+          <div className="saving-overlay">
+            <div className="saving-spinner-container">
+              <div className="saving-spinner" />
+              <div className="saving-text">Saving Configuration...</div>
+              <div className="saving-subtext">Please wait</div>
+            </div>
+          </div>
+        )}
+      </FontScaleProvider>
+    );
+  }
 
   if (isIdeum06) {
     return (
