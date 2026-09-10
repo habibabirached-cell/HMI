@@ -39,6 +39,8 @@ BRIDGE_HOST = os.environ.get("KIOSK_MOUSE_HOST", "0.0.0.0")
 BRIDGE_PORT = int(os.environ.get("KIOSK_MOUSE_PORT", "8767"))
 FOCUS_HOST = os.environ.get("KIOSK_FOCUS_HOST", "127.0.0.1")
 FOCUS_PORT = int(os.environ.get("KIOSK_FOCUS_PORT", "8766"))
+BRIDGE_VERSION = 2
+BRIDGE_CAPABILITIES = ("move", "click", "focus")
 
 
 class POINT(ctypes.Structure):
@@ -176,7 +178,12 @@ async def client_handler(websocket) -> None:
     print(f"[kiosk-mouse] client connected {peer}", flush=True)
     await asyncio.to_thread(beep_ideum_signal)
     try:
-        await websocket.send(json.dumps({"type": "hello", "bounds": virtual_screen_bounds()}))
+        await websocket.send(json.dumps({
+            "type": "hello",
+            "version": BRIDGE_VERSION,
+            "capabilities": list(BRIDGE_CAPABILITIES),
+            "bounds": virtual_screen_bounds(),
+        }))
         async for raw in websocket:
             if not isinstance(raw, str):
                 continue

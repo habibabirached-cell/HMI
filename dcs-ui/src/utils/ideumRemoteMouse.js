@@ -49,11 +49,18 @@ export class IdeumRemoteMouseClient {
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'hello' && msg.bounds) {
-            this.bounds = msg.bounds;
+          if (msg.type === 'hello') {
+            if (msg.bounds) this.bounds = msg.bounds;
+            this.capabilities = msg.capabilities || [];
+            this.bridgeVersion = msg.version ?? 1;
+            if (!this.capabilities.includes('focus')) {
+              console.warn(
+                '[ideum-mouse] Maingear KioskMouseServer is outdated (no focus). Restart BAT\\start-kiosk-mouse-server.bat',
+              );
+            }
             if (!settled) {
               settled = true;
-              resolve(msg.bounds);
+              resolve(this.bounds);
             }
           }
         } catch {
@@ -119,6 +126,10 @@ export class IdeumRemoteMouseClient {
       return false;
     }
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    if (this.capabilities?.length && !this.capabilities.includes('focus')) {
+      console.warn('[ideum-mouse] server has no focus capability — restart KioskMouseServer on Maingear');
+      return false;
+    }
     this.ws.send(JSON.stringify({ type: 'focus', target }));
     return true;
   }
