@@ -4507,40 +4507,6 @@ function App() {
     currentConfigName,
   ]);
 
-  useEffect(() => {
-    if (!pendingP2R18InitRef.current) return;
-    if (!designApiPath || !csvStatus?.use_design_dir) return;
-    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
-      return;
-    }
-    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
-    if (!designEnsembles.length) return;
-
-    const ens = designEnsembles.find((e) => e.id === P2R18_ENSEMBLE_ID);
-    if (!ens) return;
-
-    pendingP2R18InitRef.current = false;
-
-    void (async () => {
-      handleStopSimulation();
-      handleWorkspaceLayoutPresetChange('conf3');
-      applyNoBessNoStatcomCanvas();
-      await handleSelectEnsemble(ens);
-      await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
-      setRightRailCollapsed(false);
-      setRightRailGridPeek(true);
-    })();
-  }, [
-    designApiPath,
-    csvStatus?.use_design_dir,
-    currentConfigName,
-    designEnsembles,
-    handleSelectEnsemble,
-    handleStopSimulation,
-    handleWorkspaceLayoutPresetChange,
-    applyNoBessNoStatcomCanvas,
-  ]);
-
   const handleLiveRtds = useCallback(async () => {
     if (!designApiPath) {
       alert('Load a design first.');
@@ -4722,6 +4688,75 @@ function App() {
     }
   };
 
+  /** Default P2R_18 wall state: upper baseline canvas, noBessNoStatcom preset, simulation playing. */
+  const applyP2R18DefaultState = useCallback(async () => {
+    if (!designApiPath) return false;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return false;
+    }
+
+    stopLiveRtdsStream();
+    handleStopSimulation();
+    handleWorkspaceLayoutPresetChange('conf3');
+    applyNoBessNoStatcomCanvas();
+
+    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
+    if (!ensemble) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    pendingP2R18InitRef.current = false;
+
+    if (simulationMetadataRef.current?.ensembleId !== ensemble.id) {
+      await handleSelectEnsemble(ensemble);
+    }
+
+    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
+    if (presetOk) {
+      await restartSimulationPlaybackFromStart();
+      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
+      if (shortcut) {
+        setActiveQuickScenarioPlaying(shortcut);
+      }
+    }
+
+    setQuickScenarioDesignPrimedPreset(null);
+    setRightRailCollapsed(false);
+    setRightRailGridPeek(true);
+    return presetOk;
+  }, [
+    designApiPath,
+    currentConfigName,
+    designEnsembles,
+    quickScenarioButtons,
+    stopLiveRtdsStream,
+    handleStopSimulation,
+    handleWorkspaceLayoutPresetChange,
+    applyNoBessNoStatcomCanvas,
+    handleSelectEnsemble,
+  ]);
+
+  useEffect(() => {
+    if (!pendingP2R18InitRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return;
+    }
+    void applyP2R18DefaultState();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    applyP2R18DefaultState,
+  ]);
+
   const handleIdeum05Reset = useCallback(async () => {
     await handleIdeumControlButtonClick({ command: 'reset' });
   }, [handleIdeumControlButtonClick]);
@@ -4805,6 +4840,7 @@ function App() {
           csv_status: { design_catalog_rel: designApiPath },
         })
       ) {
+        await applyP2R18DefaultState();
         return;
       }
       try {
