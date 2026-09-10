@@ -767,8 +767,8 @@
       "name": "Load HD",
       "fullName": "Open both CBs and load HD configuration",
       "position": {
-        "x": 900,
-        "y": 20
+        "x": 1370,
+        "y": 40
       },
       "status": "idle",
       "properties": {

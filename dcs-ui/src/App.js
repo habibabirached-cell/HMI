@@ -270,8 +270,6 @@ function clearConfiguratorViewFromUrl() {
   window.history.replaceState(null, '', next);
 }
 
-const P2R18_ENSEMBLE_ID = 'all';
-const P2R18_DEFAULT_PRESET = 'noBessNoStatcom';
 
 function isP2R18Design(loadedConfig) {
   const name = String(loadedConfig?.name || '').toLowerCase();
@@ -1019,7 +1017,6 @@ function App() {
   /** Deep link calls the same loader as the dialog but must not also run localStorage session-restore for the same navigation. */
   const loadSkipSessionRestoreRef = useRef(false);
   const pendingHdAeroInitRef = useRef(false);
-  const pendingP2R18InitRef = useRef(false);
   /**
    * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
@@ -1027,6 +1024,8 @@ function App() {
   const pendingDesignUiRestoreRef = useRef(null);
   /** Set when GET /ensembles finishes for `designApiPath` so post-load restore can distinguish “still fetching” from “empty list”. */
   const ensemblesHydratedForPathRef = useRef(null);
+  /** designApiPath for the loaded simulation/ensemble — both HD_Aero and P2R_18 reuse ensemble id `all`. */
+  const simulationDesignPathRef = useRef(null);
   const [saveSimConfigDialogOpen, setSaveSimConfigDialogOpen] = useState(false);
   const [saveScenarioAsDialogOpen, setSaveScenarioAsDialogOpen] = useState(false);
   const [saveScenarioAsReplaceTarget, setSaveScenarioAsReplaceTarget] = useState(null);
@@ -1798,6 +1797,36 @@ function App() {
     }
   };
 
+  /** Clear simulation/ensemble state when switching designs (shared ensemble ids like `all`). */
+  const resetSimulationStateForDesignLoad = () => {
+    handleStopSimulation();
+    setSimulationTime(0);
+    simulationMetadataRef.current = null;
+    setSimulationMetadata(null);
+    simulationDesignPathRef.current = null;
+    simulationRawRowsRef.current = null;
+    simulationRawRowsSimIdRef.current = null;
+    setSimulationData([]);
+    setEnsembleMemberSimulationData(null);
+    ensembleMemberSimulationDataRef.current = {};
+    ensembleMemberDerivedBySimIdRef.current = {};
+    ensembleMemberMetaCacheRef.current = {};
+    ensembleLoadChainsRef.current = {};
+    setEnsembleColumnGroups([]);
+    setActiveNamedSimulationConfig(null);
+    activeNamedSimulationConfigRef.current = null;
+    setNamedSimulationConfigs([]);
+    setLastNamedPresetForUi(null);
+    setActiveQuickScenarioPlaying(null);
+    setQuickScenarioDesignPrimedPreset(null);
+    setSimulationLoadProgress(null);
+    ensemblesHydratedForPathRef.current = null;
+    pendingHdAeroInitRef.current = false;
+    setOpenCharts([]);
+    setChartStacks([]);
+    setPerChartSampleStep({});
+  };
+
   /*
    * Apply chart_panel blob from an ensemble entry (select or named-preset activate).
    */
@@ -1965,6 +1994,7 @@ function App() {
         };
         simulationMetadataRef.current = ensembleMetadata;
         setSimulationMetadata(ensembleMetadata);
+        simulationDesignPathRef.current = designApiPath;
 
         const cp = ensemble.chart_panel;
         const primary = members[0];
@@ -2952,6 +2982,8 @@ function App() {
         columns: columnsForUi,
         derivedVariables,
       };
+
+      simulationDesignPathRef.current = designApiPath;
 
       startTransition(() => {
         if (savedSpeed != null) {
@@ -4660,7 +4692,10 @@ function App() {
           alert('This ensemble no longer exists in the design.');
           return;
         }
-        if (simulationMetadata?.ensembleId !== ensemble.id) {
+        const sameDesignEnsemble =
+          simulationMetadata?.ensembleId === ensemble.id
+          && simulationDesignPathRef.current === designApiPath;
+        if (!sameDesignEnsemble) {
           await handleSelectEnsemble(ensemble);
         }
         const ensembleOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
@@ -4687,75 +4722,6 @@ function App() {
       alert(e.message || 'Failed to load scenario shortcut');
     }
   };
-
-  /** Default P2R_18 wall state: upper baseline canvas, noBessNoStatcom preset, simulation playing. */
-  const applyP2R18DefaultState = useCallback(async () => {
-    if (!designApiPath) return false;
-    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
-      return false;
-    }
-
-    stopLiveRtdsStream();
-    handleStopSimulation();
-    handleWorkspaceLayoutPresetChange('conf3');
-    applyNoBessNoStatcomCanvas();
-
-    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
-      pendingP2R18InitRef.current = true;
-      return false;
-    }
-
-    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
-    if (!ensemble) {
-      pendingP2R18InitRef.current = true;
-      return false;
-    }
-
-    pendingP2R18InitRef.current = false;
-
-    if (simulationMetadataRef.current?.ensembleId !== ensemble.id) {
-      await handleSelectEnsemble(ensemble);
-    }
-
-    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
-    if (presetOk) {
-      await restartSimulationPlaybackFromStart();
-      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
-      if (shortcut) {
-        setActiveQuickScenarioPlaying(shortcut);
-      }
-    }
-
-    setQuickScenarioDesignPrimedPreset(null);
-    setRightRailCollapsed(false);
-    setRightRailGridPeek(true);
-    return presetOk;
-  }, [
-    designApiPath,
-    currentConfigName,
-    designEnsembles,
-    quickScenarioButtons,
-    stopLiveRtdsStream,
-    handleStopSimulation,
-    handleWorkspaceLayoutPresetChange,
-    applyNoBessNoStatcomCanvas,
-    handleSelectEnsemble,
-  ]);
-
-  useEffect(() => {
-    if (!pendingP2R18InitRef.current) return;
-    if (!designApiPath || !csvStatus?.use_design_dir) return;
-    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
-      return;
-    }
-    void applyP2R18DefaultState();
-  }, [
-    designApiPath,
-    csvStatus?.use_design_dir,
-    currentConfigName,
-    designEnsembles,
-    applyP2R18DefaultState,
-  ]);
 
   const handleIdeum05Reset = useCallback(async () => {
     await handleIdeumControlButtonClick({ command: 'reset' });
@@ -4840,7 +4806,6 @@ function App() {
           csv_status: { design_catalog_rel: designApiPath },
         })
       ) {
-        await applyP2R18DefaultState();
         return;
       }
       try {
@@ -4849,7 +4814,6 @@ function App() {
         );
         if (!res.ok) return;
         const loadedConfig = await res.json();
-        loadSkipSessionRestoreRef.current = true;
         handleConfigurationLoadedRef.current?.(loadedConfig);
       } catch (e) {
         console.warn('loadP2R18 remote command failed', e);
@@ -7640,6 +7604,8 @@ function App() {
     const skipSessionRestore = loadSkipSessionRestoreRef.current;
     loadSkipSessionRestoreRef.current = false;
 
+    resetSimulationStateForDesignLoad();
+
     dcsSimDbg('handleConfigurationLoaded ▶', {
       configName: loadedConfig.name,
       skipSessionRestore,
@@ -7670,12 +7636,7 @@ function App() {
     }
 
     if (isHDAeroDesign(loadedConfig)) {
-      pendingP2R18InitRef.current = false;
       pendingHdAeroInitRef.current = true;
-      loadSkipSessionRestoreRef.current = true;
-    } else if (isP2R18Design(loadedConfig)) {
-      pendingHdAeroInitRef.current = false;
-      pendingP2R18InitRef.current = true;
       loadSkipSessionRestoreRef.current = true;
     }
     
@@ -8354,7 +8315,15 @@ function App() {
   });
 
   useEffect(() => {
-    const shouldListen = machineRole?.isMaingear || isLocalClusterDev();
+    if (machineRole?.isIdeum) return undefined;
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const likelyMaingearHost =
+      hostname === '192.168.50.1' || hostname === 'localhost' || hostname === '127.0.0.1';
+    const shouldListen =
+      machineRole?.isMaingear
+      || isLocalClusterDev()
+      || likelyMaingearHost
+      || (machineRole == null && likelyMaingearHost);
     if (!shouldListen) return undefined;
     return connectClusterWebSocket((msg) => {
       if (msg?.type === 'configurator_open_wall') {
@@ -8371,7 +8340,7 @@ function App() {
         handleRemoteClusterCommandRef.current(msg.command, msg.payload);
       }
     });
-  }, [machineRole?.isMaingear]);
+  }, [machineRole?.isMaingear, machineRole?.isIdeum]);
 
   useEffect(() => {
     if (

@@ -119,11 +119,20 @@ class ClusterConnectionManager:
     def __init__(self) -> None:
         self._clients: set[WebSocket] = set()
         self._lock = asyncio.Lock()
+        self._pending_messages: list[dict[str, Any]] = []
+        self._max_pending = 32
 
     async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()
         async with self._lock:
             self._clients.add(websocket)
+            pending = list(self._pending_messages)
+            self._pending_messages.clear()
+        for msg in pending:
+            try:
+                await websocket.send_text(json.dumps(msg))
+            except Exception:
+                pass
 
     async def disconnect(self, websocket: WebSocket) -> None:
         async with self._lock:
@@ -145,6 +154,11 @@ class ClusterConnectionManager:
             async with self._lock:
                 for ws in dead:
                     self._clients.discard(ws)
+        if sent == 0:
+            async with self._lock:
+                self._pending_messages.append(message)
+                if len(self._pending_messages) > self._max_pending:
+                    self._pending_messages = self._pending_messages[-self._max_pending :]
         return sent
 
 

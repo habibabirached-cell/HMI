@@ -78,6 +78,12 @@ export async function sendRemoteCommandToMaingear(peerBackendUrlOrRole, command,
   if (!res.ok) {
     throw new Error(data.detail || `Remote command failed (${res.status})`);
   }
+  if (data.deliveredToClients === 0) {
+    console.warn(
+      '[cluster] remote command queued on Maingear (UI not connected yet):',
+      command,
+    );
+  }
   return data;
 }
 
