@@ -84,10 +84,13 @@ import {
   IDEUM05_CATALOG,
   IDEUM06_CATALOG,
   isIdeum06DesignName,
+  isIdeumTrackpadOnlyConfig,
 } from './utils/ideum06Design';
 import {
   DATA_CENTER_CATALOG,
+  isDataCenterCatalogRef,
   isDataCenterDesignName,
+  isIdeumDataCenterOnlyConfig,
 } from './utils/ideumDataCenterDesign';
 import {
   getIdeum05NavDrillTarget,
@@ -1050,6 +1053,8 @@ function App() {
   const ideum05OverlayLoadGenRef = useRef(0);
   /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
   const pendingIdeum05NavStackRef = useRef(null);
+  /** Isolated Ideum kiosk shells: trackpad (ideum06) or data-centers menu only. */
+  const [ideumShellMode, setIdeumShellMode] = useState(null);
   const initialConfigurator = resolveConfiguratorFromUrl();
   const [configuratorOpen, setConfiguratorOpen] = useState(initialConfigurator.open);
   const [configuratorMode, setConfiguratorMode] = useState(initialConfigurator.mode);
@@ -1113,8 +1118,8 @@ function App() {
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
-  const isIdeum06 = isIdeum06DesignName(currentConfigName);
-  const isDataCenter = isDataCenterDesignName(currentConfigName);
+  const isIdeum06 = ideumShellMode === 'trackpad';
+  const isDataCenter = ideumShellMode === 'dataCenter';
   const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
@@ -7522,12 +7527,23 @@ function App() {
         : [IDEUM05_NAV_ROOT],
     );
     const loadedIsIdeum05 = isIdeum05DesignName(loadedConfig.name);
-    const loadedIsDataCenter = isDataCenterDesignName(loadedConfig.name);
+    const loadedIsDataCenter =
+      isIdeumDataCenterOnlyConfig(data)
+      || isDataCenterDesignName(loadedConfig.name)
+      || isDataCenterCatalogRef(loadedConfig.csv_status?.design_catalog_rel);
+    const loadedIsIdeum06Shell =
+      isIdeumTrackpadOnlyConfig(data) || isIdeum06DesignName(loadedConfig.name);
     if (loadedIsDataCenter) {
+      setIdeumShellMode('dataCenter');
       setIdeum05NavStack(['data-centers']);
       setZoom(1);
       setPan({ x: 0, y: 0 });
-    } else if (loadedIsIdeum05) {
+    } else if (loadedIsIdeum06Shell) {
+      setIdeumShellMode('trackpad');
+    } else {
+      setIdeumShellMode(null);
+    }
+    if (loadedIsIdeum05) {
       ideum05NavViewportsRef.current = normalizeIdeum05NavViewports(
         data.ideum05NavViewports ?? dus?.ideum05NavViewports,
         data.systemState,
@@ -8626,16 +8642,14 @@ function App() {
         setCanvasFontPxShift={setCanvasFontPxShift}
         setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
       >
-        <div className="app-container app-container--ideum-mode">
-          <IdeumKioskNavShell
-            screenId="data-centers"
-            onSelectCard={handleDataCenterNavSelect}
-            onBack={handleDataCenterBack}
-            showBack
-            zoom={zoom}
-            pan={pan}
-          />
-        </div>
+        <IdeumKioskNavShell
+          screenId="data-centers"
+          onSelectCard={handleDataCenterNavSelect}
+          onBack={handleDataCenterBack}
+          showBack
+          zoom={zoom}
+          pan={pan}
+        />
         {showDialog && (
           <SaveLoadDialog
             mode={dialogMode}

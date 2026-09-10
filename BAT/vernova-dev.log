@@ -1,5 +1,5 @@
 === Vernova dev server log ===
-Started: Thu 09/10/2026  1:36:47.41
+Started: Thu 09/10/2026  3:42:01.57
 Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
@@ -14,7 +14,7 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
 [INFO] Bound FastAPI backend to fixed port: 8001
 
-(node:39236) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(node:36308) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [36m[FastAPI][0m =======================================================
 [36m[FastAPI][0m  [FastAPI] Verona Spark Databank API running on:
@@ -22,263 +22,43 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 [36m[FastAPI][0m =======================================================
 [33m[FastAPI][0m INFO:     Will watch for changes in these directories: ['C:\\Users\\GEVer\\Documents\\HMI\\vernova-spark-engine_new']
 [33m[FastAPI][0m INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[33m[FastAPI][0m INFO:     Started reloader process [35220] using WatchFiles
-[33m[FastAPI][0m INFO:     Started server process [40708]
+[33m[FastAPI][0m INFO:     Started reloader process [28356] using WatchFiles
+[33m[FastAPI][0m INFO:     Started server process [31828]
 [33m[FastAPI][0m INFO:     Waiting for application startup.
 [33m[FastAPI][0m INFO:     Application startup complete.
 [33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
 
-  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m878[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m951[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.29.48.1:[1m5173[22m/[39m    [2mvEthernet (WSL (Hyp…[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.50.1:[1m5173[22m/[39m   [2mEthernet[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://190.168.13.5:[1m5173[22m/[39m   [2mEthernet 2[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.168.1:[1m5173[22m/[39m  [2mEthernet 3[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.2.87:[1m5173[22m/[39m    [2mWi-Fi[22m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.23.1.10:[1m5173[22m/[39m    [2mWi-Fi[22m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m1:36:51 AM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
-[36m[FastAPI][0m INFO:     127.0.0.1:56906 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62554 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53022 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53023 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53024 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53025 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53026 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55305 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55307 - "GET /api/v1/series/CFG6/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55306 - "GET /api/v1/series/CFG6/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55308 - "GET /api/v1/series/CFG6/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55560 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53606 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55983 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53834 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57336 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57337 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57338 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57339 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57340 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65008 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62354 - "GET /api/v1/series/CFG5/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62353 - "GET /api/v1/series/CFG5/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62355 - "GET /api/v1/series/CFG5/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54466 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64826 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51786 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54764 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54840 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56821 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52761 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62163 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58161 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61310 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49212 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62479 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59771 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59772 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59773 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59774 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59775 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52961 - "GET /api/v1/series/CFG2/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52962 - "GET /api/v1/series/CFG2/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52963 - "GET /api/v1/series/CFG2/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52964 - "GET /api/v1/series/CFG2/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55069 - "GET /api/v1/series/CFG2/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54223 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51573 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54117 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49869 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56148 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63879 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64429 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56035 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50486 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53262 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63299 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51849 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55023 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64635 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65422 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63089 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55153 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60835 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56099 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62572 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50649 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50722 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56548 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61940 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60760 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65210 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59952 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52526 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50962 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58314 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56439 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62326 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61217 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56528 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53177 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55720 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50514 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52751 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58317 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63126 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59503 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54190 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49210 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57842 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65114 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56795 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56847 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58683 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52307 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49152 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51254 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63171 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56768 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64677 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60871 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53279 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62485 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55710 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57673 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55072 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51656 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54071 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49908 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56604 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55317 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61903 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49773 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55704 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57876 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63529 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60558 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59717 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49607 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57415 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50635 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49377 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59607 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54772 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55524 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64926 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51046 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64655 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56047 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54671 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65517 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55920 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55928 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62223 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62224 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62225 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62226 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62227 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63805 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63806 - "GET /api/v1/series/CFG5/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63807 - "GET /api/v1/series/CFG5/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59851 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59850 - "GET /api/v1/series/CFG5/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59228 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54488 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65013 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57965 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55256 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55257 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52588 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57357 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65348 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56679 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56681 - "GET /api/v1/series/CFG5/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56680 - "GET /api/v1/series/CFG5/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56682 - "GET /api/v1/series/CFG5/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58717 - "GET /api/v1/series/CFG5/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52134 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54863 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60254 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49305 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61672 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60099 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64477 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64031 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61006 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61962 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56255 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53147 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61539 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61540 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61541 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61542 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61543 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59984 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59986 - "GET /api/v1/series/CFG6/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59985 - "GET /api/v1/series/CFG6/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59987 - "GET /api/v1/series/CFG6/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53689 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63980 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49278 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49279 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49280 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49281 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49282 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62859 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62860 - "GET /api/v1/series/CFG6/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62861 - "GET /api/v1/series/CFG6/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58628 - "GET /api/v1/series/CFG6/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58418 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57752 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64343 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64344 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64345 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64346 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64347 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50917 - "GET /api/v1/series/CFG4/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50919 - "GET /api/v1/series/CFG4/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50918 - "GET /api/v1/series/CFG4/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52362 - "GET /api/v1/series/CFG4/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52363 - "GET /api/v1/series/CFG4/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57719 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62760 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:65325 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54957 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53877 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50531 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60855 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63147 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64877 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52807 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:52760 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:61897 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56459 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57911 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58628 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54671 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56364 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56365 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49480 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55399 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53795 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62560 - "GET /api/v1/series/CFG7/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62561 - "GET /api/v1/series/CFG7/ROCOF?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62563 - "GET /api/v1/series/CFG7/PHJUMP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62562 - "GET /api/v1/series/CFG7/VSTEP?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58628 - "GET /api/v1/series/CFG7/SCL?phase=pre HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49367 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:57813 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:50928 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56488 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55347 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51340 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59258 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49930 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:64168 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:56226 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62507 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:59885 - "GET /api/v1/health HTTP/1.1" 200 OK
+[2m3:42:05 AM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
+[36m[FastAPI][0m INFO:     127.0.0.1:59939 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:54655 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:54657 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:54658 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:54659 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:54660 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:50431 - "GET /api/v1/series/CFG6/ROCOF?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:50430 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:57689 - "GET /api/v1/series/CFG6/VSTEP?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:55915 - "GET /api/v1/series/CFG6/PHJUMP?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:55914 - "GET /api/v1/series/CFG6/SCL?phase=pre HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:62549 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:53970 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:64319 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:57829 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63057 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:49211 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:58340 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:59278 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:56700 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:49221 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63947 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:51125 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:63224 - "GET /api/v1/health HTTP/1.1" 200 OK

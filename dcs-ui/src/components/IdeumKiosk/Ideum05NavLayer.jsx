@@ -149,7 +149,8 @@ export default function Ideum05NavLayer({
   screenId,
   pan,
   zoom,
-  canvasRef,
+  canvasRef = null,
+  viewportRef = null,
   onSelectCard,
   onBack,
   showBack = false,
@@ -158,28 +159,41 @@ export default function Ideum05NavLayer({
   const cards = getIdeum05NavCards(screenId);
 
   useLayoutEffect(() => {
-    const canvasEl = canvasRef?.current;
-    if (!canvasEl || !cards.length) {
+    if (!cards.length) {
       setSlots([]);
       return undefined;
     }
 
-    const container = canvasEl.parentElement;
+    const measureViewport = () => {
+      const container = viewportRef?.current ?? canvasRef?.current?.parentElement;
+      const width = Math.max(
+        container?.clientWidth ?? 0,
+        typeof window !== 'undefined' ? window.innerWidth : 1920,
+      );
+      const height = Math.max(
+        container?.clientHeight ?? 0,
+        typeof window !== 'undefined' ? window.innerHeight : 1080,
+      );
+      return { width, height, zoom };
+    };
 
     const update = () => {
-      const viewport = container
-        ? { width: container.clientWidth, height: container.clientHeight, zoom }
-        : { zoom };
+      const viewport = measureViewport();
       const cardLayout = getIdeum05NavCardLayout(screenId, viewport);
       setSlots(
-        cards.map((card, i) =>
-          layoutNavCard(card, cardLayout[i], pan, zoom),
-        ),
+        cards
+          .map((card, i) => {
+            const layout = cardLayout[i];
+            if (!layout) return null;
+            return layoutNavCard(card, layout, pan, zoom);
+          })
+          .filter(Boolean),
       );
     };
 
     update();
 
+    const container = viewportRef?.current ?? canvasRef?.current?.parentElement;
     if (typeof ResizeObserver !== 'undefined' && container) {
       const ro = new ResizeObserver(update);
       ro.observe(container);
@@ -188,9 +202,15 @@ export default function Ideum05NavLayer({
 
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [cards, pan, zoom, canvasRef, screenId]);
+  }, [cards, pan, zoom, canvasRef, viewportRef, screenId]);
 
-  if (!slots.length) return null;
+  if (!slots.length) {
+    return (
+      <div className="ideum05-nav-layer" aria-hidden={false}>
+        {showBack ? <Ideum05BackButton onBack={onBack} /> : null}
+      </div>
+    );
+  }
 
   const matchedImageSizes = computeMatchedImageSizes(slots, zoom);
 

@@ -10,3 +10,10 @@ export function isIdeumDataCenterOnlyConfig(data) {
   if (!data || typeof data !== 'object') return false;
   return data.ideumDataCenterOnly === true || isDataCenterDesignName(data.name);
 }
+
+/** Match display name or catalog folder (dataCenter). */
+export function isDataCenterCatalogRef(pathOrName) {
+  if (pathOrName == null || pathOrName === '') return false;
+  const leaf = String(pathOrName).replace(/\\/g, '/').split('/').pop()?.toLowerCase() || '';
+  return leaf === 'datacenter';
+}

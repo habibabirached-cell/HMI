@@ -425,6 +425,8 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _hdq = conf.get("hiddenDefaultQuickScenarios")
     _icb = conf.get("ideumControlButtons")
     _ikm = conf.get("ideumKioskMode")
+    _idco = conf.get("ideumDataCenterOnly")
+    _ito = conf.get("ideumTrackpadOnly")
     _rcp = conf.get("remoteControlProfile")
     _rct = conf.get("remoteControlTarget")
     _bts = conf.get("busTransferSegments")
@@ -454,6 +456,8 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         "hiddenDefaultQuickScenarios": _hdq if isinstance(_hdq, list) else [],
         "ideumControlButtons": _icb if isinstance(_icb, list) else [],
         "ideumKioskMode": bool(_ikm),
+        "ideumDataCenterOnly": bool(_idco),
+        "ideumTrackpadOnly": bool(_ito),
         "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
         "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
         "busTransferSegments": _bts if isinstance(_bts, list) else [],
