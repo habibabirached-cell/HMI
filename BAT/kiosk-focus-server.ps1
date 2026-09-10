@@ -6,20 +6,30 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $Port = 8766
-$Prefix = "http://127.0.0.1:$Port/"
+$prefixes = @(
+    "http://127.0.0.1:$Port/",
+    "http://192.168.50.1:$Port/"
+)
 
 . (Join-Path $PSScriptRoot "kiosk-windows.ps1")
 
 $listener = [System.Net.HttpListener]::new()
-$listener.Prefixes.Add($Prefix)
+foreach ($prefix in $prefixes) {
+    $listener.Prefixes.Add($prefix)
+}
 try {
     $listener.Start()
 } catch {
     Write-Host "Kiosk focus server already running or port $Port unavailable: $($_.Exception.Message)"
+    Write-Host "If URL ACL is required, run as Administrator once:"
+    Write-Host "  netsh http add urlacl url=http://192.168.50.1:$Port/ user=Everyone"
     exit 0
 }
 
-Write-Host "Kiosk focus server listening on $Prefix"
+Write-Host "Kiosk focus server listening on:"
+foreach ($prefix in $prefixes) {
+    Write-Host "  $prefix"
+}
 
 function Write-JsonResponse {
     param(

@@ -92,6 +92,8 @@ services:
       - DATABASE_URL=sqlite:///./datacenter.db
       - ENVIRONMENT=development
       - RTDS_BRIDGE_URL=ws://host.docker.internal:8765
+      - KIOSK_FOCUS_HOST_URL=http://192.168.50.1:8766
+      - NO_PROXY=${NO_PROXY},host.docker.internal,192.168.50.1,192.168.50.2,127.0.0.1,localhost
     ports:
       - "5000:5000"                        # Backend API port
     extra_hosts:
