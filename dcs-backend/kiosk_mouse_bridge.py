@@ -46,8 +46,8 @@ FOCUS_HOST = os.environ.get("KIOSK_FOCUS_HOST", "127.0.0.1")
 FOCUS_PORT = int(os.environ.get("KIOSK_FOCUS_PORT", "8766"))
 BRIDGE_VERSION = 2
 BRIDGE_CAPABILITIES = ("move", "click", "focus")
-# Set KIOSK_MOUSE_LOG_MOVES=0 to silence high-rate trackpad lines.
-LOG_MOVES = os.environ.get("KIOSK_MOUSE_LOG_MOVES", "1").strip().lower() not in (
+# Set KIOSK_MOUSE_LOG_MOVES=1 to log every trackpad move (debug only).
+LOG_MOVES = os.environ.get("KIOSK_MOUSE_LOG_MOVES", "0").strip().lower() not in (
     "0",
     "false",
     "no",

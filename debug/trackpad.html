@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Ideum trackpad (standalone)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #e8e8e8;
+      font-family: system-ui, sans-serif;
+      touch-action: none;
+      user-select: none;
+    }
+    .shell {
+      display: flex;
+      height: 100%;
+    }
+    .sidebar {
+      flex: 0 0 25%;
+      max-width: 25%;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #333;
+    }
+    .tcp-toggle {
+      flex: 1;
+      width: 100%;
+      border: none;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      font-size: clamp(18px, 2.5vw, 32px);
+    }
+    .tcp-toggle.is-active {
+      background: linear-gradient(180deg, #1b5e20 0%, #0d3d12 100%);
+      color: #fff;
+    }
+    .tcp-toggle.is-paused {
+      background: linear-gradient(180deg, #b71c1c 0%, #7f0000 100%);
+      color: #fff;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+      min-width: 0;
+    }
+    .ws-status {
+      margin: 0;
+      font-size: clamp(12px, 1.5vw, 16px);
+      color: #888;
+      text-align: center;
+      max-width: 100%;
+      word-break: break-all;
+    }
+    .ws-status.is-ok { color: #7dffb3; }
+    .ws-status.is-error { color: #f59e0b; }
+    .trackpad {
+      position: relative;
+      width: min(72vh, 72vw);
+      aspect-ratio: 1;
+      max-width: 100%;
+      border: 3px solid #005e60;
+      border-radius: 12px;
+      background: #111;
+      box-shadow: inset 0 0 40px rgba(0, 94, 96, 0.25);
+      touch-action: none;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+    .finger-dot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 28px;
+      height: 28px;
+      margin-left: -14px;
+      margin-top: -14px;
+      border-radius: 50%;
+      background: #ff2222;
+      border: 3px solid #fff;
+      box-shadow: 0 0 12px rgba(255, 40, 40, 0.9);
+      pointer-events: none;
+      z-index: 3;
+      display: none;
+      will-change: transform;
+    }
+    .finger-pos {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 2;
+      margin: 0;
+      padding: 8px 12px;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: clamp(13px, 1.6vw, 20px);
+      line-height: 1.3;
+      color: #ff6b6b;
+      background: rgba(0, 0, 0, 0.75);
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trackpad-debug {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      margin: 0;
+      padding: 48px 16px 16px;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: clamp(11px, 1.4vw, 16px);
+      line-height: 1.45;
+      color: #7dffb3;
+      background: rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+    .click-btn {
+      min-width: min(72vh, 72vw);
+      max-width: 100%;
+      padding: 20px 32px;
+      border: 2px solid #1a8b8d;
+      border-radius: 10px;
+      background: #005e60;
+      color: #fff;
+      font-size: clamp(22px, 3vw, 40px);
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <button type="button" id="tcpToggle" class="tcp-toggle is-active">Stop TCP/IP</button>
+    </aside>
+    <main class="main">
+      <p id="wsStatus" class="ws-status">connecting…</p>
+      <div id="trackpad" class="trackpad" role="application" aria-label="Trackpad">
+        <div id="fingerDot" class="finger-dot" aria-hidden="true"></div>
+        <pre id="fingerPos" class="finger-pos">finger — waiting for touch</pre>
+        <pre id="debugHud" class="trackpad-debug">loading…</pre>
+      </div>
+      <button type="button" id="clickBtn" class="click-btn">Click</button>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const MOUSE_PORT = '8767';
+      const DEFAULT_HOST = '192.168.50.1';
+      const params = new URLSearchParams(location.search);
+      const MAINGEAR_HOST = params.get('host') || DEFAULT_HOST;
+      const WS_URL = 'ws://' + MAINGEAR_HOST + ':' + MOUSE_PORT;
+
+      const trackpad = document.getElementById('trackpad');
+      const fingerDot = document.getElementById('fingerDot');
+      const fingerPos = document.getElementById('fingerPos');
+      const debugHud = document.getElementById('debugHud');
+      const tcpToggle = document.getElementById('tcpToggle');
+      const clickBtn = document.getElementById('clickBtn');
+      const wsStatus = document.getElementById('wsStatus');
+
+      let bounds = { left: 0, top: 0, width: 1920, height: 1080 };
+      let ws = null;
+      let tcpSendPaused = false;
+      let touchActive = false;
+      let lastTouch = { x: 0, y: 0 };
+      let fingerTrackCount = 0;
+      let pendingDx = 0;
+      let pendingDy = 0;
+      let flushTimer = null;
+      let wsSendCount = 0;
+
+      const stats = {
+        touchMoveEvents: 0,
+        pointerMoveEvents: 0,
+        sends: 0,
+        lastSource: '—',
+        lastDx: 0,
+        lastDy: 0,
+        lastScaledDx: 0,
+        lastScaledDy: 0,
+        lastAt: 0,
+        recentLines: [],
+      };
+
+      const lastSample = { x: NaN, y: NaN, t: 0 };
+
+      function setWsStatus(text, kind) {
+        wsStatus.textContent = text;
+        wsStatus.className = 'ws-status' + (kind ? ' is-' + kind : '');
+      }
+
+      function paintFinger(clientX, clientY, source) {
+        const rect = trackpad.getBoundingClientRect();
+        const localX = clientX - rect.left;
+        const localY = clientY - rect.top;
+        fingerTrackCount += 1;
+        fingerDot.style.display = 'block';
+        fingerDot.style.transform = 'translate(' + localX + 'px, ' + localY + 'px)';
+        fingerPos.textContent =
+          'finger #' + fingerTrackCount + '  x ' + Math.round(localX) + '  y ' + Math.round(localY) + '  (' + source + ')';
+      }
+
+      function hideFinger() {
+        fingerDot.style.display = 'none';
+      }
+
+      function pointerScale() {
+        const rect = trackpad.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) {
+          return { scaleX: 1, scaleY: 1 };
+        }
+        return {
+          scaleX: bounds.width / rect.width,
+          scaleY: bounds.height / rect.height,
+        };
+      }
+
+      function paintDebugHud() {
+        const ago = stats.lastAt ? (Date.now() - stats.lastAt) + 'ms ago' : 'never';
+        const tcp = tcpSendPaused ? 'PAUSED (not sending)' : 'SENDING';
+        debugHud.textContent = [
+          'ws: ' + WS_URL,
+          'tcp: ' + tcp,
+          'source: ' + stats.lastSource + '  (' + ago + ')',
+          'last raw dx,dy: ' + stats.lastDx + ' , ' + stats.lastDy,
+          'last sent dx,dy: ' + stats.lastScaledDx + ' , ' + stats.lastScaledDy,
+          'browser events ' + stats.sends + '  (touch ' + stats.touchMoveEvents + ' ptr ' + stats.pointerMoveEvents + ')',
+          'ws pending ' + Math.round(pendingDx) + ' , ' + Math.round(pendingDy) + '  |  ws sent ' + wsSendCount,
+          '— recent —',
+          ...(stats.recentLines.length ? stats.recentLines : ['(no dx/dy yet)']),
+        ].join('\n');
+      }
+
+      function flushPendingMove() {
+        flushTimer = null;
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          pendingDx = 0;
+          pendingDy = 0;
+          return;
+        }
+        const rdx = Math.round(pendingDx);
+        const rdy = Math.round(pendingDy);
+        pendingDx = 0;
+        pendingDy = 0;
+        if (rdx === 0 && rdy === 0) return;
+        try {
+          ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
+          wsSendCount += 1;
+        } catch (e) {
+          console.warn('[trackpad] move send failed', e);
+        }
+        if (pendingDx !== 0 || pendingDy !== 0) {
+          scheduleFlush();
+        }
+      }
+
+      function scheduleFlush() {
+        if (flushTimer != null) return;
+        flushTimer = setTimeout(flushPendingMove, 0);
+      }
+
+      function sendMoveRelative(dx, dy) {
+        pendingDx += dx;
+        pendingDy += dy;
+        scheduleFlush();
+      }
+
+      function flushMoves() {
+        if (flushTimer != null) {
+          clearTimeout(flushTimer);
+          flushTimer = null;
+        }
+        flushPendingMove();
+      }
+
+      function sendClick() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({ type: 'click' }));
+      }
+
+      function applyDelta(clientX, clientY, source) {
+        paintFinger(clientX, clientY, source);
+
+        const now = performance.now();
+        if (lastSample.x === clientX && lastSample.y === clientY && now - lastSample.t < 8) {
+          return;
+        }
+        lastSample.x = clientX;
+        lastSample.y = clientY;
+        lastSample.t = now;
+
+        const dx = clientX - lastTouch.x;
+        const dy = clientY - lastTouch.y;
+        lastTouch = { x: clientX, y: clientY };
+
+        stats.lastSource = source;
+        stats.lastDx = Math.round(dx * 10) / 10;
+        stats.lastDy = Math.round(dy * 10) / 10;
+        stats.lastAt = Date.now();
+
+        if (dx === 0 && dy === 0) {
+          paintDebugHud();
+          return;
+        }
+
+        const scale = pointerScale();
+        const scaledDx = Math.round(dx * scale.scaleX);
+        const scaledDy = Math.round(dy * scale.scaleY);
+        stats.lastScaledDx = scaledDx;
+        stats.lastScaledDy = scaledDy;
+        stats.sends += 1;
+        stats.recentLines.unshift(
+          '#' + stats.sends + ' ' + source + '  raw(' + stats.lastDx + ', ' + stats.lastDy + ')  sent(' + scaledDx + ', ' + scaledDy + ')',
+        );
+        if (stats.recentLines.length > 8) {
+          stats.recentLines.length = 8;
+        }
+
+        if (!tcpSendPaused && ws && ws.readyState === WebSocket.OPEN) {
+          sendMoveRelative(scaledDx, scaledDy);
+        }
+
+        paintDebugHud();
+      }
+
+      function connectWebSocket() {
+        setWsStatus('connecting ' + WS_URL + ' …');
+        try {
+          ws = new WebSocket(WS_URL);
+        } catch (e) {
+          setWsStatus('WebSocket failed: ' + e.message, 'error');
+          return;
+        }
+
+        ws.onopen = function () {
+          setWsStatus('connected ' + WS_URL, 'ok');
+        };
+
+        ws.onmessage = function (event) {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'hello' && msg.bounds) {
+              bounds = msg.bounds;
+              paintDebugHud();
+            }
+          } catch (_) { /* ignore */ }
+        };
+
+        ws.onerror = function () {
+          setWsStatus('WebSocket error — is KioskMouseServer running on Maingear?', 'error');
+        };
+
+        ws.onclose = function () {
+          setWsStatus('disconnected — retrying in 3s…', 'error');
+          ws = null;
+          setTimeout(connectWebSocket, 3000);
+        };
+      }
+
+      // Touch handlers (passive: false for preventDefault)
+      trackpad.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        touchActive = true;
+        const t = e.touches[0];
+        lastTouch = { x: t.clientX, y: t.clientY };
+        paintFinger(t.clientX, t.clientY, 'touchstart');
+      }, { passive: false });
+
+      trackpad.addEventListener('touchmove', function (e) {
+        if (!touchActive || e.touches.length !== 1) return;
+        e.preventDefault();
+        stats.touchMoveEvents += 1;
+        const t = e.touches[0];
+        paintFinger(t.clientX, t.clientY, 'touchmove');
+        applyDelta(t.clientX, t.clientY, 'touchmove');
+      }, { passive: false });
+
+      function onTouchEnd(e) {
+        if (e.touches.length === 0) {
+          touchActive = false;
+          hideFinger();
+          if (!tcpSendPaused) flushMoves();
+        }
+        stats.lastSource = 'touchend';
+        stats.lastAt = Date.now();
+        paintDebugHud();
+      }
+
+      trackpad.addEventListener('touchend', onTouchEnd, { passive: false });
+      trackpad.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+      // Pointer fallback (mouse on dev machine)
+      trackpad.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        touchActive = true;
+        lastTouch = { x: e.clientX, y: e.clientY };
+        paintFinger(e.clientX, e.clientY, 'pointerdown');
+        stats.lastSource = 'pointerdown';
+        stats.lastAt = Date.now();
+        paintDebugHud();
+      });
+
+      trackpad.addEventListener('pointermove', function (e) {
+        if (!touchActive) return;
+        e.preventDefault();
+        stats.pointerMoveEvents += 1;
+        paintFinger(e.clientX, e.clientY, e.pointerType === 'touch' ? 'ptr-touch' : 'pointermove');
+        const samples = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+        for (const sample of samples) {
+          applyDelta(sample.clientX, sample.clientY, 'pointermove');
+        }
+      });
+
+      function onPointerUp(e) {
+        touchActive = false;
+        hideFinger();
+        stats.lastSource = 'pointerup';
+        stats.lastAt = Date.now();
+        if (!tcpSendPaused) {
+          flushMoves();
+          pendingDx = 0;
+          pendingDy = 0;
+        }
+        paintDebugHud();
+      }
+
+      trackpad.addEventListener('pointerup', onPointerUp);
+      trackpad.addEventListener('pointercancel', onPointerUp);
+
+      tcpToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        tcpSendPaused = !tcpSendPaused;
+        tcpToggle.textContent = tcpSendPaused ? 'Sending stopped' : 'Stop TCP/IP';
+        tcpToggle.className = 'tcp-toggle ' + (tcpSendPaused ? 'is-paused' : 'is-active');
+        paintDebugHud();
+      });
+
+      clickBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (!tcpSendPaused) sendClick();
+      });
+
+      // rAF stats refresh (same as React overlay)
+      function tick() {
+        if (ws && ws.readyState === WebSocket.OPEN && !tcpSendPaused) {
+          /* wsSendCount updated on send; pending read from refs */
+        }
+        requestAnimationFrame(tick);
+      }
+
+      paintDebugHud();
+      connectWebSocket();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
