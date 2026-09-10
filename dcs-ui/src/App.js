@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect, startTransition } from 'react';
 import ComponentLibrary from './components/ComponentLibrary';
+import IdeumRemoteControlOverlay from './components/IdeumKiosk/IdeumRemoteControlOverlay';
 import Canvas from './components/Canvas';
 import PropertyPanel from './components/PropertyPanel';
 import SimulationControls from './components/SimulationControls';
@@ -1019,6 +1020,8 @@ function App() {
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
   const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
+  /** Ideum05 Grid Connected: black trackpad screen to drive Maingear mouse. */
+  const [ideumWallControlActive, setIdeumWallControlActive] = useState(false);
   /** Per-screen zoom/pan for Ideum05 nav drill stack (root, data-centers, ref-500-mw, …). */
   const ideum05NavViewportsRef = useRef({});
   const ideum05PrevNavScreenRef = useRef(null);
@@ -3914,11 +3917,19 @@ function App() {
     return true;
   }, [clampCanvasZoom]);
 
+  const handleIdeumWallControlBack = useCallback(() => {
+    void sendIdeumClusterCommand('showDcs');
+    setIdeumWallControlActive(false);
+  }, [sendIdeumClusterCommand]);
+
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const navClusterCmd = getIdeum05NavClusterCommand(screenId, cardId);
     if (navClusterCmd) {
       void sendIdeumClusterCommand(navClusterCmd);
+      if (navClusterCmd === 'showVernova') {
+        setIdeumWallControlActive(true);
+      }
     }
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
     if (drillTarget) {
@@ -8919,6 +8930,13 @@ function App() {
           onClose={() => setEnsembleMemberEditor(null)}
           onRename={applyEnsembleMemberRename}
           onReplaceCsv={handleReplaceEnsembleMemberCsv}
+        />
+      )}
+
+      {isIdeum05 && ideumWallControlActive && machineRole?.isIdeum && (
+        <IdeumRemoteControlOverlay
+          machineRole={machineRole}
+          onBack={handleIdeumWallControlBack}
         />
       )}
     </div>

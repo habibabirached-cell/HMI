@@ -45,6 +45,8 @@ call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[0/5] Starting kiosk focus server (Ideum Grid Connected -> Vernova wall)..."
 call "%BAT_DIR%start-kiosk-focus-server.bat"
 call "%BAT_DIR%_debug-log.bat" line "Kiosk focus server start requested (port 8766)"
+call "%BAT_DIR%start-kiosk-mouse-server.bat"
+call "%BAT_DIR%_debug-log.bat" line "Kiosk mouse server start requested (port 8767)"
 
 call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[1/5] Starting DataCenterSmartPower Docker stack..."
