@@ -330,7 +330,7 @@ const SCREENS = {
       modelYOffset: 0.1,
       cameraPitchLift: 0.5,
       navFeatured: true,
-      navDrillTarget: 'ref-200-mw',
+      navLoadDesignCatalog: 'ref200Mw',
     },
     {
       id: 'controls',
@@ -345,7 +345,7 @@ const SCREENS = {
       modelYOffset: 0.54,
       cameraPitchLift: 0.42,
       navTitleActive: true,
-      navDrillTarget: 'configurator',
+      navLoadDesignCatalog: 'dataConfigurator',
     },
     {
       id: 'ref-500',
@@ -359,7 +359,7 @@ const SCREENS = {
       modelYOffset: 0.1,
       cameraPitchLift: 0.5,
       navFeatured: true,
-      navDrillTarget: 'ref-500-mw',
+      navLoadDesignCatalog: 'hd_aero_ideum',
     },
   ],
   'island-microgrids': [

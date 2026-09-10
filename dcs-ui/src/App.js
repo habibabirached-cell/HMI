@@ -93,6 +93,17 @@ import {
   isIdeumDataCenterOnlyConfig,
 } from './utils/ideumDataCenterDesign';
 import {
+  isDataConfiguratorCatalogRef,
+  isDataConfiguratorDesignName,
+  isIdeumConfiguratorOnlyConfig,
+  isIdeumHdAeroShellOnlyConfig,
+  isIdeumRef200MwOnlyConfig,
+  isRef200MwCatalogRef,
+  isRef200MwDesignName,
+} from './utils/ideumShellDesign';
+import IdeumKioskControlsShell from './components/IdeumKiosk/IdeumKioskControlsShell';
+import IdeumHdAeroKioskShell from './components/IdeumKiosk/IdeumHdAeroKioskShell';
+import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
   getIdeum05ControlsClusterCommand,
@@ -1120,6 +1131,9 @@ function App() {
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
   const isIdeum06 = ideumShellMode === 'trackpad';
   const isDataCenter = ideumShellMode === 'dataCenter';
+  const isRef200MwShell = ideumShellMode === 'ref200Mw';
+  const isConfiguratorShell = ideumShellMode === 'configurator';
+  const isHdAeroShell = ideumShellMode === 'hdAero';
   const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
@@ -3998,25 +4012,22 @@ function App() {
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [fireKioskFocusFast, loadDesignFromCatalog]);
 
-  /** DataCenter Back — return to Ideum05 root landing (unloads this isolated menu). */
+  /** DataCenter Back — return to Ideum05 root landing. */
   const handleDataCenterBack = useCallback(() => {
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [loadDesignFromCatalog]);
 
-  /** DataCenter card tap — deeper screens still use full Ideum05 for now. */
+  /** Child shells (200 MW / Configurator / 500 MW) Back — return to DataCenter menu. */
+  const handleDataCenterChildBack = useCallback(() => {
+    void loadDesignFromCatalog(DATA_CENTER_CATALOG);
+  }, [loadDesignFromCatalog]);
+
+  /** DataCenter card tap — load isolated shell design per card. */
   const handleDataCenterNavSelect = useCallback((cardId) => {
-    const drillTarget = getIdeum05NavDrillTarget('data-centers', cardId);
-    if (!drillTarget) return;
-    const overlayCmd = getIdeum05OverlayClusterCommand(drillTarget);
-    const controlsCmd = getIdeum05ControlsClusterCommand(drillTarget);
-    if (overlayCmd) {
-      void sendIdeumClusterCommand(overlayCmd);
-    } else if (controlsCmd) {
-      void sendIdeumClusterCommand(controlsCmd);
-    }
-    pendingIdeum05NavStackRef.current = [IDEUM05_NAV_ROOT, 'data-centers', drillTarget];
-    void loadDesignFromCatalog(IDEUM05_CATALOG);
-  }, [loadDesignFromCatalog, sendIdeumClusterCommand]);
+    const loadCatalog = getIdeum05NavLoadDesignCatalog('data-centers', cardId);
+    if (!loadCatalog) return;
+    void loadDesignFromCatalog(loadCatalog);
+  }, [loadDesignFromCatalog]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
@@ -4221,9 +4232,14 @@ function App() {
   }, [isIdeum05, ideum05NavScreen, applyIdeum05ViewportForScreen]);
 
   useEffect(() => {
-    if (!isHdAeroIdeumLoaded) return;
+    if (!isHdAeroIdeumLoaded || isIdeum05) return;
     void sendIdeumClusterCommand('loadHdAero');
-  }, [isHdAeroIdeumLoaded, sendIdeumClusterCommand]);
+  }, [isHdAeroIdeumLoaded, isIdeum05, sendIdeumClusterCommand]);
+
+  useEffect(() => {
+    if (!isRef200MwShell) return;
+    void sendIdeumClusterCommand('loadP2R18');
+  }, [isRef200MwShell, currentConfigName, sendIdeumClusterCommand]);
 
   useEffect(() => {
     if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;
@@ -7527,17 +7543,34 @@ function App() {
         : [IDEUM05_NAV_ROOT],
     );
     const loadedIsIdeum05 = isIdeum05DesignName(loadedConfig.name);
+    const catalogRel = loadedConfig.csv_status?.design_catalog_rel;
     const loadedIsDataCenter =
       isIdeumDataCenterOnlyConfig(data)
       || isDataCenterDesignName(loadedConfig.name)
-      || isDataCenterCatalogRef(loadedConfig.csv_status?.design_catalog_rel);
+      || isDataCenterCatalogRef(catalogRel);
     const loadedIsIdeum06Shell =
       isIdeumTrackpadOnlyConfig(data) || isIdeum06DesignName(loadedConfig.name);
+    const loadedIsRef200MwShell =
+      isIdeumRef200MwOnlyConfig(data)
+      || isRef200MwDesignName(loadedConfig.name)
+      || isRef200MwCatalogRef(catalogRel);
+    const loadedIsConfiguratorShell =
+      isIdeumConfiguratorOnlyConfig(data)
+      || isDataConfiguratorDesignName(loadedConfig.name)
+      || isDataConfiguratorCatalogRef(catalogRel);
+    const loadedIsHdAeroShell =
+      isIdeumHdAeroShellOnlyConfig(data) && isHDAeroIdeumDesign(loadedConfig);
     if (loadedIsDataCenter) {
       setIdeumShellMode('dataCenter');
       setIdeum05NavStack(['data-centers']);
       setZoom(1);
       setPan({ x: 0, y: 0 });
+    } else if (loadedIsRef200MwShell) {
+      setIdeumShellMode('ref200Mw');
+    } else if (loadedIsConfiguratorShell) {
+      setIdeumShellMode('configurator');
+    } else if (loadedIsHdAeroShell) {
+      setIdeumShellMode('hdAero');
     } else if (loadedIsIdeum06Shell) {
       setIdeumShellMode('trackpad');
     } else {
@@ -8138,13 +8171,29 @@ function App() {
   }, [machineRole?.isMaingear]);
 
   useEffect(() => {
-    if (isIdeum06 || isDataCenter || !machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
+    if (
+      isIdeum06
+      || isDataCenter
+      || isRef200MwShell
+      || isConfiguratorShell
+      || !machineRole?.isIdeum
+      || !machineRole?.peerBackendUrl
+    ) {
+      return undefined;
+    }
     return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
         setIdeumSimulationMirror(msg.running);
       }
     });
-  }, [isIdeum06, isDataCenter, machineRole?.isIdeum, machineRole?.peerBackendUrl]);
+  }, [
+    isIdeum06,
+    isDataCenter,
+    isRef200MwShell,
+    isConfiguratorShell,
+    machineRole?.isIdeum,
+    machineRole?.peerBackendUrl,
+  ]);
 
   useEffect(() => {
     const onClusterLan = typeof window !== 'undefined'
@@ -8650,6 +8699,214 @@ function App() {
           zoom={zoom}
           pan={pan}
         />
+        {showDialog && (
+          <SaveLoadDialog
+            mode={dialogMode}
+            onClose={handleCloseDialog}
+            onSave={handleConfigurationSaved}
+            onLoad={handleConfigurationLoaded}
+            onOpenConfigurator={handleOpenConfigurator}
+            onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+            destinationDesignDir={designApiPath}
+            getCurrentConfiguration={getCurrentConfiguration}
+            currentConfiguration={getCurrentConfiguration()}
+            currentConfigName={currentConfigName}
+            setSavingOverlay={setIsSaving}
+          />
+        )}
+        {isSaving && (
+          <div className="saving-overlay">
+            <div className="saving-spinner-container">
+              <div className="saving-spinner" />
+              <div className="saving-text">Saving Configuration...</div>
+              <div className="saving-subtext">Please wait</div>
+            </div>
+          </div>
+        )}
+      </FontScaleProvider>
+    );
+  }
+
+  if (isRef200MwShell) {
+    return (
+      <FontScaleProvider
+        uiFontPxShift={uiFontPxShift}
+        canvasFontPxShift={canvasFontPxShift}
+        collapsedComponentFontPxShift={collapsedComponentFontPxShift}
+        setUiFontPxShift={setUiFontPxShift}
+        setCanvasFontPxShift={setCanvasFontPxShift}
+        setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
+      >
+        <IdeumKioskControlsShell
+          components={canvasComponents}
+          zoom={zoom}
+          pan={pan}
+          canvasBlockTypeScale={canvasBlockTypeScale}
+          onBack={handleDataCenterChildBack}
+          onReset={handleIdeum05Reset}
+          onLiveRtds={handleIdeum05LiveRtds}
+          onIdeumClick={handleIdeumControlButtonClick}
+          ideumExpansionMirror={ideumExpansionMirror}
+          onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
+        />
+        {showDialog && (
+          <SaveLoadDialog
+            mode={dialogMode}
+            onClose={handleCloseDialog}
+            onSave={handleConfigurationSaved}
+            onLoad={handleConfigurationLoaded}
+            onOpenConfigurator={handleOpenConfigurator}
+            onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+            destinationDesignDir={designApiPath}
+            getCurrentConfiguration={getCurrentConfiguration}
+            currentConfiguration={getCurrentConfiguration()}
+            currentConfigName={currentConfigName}
+            setSavingOverlay={setIsSaving}
+          />
+        )}
+        {isSaving && (
+          <div className="saving-overlay">
+            <div className="saving-spinner-container">
+              <div className="saving-spinner" />
+              <div className="saving-text">Saving Configuration...</div>
+              <div className="saving-subtext">Please wait</div>
+            </div>
+          </div>
+        )}
+      </FontScaleProvider>
+    );
+  }
+
+  if (isConfiguratorShell) {
+    return (
+      <FontScaleProvider
+        uiFontPxShift={uiFontPxShift}
+        canvasFontPxShift={canvasFontPxShift}
+        collapsedComponentFontPxShift={collapsedComponentFontPxShift}
+        setUiFontPxShift={setUiFontPxShift}
+        setCanvasFontPxShift={setCanvasFontPxShift}
+        setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
+      >
+        <div className="app-container app-container--configurator-ideum app-container--ideum-mode">
+          <DataCenterConfigurator mode="ideum" onClose={handleDataCenterChildBack} />
+        </div>
+        {showDialog && (
+          <SaveLoadDialog
+            mode={dialogMode}
+            onClose={handleCloseDialog}
+            onSave={handleConfigurationSaved}
+            onLoad={handleConfigurationLoaded}
+            onOpenConfigurator={handleOpenConfigurator}
+            onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+            destinationDesignDir={designApiPath}
+            getCurrentConfiguration={getCurrentConfiguration}
+            currentConfiguration={getCurrentConfiguration()}
+            currentConfigName={currentConfigName}
+            setSavingOverlay={setIsSaving}
+          />
+        )}
+        {isSaving && (
+          <div className="saving-overlay">
+            <div className="saving-spinner-container">
+              <div className="saving-spinner" />
+              <div className="saving-text">Saving Configuration...</div>
+              <div className="saving-subtext">Please wait</div>
+            </div>
+          </div>
+        )}
+      </FontScaleProvider>
+    );
+  }
+
+  if (isHdAeroShell) {
+    return (
+      <FontScaleProvider
+        uiFontPxShift={uiFontPxShift}
+        canvasFontPxShift={canvasFontPxShift}
+        collapsedComponentFontPxShift={collapsedComponentFontPxShift}
+        setUiFontPxShift={setUiFontPxShift}
+        setCanvasFontPxShift={setCanvasFontPxShift}
+        setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
+      >
+        <IdeumHdAeroKioskShell onBack={handleDataCenterChildBack}>
+          <Canvas
+            ref={canvasRef}
+            components={canvasComponents}
+            connections={connections}
+            selectedComponent={selectedComponent}
+            selectedConnection={selectedConnection}
+            onSelectComponent={setSelectedComponent}
+            onSelectConnection={handleSelectConnection}
+            selectedComponents={selectedComponents}
+            onMultiSelect={handleMultiSelect}
+            onClearMultiSelection={handleClearMultiSelection}
+            onClearConnectionMultiSelection={handleClearConnectionMultiSelection}
+            selectedConnectionIds={selectedConnections}
+            isComponentMultiSelected={isComponentMultiSelected}
+            onMoveComponent={handleMoveComponent}
+            onMoveComponents={handleMoveComponents}
+            onMarqueeSelect={handleMarqueeCanvasSelect}
+            onCopySelection={handleCopyCanvasSelection}
+            onPasteSelection={handlePasteCanvasSelection}
+            onDeleteSelection={handleDeleteCanvasSelection}
+            onAddComponent={handleAddComponent}
+            onAddConnection={handleAddConnection}
+            onUpdateComponent={handleCanvasUpdateComponent}
+            onAssociateChart={handleAssociateChart}
+            onOpenChart={handleOpenChart}
+            onCreateMultiComponentChart={handleCreateMultiComponentChart}
+            canAddCharts={false}
+            simulationColumns={[]}
+            simulationCsvName=""
+            ensembleColumnGroups={[]}
+            onConfigureConnectionReadout={() => {}}
+            zoom={zoom}
+            onZoomIn={() => setZoom((prev) => Math.min(prev + CANVAS_ZOOM_STEP, CANVAS_ZOOM_MAX))}
+            onZoomOut={() => setZoom((prev) => Math.max(prev - CANVAS_ZOOM_STEP, CANVAS_ZOOM_MIN))}
+            pan={pan}
+            onPan={setPan}
+            canvasZoomMin={CANVAS_ZOOM_MIN}
+            canvasZoomMax={CANVAS_ZOOM_MAX}
+            onCanvasViewport={applyCanvasViewport}
+            mode="design"
+            viewMode="canvas"
+            simulationRunning={false}
+            simulationData={[]}
+            ensembleMemberSimulationData={null}
+            simulationTime={0}
+            systemState={systemState}
+            designSectionVisibility={designSectionVisibility}
+            variableDrivenPresence={variableDrivenPresence}
+            busTransferSegments={busTransferSegments}
+            canvasBlockTypeScale={canvasBlockTypeScale}
+            onNudgeCanvasBlockTypeScale={handleNudgeCanvasBlockTypeScale}
+            ideumKioskMode
+            ideumControlButtons={ideumControlButtons}
+            onIdeumControlButtonClick={handleIdeumControlButtonClick}
+            ideumExpansionMirror={ideumExpansionMirror}
+            onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
+            ideumSimulationMirror={ideumSimulationMirror}
+            onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
+            ideumSimulateMirror={ideumSimulateMirror}
+            onIdeumSimulateClick={handleIdeumSimulateRemoteClick}
+            ideumSimulateLoopMirror={ideumSimulateLoopMirror}
+            onIdeumSimulateLoopClick={handleIdeumSimulateLoopRemoteClick}
+            ideumSimulationSpeedMirror={ideumSimulationSpeedMirror}
+            onIdeumSimulationSpeedClick={handleIdeumSimulationSpeedRemoteClick}
+            isIdeum05={false}
+            ideum05ShowControls
+            ideum05OverlayMode={false}
+            ideumHdAeroViewCompact={ideumExpansionMirror.peripheralsCompact}
+            onIdeumHdAeroViewToggle={handleIdeumHdAeroViewToggle}
+            disableCanvasPan
+            disableCanvasGestureZoom
+            splitView={false}
+            panTop={panTop}
+            panBottom={panBottom}
+            onPanTop={setPanTop}
+            onPanBottom={setPanBottom}
+          />
+        </IdeumHdAeroKioskShell>
         {showDialog && (
           <SaveLoadDialog
             mode={dialogMode}

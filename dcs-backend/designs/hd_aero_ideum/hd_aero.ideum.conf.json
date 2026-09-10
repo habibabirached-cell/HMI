@@ -1953,6 +1953,7 @@
   "hiddenDefaultQuickScenarios": [],
   "ideumControlButtons": [],
   "ideumKioskMode": true,
+  "ideumHdAeroShellOnly": true,
   "remoteControlProfile": {
     "enabled": true,
     "commands": {

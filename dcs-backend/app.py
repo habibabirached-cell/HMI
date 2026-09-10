@@ -427,6 +427,9 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
     _ikm = conf.get("ideumKioskMode")
     _idco = conf.get("ideumDataCenterOnly")
     _ito = conf.get("ideumTrackpadOnly")
+    _ir2 = conf.get("ideumRef200MwOnly")
+    _ico = conf.get("ideumConfiguratorOnly")
+    _ihs = conf.get("ideumHdAeroShellOnly")
     _rcp = conf.get("remoteControlProfile")
     _rct = conf.get("remoteControlTarget")
     _bts = conf.get("busTransferSegments")
@@ -458,6 +461,9 @@ def canvas_data_from_conf_file(conf: dict) -> dict:
         "ideumKioskMode": bool(_ikm),
         "ideumDataCenterOnly": bool(_idco),
         "ideumTrackpadOnly": bool(_ito),
+        "ideumRef200MwOnly": bool(_ir2),
+        "ideumConfiguratorOnly": bool(_ico),
+        "ideumHdAeroShellOnly": bool(_ihs),
         "remoteControlProfile": _rcp if isinstance(_rcp, dict) else None,
         "remoteControlTarget": _rct if isinstance(_rct, dict) else None,
         "busTransferSegments": _bts if isinstance(_bts, list) else [],

@@ -1,0 +1,22 @@
+{
+  "name": "Data Configurator",
+  "description": "Data Center Configurator only — loaded from DataCenter menu.",
+  "ideumKioskMode": true,
+  "ideumConfiguratorOnly": true,
+  "canvasComponents": [],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 1,
+    "pan": { "x": 0, "y": 0 },
+    "mode": "design"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "designUiSession": {},
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": []
+}
