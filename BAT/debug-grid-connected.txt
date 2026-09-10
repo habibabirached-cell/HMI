@@ -1,0 +1,23 @@
+=== Grid Connected debug === 
+Time: Wed 09/09/2026 22:44:24.42 
+ 
+--- GET http://127.0.0.1:5000/api/cluster/machine-role --- 
+{"role":"maingear","ethernetIp":"192.168.50.1","peerEthernetIp":"192.168.50.2","peerBackendUrl":"http://192.168.50.1:5000","isMaingear":true,"isIdeum":false,"maingearEthernetIp":"192.168.50.1","ideumEthernetIp":"192.168.50.2"} 
+--- POST http://127.0.0.1:8766/kiosk/focus/Vernova --- 
+{"target":"Vernova","ok":true} 
+--- POST http://127.0.0.1:5000/api/cluster/remote-command showVernova --- 
+{"ok":true,"command":"showVernova","deliveredToClients":2,"kioskFocus":{"target":"Vernova","ok":true,"focusUrl":"http://host.docker.internal:8766/kiosk/focus/Vernova"}} 
+﻿{
+    "dcs":  {
+                "hwnd":  1575842,
+                "url":  "http://localhost:3003",
+                "profile":  "C:\\Users\\GEVer\\AppData\\Local\\DataCenterSmartPower\\chrome-kiosk-dcs",
+                "updatedAt":  "2026-09-09T22:43:49.4776592-04:00"
+            },
+    "vernova":  {
+                    "hwnd":  1247712,
+                    "url":  "http://localhost:5173",
+                    "profile":  "C:\\Users\\GEVer\\AppData\\Local\\DataCenterSmartPower\\chrome-kiosk-vernova",
+                    "updatedAt":  "2026-09-09T22:44:28.7052416-04:00"
+                }
+}

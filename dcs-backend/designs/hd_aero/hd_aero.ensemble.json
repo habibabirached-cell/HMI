@@ -19,31 +19,34 @@
             "chart_type": "stacked-nd",
             "x_column": "Time",
             "y_columns": [
-              "Aero_power (MW)",
-              "HD_power (MW)"
+              "Aero_freq (Hz)",
+              "HD_freq (Hz)"
             ],
             "split_by": "column",
-            "title": "Power",
-            "ensemble_sim_id": "HD-Load",
+            "title": "Frequency",
+            "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1706,
+            "chart_card_width": 765,
             "x_label": "Time",
             "stacked_y_labels": {
-              "0": "Aero Power (MW)",
-              "1": "HD Power (MW)"
+              "0": "Aero Frequency (Hz)",
+              "1": "HD Frequency  (Hz)"
+            },
+            "legend_labels": {
+              "Aero_freq (Hz)": "Aero Frequency(Hz)",
+              "HD_freq (Hz)": "HD Frequency(Hz)"
             },
             "axis_range": {
               "simulation_start_at": 0,
-              "simulation_end_at": 25,
+              "simulation_end_at": 10.8,
               "t_loop": 3,
               "x_min": 0,
-              "x_max": 25,
+              "x_max": 10.8,
               "x_locked": true,
-              "y_min": 200,
-              "y_max": 300,
+              "y_min": 59.5,
+              "y_max": 60.5,
               "y_locked": true
-            },
-            "ui_drawer": "chart2"
+            }
           },
           {
             "type": "single",
@@ -51,30 +54,44 @@
             "chart_type": "stacked-nd",
             "x_column": "Time",
             "y_columns": [
-              "Aero_freq (Hz)",
-              "HD_freq (Hz)"
+              "Aero_power (MW)",
+              "HD_power (MW)"
             ],
             "split_by": "column",
-            "title": "Frequency",
-            "ensemble_sim_id": "HD-Load",
+            "title": "Power",
+            "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 1702,
+            "chart_card_width": 1704,
             "x_label": "Time",
             "stacked_y_labels": {
-              "0": "Aero Frequency (Hz)",
-              "1": "HD Frequency (Hz)"
+              "0": "Aero Power (MW)",
+              "1": "HD Power (MW)"
+            },
+            "legend_labels": {
+              "Aero_power (MW)": "Aero Power (MW)",
+              "HD_power (MW)": "HD Power (MW)"
             },
             "axis_range": {
               "simulation_start_at": 0,
-              "simulation_end_at": 25,
+              "simulation_end_at": 10.8,
               "t_loop": 3,
               "x_min": 0,
-              "x_max": 25,
+              "x_max": 10.8,
               "x_locked": true,
-              "y_min": 59.5,
-              "y_max": 60.5,
-              "y_locked": true
-            }
+              "stacked_y_ranges": {
+                "0": {
+                  "y_locked": true,
+                  "y_min": 0,
+                  "y_max": 30
+                },
+                "1": {
+                  "y_locked": true,
+                  "y_min": 200,
+                  "y_max": 300
+                }
+              }
+            },
+            "ui_drawer": "chart2"
           }
         ],
         "chart_stacks": [],
