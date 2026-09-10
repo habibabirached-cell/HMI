@@ -1,5 +1,5 @@
 === Vernova dev server log ===
-Started: Thu 09/10/2026  0:37:05.40
+Started: Thu 09/10/2026  0:57:54.02
 Directory: C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
@@ -14,7 +14,7 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 
 [INFO] Bound FastAPI backend to fixed port: 8001
 
-(node:13420) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(node:41000) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [36m[FastAPI][0m =======================================================
 [36m[FastAPI][0m  [FastAPI] Verona Spark Databank API running on:
@@ -22,32 +22,29 @@ npm run dev in C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
 [36m[FastAPI][0m =======================================================
 [33m[FastAPI][0m INFO:     Will watch for changes in these directories: ['C:\\Users\\GEVer\\Documents\\HMI\\vernova-spark-engine_new']
 [33m[FastAPI][0m INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[33m[FastAPI][0m INFO:     Started reloader process [8920] using WatchFiles
-[33m[FastAPI][0m INFO:     Started server process [18516]
+[33m[FastAPI][0m INFO:     Started reloader process [33372] using WatchFiles
+[33m[FastAPI][0m INFO:     Started server process [6116]
 [33m[FastAPI][0m INFO:     Waiting for application startup.
 [33m[FastAPI][0m INFO:     Application startup complete.
 [33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
 
-  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m951[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v8.2.2[39m  [2mready in [0m[1m871[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.29.48.1:[1m5173[22m/[39m    [2mvEthernet (WSL (Hyp…[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.50.1:[1m5173[22m/[39m   [2mEthernet[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://190.168.13.5:[1m5173[22m/[39m   [2mEthernet 2[22m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.168.1:[1m5173[22m/[39m  [2mEthernet 3[22m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.2.87:[1m5173[22m/[39m    [2mWi-Fi[22m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.23.1.10:[1m5173[22m/[39m    [2mWi-Fi[22m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m12:37:09 AM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
-[36m[FastAPI][0m INFO:     127.0.0.1:49796 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:63882 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51327 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:62243 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58096 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:58376 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:60324 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:53162 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54111 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:49808 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:54431 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:51920 - "GET /api/v1/health HTTP/1.1" 200 OK
-[36m[FastAPI][0m INFO:     127.0.0.1:55195 - "GET /api/v1/health HTTP/1.1" 200 OK
+[2m12:57:58 AM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m connected.
+[36m[FastAPI][0m INFO:     127.0.0.1:55573 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:53963 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:57660 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:56683 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:55279 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:64292 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:50642 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:60685 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:61739 - "GET /api/v1/health HTTP/1.1" 200 OK
+[36m[FastAPI][0m INFO:     127.0.0.1:49426 - "GET /api/v1/health HTTP/1.1" 200 OK

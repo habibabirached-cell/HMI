@@ -5,7 +5,10 @@ Maingear wall mouse bridge — run on Maingear Windows host (not in Docker).
   python kiosk_mouse_bridge.py
 
 Listens ws://0.0.0.0:8767 — Ideum touch table connects directly over Ethernet
-(ws://192.168.50.1:8767) for low-latency trackpad + click.
+(ws://192.168.50.1:8767) for low-latency trackpad + click + focus.
+
+Moves are queued to a dedicated thread so Vernova 3D load on the GPU/CPU cannot
+block reading the next WebSocket frame (TCP backpressure).
 """
 
 from __future__ import annotations
@@ -13,7 +16,9 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import queue
 import sys
+import threading
 import urllib.error
 import urllib.request
 
@@ -41,6 +46,18 @@ FOCUS_HOST = os.environ.get("KIOSK_FOCUS_HOST", "127.0.0.1")
 FOCUS_PORT = int(os.environ.get("KIOSK_FOCUS_PORT", "8766"))
 BRIDGE_VERSION = 2
 BRIDGE_CAPABILITIES = ("move", "click", "focus")
+# Set KIOSK_MOUSE_LOG_MOVES=0 to silence high-rate trackpad lines.
+LOG_MOVES = os.environ.get("KIOSK_MOUSE_LOG_MOVES", "1").strip().lower() not in (
+    "0",
+    "false",
+    "no",
+)
+# Coalesce pending moves in the worker (sum dx/dy) before injecting — keeps cursor smooth under load.
+COALESCE_MOVES = os.environ.get("KIOSK_MOUSE_COALESCE", "1").strip().lower() not in (
+    "0",
+    "false",
+    "no",
+)
 
 
 class POINT(ctypes.Structure):
@@ -57,13 +74,11 @@ def virtual_screen_bounds() -> dict[str, int]:
 
 
 def _mouse_dword(value: int) -> int:
-    """mouse_event dx/dy are DWORD — preserve sign for relative motion."""
     value = int(value)
     return value & 0xFFFFFFFF
 
 
 def move_relative(dx: int, dy: int) -> None:
-    """Inject relative motion like a physical mouse (not SetCursorPos)."""
     rdx = int(dx)
     rdy = int(dy)
     if rdx == 0 and rdy == 0:
@@ -88,13 +103,84 @@ def left_click() -> None:
 
 
 def beep_ideum_signal() -> None:
-    """Short tone when Ideum sends a command (not used for high-rate move deltas)."""
     try:
         import winsound
 
         winsound.Beep(880, 35)
     except Exception:
         user32.MessageBeep(0xFFFFFFFF)
+
+
+class _MouseInputWorker:
+    """Background thread — recv loop never waits on mouse_event or console I/O."""
+
+    def __init__(self) -> None:
+        self._q: queue.SimpleQueue = queue.SimpleQueue()
+        self._thread = threading.Thread(target=self._run, name="kiosk-mouse-input", daemon=True)
+        self._thread.start()
+
+    def submit_move(self, dx: int, dy: int, *, peer=None, raw: str | None = None) -> None:
+        self._q.put(("move", int(dx), int(dy), peer, raw))
+
+    def submit_move_abs(self, x: int, y: int, *, peer=None, raw: str | None = None) -> None:
+        self._q.put(("abs", int(x), int(y), peer, raw))
+
+    def submit_click(self, *, peer=None, raw: str | None = None) -> None:
+        self._q.put(("click", peer, raw))
+
+    def submit_beep(self) -> None:
+        self._q.put(("beep",))
+
+    def _log(self, raw: str | None, peer) -> None:
+        if LOG_MOVES and raw:
+            print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
+
+    def _drain_coalesced_moves(self, first_kind: str, first_a: int, first_b: int, peer, raw: str | None):
+        if first_kind == "abs":
+            self._log(raw, peer)
+            set_cursor_pos(first_a, first_b)
+            return
+
+        dx, dy = first_a, first_b
+        self._log(raw, peer)
+        while COALESCE_MOVES:
+            try:
+                item = self._q.get_nowait()
+            except queue.Empty:
+                break
+            if not item or item[0] != "move":
+                # Put non-move back — process on next loop iteration
+                self._q.put(item)
+                break
+            _, mx, my, _, mraw = item
+            dx += mx
+            dy += my
+            if LOG_MOVES and mraw:
+                print(f"[kiosk-mouse] recv {mraw[:200]} from {peer}", flush=True)
+        move_relative(dx, dy)
+
+    def _run(self) -> None:
+        while True:
+            item = self._q.get()
+            if item is None:
+                break
+            kind = item[0]
+            if kind == "move":
+                _, dx, dy, peer, raw = item
+                self._drain_coalesced_moves("move", dx, dy, peer, raw)
+            elif kind == "abs":
+                _, x, y, peer, raw = item
+                self._drain_coalesced_moves("abs", x, y, peer, raw)
+            elif kind == "click":
+                _, peer, raw = item
+                if raw:
+                    print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
+                left_click()
+            elif kind == "beep":
+                beep_ideum_signal()
+
+
+INPUT_WORKER = _MouseInputWorker()
 
 
 def _post_kiosk_focus_sync(target: str) -> dict:
@@ -132,51 +218,73 @@ async def focus_kiosk(target: str) -> dict:
         return {"ok": False, "error": str(exc)}
 
 
-async def handle_message(raw: str, peer=None) -> dict | None:
+async def _handle_focus_async(websocket, target: str, peer) -> None:
+    print(f"[kiosk-mouse] focus -> POST :{FOCUS_PORT}/kiosk/focus/{target} (async)", flush=True)
+    INPUT_WORKER.submit_beep()
+    result = await focus_kiosk(target)
+    print(f"[kiosk-mouse] focus result: {result}", flush=True)
+    try:
+        await websocket.send(json.dumps({
+            "ok": bool(result.get("ok")),
+            "type": "focus",
+            "target": target,
+            **result,
+        }))
+    except Exception as exc:
+        print(f"[kiosk-mouse] focus reply failed: {exc}", flush=True)
+
+
+def dispatch_message(raw: str, peer, websocket) -> None:
+    """Non-blocking dispatch — returns immediately; never awaits mouse I/O."""
     try:
         msg = json.loads(raw)
     except json.JSONDecodeError:
         print(f"[kiosk-mouse] recv invalid json from {peer}: {raw[:80]!r}", flush=True)
-        return {"ok": False, "error": "invalid json"}
+        return
 
     msg_type = (msg.get("type") or "").strip().lower()
-    if msg_type != "move":
-        print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
-    if msg_type != "move":
-        await asyncio.to_thread(beep_ideum_signal)
 
-    if msg_type == "ping":
-        return {"ok": True, "type": "pong", "bounds": virtual_screen_bounds()}
+    if msg_type == "move":
+        if "x" in msg and "y" in msg:
+            INPUT_WORKER.submit_move_abs(msg["x"], msg["y"], peer=peer, raw=raw)
+        elif "dx" in msg and "dy" in msg:
+            INPUT_WORKER.submit_move(msg["dx"], msg["dy"], peer=peer, raw=raw)
+        else:
+            print(f"[kiosk-mouse] bad move from {peer}: {raw[:120]}", flush=True)
+        return
+
+    if msg_type == "click":
+        print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
+        INPUT_WORKER.submit_beep()
+        INPUT_WORKER.submit_click(peer=peer, raw=None)
+        return
 
     if msg_type == "focus":
         target = (msg.get("target") or "").strip()
         if target not in ("Dcs", "Vernova"):
-            return {"ok": False, "error": "focus target must be Dcs or Vernova"}
-        print(f"[kiosk-mouse] focus -> POST :{FOCUS_PORT}/kiosk/focus/{target}", flush=True)
-        result = await focus_kiosk(target)
-        print(f"[kiosk-mouse] focus result: {result}", flush=True)
-        return {"ok": bool(result.get("ok")), "type": "focus", "target": target, **result}
+            print(f"[kiosk-mouse] bad focus target from {peer}: {target}", flush=True)
+            return
+        print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
+        asyncio.create_task(_handle_focus_async(websocket, target, peer))
+        return
 
-    if msg_type == "move":
-        if "x" in msg and "y" in msg:
-            await asyncio.to_thread(set_cursor_pos, msg["x"], msg["y"])
-            return {"ok": True, "type": "move"}
-        if "dx" in msg and "dy" in msg:
-            await asyncio.to_thread(move_relative, msg["dx"], msg["dy"])
-            return None
-        return {"ok": False, "error": "move requires x,y or dx,dy"}
+    if msg_type == "ping":
+        print(f"[kiosk-mouse] recv ping from {peer}", flush=True)
+        INPUT_WORKER.submit_beep()
+        asyncio.create_task(websocket.send(json.dumps({
+            "ok": True,
+            "type": "pong",
+            "bounds": virtual_screen_bounds(),
+        })))
+        return
 
-    if msg_type == "click":
-        await asyncio.to_thread(left_click)
-        return {"ok": True, "type": "click"}
-
-    return {"ok": False, "error": f"unknown type: {msg_type}"}
+    print(f"[kiosk-mouse] unknown type from {peer}: {raw[:120]}", flush=True)
 
 
 async def client_handler(websocket) -> None:
     peer = getattr(websocket, "remote_address", None)
     print(f"[kiosk-mouse] client connected {peer}", flush=True)
-    await asyncio.to_thread(beep_ideum_signal)
+    INPUT_WORKER.submit_beep()
     try:
         await websocket.send(json.dumps({
             "type": "hello",
@@ -187,9 +295,7 @@ async def client_handler(websocket) -> None:
         async for raw in websocket:
             if not isinstance(raw, str):
                 continue
-            reply = await handle_message(raw, peer)
-            if reply is not None:
-                await websocket.send(json.dumps(reply))
+            dispatch_message(raw, peer, websocket)
     except Exception as exc:
         print(f"[kiosk-mouse] client error: {exc}", flush=True)
     finally:
@@ -199,9 +305,17 @@ async def client_handler(websocket) -> None:
 async def main() -> None:
     bounds = virtual_screen_bounds()
     print(f"[kiosk-mouse] virtual desktop: {bounds}", flush=True)
-    print(f"[kiosk-mouse] listening ws://{BRIDGE_HOST}:{BRIDGE_PORT}", flush=True)
-    print("[kiosk-mouse] Grid Connected / Back focus -> ws :8767 (this window, NOT KioskFocusServer)", flush=True)
-    async with serve(client_handler, BRIDGE_HOST, BRIDGE_PORT, max_size=2**16):
+    print(f"[kiosk-mouse] listening ws://{BRIDGE_HOST}:{BRIDGE_PORT} (TCP/WebSocket)", flush=True)
+    print("[kiosk-mouse] moves -> background thread (non-blocking recv)", flush=True)
+    async with serve(
+        client_handler,
+        BRIDGE_HOST,
+        BRIDGE_PORT,
+        max_size=2**16,
+        max_queue=256,
+        read_limit=2**18,
+        write_limit=2**18,
+    ):
         await asyncio.Future()
 
 

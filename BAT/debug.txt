@@ -1,5 +1,5 @@
 === Maingear kiosk debug log ===
-Started: Thu 09/10/2026  0:43:11.04
+Started: Thu 09/10/2026  0:57:52.79
 Computer: DATACENTER
 User: GEVer
 BAT_DIR=C:\Users\GEVer\Documents\HMI\BAT\
@@ -74,40 +74,38 @@ Major  Minor  Build  Revision
 
 
 
-[Thu 09/10/2026  0:43:11.67] Genesis startup (Docker + Vernova + Chrome walls)...
-[Thu 09/10/2026  0:43:11.67] VERNOVA_DIR=C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
-[Thu 09/10/2026  0:43:11.67] DCS_URL=http://localhost:3003
-[Thu 09/10/2026  0:43:11.67] Sub-logs: docker-compose.log ports-wait.log chrome-launch.log vernova-dev.log
-[Thu 09/10/2026  0:43:11.73] 
-[Thu 09/10/2026  0:43:11.74] Kiosk focus server start requested (port 8766)
-[Thu 09/10/2026  0:43:11.74] Kiosk mouse server start requested (port 8767)
-[Thu 09/10/2026  0:43:11.75] 
-[Thu 09/10/2026  0:43:11.76] [1/5] Starting DataCenterSmartPower Docker stack...
-[Thu 09/10/2026  0:43:11.76] Step 1: docker compose up -d
+[Thu 09/10/2026  0:57:53.44] Genesis startup (Docker + Vernova + Chrome walls)...
+[Thu 09/10/2026  0:57:53.45] VERNOVA_DIR=C:\Users\GEVer\Documents\HMI\vernova-spark-engine_new
+[Thu 09/10/2026  0:57:53.45] DCS_URL=http://localhost:3003
+[Thu 09/10/2026  0:57:53.46] Sub-logs: docker-compose.log ports-wait.log chrome-launch.log vernova-dev.log
+[Thu 09/10/2026  0:57:53.51] 
+[Thu 09/10/2026  0:57:53.52] Kiosk focus server start requested (port 8766)
+[Thu 09/10/2026  0:57:53.52] Kiosk mouse server start requested (port 8767)
+[Thu 09/10/2026  0:57:53.53] 
+[Thu 09/10/2026  0:57:53.53] [1/5] Starting DataCenterSmartPower Docker stack...
+[Thu 09/10/2026  0:57:53.54] Step 1: docker compose up -d
 
 ----- docker compose -----
-time="2026-09-10T00:43:11-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
- Container hmi-dcs-ui-1 Starting 
- Container hmi-dcs-ui-1 Started 
- Container hmi-dcs-backend-1 Starting 
- Container hmi-dcs-backend-1 Started 
+time="2026-09-10T00:57:53-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+ Container hmi-dcs-ui-1 Running 
+ Container hmi-dcs-backend-1 Running 
 
 --- docker compose ps ---
-time="2026-09-10T00:43:12-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
-NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS                  PORTS
-hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --hGǪ"   dcs-backend   2 hours ago    Up Less than a second   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
-hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.sGǪ"   dcs-ui        39 hours ago   Up Less than a second   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
-[Thu 09/10/2026  0:43:12.62] docker compose exit code: 0
-[Thu 09/10/2026  0:43:12.63] 
-[Thu 09/10/2026  0:43:12.63] [2/5] Starting Vernova dev server (npm run dev)...
-[Thu 09/10/2026  0:43:12.64] Step 2: npm run dev in vernova-spark-engine_new
-[Thu 09/10/2026  0:43:12.64]   Output log: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
-[Thu 09/10/2026  0:43:12.65]   This may take 1-3 minutes before port 5173 is ready.
-[Thu 09/10/2026  0:43:12.66] Vernova dev launched in minimized window (title: Vernova dev).
-[Thu 09/10/2026  0:43:12.66] Giving Vernova 3 seconds to start before port checks...
-[Thu 09/10/2026  0:43:15.11] 
-[Thu 09/10/2026  0:43:15.11] [3/5] Waiting for services (watch this window — progress every 15s)...
-[Thu 09/10/2026  0:43:15.11] Step 3: wait for TCP ports 5000, 3003, 5173
+time="2026-09-10T00:57:53-04:00" level=warning msg="The \"DOCKER_DEFAULT_PLATFORM\" variable is not set. Defaulting to a blank string."
+NAME                IMAGE                                                          COMMAND                  SERVICE       CREATED        STATUS          PORTS
+hmi-dcs-backend-1   dtr.research.ge.com/data_center_simulator/dcs-backend:latest   "uvicorn app:app --hGǪ"   dcs-backend   2 hours ago    Up 14 minutes   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+hmi-dcs-ui-1        dtr.research.ge.com/data_center_simulator/dcs-ui:latest        "docker-entrypoint.sGǪ"   dcs-ui        39 hours ago   Up 14 minutes   0.0.0.0:3003->3003/tcp, [::]:3003->3003/tcp
+[Thu 09/10/2026  0:57:53.99] docker compose exit code: 0
+[Thu 09/10/2026  0:57:53.99] 
+[Thu 09/10/2026  0:57:54.00] [2/5] Starting Vernova dev server (npm run dev)...
+[Thu 09/10/2026  0:57:54.00] Step 2: npm run dev in vernova-spark-engine_new
+[Thu 09/10/2026  0:57:54.01]   Output log: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+[Thu 09/10/2026  0:57:54.01]   This may take 1-3 minutes before port 5173 is ready.
+[Thu 09/10/2026  0:57:54.03] Vernova dev launched in minimized window (title: Vernova dev).
+[Thu 09/10/2026  0:57:54.03] Giving Vernova 3 seconds to start before port checks...
+[Thu 09/10/2026  0:57:57.21] 
+[Thu 09/10/2026  0:57:57.21] [3/5] Waiting for services (watch this window — progress every 15s)...
+[Thu 09/10/2026  0:57:57.22] Step 3: wait for TCP ports 5000, 3003, 5173
 
 ----- port wait -----
 
@@ -120,31 +118,31 @@ DCS UI (Docker) is ready after 0s.
 Waiting for Vernova npm run dev (Vite on port 5173) on 127.0.0.1:5173 (timeout 300s) ...
   Vernova npm run dev can take 1-3 minutes on a cold start — please wait.
 Vernova npm run dev (Vite on port 5173) is ready after 0s.
-[Thu 09/10/2026  0:43:15.43] port wait exit code: 0
-[Thu 09/10/2026  0:43:15.43] 
-[Thu 09/10/2026  0:43:15.44] [4/5] Opening Vernova Chrome (behind)...
-[Thu 09/10/2026  0:43:15.44] Step 4: Vernova Chrome -NoActivate
-Saved kiosk window 'Vernova' (hwnd=265490) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
+[Thu 09/10/2026  0:57:57.56] port wait exit code: 0
+[Thu 09/10/2026  0:57:57.56] 
+[Thu 09/10/2026  0:57:57.57] [4/5] Opening Vernova Chrome (behind)...
+[Thu 09/10/2026  0:57:57.57] Step 4: Vernova Chrome -NoActivate
+Saved kiosk window 'Vernova' (hwnd=265598) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
 Chrome opened spanning all displays at (-1280, -720) size 2560x1440
 Actual window: (-1280, -720) size 2560x1440, bottom=720
 Mode: app (no tabs/address bar)
 URL: http://localhost:5173
-[Thu 09/10/2026  0:43:16.50] Vernova Chrome exit code: 0
-[Thu 09/10/2026  0:43:16.51] 
-[Thu 09/10/2026  0:43:16.51] [5/5] Opening DCS Chrome (foreground)...
-[Thu 09/10/2026  0:43:16.52] Step 5: DCS Chrome foreground
-Saved kiosk window 'Dcs' (hwnd=134440) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
+[Thu 09/10/2026  0:57:58.63] Vernova Chrome exit code: 0
+[Thu 09/10/2026  0:57:58.64] 
+[Thu 09/10/2026  0:57:58.64] [5/5] Opening DCS Chrome (foreground)...
+[Thu 09/10/2026  0:57:58.65] Step 5: DCS Chrome foreground
+Saved kiosk window 'Dcs' (hwnd=200040) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
 Chrome opened spanning all displays at (-1280, -720) size 2560x1440
 Actual window: (-1280, -720) size 2560x1440, bottom=720
 Mode: app (no tabs/address bar)
 URL: http://localhost:3003
-[Thu 09/10/2026  0:43:17.66] DCS Chrome exit code: 0
-[Thu 09/10/2026  0:43:17.66] Startup finished OK.
-[Thu 09/10/2026  0:43:17.67] End of run exit code 0
-[Thu 09/10/2026  0:43:17.68] 
-[Thu 09/10/2026  0:43:17.69] ============================================================
-[Thu 09/10/2026  0:43:17.69]   Startup finished OK.
-[Thu 09/10/2026  0:43:17.69]   Summary: C:\Users\GEVer\Documents\HMI\BAT\debug.txt
-[Thu 09/10/2026  0:43:17.71]   Docker:  C:\Users\GEVer\Documents\HMI\BAT\docker-compose.log
-[Thu 09/10/2026  0:43:17.71]   Vernova: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
-[Thu 09/10/2026  0:43:17.72] ============================================================
+[Thu 09/10/2026  0:57:59.78] DCS Chrome exit code: 0
+[Thu 09/10/2026  0:57:59.78] Startup finished OK.
+[Thu 09/10/2026  0:57:59.79] End of run exit code 0
+[Thu 09/10/2026  0:57:59.80] 
+[Thu 09/10/2026  0:57:59.80] ============================================================
+[Thu 09/10/2026  0:57:59.81]   Startup finished OK.
+[Thu 09/10/2026  0:57:59.82]   Summary: C:\Users\GEVer\Documents\HMI\BAT\debug.txt
+[Thu 09/10/2026  0:57:59.83]   Docker:  C:\Users\GEVer\Documents\HMI\BAT\docker-compose.log
+[Thu 09/10/2026  0:57:59.84]   Vernova: C:\Users\GEVer\Documents\HMI\BAT\vernova-dev.log
+[Thu 09/10/2026  0:57:59.85] ============================================================
