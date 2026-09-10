@@ -3,17 +3,29 @@ import './IdeumRemoteControlOverlay.css';
 
 /**
  * Full-screen Ideum wall-control mode after Grid Connected.
- * Touch table: native touch events (touchmove) — pointermove is unreliable on Ideum glass.
+ * On-trackpad debug HUD shows dx/dy before WebSocket — isolates glass vs network.
  */
 export default function IdeumRemoteControlOverlay({
   mouseClientRef = null,
   onBack,
 }) {
   const trackpadRef = useRef(null);
+  const debugHudRef = useRef(null);
   const boundsRef = useRef({ left: 0, top: 0, width: 1920, height: 1080 });
   const lastTouchRef = useRef({ x: 0, y: 0 });
   const touchActiveRef = useRef(false);
-  const moveCountRef = useRef(0);
+  const statsRef = useRef({
+    touchMoveEvents: 0,
+    pointerMoveEvents: 0,
+    sends: 0,
+    lastSource: '—',
+    lastDx: 0,
+    lastDy: 0,
+    lastScaledDx: 0,
+    lastScaledDy: 0,
+    lastAt: 0,
+    recentLines: [],
+  });
 
   const getClient = useCallback(() => {
     const client = mouseClientRef?.current;
@@ -40,20 +52,57 @@ export default function IdeumRemoteControlOverlay({
     };
   }, []);
 
-  const applyDelta = useCallback((clientX, clientY) => {
-    const client = getClient();
-    if (!client) return;
+  const paintDebugHud = useCallback(() => {
+    const el = debugHudRef.current;
+    if (!el) return;
+    const s = statsRef.current;
+    const ago = s.lastAt ? `${Date.now() - s.lastAt}ms ago` : 'never';
+    el.textContent = [
+      `source: ${s.lastSource}  (${ago})`,
+      `last raw dx,dy: ${s.lastDx} , ${s.lastDy}`,
+      `last sent dx,dy: ${s.lastScaledDx} , ${s.lastScaledDy}`,
+      `count touchmove ${s.touchMoveEvents}  pointer ${s.pointerMoveEvents}  sends ${s.sends}`,
+      '— recent —',
+      ...(s.recentLines.length ? s.recentLines : ['(no dx/dy yet)']),
+    ].join('\n');
+  }, []);
 
+  const applyDelta = useCallback((clientX, clientY, source) => {
     const dx = clientX - lastTouchRef.current.x;
     const dy = clientY - lastTouchRef.current.y;
     lastTouchRef.current = { x: clientX, y: clientY };
 
-    if (dx === 0 && dy === 0) return;
+    const s = statsRef.current;
+    s.lastSource = source;
+    s.lastDx = Math.round(dx * 10) / 10;
+    s.lastDy = Math.round(dy * 10) / 10;
+    s.lastAt = Date.now();
+
+    if (dx === 0 && dy === 0) {
+      paintDebugHud();
+      return;
+    }
 
     const { scaleX, scaleY } = pointerScale();
-    client.sendMoveRelative(dx * scaleX, dy * scaleY, { immediate: true });
-    moveCountRef.current += 1;
-  }, [getClient, pointerScale]);
+    const scaledDx = Math.round(dx * scaleX);
+    const scaledDy = Math.round(dy * scaleY);
+    s.lastScaledDx = scaledDx;
+    s.lastScaledDy = scaledDy;
+    s.sends += 1;
+    s.recentLines.unshift(
+      `#${s.sends} ${source}  raw(${s.lastDx}, ${s.lastDy})  sent(${scaledDx}, ${scaledDy})`,
+    );
+    if (s.recentLines.length > 8) {
+      s.recentLines.length = 8;
+    }
+
+    paintDebugHud();
+
+    const client = getClient();
+    if (client) {
+      client.sendMoveRelative(scaledDx, scaledDy, { immediate: true });
+    }
+  }, [getClient, pointerScale, paintDebugHud]);
 
   useEffect(() => {
     const el = trackpadRef.current;
@@ -65,16 +114,23 @@ export default function IdeumRemoteControlOverlay({
       touchActiveRef.current = true;
       const t = e.touches[0];
       lastTouchRef.current = { x: t.clientX, y: t.clientY };
+      statsRef.current.lastSource = 'touchstart';
+      statsRef.current.lastAt = Date.now();
+      paintDebugHud();
     };
 
     const onTouchMove = (e) => {
       if (!touchActiveRef.current || e.touches.length !== 1) return;
       e.preventDefault();
+      statsRef.current.touchMoveEvents += 1;
       const t = e.touches[0];
-      applyDelta(t.clientX, t.clientY);
+      applyDelta(t.clientX, t.clientY, 'touchmove');
     };
 
     const onTouchEnd = (e) => {
+      statsRef.current.lastSource = 'touchend';
+      statsRef.current.lastAt = Date.now();
+      paintDebugHud();
       if (e.touches.length === 0) {
         touchActiveRef.current = false;
         getClient()?.flushMoves();
@@ -92,30 +148,37 @@ export default function IdeumRemoteControlOverlay({
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [applyDelta, getClient]);
+  }, [applyDelta, getClient, paintDebugHud]);
 
   const onTrackpadPointerDown = useCallback((e) => {
     if (e.pointerType === 'touch') return;
     e.preventDefault();
     touchActiveRef.current = true;
     lastTouchRef.current = { x: e.clientX, y: e.clientY };
-  }, []);
+    statsRef.current.lastSource = 'pointerdown';
+    statsRef.current.lastAt = Date.now();
+    paintDebugHud();
+  }, [paintDebugHud]);
 
   const onTrackpadPointerMove = useCallback((e) => {
     if (e.pointerType === 'touch') return;
     if (!touchActiveRef.current) return;
     e.preventDefault();
+    statsRef.current.pointerMoveEvents += 1;
     const samples = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
     for (const sample of samples) {
-      applyDelta(sample.clientX, sample.clientY);
+      applyDelta(sample.clientX, sample.clientY, 'pointermove');
     }
   }, [applyDelta]);
 
   const onTrackpadPointerUp = useCallback((e) => {
     if (e.pointerType === 'touch') return;
     touchActiveRef.current = false;
+    statsRef.current.lastSource = 'pointerup';
+    statsRef.current.lastAt = Date.now();
+    paintDebugHud();
     getClient()?.flushMoves();
-  }, [getClient]);
+  }, [getClient, paintDebugHud]);
 
   const onClickButton = useCallback((e) => {
     e.preventDefault();
@@ -148,7 +211,14 @@ export default function IdeumRemoteControlOverlay({
           role="application"
           aria-label="Trackpad — relative move (Maingear mouse)"
         >
-          <span className="ideum-remote-control__trackpad-label">Trackpad</span>
+          <pre ref={debugHudRef} className="ideum-remote-control__trackpad-debug">
+            source: —
+            last raw dx,dy: 0 , 0
+            last sent dx,dy: 0 , 0
+            count touchmove 0  pointer 0  sends 0
+            — recent —
+            (no dx/dy yet)
+          </pre>
         </div>
 
         <button
