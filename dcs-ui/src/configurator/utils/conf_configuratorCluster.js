@@ -30,6 +30,22 @@ export function resolveMaingearBackendUrl(role) {
  * Ideum → Maingear: submit inputs; Maingear runs optimizer and pushes results to wall UI.
  * @param {string} maingearBackendUrl e.g. http://192.168.50.1:5000, or '' for relative /api
  */
+/** Ideum → Maingear: dismiss wall configurator when leaving Data Centers flow. */
+export async function closeConfiguratorWallOnMaingear(maingearBackendUrl) {
+  const base = (maingearBackendUrl ?? '').replace(/\/$/, '');
+  const url = base ? `${base}/api/configurator/cluster/close` : '/api/configurator/cluster/close';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source: 'ideum' }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || `Cluster close failed (${res.status})`);
+  }
+  return data;
+}
+
 export async function submitConfiguratorToMaingear(maingearBackendUrl, inputs) {
   const base = (maingearBackendUrl ?? '').replace(/\/$/, '');
   const url = base ? `${base}/api/configurator/cluster/submit` : '/api/configurator/cluster/submit';

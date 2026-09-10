@@ -10,6 +10,7 @@ import { getGFMe3DModelUrl } from '../../utils/gfme3dLayout';
 import {
   getIdeumComponents,
   getIdeumTitle,
+  getIdeumCommand,
   getIdeumPreviewImageUrl,
   getIdeumButtonStyleClass,
   ideumButtonPayload,
@@ -295,15 +296,34 @@ export default function IdeumComponentLayer({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              const customCommand = getIdeumCommand(slot.component);
+              if (customCommand) {
+                onIdeumClick?.({
+                  command: customCommand,
+                  label: slot.title,
+                  componentId: slot.component.id,
+                });
+                return;
+              }
               onIdeumSimulationClick?.();
             }}
-            aria-label={running ? 'Stop Simulation' : 'Start Simulation'}
+            aria-label={
+              getIdeumCommand(slot.component)
+                ? slot.title
+                : running
+                  ? 'Stop Simulation'
+                  : 'Start Simulation'
+            }
           >
             <span
               className="ideum-component-btn__start-sim-label"
               style={{ fontSize: labelPx }}
             >
-              {running ? '⏹ Stop Simulation' : '▶ Start Simulation'}
+              {getIdeumCommand(slot.component)
+                ? slot.title
+                : running
+                  ? '⏹ Stop Simulation'
+                  : '▶ Start Simulation'}
             </span>
           </button>
         );

@@ -708,7 +708,7 @@
         "x": 401,
         "y": 500
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -739,7 +739,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -760,6 +760,33 @@
       },
       "connectionReadout": null,
       "initialSimStatus": "open"
+    },
+    {
+      "id": "comp-ideum-hd-reset-btn",
+      "type": "ideum-start-simulation-button",
+      "name": "Load HD",
+      "fullName": "Open both CBs and load HD configuration",
+      "position": {
+        "x": 900,
+        "y": 20
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Load HD",
+        "ideumCommand": "resetHdAero"
+      },
+      "visualOverrides": {
+        "width": 420,
+        "height": 88
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
     },
     {
       "id": "comp-hd-3d-preview",
@@ -1960,6 +1987,9 @@
       "loadHdAero": {
         "action": "loadDesign",
         "designDir": "hd_aero"
+      },
+      "resetHdAero": {
+        "action": "resetHdAero"
       },
       "togglePeripheralsExpansion": {
         "action": "toggleExpansion",

@@ -70,3 +70,22 @@ async def submit_configurator_cluster(
 
     await broadcast({"type": "configurator_update", "session": await get_configurator_session()})
     return await get_configurator_session()
+
+
+async def close_configurator_wall_cluster(
+    *,
+    source: str | None,
+    broadcast: Callable[[dict[str, Any]], Awaitable[int]],
+) -> dict[str, Any]:
+    """Tell Maingear wall clients to dismiss the configurator overlay."""
+    now = datetime.now(timezone.utc).isoformat()
+    async with _lock:
+        _session.update(
+            {
+                "status": "idle",
+                "updatedAt": now,
+                "source": source or "ideum",
+            }
+        )
+    await broadcast({"type": "configurator_close_wall", "source": source or "ideum"})
+    return await get_configurator_session()

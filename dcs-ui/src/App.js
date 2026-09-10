@@ -70,6 +70,7 @@ import {
   connectClusterWebSocket,
   connectPeerClusterWebSocket,
   fetchMachineRole,
+  resolveMaingearPeerPostBase,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
 import { installIdeumClickSound } from './utils/ideumClickSound';
@@ -197,7 +198,10 @@ import {
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
-import { isLocalClusterDev } from './configurator/utils/conf_configuratorCluster';
+import {
+  closeConfiguratorWallOnMaingear,
+  isLocalClusterDev,
+} from './configurator/utils/conf_configuratorCluster';
 import { resolveChartDataTimeBounds } from './utils/chartSimulationTimeBounds';
 import { resolveLoopPlaybackGlobalStart } from './utils/simulationLoopPlayback';
 import {
@@ -265,6 +269,9 @@ function clearConfiguratorViewFromUrl() {
   const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
   window.history.replaceState(null, '', next);
 }
+
+const P2R18_ENSEMBLE_ID = 'all';
+const P2R18_DEFAULT_PRESET = 'noBessNoStatcom';
 
 function isP2R18Design(loadedConfig) {
   const name = String(loadedConfig?.name || '').toLowerCase();
@@ -1012,6 +1019,7 @@ function App() {
   /** Deep link calls the same loader as the dialog but must not also run localStorage session-restore for the same navigation. */
   const loadSkipSessionRestoreRef = useRef(false);
   const pendingHdAeroInitRef = useRef(false);
+  const pendingP2R18InitRef = useRef(false);
   /**
    * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
@@ -3660,6 +3668,12 @@ function App() {
       button?.command ||
       button?.properties?.ideumCommand;
     if (!command) return;
+    if (
+      (command === 'resetHdAero' || command === 'loadHdAero')
+      && (isHdAeroShell || isHdAeroIdeumLoaded)
+    ) {
+      setCanvasComponents((prev) => hdAeroBreakersOpenUpdate(prev));
+    }
     let role;
     try {
       role = await fetchMachineRole();
@@ -3960,6 +3974,25 @@ function App() {
     }
   }, [machineRole]);
 
+  const sendIdeumCloseConfiguratorWall = useCallback(async () => {
+    let role = machineRole;
+    try {
+      if (!role?.role) {
+        role = await fetchMachineRole();
+        setMachineRole(role);
+      }
+    } catch (e) {
+      console.warn('[cluster] machine role fetch failed (configurator close)', e);
+      return;
+    }
+    if (role.isMaingear || !role.isIdeum) return;
+    try {
+      await closeConfiguratorWallOnMaingear(resolveMaingearPeerPostBase(role));
+    } catch (e) {
+      console.warn('[cluster] configurator close failed', e);
+    }
+  }, [machineRole]);
+
   const clampCanvasZoom = useCallback((value) => {
     const z = Number(value);
     return Number.isFinite(z)
@@ -4038,20 +4071,23 @@ function App() {
 
   /** Child shells (200 MW / Configurator / 500 MW) Back — return to DataCenter menu. */
   const handleDataCenterChildBack = useCallback(() => {
+    void sendIdeumCloseConfiguratorWall();
     void loadDesignFromCatalog(DATA_CENTER_CATALOG);
-  }, [loadDesignFromCatalog]);
+  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
   /** Configurator ✕ — exit Data Centers flow (unload configurator + DataCenter menu). */
   const handleConfiguratorShellClose = useCallback(() => {
+    void sendIdeumCloseConfiguratorWall();
     void loadDesignFromCatalog(IDEUM05_CATALOG);
-  }, [loadDesignFromCatalog]);
+  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
   /** DataCenter card tap — load isolated shell design per card. */
   const handleDataCenterNavSelect = useCallback((cardId) => {
     const loadCatalog = getIdeum05NavLoadDesignCatalog('data-centers', cardId);
     if (!loadCatalog) return;
+    void sendIdeumCloseConfiguratorWall();
     void loadDesignFromCatalog(loadCatalog);
-  }, [loadDesignFromCatalog]);
+  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
@@ -4305,6 +4341,44 @@ function App() {
     ],
   );
 
+  /** Open both stub CBs, stop playback, and activate the HD ensemble preset. */
+  const applyHdAeroDefaultState = useCallback(async () => {
+    if (!designApiPath) return false;
+    if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return false;
+    }
+
+    handleStopSimulation();
+    setHdAeroChartEvents([]);
+    setCanvasComponents((prev) => hdAeroBreakersOpenUpdate(prev));
+    setRightRailCollapsed(false);
+    setRightRailGridPeek(true);
+
+    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
+      pendingHdAeroInitRef.current = true;
+      return false;
+    }
+
+    const ens = designEnsembles.find((e) => e.id === HD_AERO_ENSEMBLE_ID);
+    if (!ens) {
+      pendingHdAeroInitRef.current = true;
+      return false;
+    }
+
+    pendingHdAeroInitRef.current = false;
+    if (simulationMetadataRef.current?.ensembleId !== HD_AERO_ENSEMBLE_ID) {
+      await handleSelectEnsemble(ens);
+    }
+    await handleActivateNamedSimulationConfig(HD_AERO_DEFAULT_PRESET);
+    return true;
+  }, [
+    designApiPath,
+    currentConfigName,
+    designEnsembles,
+    handleSelectEnsemble,
+    handleStopSimulation,
+  ]);
+
   const maybeApplyHdAeroBreakerPreset = useCallback(
     (componentId, updates) => {
       if (!isHDAeroDesign({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
@@ -4351,22 +4425,13 @@ function App() {
     const ens = designEnsembles.find((e) => e.id === HD_AERO_ENSEMBLE_ID);
     if (!ens) return;
 
-    pendingHdAeroInitRef.current = false;
-
-    void (async () => {
-      setHdAeroChartEvents([]);
-      setCanvasComponents((prev) => hdAeroBreakersOpenUpdate(prev));
-      await handleSelectEnsemble(ens);
-      await handleActivateNamedSimulationConfig(HD_AERO_DEFAULT_PRESET);
-      setRightRailCollapsed(false);
-      setRightRailGridPeek(true);
-    })();
+    void applyHdAeroDefaultState();
   }, [
     designApiPath,
     csvStatus?.use_design_dir,
     currentConfigName,
     designEnsembles,
-    handleSelectEnsemble,
+    applyHdAeroDefaultState,
   ]);
 
   const handleCanvasUpdateComponent = useCallback((componentId, updates) => {
@@ -4440,6 +4505,40 @@ function App() {
     designExpansion,
     designApiPath,
     currentConfigName,
+  ]);
+
+  useEffect(() => {
+    if (!pendingP2R18InitRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return;
+    }
+    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
+    if (!designEnsembles.length) return;
+
+    const ens = designEnsembles.find((e) => e.id === P2R18_ENSEMBLE_ID);
+    if (!ens) return;
+
+    pendingP2R18InitRef.current = false;
+
+    void (async () => {
+      handleStopSimulation();
+      handleWorkspaceLayoutPresetChange('conf3');
+      applyNoBessNoStatcomCanvas();
+      await handleSelectEnsemble(ens);
+      await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
+      setRightRailCollapsed(false);
+      setRightRailGridPeek(true);
+    })();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    handleSelectEnsemble,
+    handleStopSimulation,
+    handleWorkspaceLayoutPresetChange,
+    applyNoBessNoStatcomCanvas,
   ]);
 
   const handleLiveRtds = useCallback(async () => {
@@ -4671,7 +4770,7 @@ function App() {
       await handleLiveRtds();
       return;
     }
-    if (command === 'loadHdAero') {
+    if (command === 'loadHdAero' || command === 'resetHdAero') {
       if (
         isHDAeroDesign({
           name: currentConfigName,
@@ -4679,6 +4778,10 @@ function App() {
           csv_status: { design_catalog_rel: designApiPath },
         })
       ) {
+        await applyHdAeroDefaultState();
+        return;
+      }
+      if (command === 'resetHdAero') {
         return;
       }
       try {
@@ -7531,7 +7634,12 @@ function App() {
     }
 
     if (isHDAeroDesign(loadedConfig)) {
+      pendingP2R18InitRef.current = false;
       pendingHdAeroInitRef.current = true;
+      loadSkipSessionRestoreRef.current = true;
+    } else if (isP2R18Design(loadedConfig)) {
+      pendingHdAeroInitRef.current = false;
+      pendingP2R18InitRef.current = true;
       loadSkipSessionRestoreRef.current = true;
     }
     
@@ -7633,11 +7741,26 @@ function App() {
     if (data.canvasComponents) {
       // Set all components to 'idle' status initially when loaded
       // They will turn 'online' when user presses "Start Simulation"
-      const componentsWithIdleStatus = data.canvasComponents.map(comp => ({
-        ...comp,
-        status: 'idle',
-        isTripped: false
-      }));
+      const componentsWithIdleStatus = data.canvasComponents.map((comp) => {
+        const isHdAeroStubCb =
+          comp.id === HD_AERO_CB_A_ID || comp.id === HD_AERO_CB_B_ID;
+        if (
+          isHdAeroStubCb
+          && (isHDAeroDesign(loadedConfig) || isHDAeroIdeumDesign(loadedConfig))
+        ) {
+          return {
+            ...comp,
+            status: 'open',
+            initialSimStatus: 'open',
+            isTripped: false,
+          };
+        }
+        return {
+          ...comp,
+          status: 'idle',
+          isTripped: false,
+        };
+      });
       setCanvasComponents(
         applyDesignExpansionToComponents(
           normalizeLoadedCanvasComponents(componentsWithIdleStatus),
@@ -8201,6 +8324,11 @@ function App() {
       if (msg?.type === 'configurator_open_wall') {
         setConfiguratorWallMountKey((k) => k + 1);
         handleOpenConfiguratorRef.current('wall');
+        return;
+      }
+      if (msg?.type === 'configurator_close_wall') {
+        setConfiguratorOpen(false);
+        clearConfiguratorViewFromUrl();
         return;
       }
       if (msg?.type === 'remote_command' && msg.command) {
