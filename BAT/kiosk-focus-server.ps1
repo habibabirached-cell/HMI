@@ -6,30 +6,56 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $Port = 8766
-$prefixes = @(
-    "http://127.0.0.1:$Port/",
-    "http://192.168.50.1:$Port/"
-)
 
 . (Join-Path $PSScriptRoot "kiosk-windows.ps1")
 
-$listener = [System.Net.HttpListener]::new()
-foreach ($prefix in $prefixes) {
-    $listener.Prefixes.Add($prefix)
+function Start-KioskFocusListener {
+    param([string[]] $PrefixList)
+
+    $instance = [System.Net.HttpListener]::new()
+    foreach ($prefix in $PrefixList) {
+        $instance.Prefixes.Add($prefix)
+    }
+    $instance.Start()
+    return $instance
 }
+
+$listener = $null
+$activePrefixes = @()
 try {
-    $listener.Start()
+    $listener = Start-KioskFocusListener @(
+        "http://127.0.0.1:$Port/",
+        "http://192.168.50.1:$Port/"
+    )
+    $activePrefixes = @(
+        "http://127.0.0.1:$Port/",
+        "http://192.168.50.1:$Port/"
+    )
 } catch {
-    Write-Host "Kiosk focus server already running or port $Port unavailable: $($_.Exception.Message)"
-    Write-Host "If URL ACL is required, run as Administrator once:"
-    Write-Host "  netsh http add urlacl url=http://192.168.50.1:$Port/ user=Everyone"
-    exit 0
+    Write-Host "Could not bind 127.0.0.1 + 192.168.50.1 ($($_.Exception.Message))"
+    Write-Host "Retrying 127.0.0.1 only ..."
+    try {
+        $listener = Start-KioskFocusListener @("http://127.0.0.1:$Port/")
+        $activePrefixes = @("http://127.0.0.1:$Port/")
+    } catch {
+        Write-Host ""
+        Write-Host "Kiosk focus server FAILED on port $Port."
+        Write-Host $_.Exception.Message
+        Write-Host ""
+        Write-Host "If one is already running, ignore this and test:"
+        Write-Host "  curl -X POST http://127.0.0.1:$Port/kiosk/focus/Vernova -H \"Content-Type: application/json\" -d \"{}\""
+        Write-Host ""
+        pause
+        exit 1
+    }
 }
 
 Write-Host "Kiosk focus server listening on:"
-foreach ($prefix in $prefixes) {
+foreach ($prefix in $activePrefixes) {
     Write-Host "  $prefix"
 }
+Write-Host "(Leave this window open. Ideum Grid Connected -> showVernova uses port $Port.)"
+Write-Host ""
 
 function Write-JsonResponse {
     param(
