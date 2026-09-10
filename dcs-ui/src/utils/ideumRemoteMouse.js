@@ -100,4 +100,12 @@ export class IdeumRemoteMouseClient {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify({ type: 'click' }));
   }
+
+  /** Bring DCS or Vernova Chrome kiosk to front (same WebSocket as trackpad). */
+  sendFocus(target) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    if (target !== 'Dcs' && target !== 'Vernova') return false;
+    this.ws.send(JSON.stringify({ type: 'focus', target }));
+    return true;
+  }
 }

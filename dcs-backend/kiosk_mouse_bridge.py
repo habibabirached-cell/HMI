@@ -14,6 +14,8 @@ import asyncio
 import json
 import os
 import sys
+import urllib.error
+import urllib.request
 
 try:
     from websockets.server import serve
@@ -35,6 +37,8 @@ MOUSEEVENTF_LEFTUP = 0x0004
 
 BRIDGE_HOST = os.environ.get("KIOSK_MOUSE_HOST", "0.0.0.0")
 BRIDGE_PORT = int(os.environ.get("KIOSK_MOUSE_PORT", "8767"))
+FOCUS_HOST = os.environ.get("KIOSK_FOCUS_HOST", "127.0.0.1")
+FOCUS_PORT = int(os.environ.get("KIOSK_FOCUS_PORT", "8766"))
 
 
 class POINT(ctypes.Structure):
@@ -81,6 +85,51 @@ def left_click() -> None:
     user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
 
+def beep_ideum_signal() -> None:
+    """Short tone when Ideum sends a command (not used for high-rate move deltas)."""
+    try:
+        import winsound
+
+        winsound.Beep(880, 35)
+    except Exception:
+        user32.MessageBeep(0xFFFFFFFF)
+
+
+def _post_kiosk_focus_sync(target: str) -> dict:
+    url = f"http://{FOCUS_HOST}:{FOCUS_PORT}/kiosk/focus/{target}"
+    req = urllib.request.Request(
+        url,
+        data=b"{}",
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+        if isinstance(payload, dict):
+            payload.setdefault("ok", True)
+            return payload
+        return {"ok": True, "target": target}
+
+
+async def focus_kiosk(target: str) -> dict:
+    if target not in ("Dcs", "Vernova"):
+        return {"ok": False, "error": "target must be Dcs or Vernova"}
+    try:
+        return await asyncio.to_thread(_post_kiosk_focus_sync, target)
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        try:
+            detail = json.loads(raw)
+        except json.JSONDecodeError:
+            detail = {"error": raw or exc.reason}
+        if isinstance(detail, dict):
+            detail.setdefault("ok", False)
+            return detail
+        return {"ok": False, "error": str(detail)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 async def handle_message(raw: str) -> dict | None:
     try:
         msg = json.loads(raw)
@@ -88,8 +137,18 @@ async def handle_message(raw: str) -> dict | None:
         return {"ok": False, "error": "invalid json"}
 
     msg_type = (msg.get("type") or "").strip().lower()
+    if msg_type != "move":
+        await asyncio.to_thread(beep_ideum_signal)
+
     if msg_type == "ping":
         return {"ok": True, "type": "pong", "bounds": virtual_screen_bounds()}
+
+    if msg_type == "focus":
+        target = (msg.get("target") or "").strip()
+        if target not in ("Dcs", "Vernova"):
+            return {"ok": False, "error": "focus target must be Dcs or Vernova"}
+        result = await focus_kiosk(target)
+        return {"ok": bool(result.get("ok")), "type": "focus", "target": target, **result}
 
     if msg_type == "move":
         if "x" in msg and "y" in msg:
@@ -110,6 +169,7 @@ async def handle_message(raw: str) -> dict | None:
 async def client_handler(websocket) -> None:
     peer = getattr(websocket, "remote_address", None)
     print(f"[kiosk-mouse] client connected {peer}", flush=True)
+    await asyncio.to_thread(beep_ideum_signal)
     try:
         await websocket.send(json.dumps({"type": "hello", "bounds": virtual_screen_bounds()}))
         async for raw in websocket:

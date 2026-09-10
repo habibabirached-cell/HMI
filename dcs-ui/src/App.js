@@ -70,7 +70,6 @@ import {
   connectClusterWebSocket,
   connectPeerClusterWebSocket,
   fetchMachineRole,
-  MAINGEAR_CLUSTER_BACKEND,
   sendRemoteCommandToMaingear,
 } from './utils/clusterPeer';
 import { installIdeumClickSound } from './utils/ideumClickSound';
@@ -3853,19 +3852,19 @@ function App() {
     }
   };
 
-  /** Single direct focus POST (:8766). One request — focus server is single-threaded. */
+  /** Grid Connected / Back — WebSocket :8767 first (same path as trackpad). */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
-    void sendKioskFocusDirect(machineRole, target)
-      .then((result) => console.info('[cluster] kiosk focus ok', command, result))
-      .catch((e) => {
-        console.warn('[cluster] kiosk focus direct failed, relay fallback', command, e);
-        const relayBase = machineRole?.peerBackendUrl || MAINGEAR_CLUSTER_BACKEND;
-        void sendRemoteCommandToMaingear(relayBase, command).catch((err) => {
-          console.warn('[cluster] kiosk focus relay failed', command, err);
-        });
-      });
+    const client = ideumMouseClientRef.current;
+    if (client?.sendFocus(target)) {
+      console.info('[cluster] kiosk focus via ws', command, target);
+      return;
+    }
+    console.warn('[cluster] ws not ready, focus fallback http', command);
+    void sendKioskFocusDirect(machineRole, target).catch((e) => {
+      console.warn('[cluster] kiosk focus http failed', command, e);
+    });
   }, [machineRole]);
 
   const sendIdeumClusterCommand = useCallback(async (command, payload) => {
@@ -3954,11 +3953,11 @@ function App() {
   }, [clampCanvasZoom]);
 
   const handleIdeumWallControlBack = useCallback(() => {
+    fireKioskFocusFast('showDcs');
     flushSync(() => {
       setIdeumWallControlActive(false);
       setIdeum05NavStack([IDEUM05_NAV_ROOT]);
     });
-    fireKioskFocusFast('showDcs');
   }, [fireKioskFocusFast]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
