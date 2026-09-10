@@ -720,11 +720,14 @@ async def post_cluster_remote_command(body: dict):
     focus_result = None
     focus_target = KIOSK_FOCUS_BY_COMMAND.get(command)
     if focus_target:
+        print(f"[cluster] kiosk focus request: {command} -> {focus_target}", flush=True)
         focus_result = await trigger_kiosk_focus(focus_target)
+        print(f"[cluster] kiosk focus result: {focus_result}", flush=True)
         if not focus_result.get("ok"):
             raise HTTPException(
                 status_code=503,
                 detail=focus_result.get("error")
+                or focus_result.get("hint")
                 or f"Kiosk focus failed for {focus_target}. "
                 "On Maingear run BAT\\start-kiosk-focus-server.bat or z_genesis.start.bat.",
             )

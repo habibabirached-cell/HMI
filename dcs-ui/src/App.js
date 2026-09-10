@@ -3848,14 +3848,24 @@ function App() {
         setMachineRole(role);
       }
     } catch (e) {
-      console.warn(e);
-      return;
+      console.warn('[cluster] machine role fetch failed', e);
+      alert(e.message || 'Could not read cluster role. Run set-ideum-ethernet-ip.bat on this PC.');
+      return null;
     }
-    if (role.isMaingear || !role.isIdeum) return;
+    if (role.isMaingear || !role.isIdeum) {
+      const msg = `This PC is not configured as Ideum (role=${role.role || 'unknown'}). Run set-ideum-ethernet-ip.bat and reload.`;
+      console.warn('[cluster]', msg);
+      alert(msg);
+      return null;
+    }
     try {
-      await sendRemoteCommandToMaingear(role.peerBackendUrl, command, payload);
+      const result = await sendRemoteCommandToMaingear(role, command, payload);
+      console.info('[cluster] remote command ok', command, result);
+      return result;
     } catch (e) {
-      console.warn(e);
+      console.warn('[cluster] remote command failed', command, e);
+      alert(e.message || `Failed to send "${command}" to Maingear.`);
+      return null;
     }
   }, [machineRole]);
 
