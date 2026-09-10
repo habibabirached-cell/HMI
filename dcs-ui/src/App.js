@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect, startTransition } from 'react';
-import { flushSync } from 'react-dom';
 import ComponentLibrary from './components/ComponentLibrary';
 import IdeumRemoteControlOverlay from './components/IdeumKiosk/IdeumRemoteControlOverlay';
 import Canvas from './components/Canvas';
@@ -80,12 +79,17 @@ import {
 } from './utils/ideumRemoteFocus';
 import { IdeumRemoteMouseClient, resolveMaingearMouseWebSocketUrl } from './utils/ideumRemoteMouse';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
-import { isIdeum06DesignName } from './utils/ideum06Design';
+import {
+  IDEUM05_CATALOG,
+  IDEUM06_CATALOG,
+  isIdeum06DesignName,
+} from './utils/ideum06Design';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
   getIdeum05ControlsClusterCommand,
   getIdeum05NavClusterCommand,
+  getIdeum05NavLoadDesignCatalog,
   getIdeum05OverlayClusterCommand,
   getIdeum05OverlayDesignDir,
   getIdeum05OverlaySaveTarget,
@@ -1028,8 +1032,6 @@ function App() {
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
   const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
-  /** Ideum05 Grid Connected: black trackpad screen to drive Maingear mouse. */
-  const [ideumWallControlActive, setIdeumWallControlActive] = useState(false);
   /** Persistent Ideum→Maingear mouse WebSocket (stay connected across overlay mount/unmount). */
   const ideumMouseClientRef = useRef(null);
   /** Per-screen zoom/pan for Ideum05 nav drill stack (root, data-centers, ref-500-mw, …). */
@@ -3963,32 +3965,48 @@ function App() {
     return true;
   }, [clampCanvasZoom]);
 
-  const handleIdeumWallControlBack = useCallback(() => {
-    fireKioskFocusFast('showDcs');
-    flushSync(() => {
-      setIdeumWallControlActive(false);
-      setIdeum05NavStack([IDEUM05_NAV_ROOT]);
-    });
-  }, [fireKioskFocusFast]);
+  const loadDesignFromCatalog = useCallback(async (catalogDir) => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(catalogDir)}/load`,
+      );
+      if (!res.ok) {
+        console.warn('[ideum] catalog load failed', catalogDir, res.status);
+        alert(`Could not load design "${catalogDir}".`);
+        return;
+      }
+      const loadedConfig = await res.json();
+      setShowDialog(false);
+      setDialogMode(null);
+      handleConfigurationLoadedRef.current?.(loadedConfig);
+    } catch (e) {
+      console.warn('[ideum] catalog load error', catalogDir, e);
+      alert(e.message || `Failed to load "${catalogDir}".`);
+    }
+  }, []);
 
-  /** Ideum06 Back — focus DCS wall and open Load so operator can pick Ideum05. */
+  /** Ideum06 Back — focus DCS wall and reload Ideum05 root menu. */
   const handleIdeum06Back = useCallback(() => {
     fireKioskFocusFast('showDcs');
-    setDialogMode('load');
-    setShowDialog(true);
-  }, [fireKioskFocusFast]);
+    void loadDesignFromCatalog(IDEUM05_CATALOG);
+  }, [fireKioskFocusFast, loadDesignFromCatalog]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
+    const loadCatalog = getIdeum05NavLoadDesignCatalog(screenId, cardId);
+    if (loadCatalog) {
+      if (loadCatalog === IDEUM06_CATALOG) {
+        fireKioskFocusFast('showVernova');
+      }
+      void loadDesignFromCatalog(loadCatalog);
+      return;
+    }
     const navClusterCmd = getIdeum05NavClusterCommand(screenId, cardId);
     if (navClusterCmd) {
       if (isDirectKioskFocusCommand(navClusterCmd)) {
         fireKioskFocusFast(navClusterCmd);
       } else {
         void sendIdeumClusterCommand(navClusterCmd);
-      }
-      if (navClusterCmd === 'showVernova') {
-        flushSync(() => setIdeumWallControlActive(true));
       }
     }
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
@@ -4010,6 +4028,7 @@ function App() {
     isIdeum05,
     captureIdeum05ViewportForScreen,
     fireKioskFocusFast,
+    loadDesignFromCatalog,
     sendIdeumClusterCommand,
   ]);
 
@@ -9065,12 +9084,6 @@ function App() {
         />
       )}
 
-      {isIdeum05 && ideumWallControlActive && (
-        <IdeumRemoteControlOverlay
-          mouseClientRef={ideumMouseClientRef}
-          onBack={handleIdeumWallControlBack}
-        />
-      )}
     </div>
     </FontScaleProvider>
   );
