@@ -8,11 +8,6 @@ $script:KioskRegistryPath = Join-Path $PSScriptRoot "kiosk-windows.json"
 function Write-WaitMsg {
     param([string] $Message)
     Write-Host $Message
-    foreach ($path in @($global:GenesisTeeLogs)) {
-        if ($path) {
-            Add-Content -LiteralPath $path -Value $Message -ErrorAction SilentlyContinue
-        }
-    }
 }
 
 if (-not ("KioskWindowApi" -as [type])) {

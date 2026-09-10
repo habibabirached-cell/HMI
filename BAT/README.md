@@ -27,13 +27,7 @@ Ideum will eventually send those focus commands over the existing cluster link; 
 | `kiosk-windows.ps1` | Window registry, HWND save/restore, port wait helpers |
 | `_paths.bat` | Sets `BAT_DIR` and `REPO_ROOT` for other scripts |
 | `kiosk-windows.json` | Auto-generated window handles (gitignored) |
-| `debug.txt` | Startup summary (commit & share for remote diagnosis) |
-| `docker-compose.log` | `docker compose up` + `docker compose ps` output |
-| `ports-wait.log` | TCP port wait output |
-| `chrome-launch.log` | Chrome launcher output |
-| `vernova-dev.log` | Vernova `npm run dev` output |
-| `start-vernova-dev.bat` | Helper that runs Vernova dev with logging |
-| `_debug-log.bat` | Internal logging helpers |
+| `start-vernova-dev.bat` | Helper that runs Vernova `npm run dev` |
 | `userManual.md` | Short operator instructions |
 
 **Repo root** (not in `BAT/`):
@@ -85,11 +79,11 @@ Grid Connected will add cluster commands such as `showVernova` / `showDcs` that 
 
 ## Troubleshooting
 
-If startup fails (Docker OK but no Chrome / no Vernova), re-run `z_genesis.start.bat`, then open **`BAT/debug.txt`**. It captures every step, docker output, port waits, Chrome launch errors, and the Vernova dev log. Commit and push `debug.txt` so it can be reviewed off-machine.
+If startup fails, re-run `z_genesis.start.bat` and read the console output in the startup window.
 
 | Problem | Check |
 |---|---|
-| Vernova port timeout | `BAT/debug.txt` and `BAT/vernova-dev.log`; run `npm run api:install` in `vernova-spark-engine_new` |
+| Vernova port timeout | Minimized **Vernova dev** cmd window; run `npm run api:install` in `vernova-spark-engine_new` |
 | Chrome permission denied | Run `npm install` inside `vernova-spark-engine_new` |
 | Focus finds wrong window | Re-run `z_genesis.start.bat`; close extra Chrome windows |
 | Docker fails | Docker Desktop running; `.env` present at repo root |
