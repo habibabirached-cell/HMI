@@ -67,6 +67,10 @@ import {
   getChartDangerYThreshold,
 } from '../../utils/chartDangerYThreshold';
 import { applyXReferenceLayout } from '../../utils/chartXReference';
+import {
+  applyFrequencyGoodnessBandsLayout,
+  chartSupportsFrequencyGoodnessBands,
+} from '../../utils/chartFrequencyGoodnessBands';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
@@ -3303,6 +3307,9 @@ const ChartPanel = ({
   const generatePlotlyLayout = (chart, data) => {
     const withDangerY = (layout) => {
       let next = layout;
+      if (chartSupportsFrequencyGoodnessBands(chart)) {
+        next = applyFrequencyGoodnessBandsLayout(next, chart);
+      }
       if (chartSupportsDangerYThreshold(chart)) {
         next = applyDangerYThresholdLayout(next, chart);
       }
@@ -3409,7 +3416,23 @@ const ChartPanel = ({
       const n = groups.length;
       if (n === 0) return { ...baseLayout, xaxis: {}, yaxis: {} };
 
-      const rowHeight = 1 / n;
+      /** Compact Time axis strip between two stacked panels (bottom plot keeps the main axis). */
+      const stackedNdMiddleXGap = n === 2 ? 0.055 : 0;
+      const rowHeight = stackedNdMiddleXGap > 0 ? (1 - stackedNdMiddleXGap) / n : 1 / n;
+      const stackedNdYDomains = Array.from({ length: n }, (_, i) => {
+        if (stackedNdMiddleXGap > 0 && n === 2) {
+          return i === 0
+            ? [rowHeight + stackedNdMiddleXGap, 1]
+            : [0, rowHeight];
+        }
+        const top = 1 - i * rowHeight;
+        const bottom = Math.max(0, 1 - (i + 1) * rowHeight);
+        return [bottom, top];
+      });
+      const stackedNdMiddleXAxisPosition =
+        stackedNdMiddleXGap > 0 ? rowHeight + stackedNdMiddleXGap / 2 : undefined;
+      const xAxisTitleText = chart.xLabel ?? chart.xColumn;
+
       const groupBgColors = [rgba(0, 0, 0), rgba(26, 26, 26)];
       const axisStyle = {
         gridcolor: gridRgba,
@@ -3425,8 +3448,7 @@ const ChartPanel = ({
 
       const shapes = [];
       for (let i = 0; i < n; i++) {
-        const top = 1 - i * rowHeight;
-        const bottom = Math.max(0, 1 - (i + 1) * rowHeight);
+        const [bottom, top] = stackedNdYDomains[i];
         shapes.push({
           type: 'rect',
           xref: 'paper',
@@ -3452,7 +3474,7 @@ const ChartPanel = ({
         shapes: [...(baseLayout.shapes || []), ...shapes],
         xaxis: {
           title: {
-            text: chart.xLabel ?? chart.xColumn,
+            text: xAxisTitleText,
             font: { family: 'Arial, sans-serif', size: 26, color: '#999', weight: 600 },
             standoff: 32,
           },
@@ -3463,12 +3485,36 @@ const ChartPanel = ({
           ...axisStyle,
           ...xRangeProps,
           ...xLockProps,
-        }
+        },
+        ...(stackedNdMiddleXAxisPosition != null
+          ? {
+              xaxis2: {
+                overlaying: 'x',
+                anchor: 'free',
+                position: stackedNdMiddleXAxisPosition,
+                side: 'bottom',
+                domain: [0, 1],
+                matches: 'x',
+                showline: true,
+                linecolor: lineRgba,
+                linewidth: 1,
+                gridcolor: gridRgba,
+                gridwidth: 1,
+                tickfont: { family: 'Arial, sans-serif', size: 9, color: '#999' },
+                ticklabelstandoff: 2,
+                title: {
+                  text: xAxisTitleText,
+                  font: { family: 'Arial, sans-serif', size: 13, color: '#999', weight: 600 },
+                  standoff: 6,
+                },
+                automargin: true,
+              },
+            }
+          : {}),
       };
 
       for (let i = 0; i < n; i++) {
-        const top = 1 - i * rowHeight;
-        const bottom = Math.max(0, 1 - (i + 1) * rowHeight);
+        const [bottom, top] = stackedNdYDomains[i];
         const yKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
         const { yRangeProps, yLockProps } = resolveStackedSubplotYProps(
           chart,

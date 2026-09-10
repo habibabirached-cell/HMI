@@ -26,7 +26,7 @@
             "title": "Frequency",
             "ensemble_sim_id": "HD_",
             "sample_step": 16,
-            "chart_card_width": 765,
+            "chart_card_width": 1702,
             "x_label": "Time",
             "stacked_y_labels": {
               "0": "Aero Frequency (Hz)",
@@ -35,6 +35,12 @@
             "legend_labels": {
               "Aero_freq (Hz)": "Aero Frequency(Hz)",
               "HD_freq (Hz)": "HD Frequency(Hz)"
+            },
+            "legend_position": {
+              "x": 0.36999999999999944,
+              "y": 1.01,
+              "xanchor": "right",
+              "yanchor": "top"
             },
             "axis_range": {
               "simulation_start_at": 0,
@@ -383,6 +389,12 @@
             "legend_labels": {
               "Aero_freq (Hz)": "Aero Frequency(Hz)",
               "HD_freq (Hz)": "HD Frequency(Hz)"
+            },
+            "legend_position": {
+              "x": 0.36999999999999944,
+              "y": 1.01,
+              "xanchor": "right",
+              "yanchor": "top"
             },
             "axis_range": {
               "simulation_start_at": 0,
@@ -753,7 +765,7 @@
                 "0": {
                   "y_locked": true,
                   "y_min": 59.5,
-                  "y_max": 60.6
+                  "y_max": 60.5
                 },
                 "1": {
                   "y_locked": true,

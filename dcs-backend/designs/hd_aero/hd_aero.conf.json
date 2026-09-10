@@ -11,7 +11,7 @@
         "x": -300,
         "y": 45
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -36,7 +36,7 @@
         "x": -225,
         "y": 256
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -61,7 +61,7 @@
         "x": 50,
         "y": 250
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -88,7 +88,7 @@
         "x": 75,
         "y": 375
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -113,7 +113,7 @@
         "x": 75,
         "y": 550
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -138,7 +138,7 @@
         "x": 0,
         "y": 775
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -164,7 +164,7 @@
         "x": -50,
         "y": 800
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -189,7 +189,7 @@
         "x": -75,
         "y": 1150
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -214,7 +214,7 @@
         "x": -50,
         "y": 975
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -239,7 +239,7 @@
         "x": -275,
         "y": 806
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -264,7 +264,7 @@
         "x": -300,
         "y": 975
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -289,7 +289,7 @@
         "x": -300,
         "y": 1150
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -314,7 +314,7 @@
         "x": -300,
         "y": 1300
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -339,7 +339,7 @@
         "x": 600,
         "y": 50
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 33.3,
         "voltage": 13.8,
@@ -365,7 +365,7 @@
         "x": 625,
         "y": 256
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 2000,
         "voltage": 13.8,
@@ -391,7 +391,7 @@
         "x": 300,
         "y": 250
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -418,7 +418,7 @@
         "x": 225,
         "y": 375
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 800,
         "voltage": 0,
@@ -443,7 +443,7 @@
         "x": 225,
         "y": 550
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 1500,
         "voltage": 0,
@@ -468,7 +468,7 @@
         "x": 300,
         "y": 775
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 100,
         "unit": "MVA",
@@ -496,7 +496,7 @@
         "x": 325,
         "y": 825
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 0,
@@ -522,7 +522,7 @@
         "x": 275,
         "y": 1150
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -548,7 +548,7 @@
         "x": 325,
         "y": 975
       },
-      "status": "open",
+      "status": "idle",
       "properties": {
         "rating": 4000,
         "voltage": 0.48,
@@ -574,7 +574,7 @@
         "x": 575,
         "y": 806
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 3000,
         "voltage": 0.48,
@@ -600,7 +600,7 @@
         "x": 550,
         "y": 975
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 25,
         "voltage": 0.48,
@@ -626,7 +626,7 @@
         "x": 550,
         "y": 1150
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.4,
@@ -652,7 +652,7 @@
         "x": 550,
         "y": 1300
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 25,
         "voltage": 0.4,
@@ -678,7 +678,7 @@
         "x": -450,
         "y": 715
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -708,7 +708,7 @@
         "x": 401,
         "y": 500
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -728,7 +728,7 @@
         "height": 130
       },
       "connectionReadout": null,
-      "initialSimStatus": null
+      "initialSimStatus": "open"
     },
     {
       "id": "comp-load2-stub-cb",
@@ -739,7 +739,7 @@
         "x": 401,
         "y": 840
       },
-      "status": "idle",
+      "status": "open",
       "properties": {
         "rating": 0,
         "voltage": 34.5,
@@ -759,7 +759,7 @@
         "height": 130
       },
       "connectionReadout": null,
-      "initialSimStatus": null
+      "initialSimStatus": "open"
     },
     {
       "id": "comp-hd-3d-preview",
@@ -770,7 +770,7 @@
         "x": -450,
         "y": 40
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "primaryLabel": "HD",
         "rating": 0,
@@ -801,7 +801,7 @@
         "x": 152,
         "y": 40
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "primaryLabel": "Aero1",
         "rating": 0,
@@ -831,7 +831,7 @@
         "x": -450,
         "y": 1055
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -861,7 +861,7 @@
         "x": 152,
         "y": 1055
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
@@ -892,7 +892,7 @@
         "x": -450,
         "y": -12
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -949,7 +949,7 @@
         "x": 152,
         "y": -12
       },
-      "status": "online",
+      "status": "idle",
       "properties": {
         "rating": 0,
         "voltage": 13.8,
@@ -1772,39 +1772,11 @@
       }
     }
   ],
-  "busTransferSegments": [
-    {
-      "id": "bus-transfer-hd-aero-column",
-      "busId": "comp-bus-main",
-      "endpointA": "comp-hd-3d-preview",
-      "endpointB": "comp-aero-stub-cb",
-      "rules": [
-        {
-          "when": {
-            "comp-aero-stub-cb": "open",
-            "comp-load2-stub-cb": "closed"
-          },
-          "direction": "AtoB"
-        },
-        {
-          "when": {
-            "comp-aero-stub-cb": "closed",
-            "comp-load2-stub-cb": "open"
-          },
-          "direction": "BtoA"
-        }
-      ],
-      "style": {
-        "color": "#2d7a32",
-        "thickness": 5
-      }
-    }
-  ],
   "systemState": {
     "simulationRunning": false,
     "zoom": 1.05,
     "pan": {
-      "x": 577.4666666666683,
+      "x": 601.4666666666683,
       "y": 91.46666666666607
     },
     "panTop": {
@@ -1826,10 +1798,10 @@
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
-  "globalSampleStep": 16,
+  "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1788888487565-0": 16,
-    "sim-chart-1788888487565-1": 16
+    "sim-chart-1789036950213-0": 16,
+    "sim-chart-1789036950214-1": 16
   },
   "playbackTimeRange": {
     "t1": 0.0,
@@ -1882,5 +1854,33 @@
         "revealCharts": true
       }
     }
-  }
+  },
+  "busTransferSegments": [
+    {
+      "id": "bus-transfer-hd-aero-column",
+      "busId": "comp-bus-main",
+      "endpointA": "comp-hd-3d-preview",
+      "endpointB": "comp-aero-stub-cb",
+      "rules": [
+        {
+          "when": {
+            "comp-aero-stub-cb": "open",
+            "comp-load2-stub-cb": "closed"
+          },
+          "direction": "AtoB"
+        },
+        {
+          "when": {
+            "comp-aero-stub-cb": "closed",
+            "comp-load2-stub-cb": "open"
+          },
+          "direction": "BtoA"
+        }
+      ],
+      "style": {
+        "color": "#2d7a32",
+        "thickness": 5
+      }
+    }
+  ]
 }

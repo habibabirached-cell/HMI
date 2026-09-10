@@ -84,6 +84,9 @@ function axisRangeFromDef(chartDef) {
     ...(a.x_reference != null && Number.isFinite(Number(a.x_reference))
       ? { xReference: Number(a.x_reference) }
       : {}),
+    ...(a.frequency_goodness_bands != null
+      ? { frequencyGoodnessBands: !!a.frequency_goodness_bands }
+      : {}),
     ...(xL
       ? {
           ...(a.x_min != null && { xMin: a.x_min }),
