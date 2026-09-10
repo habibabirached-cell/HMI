@@ -17,6 +17,13 @@ CLUSTER_LOCAL_FILENAME = "cluster.local.json"
 MAINGEAR_ETHERNET_IP = "192.168.50.1"
 IDEUM_ETHERNET_IP = "192.168.50.2"
 
+# Design-load commands are not queued for replay — stale loads would reset Maingear mid-demo.
+NON_REPLAY_REMOTE_COMMANDS = frozenset({
+    "loadHdAero",
+    "loadP2R18",
+    "resetHdAero",
+})
+
 VALID_REMOTE_COMMANDS = frozenset({
     "add8Turbines",
     "addStatcomAndGFMe",
@@ -154,7 +161,7 @@ class ClusterConnectionManager:
             async with self._lock:
                 for ws in dead:
                     self._clients.discard(ws)
-        if sent == 0:
+        if sent == 0 and message.get("command") not in NON_REPLAY_REMOTE_COMMANDS:
             async with self._lock:
                 self._pending_messages.append(message)
                 if len(self._pending_messages) > self._max_pending:

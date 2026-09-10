@@ -1679,7 +1679,7 @@ function App() {
 
       startSimulationClock();
       if (machineRoleRef.current?.isMaingear) {
-        void broadcastClusterMessage({ type: 'simulation_state', running: true }).catch((e) =>
+        void broadcastClusterMessage({ type: 'simulation_state', running: true, loop: false }).catch((e) =>
           console.warn('cluster simulation_state broadcast', e),
         );
       }
@@ -1740,7 +1740,7 @@ function App() {
       resetPlaybackVisualsRef.current();
       startSimulationClock();
       if (machineRoleRef.current?.isMaingear) {
-        void broadcastClusterMessage({ type: 'simulation_state', running: true }).catch((e) =>
+        void broadcastClusterMessage({ type: 'simulation_state', running: true, loop: true }).catch((e) =>
           console.warn('cluster simulation_state broadcast', e),
         );
       }
@@ -1791,7 +1791,7 @@ function App() {
     setSimulationRunning(false);
     stopSimulationClock();
     if (machineRoleRef.current?.isMaingear) {
-      void broadcastClusterMessage({ type: 'simulation_state', running: false }).catch((e) =>
+      void broadcastClusterMessage({ type: 'simulation_state', running: false, loop: false }).catch((e) =>
         console.warn('cluster simulation_state broadcast', e),
       );
     }
@@ -3901,13 +3901,6 @@ function App() {
     const command = stopping ? 'stopSimulation' : 'startSimulation';
     const result = await sendIdeumMaingearSimulationCommand(command);
     if (!result?.ok) return;
-    if (stopping) {
-      setIdeumSimulateMirror(false);
-      setIdeumSimulateLoopMirror(false);
-    } else {
-      setIdeumSimulateMirror(true);
-      setIdeumSimulateLoopMirror(false);
-    }
     if (!result.deliveredToClients) {
       alert(
         'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
@@ -3920,13 +3913,6 @@ function App() {
     const command = stopping ? 'stopSimulation' : 'startSimulationLoop';
     const result = await sendIdeumMaingearSimulationCommand(command);
     if (!result?.ok) return;
-    if (stopping) {
-      setIdeumSimulateMirror(false);
-      setIdeumSimulateLoopMirror(false);
-    } else {
-      setIdeumSimulateMirror(false);
-      setIdeumSimulateLoopMirror(true);
-    }
     if (!result.deliveredToClients) {
       alert(
         'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
@@ -4360,7 +4346,10 @@ function App() {
       setRightRailCollapsed(false);
       setRightRailGridPeek(true);
 
-      if (simulationMetadataRef.current?.ensembleId !== HD_AERO_ENSEMBLE_ID) {
+      const sameDesignEnsemble =
+        simulationMetadataRef.current?.ensembleId === HD_AERO_ENSEMBLE_ID
+        && simulationDesignPathRef.current === designApiPath;
+      if (!sameDesignEnsemble) {
         await handleSelectEnsemble(ens);
       }
       await handleActivateNamedSimulationConfig(presetName);
@@ -4398,7 +4387,10 @@ function App() {
     }
 
     pendingHdAeroInitRef.current = false;
-    if (simulationMetadataRef.current?.ensembleId !== HD_AERO_ENSEMBLE_ID) {
+    const sameDesignEnsemble =
+      simulationMetadataRef.current?.ensembleId === HD_AERO_ENSEMBLE_ID
+      && simulationDesignPathRef.current === designApiPath;
+    if (!sameDesignEnsemble) {
       await handleSelectEnsemble(ens);
     }
     await handleActivateNamedSimulationConfig(HD_AERO_DEFAULT_PRESET);
@@ -4771,7 +4763,7 @@ function App() {
       await handleLiveRtds();
       return;
     }
-    if (command === 'loadHdAero' || command === 'resetHdAero') {
+    if (command === 'resetHdAero') {
       if (
         isHDAeroDesign({
           name: currentConfigName,
@@ -4780,9 +4772,17 @@ function App() {
         })
       ) {
         await applyHdAeroDefaultState();
-        return;
       }
-      if (command === 'resetHdAero') {
+      return;
+    }
+    if (command === 'loadHdAero') {
+      if (
+        isHDAeroDesign({
+          name: currentConfigName,
+          design_catalog_rel: designApiPath,
+          csv_status: { design_catalog_rel: designApiPath },
+        })
+      ) {
         return;
       }
       try {
@@ -8356,6 +8356,14 @@ function App() {
     return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
         setIdeumSimulationMirror(msg.running);
+        if (msg.running) {
+          const loop = !!msg.loop;
+          setIdeumSimulateLoopMirror(loop);
+          setIdeumSimulateMirror(!loop);
+        } else {
+          setIdeumSimulateMirror(false);
+          setIdeumSimulateLoopMirror(false);
+        }
       }
     });
   }, [
