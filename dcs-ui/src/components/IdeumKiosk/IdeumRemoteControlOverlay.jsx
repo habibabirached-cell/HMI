@@ -1,10 +1,9 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import './IdeumRemoteControlOverlay.css';
 
 /**
  * Full-screen Ideum wall-control mode after Grid Connected.
- * Left: Back | Center: relative trackpad | Bottom: Click
- * Uses a pre-connected mouseClient from App when available.
+ * Touch table: native touch events (touchmove) — pointermove is unreliable on Ideum glass.
  */
 export default function IdeumRemoteControlOverlay({
   mouseClientRef = null,
@@ -12,8 +11,8 @@ export default function IdeumRemoteControlOverlay({
 }) {
   const trackpadRef = useRef(null);
   const boundsRef = useRef({ left: 0, top: 0, width: 1920, height: 1080 });
-  const activePointerRef = useRef(null);
-  const lastPointerRef = useRef({ x: 0, y: 0 });
+  const lastTouchRef = useRef({ x: 0, y: 0 });
+  const touchActiveRef = useRef(false);
   const moveCountRef = useRef(0);
 
   const getClient = useCallback(() => {
@@ -41,43 +40,81 @@ export default function IdeumRemoteControlOverlay({
     };
   }, []);
 
-  const onTrackpadPointerDown = useCallback((e) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    activePointerRef.current = e.pointerId;
-    lastPointerRef.current = { x: e.clientX, y: e.clientY };
-  }, []);
-
-  const onTrackpadPointerMove = useCallback((e) => {
-    if (activePointerRef.current !== e.pointerId) return;
-    e.preventDefault();
-
+  const applyDelta = useCallback((clientX, clientY) => {
     const client = getClient();
     if (!client) return;
 
+    const dx = clientX - lastTouchRef.current.x;
+    const dy = clientY - lastTouchRef.current.y;
+    lastTouchRef.current = { x: clientX, y: clientY };
+
+    if (dx === 0 && dy === 0) return;
+
     const { scaleX, scaleY } = pointerScale();
-    // Browser merges many touch samples into one event — coalesced list has the real path.
+    client.sendMoveRelative(dx * scaleX, dy * scaleY, { immediate: true });
+    moveCountRef.current += 1;
+  }, [getClient, pointerScale]);
+
+  useEffect(() => {
+    const el = trackpadRef.current;
+    if (!el) return undefined;
+
+    const onTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      touchActiveRef.current = true;
+      const t = e.touches[0];
+      lastTouchRef.current = { x: t.clientX, y: t.clientY };
+    };
+
+    const onTouchMove = (e) => {
+      if (!touchActiveRef.current || e.touches.length !== 1) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      applyDelta(t.clientX, t.clientY);
+    };
+
+    const onTouchEnd = (e) => {
+      if (e.touches.length === 0) {
+        touchActiveRef.current = false;
+        getClient()?.flushMoves();
+      }
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [applyDelta, getClient]);
+
+  const onTrackpadPointerDown = useCallback((e) => {
+    if (e.pointerType === 'touch') return;
+    e.preventDefault();
+    touchActiveRef.current = true;
+    lastTouchRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const onTrackpadPointerMove = useCallback((e) => {
+    if (e.pointerType === 'touch') return;
+    if (!touchActiveRef.current) return;
+    e.preventDefault();
     const samples = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
     for (const sample of samples) {
-      const dx = sample.clientX - lastPointerRef.current.x;
-      const dy = sample.clientY - lastPointerRef.current.y;
-      lastPointerRef.current = { x: sample.clientX, y: sample.clientY };
-      if (dx === 0 && dy === 0) continue;
-      client.sendMoveRelative(dx * scaleX, dy * scaleY);
-      moveCountRef.current += 1;
+      applyDelta(sample.clientX, sample.clientY);
     }
-  }, [pointerScale, getClient]);
+  }, [applyDelta]);
 
   const onTrackpadPointerUp = useCallback((e) => {
+    if (e.pointerType === 'touch') return;
+    touchActiveRef.current = false;
     getClient()?.flushMoves();
-    if (activePointerRef.current === e.pointerId) {
-      activePointerRef.current = null;
-    }
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
   }, [getClient]);
 
   const onClickButton = useCallback((e) => {

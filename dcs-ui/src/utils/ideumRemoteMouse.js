@@ -116,8 +116,22 @@ export class IdeumRemoteMouseClient {
     }
   }
 
-  /** Queue relative move — never blocks the pointer handler (avoids touch coalescing stalls). */
-  sendMoveRelative(dx, dy) {
+  /**
+   * Relative move. Default: queue + rAF (smooth). immediate:true = one ws.send per delta (debug / touch).
+   */
+  sendMoveRelative(dx, dy, { immediate = false } = {}) {
+    if (immediate) {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+      const rdx = Math.round(dx);
+      const rdy = Math.round(dy);
+      if (rdx === 0 && rdy === 0) return;
+      try {
+        this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
+      } catch (e) {
+        console.warn('[ideum-mouse] move send failed', e);
+      }
+      return;
+    }
     this._pendingDx += dx;
     this._pendingDy += dy;
     if (this._flushRaf != null) return;
