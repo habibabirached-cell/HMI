@@ -45,6 +45,7 @@ from cluster_peer import (
     cluster_manager,
     resolve_machine_role,
 )
+from kiosk_focus import KIOSK_FOCUS_BY_COMMAND, trigger_kiosk_focus
 from rtds_live_service import rtds_live_service
 from configurator.router import router as configurator_router
 
@@ -715,11 +716,25 @@ async def post_cluster_remote_command(body: dict):
     }
     if isinstance(payload, dict):
         message["payload"] = payload
+
+    focus_result = None
+    focus_target = KIOSK_FOCUS_BY_COMMAND.get(command)
+    if focus_target:
+        focus_result = await trigger_kiosk_focus(focus_target)
+        if not focus_result.get("ok"):
+            raise HTTPException(
+                status_code=503,
+                detail=focus_result.get("error")
+                or f"Kiosk focus failed for {focus_target}. "
+                "On Maingear run BAT\\start-kiosk-focus-server.bat or z_genesis.start.bat.",
+            )
+
     delivered = await cluster_manager.broadcast(message)
     return {
         "ok": True,
         "command": command,
         "deliveredToClients": delivered,
+        **({"kioskFocus": focus_result} if focus_result else {}),
     }
 
 

@@ -85,6 +85,13 @@ export function getIdeum05ControlsClusterCommand(screenId) {
   return null;
 }
 
+/** Cluster command when a nav card is tapped (no drill — e.g. Grid Connected -> show Vernova wall). */
+export function getIdeum05NavClusterCommand(screenId, cardId) {
+  const card = getIdeum05NavCards(screenId).find((c) => c.id === cardId);
+  const cmd = card?.navClusterCommand;
+  return typeof cmd === 'string' && cmd.trim() ? cmd.trim() : null;
+}
+
 /** Reference 200 MW — Ideum touch preset buttons (Reset / Live RTDS). */
 export function isIdeum05ControlsScreen(screenId) {
   return screenId === 'ref-200-mw';
@@ -291,6 +298,7 @@ const SCREENS = {
       id: 'grid-connected',
       label: 'Grid Connected',
       preview: 'Grid-connected power system',
+      navClusterCommand: 'showVernova',
       modelUrl: IDEUM05_NAV_MODEL_URLS.gridConnected,
       modelFitScale: 0.7,
       modelYOffset: 2.14,

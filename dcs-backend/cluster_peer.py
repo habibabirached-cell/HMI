@@ -33,6 +33,8 @@ VALID_REMOTE_COMMANDS = frozenset({
     "loadHdAero",
     "loadP2R18",
     "toggleInteractiveBreaker",
+    "showVernova",
+    "showDcs",
 })
 
 

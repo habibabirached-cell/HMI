@@ -42,6 +42,11 @@ if not exist "%REPO_ROOT%\.env" (
 )
 
 call "%BAT_DIR%_debug-log.bat" line ""
+call "%BAT_DIR%_debug-log.bat" line "[0/5] Starting kiosk focus server (Ideum Grid Connected -> Vernova wall)..."
+call "%BAT_DIR%start-kiosk-focus-server.bat"
+call "%BAT_DIR%_debug-log.bat" line "Kiosk focus server start requested (port 8766)"
+
+call "%BAT_DIR%_debug-log.bat" line ""
 call "%BAT_DIR%_debug-log.bat" line "[1/5] Starting DataCenterSmartPower Docker stack..."
 call "%BAT_DIR%_debug-log.bat" line "Step 1: docker compose up -d"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-docker-compose.ps1" -RepoRoot "%REPO_ROOT%" -EnvFile "%REPO_ROOT%\.env" -ComposeFile "%REPO_ROOT%\docker-compose-dev.yml" -DockerLog "%DOCKER_LOG%" -DebugLog "%DEBUG_LOG%"

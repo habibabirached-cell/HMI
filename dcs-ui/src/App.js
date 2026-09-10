@@ -76,6 +76,7 @@ import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
   getIdeum05ControlsClusterCommand,
+  getIdeum05NavClusterCommand,
   getIdeum05OverlayClusterCommand,
   getIdeum05OverlayDesignDir,
   getIdeum05OverlaySaveTarget,
@@ -3905,6 +3906,10 @@ function App() {
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
+    const navClusterCmd = getIdeum05NavClusterCommand(screenId, cardId);
+    if (navClusterCmd) {
+      void sendIdeumClusterCommand(navClusterCmd);
+    }
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
     if (drillTarget) {
       if (isIdeum05) {
