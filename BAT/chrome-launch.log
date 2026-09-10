@@ -1,10 +1,10 @@
 === Chrome launch log ===
-Saved kiosk window 'Vernova' (hwnd=724216) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
+Saved kiosk window 'Vernova' (hwnd=855392) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
 Chrome opened spanning all displays at (-1280, -720) size 2560x1440
 Actual window: (-1280, -720) size 2560x1440, bottom=720
 Mode: app (no tabs/address bar)
 URL: http://localhost:5173
-Saved kiosk window 'Dcs' (hwnd=5114812) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
+Saved kiosk window 'Dcs' (hwnd=4590198) -> C:\Users\GEVer\Documents\HMI\BAT\kiosk-windows.json
 Chrome opened spanning all displays at (-1280, -720) size 2560x1440
 Actual window: (-1280, -720) size 2560x1440, bottom=720
 Mode: app (no tabs/address bar)

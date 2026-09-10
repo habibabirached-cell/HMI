@@ -24,8 +24,12 @@ export default function IdeumRemoteControlOverlay({
     lastScaledDx: 0,
     lastScaledDy: 0,
     lastAt: 0,
+    wsSends: 0,
+    pendingDx: 0,
+    pendingDy: 0,
     recentLines: [],
   });
+  const lastSampleRef = useRef({ x: NaN, y: NaN, t: 0 });
 
   const getClient = useCallback(() => {
     const client = mouseClientRef?.current;
@@ -61,13 +65,23 @@ export default function IdeumRemoteControlOverlay({
       `source: ${s.lastSource}  (${ago})`,
       `last raw dx,dy: ${s.lastDx} , ${s.lastDy}`,
       `last sent dx,dy: ${s.lastScaledDx} , ${s.lastScaledDy}`,
-      `count touchmove ${s.touchMoveEvents}  pointer ${s.pointerMoveEvents}  sends ${s.sends}`,
+      `browser events ${s.sends}  (touch ${s.touchMoveEvents} ptr ${s.pointerMoveEvents})`,
+      `ws queued pending ${s.pendingDx} , ${s.pendingDy}  |  ws sent ${s.wsSends}`,
       '— recent —',
       ...(s.recentLines.length ? s.recentLines : ['(no dx/dy yet)']),
     ].join('\n');
   }, []);
 
   const applyDelta = useCallback((clientX, clientY, source) => {
+    const now = performance.now();
+    const ls = lastSampleRef.current;
+    if (ls.x === clientX && ls.y === clientY && now - ls.t < 8) {
+      return;
+    }
+    ls.x = clientX;
+    ls.y = clientY;
+    ls.t = now;
+
     const dx = clientX - lastTouchRef.current.x;
     const dy = clientY - lastTouchRef.current.y;
     lastTouchRef.current = { x: clientX, y: clientY };
@@ -96,12 +110,16 @@ export default function IdeumRemoteControlOverlay({
       s.recentLines.length = 8;
     }
 
-    paintDebugHud();
-
     const client = getClient();
     if (client) {
-      client.sendMoveRelative(scaledDx, scaledDy, { immediate: true });
+      client.sendMoveRelative(scaledDx, scaledDy);
+      const pending = client.getPendingDelta();
+      s.pendingDx = Math.round(pending.dx);
+      s.pendingDy = Math.round(pending.dy);
+      s.wsSends = client.getWsSendCount();
     }
+
+    paintDebugHud();
   }, [getClient, pointerScale, paintDebugHud]);
 
   useEffect(() => {
@@ -130,11 +148,17 @@ export default function IdeumRemoteControlOverlay({
     const onTouchEnd = (e) => {
       statsRef.current.lastSource = 'touchend';
       statsRef.current.lastAt = Date.now();
-      paintDebugHud();
       if (e.touches.length === 0) {
         touchActiveRef.current = false;
-        getClient()?.flushMoves();
+        const client = getClient();
+        client?.flushMoves();
+        if (client) {
+          statsRef.current.wsSends = client.getWsSendCount();
+          statsRef.current.pendingDx = 0;
+          statsRef.current.pendingDy = 0;
+        }
       }
+      paintDebugHud();
     };
 
     el.addEventListener('touchstart', onTouchStart, { passive: false });
@@ -150,8 +174,27 @@ export default function IdeumRemoteControlOverlay({
     };
   }, [applyDelta, getClient, paintDebugHud]);
 
+  useEffect(() => {
+    let frameId = 0;
+    const tick = () => {
+      const client = getClient();
+      if (client) {
+        const s = statsRef.current;
+        s.wsSends = client.getWsSendCount();
+        const pending = client.getPendingDelta();
+        s.pendingDx = Math.round(pending.dx);
+        s.pendingDy = Math.round(pending.dy);
+        if (touchActiveRef.current) {
+          paintDebugHud();
+        }
+      }
+      frameId = requestAnimationFrame(tick);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [getClient, paintDebugHud]);
+
   const onTrackpadPointerDown = useCallback((e) => {
-    if (e.pointerType === 'touch') return;
     e.preventDefault();
     touchActiveRef.current = true;
     lastTouchRef.current = { x: e.clientX, y: e.clientY };
@@ -161,10 +204,12 @@ export default function IdeumRemoteControlOverlay({
   }, [paintDebugHud]);
 
   const onTrackpadPointerMove = useCallback((e) => {
-    if (e.pointerType === 'touch') return;
     if (!touchActiveRef.current) return;
     e.preventDefault();
     statsRef.current.pointerMoveEvents += 1;
+    if (e.pointerType === 'touch') {
+      statsRef.current.lastSource = 'pointer-touch';
+    }
     const samples = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
     for (const sample of samples) {
       applyDelta(sample.clientX, sample.clientY, 'pointermove');
@@ -172,12 +217,18 @@ export default function IdeumRemoteControlOverlay({
   }, [applyDelta]);
 
   const onTrackpadPointerUp = useCallback((e) => {
-    if (e.pointerType === 'touch') return;
     touchActiveRef.current = false;
     statsRef.current.lastSource = 'pointerup';
     statsRef.current.lastAt = Date.now();
     paintDebugHud();
-    getClient()?.flushMoves();
+    const client = getClient();
+    client?.flushMoves();
+    if (client) {
+      statsRef.current.wsSends = client.getWsSendCount();
+      statsRef.current.pendingDx = 0;
+      statsRef.current.pendingDy = 0;
+    }
+    paintDebugHud();
   }, [getClient, paintDebugHud]);
 
   const onClickButton = useCallback((e) => {

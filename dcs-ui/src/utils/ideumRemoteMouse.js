@@ -25,7 +25,8 @@ export class IdeumRemoteMouseClient {
     this.connected = false;
     this._pendingDx = 0;
     this._pendingDy = 0;
-    this._flushRaf = null;
+    this._flushTimer = null;
+    this._wsSendCount = 0;
   }
 
   connect() {
@@ -98,7 +99,7 @@ export class IdeumRemoteMouseClient {
   }
 
   _flushPendingMove() {
-    this._flushRaf = null;
+    this._flushTimer = null;
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       this._pendingDx = 0;
       this._pendingDy = 0;
@@ -111,38 +112,41 @@ export class IdeumRemoteMouseClient {
     if (rdx === 0 && rdy === 0) return;
     try {
       this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
+      this._wsSendCount += 1;
     } catch (e) {
       console.warn('[ideum-mouse] move send failed', e);
     }
+    if (this._pendingDx !== 0 || this._pendingDy !== 0) {
+      this._scheduleFlush();
+    }
   }
 
-  /**
-   * Relative move. Default: queue + rAF (smooth). immediate:true = one ws.send per delta (debug / touch).
-   */
-  sendMoveRelative(dx, dy, { immediate = false } = {}) {
-    if (immediate) {
-      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-      const rdx = Math.round(dx);
-      const rdy = Math.round(dy);
-      if (rdx === 0 && rdy === 0) return;
-      try {
-        this.ws.send(JSON.stringify({ type: 'move', dx: rdx, dy: rdy }));
-      } catch (e) {
-        console.warn('[ideum-mouse] move send failed', e);
-      }
-      return;
-    }
+  _scheduleFlush() {
+    if (this._flushTimer != null) return;
+    // setTimeout(0) — never block the touch/pointer handler thread on ws.send (TCP backpressure).
+    this._flushTimer = setTimeout(() => this._flushPendingMove(), 0);
+  }
+
+  /** Queue relative move; ws.send runs on next timer tick, not in the touch handler. */
+  sendMoveRelative(dx, dy) {
     this._pendingDx += dx;
     this._pendingDy += dy;
-    if (this._flushRaf != null) return;
-    this._flushRaf = requestAnimationFrame(() => this._flushPendingMove());
+    this._scheduleFlush();
   }
 
-  /** Send any queued deltas immediately (call on pointer up). */
+  getWsSendCount() {
+    return this._wsSendCount;
+  }
+
+  getPendingDelta() {
+    return { dx: this._pendingDx, dy: this._pendingDy };
+  }
+
+  /** Push any coalesced pending deltas (call on pointer up). */
   flushMoves() {
-    if (this._flushRaf != null) {
-      cancelAnimationFrame(this._flushRaf);
-      this._flushRaf = null;
+    if (this._flushTimer != null) {
+      clearTimeout(this._flushTimer);
+      this._flushTimer = null;
     }
     this._flushPendingMove();
   }
