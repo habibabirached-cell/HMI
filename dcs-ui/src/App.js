@@ -80,6 +80,7 @@ import {
 } from './utils/ideumRemoteFocus';
 import { IdeumRemoteMouseClient, resolveMaingearMouseWebSocketUrl } from './utils/ideumRemoteMouse';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
+import { isIdeum06DesignName } from './utils/ideum06Design';
 import {
   getIdeum05NavDrillTarget,
   getIdeum05NavScreen,
@@ -1103,6 +1104,7 @@ function App() {
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
+  const isIdeum06 = isIdeum06DesignName(currentConfigName);
   const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
@@ -3967,6 +3969,13 @@ function App() {
       setIdeumWallControlActive(false);
       setIdeum05NavStack([IDEUM05_NAV_ROOT]);
     });
+  }, [fireKioskFocusFast]);
+
+  /** Ideum06 Back — focus DCS wall and open Load so operator can pick Ideum05. */
+  const handleIdeum06Back = useCallback(() => {
+    fireKioskFocusFast('showDcs');
+    setDialogMode('load');
+    setShowDialog(true);
   }, [fireKioskFocusFast]);
 
   const handleIdeum05NavSelect = useCallback((cardId) => {
@@ -8059,18 +8068,18 @@ function App() {
   }, [machineRole?.isMaingear]);
 
   useEffect(() => {
-    if (!machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
+    if (isIdeum06 || !machineRole?.isIdeum || !machineRole?.peerBackendUrl) return undefined;
     return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
         setIdeumSimulationMirror(msg.running);
       }
     });
-  }, [machineRole?.isIdeum, machineRole?.peerBackendUrl]);
+  }, [isIdeum06, machineRole?.isIdeum, machineRole?.peerBackendUrl]);
 
   useEffect(() => {
     const onClusterLan = typeof window !== 'undefined'
       && window.location.hostname.startsWith('192.168.50.');
-    const shouldConnect = isIdeum05 && (machineRole?.isIdeum || onClusterLan);
+    const shouldConnect = (isIdeum05 || isIdeum06) && (machineRole?.isIdeum || onClusterLan);
     if (!shouldConnect) {
       ideumMouseClientRef.current?.disconnect();
       ideumMouseClientRef.current = null;
@@ -8088,7 +8097,13 @@ function App() {
         ideumMouseClientRef.current = null;
       }
     };
-  }, [machineRole, isIdeum05]);
+  }, [machineRole, isIdeum05, isIdeum06]);
+
+  /** Ideum06 loads straight into wall control — focus Vernova like Grid Connected. */
+  useEffect(() => {
+    if (!isIdeum06) return;
+    fireKioskFocusFast('showVernova');
+  }, [isIdeum06, currentConfigName, fireKioskFocusFast]);
 
   useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
@@ -8548,6 +8563,48 @@ function App() {
       {renderSimulationControls(true)}
     </div>
   );
+
+  if (isIdeum06) {
+    return (
+      <FontScaleProvider
+        uiFontPxShift={uiFontPxShift}
+        canvasFontPxShift={canvasFontPxShift}
+        collapsedComponentFontPxShift={collapsedComponentFontPxShift}
+        setUiFontPxShift={setUiFontPxShift}
+        setCanvasFontPxShift={setCanvasFontPxShift}
+        setCollapsedComponentFontPxShift={setCollapsedComponentFontPxShift}
+      >
+        <IdeumRemoteControlOverlay
+          mouseClientRef={ideumMouseClientRef}
+          onBack={handleIdeum06Back}
+        />
+        {showDialog && (
+          <SaveLoadDialog
+            mode={dialogMode}
+            onClose={handleCloseDialog}
+            onSave={handleConfigurationSaved}
+            onLoad={handleConfigurationLoaded}
+            onOpenConfigurator={handleOpenConfigurator}
+            onCloneGraphsFromDesign={handleCloneGraphsFromDesign}
+            destinationDesignDir={designApiPath}
+            getCurrentConfiguration={getCurrentConfiguration}
+            currentConfiguration={getCurrentConfiguration()}
+            currentConfigName={currentConfigName}
+            setSavingOverlay={setIsSaving}
+          />
+        )}
+        {isSaving && (
+          <div className="saving-overlay">
+            <div className="saving-spinner-container">
+              <div className="saving-spinner" />
+              <div className="saving-text">Saving Configuration...</div>
+              <div className="saving-subtext">Please wait</div>
+            </div>
+          </div>
+        )}
+      </FontScaleProvider>
+    );
+  }
 
   return (
     <FontScaleProvider

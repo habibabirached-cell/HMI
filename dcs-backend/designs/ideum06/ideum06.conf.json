@@ -1,0 +1,22 @@
+{
+  "name": "Ideum06",
+  "description": "Trackpad only — Maingear wall mouse control (no 3D, canvas, or simulation UI).",
+  "ideumKioskMode": true,
+  "ideumTrackpadOnly": true,
+  "canvasComponents": [],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 1,
+    "pan": { "x": 0, "y": 0 },
+    "mode": "design"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "designUiSession": {},
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": []
+}
