@@ -95,10 +95,15 @@ while ($listener.IsListening) {
         }
 
         $path = ($request.Url.AbsolutePath.Trim('/') -replace '\\', '/')
+        $remote = $request.RemoteEndPoint.ToString()
+        Write-Host "[kiosk-focus] $($request.HttpMethod) /$path from $remote"
+
         if ($request.HttpMethod -eq 'POST' -and $path -match '^kiosk/focus/(Dcs|Vernova)$') {
             $target = $Matches[1]
+            Write-Host "[kiosk-focus] focusing Chrome window: $target"
             try {
                 Focus-KioskWindow -Target $target
+                Write-Host "[kiosk-focus] ok $target"
                 Write-JsonResponse -Response $response -StatusCode 200 -Body @{
                     ok     = $true
                     target = $target

@@ -130,13 +130,16 @@ async def focus_kiosk(target: str) -> dict:
         return {"ok": False, "error": str(exc)}
 
 
-async def handle_message(raw: str) -> dict | None:
+async def handle_message(raw: str, peer=None) -> dict | None:
     try:
         msg = json.loads(raw)
     except json.JSONDecodeError:
+        print(f"[kiosk-mouse] recv invalid json from {peer}: {raw[:80]!r}", flush=True)
         return {"ok": False, "error": "invalid json"}
 
     msg_type = (msg.get("type") or "").strip().lower()
+    if msg_type != "move":
+        print(f"[kiosk-mouse] recv {raw[:200]} from {peer}", flush=True)
     if msg_type != "move":
         await asyncio.to_thread(beep_ideum_signal)
 
@@ -147,7 +150,9 @@ async def handle_message(raw: str) -> dict | None:
         target = (msg.get("target") or "").strip()
         if target not in ("Dcs", "Vernova"):
             return {"ok": False, "error": "focus target must be Dcs or Vernova"}
+        print(f"[kiosk-mouse] focus -> POST :{FOCUS_PORT}/kiosk/focus/{target}", flush=True)
         result = await focus_kiosk(target)
+        print(f"[kiosk-mouse] focus result: {result}", flush=True)
         return {"ok": bool(result.get("ok")), "type": "focus", "target": target, **result}
 
     if msg_type == "move":
@@ -175,7 +180,7 @@ async def client_handler(websocket) -> None:
         async for raw in websocket:
             if not isinstance(raw, str):
                 continue
-            reply = await handle_message(raw)
+            reply = await handle_message(raw, peer)
             if reply is not None:
                 await websocket.send(json.dumps(reply))
     except Exception as exc:
@@ -188,6 +193,7 @@ async def main() -> None:
     bounds = virtual_screen_bounds()
     print(f"[kiosk-mouse] virtual desktop: {bounds}", flush=True)
     print(f"[kiosk-mouse] listening ws://{BRIDGE_HOST}:{BRIDGE_PORT}", flush=True)
+    print("[kiosk-mouse] Grid Connected / Back focus -> ws :8767 (this window, NOT KioskFocusServer)", flush=True)
     async with serve(client_handler, BRIDGE_HOST, BRIDGE_PORT, max_size=2**16):
         await asyncio.Future()
 

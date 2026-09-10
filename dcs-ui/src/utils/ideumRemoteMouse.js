@@ -103,8 +103,22 @@ export class IdeumRemoteMouseClient {
 
   /** Bring DCS or Vernova Chrome kiosk to front (same WebSocket as trackpad). */
   sendFocus(target) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
     if (target !== 'Dcs' && target !== 'Vernova') return false;
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    this.ws.send(JSON.stringify({ type: 'focus', target }));
+    return true;
+  }
+
+  /** Connect if needed, then send focus (for Grid Connected / Back before trackpad opens). */
+  async sendFocusAsync(target) {
+    if (target !== 'Dcs' && target !== 'Vernova') return false;
+    try {
+      await this.connect();
+    } catch (e) {
+      console.warn('[ideum-mouse] connect for focus failed', e);
+      return false;
+    }
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
     this.ws.send(JSON.stringify({ type: 'focus', target }));
     return true;
   }

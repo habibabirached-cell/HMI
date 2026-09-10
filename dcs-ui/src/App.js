@@ -3852,18 +3852,27 @@ function App() {
     }
   };
 
-  /** Grid Connected / Back — WebSocket :8767 first (same path as trackpad). */
+  /** Grid Connected / Back — WebSocket :8767 (KioskMouseServer, not KioskFocusServer). */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
-    const client = ideumMouseClientRef.current;
-    if (client?.sendFocus(target)) {
-      console.info('[cluster] kiosk focus via ws', command, target);
-      return;
+
+    let client = ideumMouseClientRef.current;
+    if (!client) {
+      const url = resolveMaingearMouseWebSocketUrl(machineRole);
+      client = new IdeumRemoteMouseClient(url);
+      ideumMouseClientRef.current = client;
     }
-    console.warn('[cluster] ws not ready, focus fallback http', command);
-    void sendKioskFocusDirect(machineRole, target).catch((e) => {
-      console.warn('[cluster] kiosk focus http failed', command, e);
+
+    void client.sendFocusAsync(target).then((ok) => {
+      if (ok) {
+        console.info('[cluster] kiosk focus sent via ws :8767', command, target);
+        return;
+      }
+      console.warn('[cluster] ws focus failed, trying http :8766', command);
+      void sendKioskFocusDirect(machineRole, target).catch((e) => {
+        console.warn('[cluster] http focus failed', command, e);
+      });
     });
   }, [machineRole]);
 
@@ -8059,7 +8068,10 @@ function App() {
   }, [machineRole?.isIdeum, machineRole?.peerBackendUrl]);
 
   useEffect(() => {
-    if (!machineRole?.isIdeum || !isIdeum05) {
+    const onClusterLan = typeof window !== 'undefined'
+      && window.location.hostname.startsWith('192.168.50.');
+    const shouldConnect = isIdeum05 && (machineRole?.isIdeum || onClusterLan);
+    if (!shouldConnect) {
       ideumMouseClientRef.current?.disconnect();
       ideumMouseClientRef.current = null;
       return undefined;
@@ -8067,7 +8079,9 @@ function App() {
     const url = resolveMaingearMouseWebSocketUrl(machineRole);
     const client = new IdeumRemoteMouseClient(url);
     ideumMouseClientRef.current = client;
-    client.connect().catch((e) => console.warn('[ideum-mouse] preconnect failed', e));
+    client.connect()
+      .then(() => console.info('[ideum-mouse] preconnected', url))
+      .catch((e) => console.warn('[ideum-mouse] preconnect failed', url, e));
     return () => {
       client.disconnect();
       if (ideumMouseClientRef.current === client) {
@@ -8994,7 +9008,7 @@ function App() {
         />
       )}
 
-      {isIdeum05 && ideumWallControlActive && machineRole?.isIdeum && (
+      {isIdeum05 && ideumWallControlActive && (
         <IdeumRemoteControlOverlay
           mouseClientRef={ideumMouseClientRef}
           onBack={handleIdeumWallControlBack}
