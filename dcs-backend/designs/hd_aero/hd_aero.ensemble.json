@@ -49,8 +49,8 @@
               "x_min": 0,
               "x_max": 10.8,
               "x_locked": true,
-              "y_min": 59.5,
-              "y_max": 60.5,
+              "y_min": 58.4,
+              "y_max": 61.6,
               "y_locked": true
             }
           },
@@ -403,8 +403,8 @@
               "x_min": 0,
               "x_max": 10.8,
               "x_locked": true,
-              "y_min": 59.5,
-              "y_max": 60.5,
+              "y_min": 58.4,
+              "y_max": 61.6,
               "y_locked": true
             }
           },
@@ -523,8 +523,8 @@
               "x_min": 0,
               "x_max": 25,
               "x_locked": true,
-              "y_min": 59.5,
-              "y_max": 60.5,
+              "y_min": 58.4,
+              "y_max": 61.6,
               "y_locked": true
             }
           }
@@ -619,8 +619,8 @@
               "x_min": 0,
               "x_max": 70.415,
               "x_locked": true,
-              "y_min": 59.5,
-              "y_max": 60.5,
+              "y_min": 58.4,
+              "y_max": 61.6,
               "y_locked": true
             }
           }
@@ -665,13 +665,13 @@
               "stacked_y_ranges": {
                 "0": {
                   "y_locked": true,
-                  "y_min": 59.5,
-                  "y_max": 60.5
+                  "y_min": 58.4,
+                  "y_max": 61.6
                 },
                 "1": {
                   "y_locked": true,
-                  "y_min": 59.5,
-                  "y_max": 60.5
+                  "y_min": 58.4,
+                  "y_max": 61.6
                 }
               }
             }
@@ -764,13 +764,13 @@
               "stacked_y_ranges": {
                 "0": {
                   "y_locked": true,
-                  "y_min": 59.5,
-                  "y_max": 60.5
+                  "y_min": 58.4,
+                  "y_max": 61.6
                 },
                 "1": {
                   "y_locked": true,
-                  "y_min": 59.5,
-                  "y_max": 60.5
+                  "y_min": 58.4,
+                  "y_max": 61.6
                 }
               }
             }

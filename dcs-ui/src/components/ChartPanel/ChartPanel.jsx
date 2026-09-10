@@ -72,6 +72,10 @@ import {
   chartSupportsFrequencyGoodnessBands,
 } from '../../utils/chartFrequencyGoodnessBands';
 import { applyHdAeroCbEventMarkersLayout } from '../../utils/chartHdAeroCbEvents';
+import {
+  applyHdAeroGridMetricsLayout,
+  chartSupportsHdAeroGridMetrics,
+} from '../../utils/chartHdAeroGridMetrics';
 import { useUiFontPxDelta } from '../../contexts/FontScaleContext';
 import {
   remapStacksPerDrawerRow,
@@ -3315,6 +3319,18 @@ const ChartPanel = ({
       }
       if (hdAeroChartEvents?.length) {
         next = applyHdAeroCbEventMarkersLayout(next, chart, hdAeroChartEvents);
+      }
+      if (chartSupportsHdAeroGridMetrics(chart) && simulationRunning) {
+        next = applyHdAeroGridMetricsLayout(next, chart, {
+          chart,
+          data,
+          simulationTime,
+          simulationRunning,
+          simulationLoopMode,
+          loopPlaybackState: getLoopPlaybackState(chart.id),
+          dataBounds: dataBoundsForChart(chart),
+          hdAeroChartEvents,
+        });
       }
       if (chartSupportsDangerYThreshold(chart)) {
         next = applyDangerYThresholdLayout(next, chart);

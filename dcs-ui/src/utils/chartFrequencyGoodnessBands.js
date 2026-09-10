@@ -2,18 +2,18 @@
 export const FREQ_NOMINAL_HZ = 60;
 
 /** Green band: nominal ± this value (Hz). */
-export const FREQ_GREEN_HALF_WIDTH_HZ = 0.2;
+export const FREQ_GREEN_HALF_WIDTH_HZ = 0.5;
 
-/** Orange band width outside green (Hz). */
-export const FREQ_ORANGE_HALF_WIDTH_HZ = 0.2;
+/** Amber band and red limits: nominal ± this value (Hz). */
+export const FREQ_STABILITY_LIMIT_HZ = 1.5;
 
 /** Red limit lines (Hz). */
-export const FREQ_RED_LOW_HZ = 59.6;
-export const FREQ_RED_HIGH_HZ = 60.4;
+export const FREQ_RED_LOW_HZ = FREQ_NOMINAL_HZ - FREQ_STABILITY_LIMIT_HZ;
+export const FREQ_RED_HIGH_HZ = FREQ_NOMINAL_HZ + FREQ_STABILITY_LIMIT_HZ;
 
 export const FREQ_GREEN_LO = FREQ_NOMINAL_HZ - FREQ_GREEN_HALF_WIDTH_HZ;
 export const FREQ_GREEN_HI = FREQ_NOMINAL_HZ + FREQ_GREEN_HALF_WIDTH_HZ;
-export const FREQ_ORANGE_HI_HI = FREQ_GREEN_HI + FREQ_ORANGE_HALF_WIDTH_HZ;
+export const FREQ_ORANGE_HI_HI = FREQ_RED_HIGH_HZ;
 
 const GREEN_LO = FREQ_GREEN_LO;
 const GREEN_HI = FREQ_GREEN_HI;
@@ -189,6 +189,13 @@ function annotationsForYref(yref) {
     lineZoneAnnotation(
       yref,
       FREQ_RED_LOW_HZ,
+      'Unstable',
+      '#ffcdd2',
+      'rgba(183, 28, 28, 0.88)',
+    ),
+    lineZoneAnnotation(
+      yref,
+      FREQ_RED_HIGH_HZ,
       'Unstable',
       '#ffcdd2',
       'rgba(183, 28, 28, 0.88)',
