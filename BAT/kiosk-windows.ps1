@@ -225,11 +225,18 @@ function Find-KioskChromeWindow {
 
     $bestHandle = [IntPtr]::Zero
     $bestArea = 0
+    $largestHandle = [IntPtr]::Zero
+    $largestArea = 0
     foreach ($hwnd in [KioskWindowApi]::FindVisibleChromeWindows()) {
+        $area = Get-KioskWindowArea -Handle $hwnd
+        if ($area -gt $largestArea) {
+            $largestHandle = $hwnd
+            $largestArea = $area
+        }
+        if ($area -le $bestArea) { continue }
+
         $title = [KioskWindowApi]::GetWindowTitle($hwnd)
         if (-not $title) { continue }
-        $area = Get-KioskWindowArea -Handle $hwnd
-        if ($area -le $bestArea) { continue }
 
         $titleMatches = $false
         if ($Target -eq "Dcs") {
@@ -248,15 +255,7 @@ function Find-KioskChromeWindow {
         return $bestHandle
     }
 
-    foreach ($hwnd in [KioskWindowApi]::FindVisibleChromeWindows()) {
-        $area = Get-KioskWindowArea -Handle $hwnd
-        if ($area -gt $bestArea) {
-            $bestHandle = $hwnd
-            $bestArea = $area
-        }
-    }
-
-    return $bestHandle
+    return $largestHandle
 }
 
 function Get-KioskSiblingWindowHandle {
@@ -304,7 +303,6 @@ function Activate-KioskWindow {
 
     if ([KioskWindowApi]::IsIconic($Handle)) {
         [void][KioskWindowApi]::ShowWindow($Handle, 9)
-        Start-Sleep -Milliseconds 60
     }
 
     if ($SendOtherToBack -ne [IntPtr]::Zero) {
@@ -333,7 +331,6 @@ function Activate-KioskWindow {
         [void][KioskWindowApi]::SetForegroundWindow($Handle)
     }
 
-    [KioskWindowApi]::SwitchToThisWindow($Handle, $true)
     [void][KioskWindowApi]::SetForegroundWindow($Handle)
 }
 
@@ -387,7 +384,12 @@ function Focus-KioskWindow {
 
     $sibling = Get-KioskSiblingWindowHandle -Target $Target
     Activate-KioskWindow -Handle $handle -SendOtherToBack $sibling
-    Write-KioskWindowRegistryEntry -Target $Target -Handle $handle -Url ($(if ($entry -and $entry.url) { [string]$entry.url } else { if ($Target -eq "Dcs") { "http://localhost:3003" } else { "http://localhost:5173" } }))
+
+    $url = $(if ($entry -and $entry.url) { [string]$entry.url } else { if ($Target -eq "Dcs") { "http://localhost:3003" } else { "http://localhost:5173" } })
+    $needsSave = (-not $entry) -or (-not $entry.hwnd) -or ([int64]$entry.hwnd -ne $handle.ToInt64())
+    if ($needsSave) {
+        Write-KioskWindowRegistryEntry -Target $Target -Handle $handle -Url $url
+    }
     Write-Host "Focused kiosk window: $Target (hwnd=$handle)"
 }
 

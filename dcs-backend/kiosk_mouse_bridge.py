@@ -5,7 +5,7 @@ Maingear wall mouse bridge — run on Maingear Windows host (not in Docker).
   python kiosk_mouse_bridge.py
 
 Listens ws://0.0.0.0:8767 — Ideum touch table connects directly over Ethernet
-(ws://192.168.50.1:8767) for low-latency trackpad + click + kiosk focus.
+(ws://192.168.50.1:8767) for low-latency trackpad + click.
 """
 
 from __future__ import annotations
@@ -35,9 +35,6 @@ MOUSEEVENTF_LEFTUP = 0x0004
 
 BRIDGE_HOST = os.environ.get("KIOSK_MOUSE_HOST", "0.0.0.0")
 BRIDGE_PORT = int(os.environ.get("KIOSK_MOUSE_PORT", "8767"))
-FOCUS_SCRIPT = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "BAT", "focus-kiosk-window.ps1")
-)
 
 
 class POINT(ctypes.Structure):
@@ -84,34 +81,6 @@ def left_click() -> None:
     user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
 
-async def focus_kiosk_async(target: str) -> None:
-    if target not in ("Dcs", "Vernova"):
-        return
-    if not os.path.isfile(FOCUS_SCRIPT):
-        print(f"[kiosk-mouse] focus script missing: {FOCUS_SCRIPT}", flush=True)
-        return
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "powershell",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            FOCUS_SCRIPT,
-            target,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, err = await proc.communicate()
-        if proc.returncode != 0:
-            detail = err.decode(errors="replace").strip() if err else "unknown error"
-            print(f"[kiosk-mouse] focus {target} failed: {detail}", flush=True)
-        else:
-            print(f"[kiosk-mouse] focus {target} ok", flush=True)
-    except Exception as exc:
-        print(f"[kiosk-mouse] focus {target} error: {exc}", flush=True)
-
-
 async def handle_message(raw: str) -> dict | None:
     try:
         msg = json.loads(raw)
@@ -134,13 +103,6 @@ async def handle_message(raw: str) -> dict | None:
     if msg_type == "click":
         await asyncio.to_thread(left_click)
         return {"ok": True, "type": "click"}
-
-    if msg_type == "focus":
-        target = (msg.get("target") or "").strip()
-        if target in ("Dcs", "Vernova"):
-            asyncio.create_task(focus_kiosk_async(target))
-            return {"ok": True, "type": "focus", "target": target}
-        return {"ok": False, "error": "focus target must be Dcs or Vernova"}
 
     return {"ok": False, "error": f"unknown type: {msg_type}"}
 

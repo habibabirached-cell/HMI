@@ -105,9 +105,10 @@ while ($listener.IsListening) {
                 }
             } catch {
                 Write-JsonResponse -Response $response -StatusCode 500 -Body @{
-                    ok    = $false
-                    error = $_.Exception.Message
+                    ok     = $false
+                    error  = $_.Exception.Message
                     target = $target
+                    hint   = "Run BAT\z_genesis.start.bat so kiosk-windows.json has valid Chrome hwnd values."
                 }
             }
         } else {

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect, startTransition } from 'react';
+import { flushSync } from 'react-dom';
 import ComponentLibrary from './components/ComponentLibrary';
 import IdeumRemoteControlOverlay from './components/IdeumKiosk/IdeumRemoteControlOverlay';
 import Canvas from './components/Canvas';
@@ -78,6 +79,7 @@ import {
   KIOSK_FOCUS_BY_COMMAND,
   sendKioskFocusDirect,
 } from './utils/ideumRemoteFocus';
+import { IdeumRemoteMouseClient, resolveMaingearMouseWebSocketUrl } from './utils/ideumRemoteMouse';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
 import {
   getIdeum05NavDrillTarget,
@@ -1028,6 +1030,8 @@ function App() {
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
   /** Ideum05 Grid Connected: black trackpad screen to drive Maingear mouse. */
   const [ideumWallControlActive, setIdeumWallControlActive] = useState(false);
+  /** Persistent Ideum→Maingear mouse WebSocket (stay connected across overlay mount/unmount). */
+  const ideumMouseClientRef = useRef(null);
   /** Per-screen zoom/pan for Ideum05 nav drill stack (root, data-centers, ref-500-mw, …). */
   const ideum05NavViewportsRef = useRef({});
   const ideum05PrevNavScreenRef = useRef(null);
@@ -3849,19 +3853,19 @@ function App() {
     }
   };
 
-  /** Fire-and-forget focus — direct :8766 + Docker relay (CORS-safe backup). */
+  /** Single direct focus POST (:8766). One request — focus server is single-threaded. */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
-
     void sendKioskFocusDirect(machineRole, target)
-      .then((result) => console.info('[cluster] kiosk focus direct ok', command, result))
-      .catch((e) => console.warn('[cluster] kiosk focus direct failed', command, e));
-
-    const relayBase = machineRole?.peerBackendUrl || MAINGEAR_CLUSTER_BACKEND;
-    void sendRemoteCommandToMaingear(relayBase, command)
-      .then((result) => console.info('[cluster] kiosk focus relay ok', command, result))
-      .catch((err) => console.warn('[cluster] kiosk focus relay failed', command, err));
+      .then((result) => console.info('[cluster] kiosk focus ok', command, result))
+      .catch((e) => {
+        console.warn('[cluster] kiosk focus direct failed, relay fallback', command, e);
+        const relayBase = machineRole?.peerBackendUrl || MAINGEAR_CLUSTER_BACKEND;
+        void sendRemoteCommandToMaingear(relayBase, command).catch((err) => {
+          console.warn('[cluster] kiosk focus relay failed', command, err);
+        });
+      });
   }, [machineRole]);
 
   const sendIdeumClusterCommand = useCallback(async (command, payload) => {
@@ -3950,8 +3954,10 @@ function App() {
   }, [clampCanvasZoom]);
 
   const handleIdeumWallControlBack = useCallback(() => {
-    setIdeumWallControlActive(false);
-    setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    flushSync(() => {
+      setIdeumWallControlActive(false);
+      setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    });
     fireKioskFocusFast('showDcs');
   }, [fireKioskFocusFast]);
 
@@ -3959,13 +3965,13 @@ function App() {
     const screenId = getIdeum05NavScreen(ideum05NavStack);
     const navClusterCmd = getIdeum05NavClusterCommand(screenId, cardId);
     if (navClusterCmd) {
-      if (navClusterCmd === 'showVernova') {
-        setIdeumWallControlActive(true);
-      }
       if (isDirectKioskFocusCommand(navClusterCmd)) {
         fireKioskFocusFast(navClusterCmd);
       } else {
         void sendIdeumClusterCommand(navClusterCmd);
+      }
+      if (navClusterCmd === 'showVernova') {
+        flushSync(() => setIdeumWallControlActive(true));
       }
     }
     const drillTarget = getIdeum05NavDrillTarget(screenId, cardId);
@@ -8054,6 +8060,24 @@ function App() {
   }, [machineRole?.isIdeum, machineRole?.peerBackendUrl]);
 
   useEffect(() => {
+    if (!machineRole?.isIdeum || !isIdeum05) {
+      ideumMouseClientRef.current?.disconnect();
+      ideumMouseClientRef.current = null;
+      return undefined;
+    }
+    const url = resolveMaingearMouseWebSocketUrl(machineRole);
+    const client = new IdeumRemoteMouseClient(url);
+    ideumMouseClientRef.current = client;
+    client.connect().catch((e) => console.warn('[ideum-mouse] preconnect failed', e));
+    return () => {
+      client.disconnect();
+      if (ideumMouseClientRef.current === client) {
+        ideumMouseClientRef.current = null;
+      }
+    };
+  }, [machineRole, isIdeum05]);
+
+  useEffect(() => {
     handleConfigurationLoadedRef.current = handleConfigurationLoaded;
     handleRunSimulationRef.current = handleRunSimulation;
   });
@@ -8973,7 +8997,7 @@ function App() {
 
       {isIdeum05 && ideumWallControlActive && machineRole?.isIdeum && (
         <IdeumRemoteControlOverlay
-          machineRole={machineRole}
+          mouseClientRef={ideumMouseClientRef}
           onBack={handleIdeumWallControlBack}
         />
       )}

@@ -100,11 +100,4 @@ export class IdeumRemoteMouseClient {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify({ type: 'click' }));
   }
-
-  /** Focus DCS or Vernova kiosk window (same WebSocket — no CORS). */
-  sendFocus(target) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    if (target !== 'Dcs' && target !== 'Vernova') return;
-    this.ws.send(JSON.stringify({ type: 'focus', target }));
-  }
 }

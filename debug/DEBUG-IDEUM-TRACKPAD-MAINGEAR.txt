@@ -42,9 +42,12 @@ When operator taps **Back** on Ideum:
   Windows cursor on 4-display virtual desktop
 
 Focus (showVernova / showDcs) and mouse BOTH bypass Docker when possible:
-  Focus → direct HTTP :8766 (ideumRemoteFocus.js)
-  Mouse → direct WebSocket :8767 (ideumRemoteMouse.js)
-Docker :5000 is fallback only if :8766 is unreachable.
+  Focus → ONE direct HTTP POST :8766 (ideumRemoteFocus.js) — never triple-fire
+  Mouse → persistent WebSocket :8767 (preconnected when Ideum05 loads)
+Docker :5000 is fallback only if :8766 fails.
+
+Focus must use cached hwnd in BAT\kiosk-windows.json (written at Chrome launch).
+If focus takes >1s, registry is stale — restart z_genesis.start.bat.
 
 ================================================================================
 3. REPO PATHS ON MAINGEAR
