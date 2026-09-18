@@ -322,6 +322,7 @@ function Get-MonitorLayout {
         }
     }
 
+    $monitors = @($monitors)
     if ($monitors.Count -eq 0) {
         throw "No monitors detected."
     }
@@ -346,7 +347,7 @@ function Get-MonitorLayout {
 
     $vs = [System.Windows.Forms.SystemInformation]::VirtualScreen
     return [PSCustomObject]@{
-        Monitors      = $monitors
+        Monitors      = @($monitors)
         VirtualLeft   = $vs.Left
         VirtualTop    = $vs.Top
         VirtualWidth  = $vs.Width
@@ -413,7 +414,7 @@ function Get-NormalizedGridLayout {
     }
 
     return [PSCustomObject]@{
-        Monitors      = $normalized
+        Monitors      = @($normalized)
         VirtualLeft   = -$cellW
         VirtualTop    = -$cellH
         VirtualWidth  = 2 * $cellW
@@ -435,7 +436,7 @@ function Get-DisplayPresetsFromLayout {
     }
 
     $presets = @{}
-    foreach ($m in $Layout.Monitors) {
+    foreach ($m in @($Layout.Monitors)) {
         $displayId = $roleToDisplay[$m.Role]
         if ($null -eq $displayId) { continue }
         if ($presets.ContainsKey($displayId)) { continue }
@@ -450,7 +451,7 @@ function Get-DisplayPresetsFromLayout {
     }
 
     if (-not $presets.ContainsKey(1)) {
-        $primary = $Layout.Monitors | Where-Object { $_.Primary } | Select-Object -First 1
+        $primary = @($Layout.Monitors) | Where-Object { $_.Primary } | Select-Object -First 1
         if ($primary) {
             $presets[1] = @{
                 X = [int]$primary.Left; Y = [int]$primary.Top
