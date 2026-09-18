@@ -34,12 +34,7 @@ echo "Ideum DCS kiosk startup..."
 echo "Repo: ${REPO_ROOT}"
 echo
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo "ERROR: docker not found in PATH."
-  exit 1
-fi
-
-echo "[1/4] Copy Ideum cluster role config..."
+echo "[1/5] Copy Ideum cluster role config..."
 if [[ ! -f "${SRC}" ]]; then
   echo "ERROR: Missing ${SRC}"
   exit 1
@@ -52,16 +47,33 @@ if [[ ! -f "${ENV_FILE}" ]]; then
 fi
 
 echo
-echo "[2/4] Starting Docker stack..."
+echo "[2/5] Ensure Docker engine is running..."
+if ! docker info >/dev/null 2>&1; then
+  if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl start docker 2>/dev/null || true
+  fi
+  elapsed=0
+  while ! docker info >/dev/null 2>&1; do
+    sleep 3
+    elapsed=$((elapsed + 3))
+    if (( elapsed >= 300 )); then
+      echo "ERROR: Docker engine did not start. Start Docker and retry."
+      exit 1
+    fi
+  done
+fi
+
+echo
+echo "[3/5] Starting Docker stack..."
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d
 
 echo
-echo "[3/4] Waiting for DCS backend and UI..."
+echo "[4/5] Waiting for DCS backend and UI..."
 wait_for_port 5000 "DCS backend"
 wait_for_port 3003 "DCS UI"
 
 echo
-echo "[4/4] Opening kiosk browser at ${DCS_URL} ..."
+echo "[5/5] Opening kiosk browser at ${DCS_URL} ..."
 if command -v google-chrome >/dev/null 2>&1; then
   exec google-chrome --kiosk --no-first-run --disable-infobars "${DCS_URL}"
 elif command -v google-chrome-stable >/dev/null 2>&1; then
