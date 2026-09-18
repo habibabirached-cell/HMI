@@ -21,4 +21,4 @@ echo Copied Ideum cluster config:
 echo   %SRC%
 echo to:
 echo   %DST%
-pause
+if /i not "%~1"=="nopause" pause
