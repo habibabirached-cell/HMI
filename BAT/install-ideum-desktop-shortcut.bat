@@ -21,6 +21,6 @@ if errorlevel 1 (
 
 echo Created desktop shortcut:
 echo   %LINK%
-echo Target:
+echo Target: 
 echo   %TARGET%
 pause
