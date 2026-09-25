@@ -30,7 +30,7 @@ export function resolveMaingearPeerPostBase(role) {
     return envUrl || peerUrl || API_BASE || 'http://127.0.0.1:5000';
   }
 
-  if (role?.isIdeum && peerUrl) {
+  if ((role?.isIdeum || role?.isMalta) && peerUrl) {
     return peerUrl;
   }
 

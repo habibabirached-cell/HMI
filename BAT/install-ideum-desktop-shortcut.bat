@@ -3,7 +3,7 @@ setlocal
 call "%~dp0_paths.bat"
 if errorlevel 1 exit /b 1
 
-set "TARGET=%REPO_ROOT%\ideum-start-kiosk.bat"
+set "TARGET=%REPO_ROOT%\Start\Ideum_CXC\START_Daily_Ideum_CXC_Kiosk.bat"
 set "LINK=%USERPROFILE%\Desktop\Ideum DCS Kiosk.lnk"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^

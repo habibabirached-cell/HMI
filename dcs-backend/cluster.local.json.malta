@@ -1,0 +1,7 @@
+{
+  "role": "malta",
+  "ethernetIp": null,
+  "peerEthernetIp": "127.0.0.1",
+  "peerBackendUrl": "http://127.0.0.1:5000",
+  "combinedWallAndTouch": true
+}

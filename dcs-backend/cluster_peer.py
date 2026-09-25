@@ -108,13 +108,16 @@ def resolve_machine_role() -> dict[str, Any]:
     if not peer_backend:
         peer_backend = f"http://{MAINGEAR_ETHERNET_IP}:5000"
 
+    is_malta = role == "malta"
     return {
         "role": role,
         "ethernetIp": ip or None,
         "peerEthernetIp": peer_ip,
         "peerBackendUrl": peer_backend,
-        "isMaingear": role == "maingear",
-        "isIdeum": role == "ideum",
+        "isMalta": is_malta,
+        "isMaingear": role == "maingear" or is_malta,
+        "isIdeum": role == "ideum" or is_malta,
+        "combinedWallAndTouch": bool(cfg.get("combinedWallAndTouch")) or is_malta,
         "maingearEthernetIp": MAINGEAR_ETHERNET_IP,
         "ideumEthernetIp": IDEUM_ETHERNET_IP,
     }

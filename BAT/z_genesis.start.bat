@@ -27,9 +27,10 @@ if not exist "%REPO_ROOT%\.env" (
 )
 
 echo.
-echo [0/5] Starting kiosk focus and mouse servers...
+echo [0/5] Starting kiosk focus, mouse bridge, and OLED keepalive...
 call "%BAT_DIR%start-kiosk-focus-server.bat"
 call "%BAT_DIR%start-kiosk-mouse-server.bat"
+call "%BAT_DIR%start-win-screensaver-keepalive.bat"
 
 echo.
 echo [1/5] Starting DataCenterSmartPower Docker stack...

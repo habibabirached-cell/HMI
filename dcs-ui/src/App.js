@@ -179,6 +179,12 @@ import {
 } from './utils/chartPanelLimits';
 import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSessionStorageKey } from './utils/simDeepLink';
 import {
+  getMaltaViewFromUrl,
+  isClusterTouchCommandSource,
+  isClusterWallCommandTarget,
+  isMaltaTouchClient,
+} from './utils/maltaClusterView';
+import {
   computePlaybackClockOriginSeconds,
 } from './utils/playbackClockOrigin';
 import { normalizeSimulationSpeed, readSimulationSpeedFromConfig } from './utils/simulationSpeed';
@@ -1077,6 +1083,7 @@ function App() {
   /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
   const ideum05OverlayLoadedMetaRef = useRef(null);
   const ideum05OverlayLoadGenRef = useRef(0);
+  const maltaIdeum05BootRef = useRef(false);
   /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
   const pendingIdeum05NavStackRef = useRef(null);
   /** Isolated Ideum kiosk shells: trackpad (ideum06) or data-centers menu only. */
@@ -1175,8 +1182,11 @@ function App() {
   const isConfiguratorWall = showConfigurator && effectiveConfiguratorMode === 'wall';
   const hideAppHeader = isConfiguratorIdeum || isConfiguratorWall;
 
+  const maltaView = getMaltaViewFromUrl();
+
   const isIdeumTouchUi =
-    Boolean(machineRole?.isIdeum) ||
+    isMaltaTouchClient(machineRole, maltaView) ||
+    Boolean(machineRole?.isIdeum && !machineRole?.isMalta) ||
     ideumKioskMode ||
     isConfiguratorIdeum;
 
@@ -3714,21 +3724,17 @@ function App() {
       alert(e.message || 'Could not determine machine role.');
       return;
     }
-    if (role.isMaingear) {
+    if (!isClusterTouchCommandSource(role, maltaView)) {
       alert(
-        'You are on the Maingear. These buttons send commands from the Ideum touch table to the Maingear display.',
+        'Remote touch controls are not enabled in this browser tab. Open the Malta touch screen tab (?maltaView=touch) or configure this PC as Ideum.',
       );
       return;
     }
-    if (!role.isIdeum) {
-      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
-      return;
-    }
     try {
-      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      const result = await sendRemoteCommandToMaingear(role, command);
       if (!result.deliveredToClients) {
         alert(
-          'Command reached the Maingear PC, but no browser is listening. On Maingear: open statcom05 at http://localhost:3003, wait a few seconds, then try again (the page must stay open).',
+          'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
         );
       }
     } catch (e) {
@@ -3754,21 +3760,17 @@ function App() {
       alert(e.message || 'Could not determine machine role.');
       return;
     }
-    if (role.isMaingear) {
+    if (!isClusterTouchCommandSource(role, maltaView)) {
       alert(
-        'You are on the Maingear. These switches send commands from the Ideum touch table to the Maingear display.',
+        'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch) or configure this PC as Ideum.',
       );
       return;
     }
-    if (!role.isIdeum) {
-      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
-      return;
-    }
     try {
-      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      const result = await sendRemoteCommandToMaingear(role, command);
       if (!result.deliveredToClients) {
         alert(
-          'Command reached the Maingear PC, but no browser is listening. On Maingear: open the target design, wait a few seconds, then try again (the page must stay open).',
+          'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS.',
         );
       }
     } catch (e) {
@@ -3798,21 +3800,14 @@ function App() {
       alert(e.message || 'Could not determine machine role.');
       return;
     }
-    if (role.isMaingear) {
+    if (!isClusterTouchCommandSource(role, maltaView)) {
       alert(
-        'You are on the Maingear. This switch sends commands from the Ideum touch table to the Maingear display.',
+        'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch).',
       );
-      return;
-    }
-    if (!role.isIdeum) {
-      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
       return;
     }
     try {
-      const result = await sendRemoteCommandToMaingear(
-        role.peerBackendUrl,
-        'togglePeripheralsExpansion',
-      );
+      const result = await sendRemoteCommandToMaingear(role, 'togglePeripheralsExpansion');
       if (!result.deliveredToClients) {
         alert(
           'Command reached the Maingear PC, but no browser is listening. On Maingear: open HD_Aero, wait a few seconds, then try again (the page must stay open).',
@@ -3834,18 +3829,14 @@ function App() {
       alert(e.message || 'Could not determine machine role.');
       return;
     }
-    if (role.isMaingear) {
+    if (!isClusterTouchCommandSource(role, maltaView)) {
       alert(
-        'You are on the Maingear. This button sends commands from the Ideum touch table to the Maingear display.',
+        'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch).',
       );
       return;
     }
-    if (!role.isIdeum) {
-      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
-      return;
-    }
     try {
-      const result = await sendRemoteCommandToMaingear(role.peerBackendUrl, command);
+      const result = await sendRemoteCommandToMaingear(role, command);
       if (result?.ok) {
         const starting = command === 'startSimulation';
         setIdeumSimulationMirror(starting);
@@ -3877,18 +3868,14 @@ function App() {
       alert(e.message || 'Could not determine machine role.');
       return null;
     }
-    if (role.isMaingear) {
+    if (!isClusterTouchCommandSource(role, maltaView)) {
       alert(
-        'You are on the Maingear. These buttons send commands from the Ideum touch table to the Maingear display.',
+        'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch).',
       );
       return null;
     }
-    if (!role.isIdeum) {
-      alert(`Unknown machine role (${role.role || 'unknown'}). Check cluster.local.json on this PC.`);
-      return null;
-    }
     try {
-      return await sendRemoteCommandToMaingear(role.peerBackendUrl, command, payload);
+      return await sendRemoteCommandToMaingear(role, command, payload);
     } catch (e) {
       console.warn(e);
       alert(e.message || 'Failed to send simulation command to Maingear.');
@@ -3967,8 +3954,8 @@ function App() {
       alert(e.message || 'Could not read cluster role. Run set-ideum-ethernet-ip.bat on this PC.');
       return null;
     }
-    if (role.isMaingear || !role.isIdeum) {
-      const msg = `This PC is not configured as Ideum (role=${role.role || 'unknown'}). Run set-ideum-ethernet-ip.bat and reload.`;
+    if (!isClusterTouchCommandSource(role, maltaView)) {
+      const msg = `This tab is not the Ideum touch client (role=${role.role || 'unknown'}, maltaView=${maltaView || 'n/a'}).`;
       console.warn('[cluster]', msg);
       alert(msg);
       return null;
@@ -3990,7 +3977,7 @@ function App() {
       alert(e.message || `Failed to send "${command}" to Maingear.`);
       return null;
     }
-  }, [machineRole]);
+  }, [machineRole, maltaView]);
 
   const sendIdeumCloseConfiguratorWall = useCallback(async () => {
     let role = machineRole;
@@ -4003,13 +3990,13 @@ function App() {
       console.warn('[cluster] machine role fetch failed (configurator close)', e);
       return;
     }
-    if (role.isMaingear || !role.isIdeum) return;
+    if (!isClusterTouchCommandSource(role, maltaView)) return;
     try {
       await closeConfiguratorWallOnMaingear(resolveMaingearPeerPostBase(role));
     } catch (e) {
       console.warn('[cluster] configurator close failed', e);
     }
-  }, [machineRole]);
+  }, [machineRole, maltaView]);
 
   const clampCanvasZoom = useCallback((value) => {
     const z = Number(value);
@@ -4075,6 +4062,13 @@ function App() {
       alert(e.message || `Failed to load "${catalogDir}".`);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isMaltaTouchClient(machineRole, maltaView)) return;
+    if (maltaIdeum05BootRef.current || isIdeum05) return;
+    maltaIdeum05BootRef.current = true;
+    void loadDesignFromCatalog(IDEUM05_CATALOG);
+  }, [machineRole, maltaView, isIdeum05, loadDesignFromCatalog]);
 
   /** Ideum06 Back — focus DCS wall and reload Ideum05 root menu. */
   const handleIdeum06Back = useCallback(() => {
@@ -8315,14 +8309,19 @@ function App() {
   });
 
   useEffect(() => {
-    if (machineRole?.isIdeum) return undefined;
+    const mv = getMaltaViewFromUrl();
+    if (machineRole?.isMalta) {
+      if (mv !== 'wall') return undefined;
+    } else if (machineRole?.isIdeum) {
+      return undefined;
+    }
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
     const likelyMaingearHost =
       hostname === '192.168.50.1' || hostname === 'localhost' || hostname === '127.0.0.1';
     const shouldListen =
-      machineRole?.isMaingear
+      isClusterWallCommandTarget(machineRole, mv)
       || isLocalClusterDev()
-      || likelyMaingearHost
+      || (likelyMaingearHost && !machineRole?.isMalta)
       || (machineRole == null && likelyMaingearHost);
     if (!shouldListen) return undefined;
     return connectClusterWebSocket((msg) => {
@@ -8340,15 +8339,19 @@ function App() {
         handleRemoteClusterCommandRef.current(msg.command, msg.payload);
       }
     });
-  }, [machineRole?.isMaingear, machineRole?.isIdeum]);
+  }, [machineRole?.isMaingear, machineRole?.isIdeum, machineRole?.isMalta]);
 
   useEffect(() => {
+    const mv = getMaltaViewFromUrl();
+    if (machineRole?.isMalta && mv !== 'touch') {
+      return undefined;
+    }
     if (
       isIdeum06
       || isDataCenter
       || isRef200MwShell
       || isConfiguratorShell
-      || !machineRole?.isIdeum
+      || !isClusterTouchCommandSource(machineRole, mv)
       || !machineRole?.peerBackendUrl
     ) {
       return undefined;
@@ -8372,13 +8375,17 @@ function App() {
     isRef200MwShell,
     isConfiguratorShell,
     machineRole?.isIdeum,
+    machineRole?.isMalta,
     machineRole?.peerBackendUrl,
   ]);
 
   useEffect(() => {
+    const mv = getMaltaViewFromUrl();
     const onClusterLan = typeof window !== 'undefined'
       && window.location.hostname.startsWith('192.168.50.');
-    const shouldConnect = (isIdeum05 || isIdeum06) && (machineRole?.isIdeum || onClusterLan);
+    const shouldConnect =
+      (isIdeum05 || isIdeum06)
+      && (isClusterTouchCommandSource(machineRole, mv) || onClusterLan);
     if (!shouldConnect) {
       ideumMouseClientRef.current?.disconnect();
       ideumMouseClientRef.current = null;
