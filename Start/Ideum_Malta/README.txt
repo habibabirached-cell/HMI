@@ -16,6 +16,8 @@ FIRST TIME after git pull:
 EVERY demo day:
   Desktop "Ideum DCS Kiosk (Malta)" OR START_Daily_Ideum_Malta_Kiosk.bat
 
-If display numbers are wrong, run from repo root:
+Windows must see two monitors (Extend, not Duplicate only). Touch = primary (Display 1), 85in = Display 2.
+
+If Chrome opens on the wrong screen, from repo root run:
   open-chrome-window.bat -ListDisplays
 Then adjust -Display 1 / 2 in BAT\open-malta-*-chrome.bat if needed.

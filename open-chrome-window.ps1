@@ -428,6 +428,48 @@ function Get-NormalizedGridLayout {
 function Get-DisplayPresetsFromLayout {
     param($Layout)
 
+    $monitors = @($Layout.Monitors)
+    # Maingear 2x2 wall: four normalized cells use fixed roles. Any other layout (e.g. Malta
+    # touch + one extended 85") uses 1 = primary, 2 = next monitor left-to-right, etc.
+    $useGenesisGrid = ($monitors.Count -eq 4) -and ($Layout.Normalized -eq $true)
+
+    if (-not $useGenesisGrid) {
+        $presets = @{}
+        $primary = @($monitors | Where-Object { $_.Primary }) | Select-Object -First 1
+        if (-not $primary) {
+            $primary = @($monitors | Sort-Object Left, Top) | Select-Object -First 1
+        }
+        if ($primary) {
+            $presets[1] = @{
+                X      = [int]$primary.Left
+                Y      = [int]$primary.Top
+                Width  = [int]$primary.Width
+                Height = [int]$primary.Height
+                Role   = "primary"
+                Device = $primary.Device
+            }
+        }
+        $others = @(
+            $monitors |
+                Where-Object { $null -eq $primary -or $_.Device -ne $primary.Device } |
+                Sort-Object Left, Top
+        )
+        $id = 2
+        foreach ($m in $others) {
+            if ($id -gt 4) { break }
+            $presets[$id] = @{
+                X      = [int]$m.Left
+                Y      = [int]$m.Top
+                Width  = [int]$m.Width
+                Height = [int]$m.Height
+                Role   = [string]$m.Role
+                Device = $m.Device
+            }
+            $id++
+        }
+        return $presets
+    }
+
     $roleToDisplay = @{
         "primary"     = 1
         "top-left"    = 2
@@ -436,7 +478,7 @@ function Get-DisplayPresetsFromLayout {
     }
 
     $presets = @{}
-    foreach ($m in @($Layout.Monitors)) {
+    foreach ($m in $monitors) {
         $displayId = $roleToDisplay[$m.Role]
         if ($null -eq $displayId) { continue }
         if ($presets.ContainsKey($displayId)) { continue }
@@ -444,14 +486,14 @@ function Get-DisplayPresetsFromLayout {
             X      = [int]$m.Left
             Y      = [int]$m.Top
             Width  = [int]$m.Width
-            Height = [int]$m.Height
+            Height  = [int]$m.Height
             Role   = $m.Role
             Device = $m.Device
         }
     }
 
     if (-not $presets.ContainsKey(1)) {
-        $primary = @($Layout.Monitors) | Where-Object { $_.Primary } | Select-Object -First 1
+        $primary = @($monitors | Where-Object { $_.Primary }) | Select-Object -First 1
         if ($primary) {
             $presets[1] = @{
                 X = [int]$primary.Left; Y = [int]$primary.Top
