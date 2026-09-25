@@ -79,6 +79,9 @@ goto :fail
 
 :err_npm
 echo ERROR: npm not found in PATH.
+echo Malta needs Node.js for Vernova/FlexSim on the 85in display.
+echo Install Node.js LTS from https://nodejs.org/ then close and reopen this window.
+echo Or: winget install OpenJS.NodeJS.LTS
 goto :fail
 
 :err_vernova_dir

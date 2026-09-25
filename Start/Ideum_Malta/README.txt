@@ -1,5 +1,7 @@
 Ideum Malta — one PC, two displays (touch table + 85" wall)
 
+Prerequisites on this PC (once): Git, Docker Desktop, Google Chrome, Node.js LTS (npm in PATH for Vernova).
+
 No Ethernet link to a separate Maingear PC. cluster.local.json role is "malta":
 touch commands and wall visuals share the same backend (127.0.0.1:5000).
 
