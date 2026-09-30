@@ -442,6 +442,23 @@
   margin-bottom: 16px;
 }
 
+.catalog-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px 0;
+}
+
+.catalog-section-header .catalog-section-title {
+  margin: 0;
+  flex: 1;
+}
+
+.catalog-section-switch {
+  flex-shrink: 0;
+}
+
 .catalog-section-title {
   margin: 0 0 8px 0;
   font-size: calc(13px + var(--ui-font-px-shift, 0px));

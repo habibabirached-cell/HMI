@@ -20,6 +20,33 @@ import React, { useState, useEffect } from 'react';
 import '../styles/SaveLoadDialog.css';
 import { API_BASE_URL } from '../apiConfig';
 
+/** Curated quick-load entries (designs/ folder names). Shown under Active Designs. */
+const ACTIVE_DESIGN_CATALOG_DIRS = ['ideum05'];
+
+function isActiveFeaturedDesign(config) {
+  const dir = String(config?.design_dir || '').trim().toLowerCase();
+  return ACTIVE_DESIGN_CATALOG_DIRS.some((d) => d.toLowerCase() === dir);
+}
+
+function CatalogSectionHeader({ title, expanded, onToggle, disabled = false }) {
+  return (
+    <div className="catalog-section-header">
+      <h4 className="catalog-section-title">{title}</h4>
+      <button
+        type="button"
+        className={`load-source-switch catalog-section-switch ${expanded ? 'on' : ''}`}
+        role="switch"
+        aria-checked={expanded}
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title}`}
+        onClick={onToggle}
+        disabled={disabled}
+      >
+        <span className="load-source-switch-knob" />
+      </button>
+    </div>
+  );
+}
+
 function SaveLoadDialog({
   mode,
   onClose,
@@ -45,6 +72,9 @@ function SaveLoadDialog({
   const [diskCatalog, setDiskCatalog] = useState({ active: [], archived: [] });
   const [diskListNonce, setDiskListNonce] = useState(0);
   const [archivedSectionOpen, setArchivedSectionOpen] = useState(false);
+  const [configuratorSectionOpen, setConfiguratorSectionOpen] = useState(false);
+  const [activeDesignsSectionOpen, setActiveDesignsSectionOpen] = useState(true);
+  const [designsSectionOpen, setDesignsSectionOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
@@ -59,6 +89,9 @@ function SaveLoadDialog({
   useEffect(() => {
     if (mode === 'load') {
       setUseDatabaseList(false);
+      setConfiguratorSectionOpen(false);
+      setActiveDesignsSectionOpen(true);
+      setDesignsSectionOpen(false);
     }
   }, [mode]);
 
@@ -410,6 +443,8 @@ function SaveLoadDialog({
   };
 
   const diskTotalCount = diskCatalog.active.length + diskCatalog.archived.length;
+  const activeFeaturedDesigns = diskCatalog.active.filter(isActiveFeaturedDesign);
+  const diskActiveDesignsMain = diskCatalog.active.filter((c) => !isActiveFeaturedDesign(c));
 
   const renderDiskCard = (config, isArchivedEntry) => {
     const rowKey = `disk-${config.design_dir}`;
@@ -574,45 +609,51 @@ function SaveLoadDialog({
               </p>
               {mode === 'load' && typeof onOpenConfigurator === 'function' && (
                 <div className="catalog-section">
-                  <h4 className="catalog-section-title">Configurator</h4>
-                  <div className="config-list">
-                    <button
-                      type="button"
-                      className="config-item config-item--launcher"
-                      onClick={() => onOpenConfigurator('full')}
-                    >
-                      <div className="config-item-header">
-                        <h3>DC Configurator 4 Screens</h3>
-                      </div>
-                      <p className="config-description">
-                        Inputs and results together on one workstation (demo / single-screen).
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      className="config-item config-item--launcher"
-                      onClick={() => onOpenConfigurator('ideum')}
-                    >
-                      <div className="config-item-header">
-                        <h3>Data Center Configurator</h3>
-                      </div>
-                      <p className="config-description">
-                        Touch-table inputs only — sends configuration to Maingear over Ethernet.
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      className="config-item config-item--launcher"
-                      onClick={() => onOpenConfigurator('wall')}
-                    >
-                      <div className="config-item-header">
-                        <h3>DC Configurator Wall Display</h3>
-                      </div>
-                      <p className="config-description">
-                        Wall output only — run on Maingear; updates when Ideum presses Configure.
-                      </p>
-                    </button>
-                  </div>
+                  <CatalogSectionHeader
+                    title="Configurator"
+                    expanded={configuratorSectionOpen}
+                    onToggle={() => setConfiguratorSectionOpen((v) => !v)}
+                  />
+                  {configuratorSectionOpen && (
+                    <div className="config-list">
+                      <button
+                        type="button"
+                        className="config-item config-item--launcher"
+                        onClick={() => onOpenConfigurator('full')}
+                      >
+                        <div className="config-item-header">
+                          <h3>DC Configurator 4 Screens</h3>
+                        </div>
+                        <p className="config-description">
+                          Inputs and results together on one workstation (demo / single-screen).
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        className="config-item config-item--launcher"
+                        onClick={() => onOpenConfigurator('ideum')}
+                      >
+                        <div className="config-item-header">
+                          <h3>Data Center Configurator</h3>
+                        </div>
+                        <p className="config-description">
+                          Touch-table inputs only — sends configuration to Maingear over Ethernet.
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        className="config-item config-item--launcher"
+                        onClick={() => onOpenConfigurator('wall')}
+                      >
+                        <div className="config-item-header">
+                          <h3>DC Configurator Wall Display</h3>
+                        </div>
+                        <p className="config-description">
+                          Wall output only — run on Maingear; updates when Ideum presses Configure.
+                        </p>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               {mode === 'load' && useDatabaseList ? (
@@ -624,6 +665,14 @@ function SaveLoadDialog({
                     <p>Use Disk, or save a design from the app.</p>
                   </div>
                 ) : (
+                  <div className="catalog-section">
+                    <CatalogSectionHeader
+                      title="Designs"
+                      expanded={designsSectionOpen}
+                      onToggle={() => setDesignsSectionOpen((v) => !v)}
+                      disabled={loading}
+                    />
+                    {designsSectionOpen && (
                   <div className="config-list">
                     {configurations.map((config) => {
                       const diskRow = config.design_dir != null;
@@ -695,6 +744,8 @@ function SaveLoadDialog({
                       );
                     })}
                   </div>
+                    )}
+                  </div>
                 )
               ) : loading && diskTotalCount === 0 ? (
                 <div className="loading">Loading…</div>
@@ -706,13 +757,43 @@ function SaveLoadDialog({
               ) : (
                 <>
                   <div className="catalog-section">
-                    <h4 className="catalog-section-title">Designs</h4>
-                    {diskCatalog.active.length === 0 ? (
-                      <p className="catalog-section-empty">No active designs (all archived).</p>
-                    ) : (
-                      <div className="config-list">
-                        {diskCatalog.active.map((c) => renderDiskCard(c, false))}
-                      </div>
+                    <CatalogSectionHeader
+                      title="Active Designs"
+                      expanded={activeDesignsSectionOpen}
+                      onToggle={() => setActiveDesignsSectionOpen((v) => !v)}
+                      disabled={loading}
+                    />
+                    {activeDesignsSectionOpen && (
+                      <>
+                        {activeFeaturedDesigns.length === 0 ? (
+                          <p className="catalog-section-empty">
+                            Ideum05 not found under designs/ (expected folder ideum05).
+                          </p>
+                        ) : (
+                          <div className="config-list">
+                            {activeFeaturedDesigns.map((c) => renderDiskCard(c, false))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <div className="catalog-section">
+                    <CatalogSectionHeader
+                      title="Designs"
+                      expanded={designsSectionOpen}
+                      onToggle={() => setDesignsSectionOpen((v) => !v)}
+                      disabled={loading}
+                    />
+                    {designsSectionOpen && (
+                      <>
+                        {diskActiveDesignsMain.length === 0 ? (
+                          <p className="catalog-section-empty">No other active designs (all archived).</p>
+                        ) : (
+                          <div className="config-list">
+                            {diskActiveDesignsMain.map((c) => renderDiskCard(c, false))}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                   {diskCatalog.archived.length > 0 && (
