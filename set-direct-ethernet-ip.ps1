@@ -119,6 +119,7 @@ if (Test-Path -LiteralPath $clusterPath) {
 
 Copy-Item -LiteralPath $examplePath -Destination $clusterPath -Force
 $role = if ($IpAddress -eq '192.168.50.1') { 'maingear' } else { 'ideum' }
+$peer = if ($IpAddress -eq '192.168.50.1') { '192.168.50.2' } else { '192.168.50.1' }
 Write-Host "Wrote cluster config: $clusterPath (copied from $exampleName, role=$role)"
 Write-Host "Done. After both machines are configured, test: ping $peer"
 if ($IpAddress -eq '192.168.50.1') {
