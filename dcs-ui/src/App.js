@@ -287,6 +287,10 @@ function isP2R18Design(loadedConfig) {
   return name === 'p2r_18' || rel === 'p2r_18' || rel.endsWith('/p2r_18');
 }
 
+/** P2R_18 and HD_Aero share ensemble id `all` on the Maingear wall. */
+const P2R18_ENSEMBLE_ID = 'all';
+const P2R18_DEFAULT_PRESET = 'noBessNoStatcom';
+
 function isHDAeroDesign(loadedConfig) {
   const name = String(loadedConfig?.name || '')
     .trim()
@@ -1027,6 +1031,7 @@ function App() {
   /** Deep link calls the same loader as the dialog but must not also run localStorage session-restore for the same navigation. */
   const loadSkipSessionRestoreRef = useRef(false);
   const pendingHdAeroInitRef = useRef(false);
+  const pendingP2R18InitRef = useRef(false);
   /**
    * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
@@ -1078,6 +1083,7 @@ function App() {
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
   /** Persistent Ideum→Maingear mouse WebSocket (stay connected across overlay mount/unmount). */
   const ideumMouseClientRef = useRef(null);
+  const fireKioskFocusFastRef = useRef(() => {});
   /** Per-screen zoom/pan for Ideum05 nav drill stack (root, data-centers, ref-500-mw, …). */
   const ideum05NavViewportsRef = useRef({});
   const ideum05PrevNavScreenRef = useRef(null);
@@ -1087,7 +1093,7 @@ function App() {
   /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
   const ideum05OverlayLoadedMetaRef = useRef(null);
   const ideum05OverlayLoadGenRef = useRef(0);
-  const maltaIdeum05BootRef = useRef(false);
+  const maltaIdeum05BootRef = useRef(false);-
   /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
   const pendingIdeum05NavStackRef = useRef(null);
   /** Isolated Ideum kiosk shells: trackpad (ideum06) or data-centers menu only. */
@@ -3732,6 +3738,9 @@ function App() {
       return;
     }
     try {
+      if (command === 'add8Turbines') {
+        await sendRemoteCommandToMaingear(role, 'loadP2R18');
+      }
       const result = await sendRemoteCommandToMaingear(role, command);
       if (!result.deliveredToClients) {
         alert(
@@ -3946,6 +3955,7 @@ function App() {
       });
     });
   }, [machineRole]);
+  fireKioskFocusFastRef.current = fireKioskFocusFast;
 
   const sendIdeumClusterCommand = useCallback(async (command, payload) => {
     let role = machineRole;
@@ -3975,6 +3985,10 @@ function App() {
       }
     }
 
+    if (command === 'loadP2R18' || command === 'loadHdAero') {
+      fireKioskFocusFast('showDcs');
+    }
+
     try {
       return await sendRemoteCommandToMaingear(role, command, payload);
     } catch (e) {
@@ -3982,7 +3996,7 @@ function App() {
       alert(e.message || `Failed to send "${command}" to Maingear.`);
       return null;
     }
-  }, [machineRole, maltaView]);
+  }, [machineRole, maltaView, fireKioskFocusFast]);
 
   const sendIdeumCloseConfiguratorWall = useCallback(async () => {
     let role = machineRole;
@@ -4457,6 +4471,79 @@ function App() {
     applyHdAeroDefaultState,
   ]);
 
+  /** Default P2R_18 wall state: conf3 layout, noBessNoStatcom preset, simulation playing. */
+  const applyP2R18DefaultState = useCallback(async () => {
+    if (!designApiPath) return false;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return false;
+    }
+
+    stopLiveRtdsStream();
+    handleStopSimulation();
+    handleWorkspaceLayoutPresetChange('conf3');
+    applyNoBessNoStatcomCanvas();
+
+    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
+    if (!ensemble) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    pendingP2R18InitRef.current = false;
+
+    const sameDesignEnsemble =
+      simulationMetadataRef.current?.ensembleId === ensemble.id
+      && simulationDesignPathRef.current === designApiPath;
+    if (!sameDesignEnsemble) {
+      await handleSelectEnsemble(ensemble);
+    }
+
+    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
+    if (presetOk) {
+      await restartSimulationPlaybackFromStart();
+      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
+      if (shortcut) {
+        setActiveQuickScenarioPlaying(shortcut);
+      }
+    }
+
+    setQuickScenarioDesignPrimedPreset(null);
+    setRightRailCollapsed(false);
+    setRightRailGridPeek(true);
+    return presetOk;
+  }, [
+    designApiPath,
+    currentConfigName,
+    designEnsembles,
+    quickScenarioButtons,
+    stopLiveRtdsStream,
+    handleStopSimulation,
+    handleWorkspaceLayoutPresetChange,
+    applyNoBessNoStatcomCanvas,
+    handleSelectEnsemble,
+    handleActivateNamedSimulationConfig,
+  ]);
+
+  useEffect(() => {
+    if (!pendingP2R18InitRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return;
+    }
+    void applyP2R18DefaultState();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    applyP2R18DefaultState,
+  ]);
+
   const handleCanvasUpdateComponent = useCallback((componentId, updates) => {
     handleUpdateComponent(componentId, updates);
     maybeApplyHdAeroBreakerPreset(componentId, updates);
@@ -4805,6 +4892,7 @@ function App() {
           csv_status: { design_catalog_rel: designApiPath },
         })
       ) {
+        await applyP2R18DefaultState();
         return;
       }
       try {
@@ -4813,6 +4901,7 @@ function App() {
         );
         if (!res.ok) return;
         const loadedConfig = await res.json();
+        loadSkipSessionRestoreRef.current = true;
         handleConfigurationLoadedRef.current?.(loadedConfig);
       } catch (e) {
         console.warn('loadP2R18 remote command failed', e);
@@ -7626,8 +7715,12 @@ function App() {
     if (isHDAeroDesign(loadedConfig)) {
       pendingHdAeroInitRef.current = true;
       loadSkipSessionRestoreRef.current = true;
+      pendingP2R18InitRef.current = false;
+    } else if (isP2R18Design(loadedConfig)) {
+      pendingP2R18InitRef.current = true;
+      loadSkipSessionRestoreRef.current = true;
     }
-    
+
     // Store CSV status and fetch available simulations
     if (loadedConfig.csv_status) {
       setCsvStatus(loadedConfig.csv_status);
