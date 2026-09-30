@@ -38,11 +38,19 @@ try {
         $listener = Start-KioskFocusListener @("http://127.0.0.1:$Port/")
         $activePrefixes = @("http://127.0.0.1:$Port/")
     } catch {
+        $msg = $_.Exception.Message
+        if ($msg -match 'conflict|already|registration|in use|Access is denied') {
+            Write-Host ""
+            Write-Host "Port $Port is already in use — another kiosk focus server is likely running."
+            Write-Host "Leave that KioskFocusServer window open, or close it and run startup again."
+            Write-Host ""
+            exit 0
+        }
         Write-Host ""
         Write-Host "Kiosk focus server FAILED on port $Port."
-        Write-Host $_.Exception.Message
+        Write-Host $msg
         Write-Host ""
-        Write-Host "If one is already running, ignore this and test:"
+        Write-Host "Test an existing listener:"
         Write-Host "  curl -X POST http://127.0.0.1:$Port/kiosk/focus/Vernova -H \"Content-Type: application/json\" -d \"{}\""
         Write-Host ""
         pause
