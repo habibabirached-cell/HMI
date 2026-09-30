@@ -237,7 +237,7 @@ function Find-KioskChromeWindow {
         if ($Target -eq "Dcs") {
             $titleMatches = ($title -match "Data Center|ACDC|Configurator|HD_Aero|P2R|localhost:3003") -or ($title -match "3003")
         } else {
-            $titleMatches = ($title -match "Spark|Vernova|VERNOVA|localhost:5173") -or ($title -match "5173")
+            $titleMatches = ($title -match "Spark|Vernova|VERNOVA|FlexSim|localhost:5173") -or ($title -match "5173")
         }
 
         if ($titleMatches -or $area -gt 3000000) {
@@ -327,6 +327,12 @@ function Activate-KioskWindow {
     }
 
     [void][KioskWindowApi]::SetForegroundWindow($Handle)
+
+    $after = [KioskWindowApi]::GetForegroundWindow()
+    if ($after -ne $Handle) {
+        [KioskWindowApi]::SwitchToThisWindow($Handle, $true)
+        [void][KioskWindowApi]::SetForegroundWindow($Handle)
+    }
 }
 
 function Show-KioskWindow {

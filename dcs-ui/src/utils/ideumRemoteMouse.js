@@ -26,6 +26,8 @@ export class IdeumRemoteMouseClient {
     this._pendingDx = 0;
     this._pendingDy = 0;
     this._flushTimer = null;
+    /** @type {Array<(msg: object) => void>} */
+    this._focusWaiters = [];
   }
 
   connect() {
@@ -65,6 +67,17 @@ export class IdeumRemoteMouseClient {
               settled = true;
               resolve(this.bounds);
             }
+            return;
+          }
+          if (msg.type === 'focus') {
+            const waiters = this._focusWaiters.splice(0);
+            waiters.forEach((fn) => {
+              try {
+                fn(msg);
+              } catch {
+                /* ignore */
+              }
+            });
           }
         } catch {
           /* ignore */
@@ -168,7 +181,29 @@ export class IdeumRemoteMouseClient {
       console.warn('[ideum-mouse] server has no focus capability — restart KioskMouseServer on Maingear');
       return false;
     }
-    this.ws.send(JSON.stringify({ type: 'focus', target }));
-    return true;
+
+    return new Promise((resolve) => {
+      const timeoutMs = 4500;
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        this._focusWaiters = this._focusWaiters.filter((fn) => fn !== onResult);
+        resolve(ok);
+      };
+      const onResult = (msg) => {
+        if (msg.target && msg.target !== target) return;
+        finish(Boolean(msg.ok));
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs);
+      this._focusWaiters.push(onResult);
+      try {
+        this.ws.send(JSON.stringify({ type: 'focus', target }));
+      } catch (e) {
+        console.warn('[ideum-mouse] focus send failed', e);
+        finish(false);
+      }
+    });
   }
 }

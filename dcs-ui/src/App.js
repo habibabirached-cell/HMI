@@ -3922,10 +3922,14 @@ function App() {
     }
   };
 
-  /** Grid Connected / Back — WebSocket :8767 (KioskMouseServer, not KioskFocusServer). */
+  /** Grid Connected / Back — HTTP :8766 on Maingear + WS :8767 mouse bridge (either can raise Vernova/DCS). */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
+
+    void sendKioskFocusDirect(machineRole, target).catch((e) => {
+      console.warn('[cluster] direct http focus failed', command, e);
+    });
 
     let client = ideumMouseClientRef.current;
     if (!client) {
@@ -3936,9 +3940,9 @@ function App() {
 
     void client.sendFocusAsync(target).then((ok) => {
       if (ok) return;
-      console.warn('[cluster] ws focus failed, trying http :8766', command);
+      console.warn('[cluster] ws focus failed or timed out', command);
       void sendKioskFocusDirect(machineRole, target).catch((e) => {
-        console.warn('[cluster] http focus failed', command, e);
+        console.warn('[cluster] http focus retry failed', command, e);
       });
     });
   }, [machineRole]);
