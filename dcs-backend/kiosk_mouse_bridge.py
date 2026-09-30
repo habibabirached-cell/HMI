@@ -17,6 +17,7 @@ import asyncio
 import json
 import os
 import queue
+import subprocess
 import sys
 import threading
 import urllib.error
@@ -199,6 +200,54 @@ def _post_kiosk_focus_sync(target: str) -> dict:
         return {"ok": True, "target": target}
 
 
+def _focus_script_path() -> str:
+    return os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "BAT", "focus-kiosk-window.ps1")
+    )
+
+
+def _invoke_focus_powershell_sync(target: str) -> dict:
+    """Same as maingear-kiosk-focus-*.bat when KioskFocusServer (:8766) is not running."""
+    script = _focus_script_path()
+    if not os.path.isfile(script):
+        return {"ok": False, "error": f"focus script missing: {script}", "target": target}
+    try:
+        proc = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                script,
+                target,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=45,
+            cwd=os.path.dirname(script),
+        )
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "target": target}
+    if proc.returncode == 0:
+        return {"ok": True, "target": target, "via": "powershell"}
+    err = (proc.stderr or proc.stdout or "").strip() or f"exit {proc.returncode}"
+    return {"ok": False, "error": err, "target": target}
+
+
+def _should_fallback_focus(exc: BaseException) -> bool:
+    if isinstance(exc, urllib.error.URLError):
+        reason = getattr(exc, "reason", None)
+        if reason is not None:
+            winerr = getattr(reason, "winerror", None)
+            if winerr == 10061:
+                return True
+        msg = str(exc).lower()
+        return "refused" in msg or "10061" in msg
+    msg = str(exc).lower()
+    return "refused" in msg or "10061" in msg
+
+
 async def focus_kiosk(target: str) -> dict:
     if target not in ("Dcs", "Vernova"):
         return {"ok": False, "error": "target must be Dcs or Vernova"}
@@ -215,6 +264,12 @@ async def focus_kiosk(target: str) -> dict:
             return detail
         return {"ok": False, "error": str(detail)}
     except Exception as exc:
+        if _should_fallback_focus(exc):
+            print(
+                f"[kiosk-mouse] :{FOCUS_PORT} unavailable ({exc!s}); using PowerShell focus",
+                flush=True,
+            )
+            return await asyncio.to_thread(_invoke_focus_powershell_sync, target)
         return {"ok": False, "error": str(exc)}
 
 
