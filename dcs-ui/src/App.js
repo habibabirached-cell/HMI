@@ -201,6 +201,10 @@ import {
   LIVE_RTDS_COLOR,
   LIVE_RTDS_PRESET,
 } from './utils/liveRtdsCharts';
+import {
+  augmentEnsemblePrimaryWithCrossMemberDerived,
+  augmentRowsWithDerived,
+} from './utils/formulaEvaluator';
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
@@ -2935,7 +2939,7 @@ function App() {
         rows: filteredRows.length,
         derivedVars: derivedVariables.length,
       });
-      const augmentedRows = (await import('./utils/formulaEvaluator')).augmentRowsWithDerived(filteredRows, derivedVariables);
+      const augmentedRows = augmentRowsWithDerived(filteredRows, derivedVariables);
       perfMark('after augmentRowsWithDerived', { rows: augmentedRows.length });
       if (isStale()) {
         stopFakeProgress();
@@ -3167,10 +3171,7 @@ function App() {
       rows: raw.length,
       derivedVars: derivedVariables.length,
     });
-    const augmentedRows = (await import('./utils/formulaEvaluator')).augmentRowsWithDerived(
-      raw,
-      derivedVariables,
-    );
+    const augmentedRows = augmentRowsWithDerived(raw, derivedVariables);
     console.log('[DCS:perf] applyActivatedNamedPresetInPlace after augmentRows', {
       augmentMs: Math.round(performance.now() - t0),
       outRows: augmentedRows.length,
@@ -5897,7 +5898,6 @@ function App() {
           limit: nRows,
         });
         const incoming = dataPayload.data || [];
-        const { augmentRowsWithDerived } = await import('./utils/formulaEvaluator');
         const derived = simulationMetadataRef.current?.derivedVariables || [];
         const merged = mergeSimulationDataByRowIndex(simulationDataRef.current, incoming);
         const augmented = augmentRowsWithDerived(merged, derived);
@@ -5945,7 +5945,6 @@ function App() {
       const incoming = dataPayload.data || [];
       if (!incoming.length) return;
       const derived = simulationMetadataRef.current?.derivedVariables || [];
-      const { augmentRowsWithDerived } = await import('./utils/formulaEvaluator');
       const aug = augmentRowsWithDerived(incoming, derived);
       const next = [...(simulationDataRef.current || []), ...aug];
       simulationRawRowsRef.current = next;
@@ -6042,9 +6041,6 @@ function App() {
         throw e;
       }
       const incoming = dataPayload.data || [];
-      const { augmentRowsWithDerived, augmentEnsemblePrimaryWithCrossMemberDerived } = await import(
-        './utils/formulaEvaluator',
-      );
       const merged = mergeSimulationDataByRowIndex(existingRows || [], incoming);
       const augmented = augmentRowsWithDerived(merged, derived);
 
@@ -6963,7 +6959,6 @@ function App() {
       const rows = simulationDataRef.current;
       const prevDvSingle = meta.derivedVariables || [];
       const newDerived = [...prevDvSingle, { name: variableName, formula }];
-      const { augmentRowsWithDerived } = await import('./utils/formulaEvaluator');
       const augmented = augmentRowsWithDerived(rows, [{ name: variableName, formula }]);
       setSimulationMetadata((prev) => {
         const augKeys = Object.keys(augmented[0] || {});
@@ -7119,9 +7114,6 @@ function App() {
 
         if (existingRows?.length) {
           let stripped = stripRows(existingRows);
-          const { augmentRowsWithDerived, augmentEnsemblePrimaryWithCrossMemberDerived } = await import(
-            './utils/formulaEvaluator',
-          );
           stripped = augmentRowsWithDerived(stripped, derivedNow);
           let nextMap = { ...loadedMap, [targetSimId]: stripped };
           const ensCross = filteredEnsDerived;
@@ -7158,7 +7150,6 @@ function App() {
           return o;
         });
         simulationRawRowsRef.current = stripped;
-        const { augmentRowsWithDerived } = await import('./utils/formulaEvaluator');
         setSimulationData(augmentRowsWithDerived(stripped, derivedNow));
       } else {
         setSimulationData((prev) => {
@@ -7379,7 +7370,6 @@ function App() {
 
       const loaded = ensembleMemberSimulationDataRef.current || {};
       if (primary && loaded[primary]?.length) {
-        const { augmentEnsemblePrimaryWithCrossMemberDerived } = await import('./utils/formulaEvaluator');
         const stripped = loaded[primary].map((row) => {
           const o = { ...row };
           delete o[vn];
