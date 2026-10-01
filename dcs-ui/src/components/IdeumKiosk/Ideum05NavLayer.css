@@ -246,6 +246,13 @@
   box-shadow: none;
 }
 
+.ideum-component-btn--nav-card-dimmed,
+.ideum-component-btn--nav-card-dimmed:hover,
+.ideum-component-btn--nav-card-dimmed:active {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+}
+
 .ideum-component-btn__title--disabled {
   color: rgba(132, 138, 140, 0.92);
   font-weight: 600;

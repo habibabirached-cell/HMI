@@ -1,0 +1,315 @@
+{
+  "name": "Ideum07",
+  "description": "",
+  "canvasComponents": [
+    {
+      "id": "comp-ideum-turbine-btn",
+      "type": "ideum-turbine-button",
+      "name": "Add 8 turbine",
+      "fullName": "Add 8 turbine",
+      "position": {
+        "x": 80,
+        "y": 120
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Add 8 turbine",
+        "ideumCommand": "add8Turbines"
+      },
+      "visualOverrides": {
+        "width": 720,
+        "height": 480
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-bess-only-btn",
+      "type": "ideum-bess-button",
+      "name": "Add BESS only",
+      "fullName": "Add BESS only",
+      "position": {
+        "x": 80,
+        "y": 640
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Add BESS only",
+        "ideumCommand": "addBessOnly"
+      },
+      "visualOverrides": {
+        "width": 720,
+        "height": 380
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-bess-gfme-btn",
+      "type": "ideum-bess-gfme-button",
+      "name": "Add BESS and GFMe",
+      "fullName": "Add BESS and GFMe",
+      "position": {
+        "x": 900,
+        "y": 120
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Add BESS and GFMe",
+        "ideumCommand": "addStatcomAndGFMe"
+      },
+      "visualOverrides": {
+        "width": 1080,
+        "height": 420
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-gfme-only-btn",
+      "type": "ideum-gfme-button",
+      "name": "ADD GFMe only",
+      "fullName": "ADD GFMe only",
+      "position": {
+        "x": 900,
+        "y": 580
+      },
+      "status": "idle",
+      "properties": {
+        "title": "ADD GFMe only",
+        "ideumCommand": "addGfmeOnly"
+      },
+      "visualOverrides": {
+        "width": 1080,
+        "height": 380
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-expansion-panel",
+      "type": "ideum-expansion-panel",
+      "name": "Expansion",
+      "fullName": "Expansion",
+      "position": {
+        "x": 2060,
+        "y": 120
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Expansion"
+      },
+      "visualOverrides": {
+        "width": 480,
+        "height": 900
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "comp-ideum-start-sim-btn",
+      "type": "ideum-start-simulation-button",
+      "name": "Start Simulation",
+      "fullName": "Start Simulation",
+      "position": {
+        "x": 2060,
+        "y": 1060
+      },
+      "status": "idle",
+      "properties": {
+        "title": "Start Simulation"
+      },
+      "visualOverrides": {
+        "width": 480,
+        "height": 100
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    }
+  ],
+  "connections": [],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 2.5427268022622505,
+    "pan": {
+      "x": -182.7186775886903,
+      "y": -5.183709451730124
+    },
+    "panTop": {
+      "x": 131.29628558719403,
+      "y": -57.845132789426906
+    },
+    "panBottom": {
+      "x": 0,
+      "y": 0
+    },
+    "quadBottomRowShare": 50,
+    "mode": "design",
+    "uiFontPxShift": 5,
+    "canvasFontPxShift": 5,
+    "collapsedComponentFontPxShift": 24,
+    "splitPaneTitles": null,
+    "designViewMode": "canvas",
+    "workspaceLayoutPreset": "conf4"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "playbackTimeRange": {
+    "t1": 8.0,
+    "t2": 60.0
+  },
+  "designUiSession": {
+    "designSectionVisibility": {
+      "showUpper": true,
+      "showLower": true,
+      "hideBranches": []
+    },
+    "quickScenarioBranchCollapsed": {
+      "noBessNoStatcom": true,
+      "withBessandStatCom": true,
+      "withBessAlone": true,
+      "withStatcomAlone": true
+    },
+    "ideum05NavViewports": {
+      "root": {
+        "zoom": 2.5427268022622505,
+        "pan": {
+          "x": -182.7186775886903,
+          "y": -5.183709451730124
+        },
+        "panTop": {
+          "x": 131.29628558719403,
+          "y": -57.845132789426906
+        },
+        "panBottom": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "data-centers": {
+        "zoom": 1.922726802262262,
+        "pan": {
+          "x": 9.281322411309702,
+          "y": -5.183709451730124
+        },
+        "panTop": {
+          "x": 131.29628558719403,
+          "y": -57.845132789426906
+        },
+        "panBottom": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ref-200-mw": {
+        "zoom": 1.5427268022622616,
+        "pan": {
+          "x": -110.7186775886903,
+          "y": 138.81629054826988
+        },
+        "panTop": {
+          "x": 131.29628558719403,
+          "y": -57.845132789426906
+        },
+        "panBottom": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      }
+    }
+  },
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": [],
+  "ideumKioskMode": true,
+  "remoteControlTarget": {
+    "designDir": "p2r_16",
+    "designName": "P2R_16"
+  },
+  "busTransferSegments": [],
+  "ideum05NavViewports": {
+    "root": {
+      "zoom": 2.5427268022622505,
+      "pan": {
+        "x": -182.7186775886903,
+        "y": -5.183709451730124
+      },
+      "panTop": {
+        "x": 131.29628558719403,
+        "y": -57.845132789426906
+      },
+      "panBottom": {
+        "x": 0.0,
+        "y": 0.0
+      }
+    },
+    "data-centers": {
+      "zoom": 1.922726802262262,
+      "pan": {
+        "x": 9.281322411309702,
+        "y": -5.183709451730124
+      },
+      "panTop": {
+        "x": 131.29628558719403,
+        "y": -57.845132789426906
+      },
+      "panBottom": {
+        "x": 0.0,
+        "y": 0.0
+      }
+    },
+    "ref-200-mw": {
+      "zoom": 1.5427268022622616,
+      "pan": {
+        "x": -110.7186775886903,
+        "y": 138.81629054826988
+      },
+      "panTop": {
+        "x": 131.29628558719403,
+        "y": -57.845132789426906
+      },
+      "panBottom": {
+        "x": 0.0,
+        "y": 0.0
+      }
+    }
+  }
+}

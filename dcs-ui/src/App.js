@@ -94,6 +94,7 @@ import {
   isIdeumDataCenterOnlyConfig,
 } from './utils/ideumDataCenterDesign';
 import {
+  DATA_CONFIGURATOR_CATALOG,
   isDataConfiguratorCatalogRef,
   isDataConfiguratorDesignName,
   isIdeumConfiguratorOnlyConfig,
@@ -125,6 +126,23 @@ import {
   IDEUM05_P2R18_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
+import {
+  getIdeum07NavDrillTarget,
+  getIdeum07NavScreen,
+  getIdeum07ControlsClusterCommand,
+  getIdeum07NavClusterCommand,
+  getIdeum07NavLoadDesignCatalog,
+  getIdeum07OverlayClusterCommand,
+  getIdeum07OverlaySaveTarget,
+  isIdeum07DesignName,
+  isIdeum07DesignScreen,
+  isIdeum07OverlayScreen,
+  normalizeIdeum07NavViewports,
+  IDEUM07_CATALOG,
+  IDEUM07_DATA_CENTERS_HUB,
+  IDEUM07_NAV_ROOT,
+  IDEUM07_REFERENCE_ARCHITECTURES,
+} from './utils/ideum07Navigation';
 import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
 import {
   HD_AERO_CB_A_ID,
@@ -1081,6 +1099,7 @@ function App() {
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
   const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
   const [ideum05NavStack, setIdeum05NavStack] = useState([IDEUM05_NAV_ROOT]);
+  const [ideum07NavStack, setIdeum07NavStack] = useState([IDEUM07_NAV_ROOT]);
   /** Persistent Ideum→Maingear mouse WebSocket (stay connected across overlay mount/unmount). */
   const ideumMouseClientRef = useRef(null);
   const fireKioskFocusFastRef = useRef(() => {});
@@ -1093,9 +1112,12 @@ function App() {
   /** Static fields from the loaded Ideum overlay conf (remoteControlProfile, etc.). */
   const ideum05OverlayLoadedMetaRef = useRef(null);
   const ideum05OverlayLoadGenRef = useRef(0);
-  const maltaIdeum05BootRef = useRef(false);-
+  const maltaIdeum05BootRef = useRef(false);
   /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
   const pendingIdeum05NavStackRef = useRef(null);
+  const pendingIdeum07NavStackRef = useRef(null);
+  const ideumKioskHomeCatalogRef = useRef(IDEUM07_CATALOG);
+  const ideumTableBootRef = useRef(false);
   /** Isolated Ideum kiosk shells: trackpad (ideum06) or data-centers menu only. */
   const [ideumShellMode, setIdeumShellMode] = useState(null);
   const initialConfigurator = resolveConfiguratorFromUrl();
@@ -1160,13 +1182,16 @@ function App() {
   }, [currentConfigName, csvStatus?.use_design_dir, csvStatus?.design_catalog_rel]);
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
+  const ideum07NavScreen = getIdeum07NavScreen(ideum07NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
+  const isIdeum07 = isIdeum07DesignName(currentConfigName);
   const isIdeum06 = ideumShellMode === 'trackpad';
   const isDataCenter = ideumShellMode === 'dataCenter';
   const isRef200MwShell = ideumShellMode === 'ref200Mw';
   const isConfiguratorShell = ideumShellMode === 'configurator';
   const isHdAeroShell = ideumShellMode === 'hdAero';
   const ideum05OverlayMode = isIdeum05 && isIdeum05OverlayScreen(ideum05NavScreen);
+  const ideum07OverlayMode = isIdeum07 && isIdeum07OverlayScreen(ideum07NavScreen);
   const isHdAeroIdeumLoaded = isHDAeroIdeumDesign({
     name: currentConfigName,
     csv_status: { design_catalog_rel: designApiPath },
@@ -1176,15 +1201,24 @@ function App() {
     csv_status: { design_catalog_rel: designApiPath },
   });
   /** Forward CB clicks from Ideum overlay designs to Maingear wall display. */
-  const mirrorHdAeroBreakersToMaingear = ideum05OverlayMode || isHdAeroIdeumLoaded || isP2R18IdeumLoaded;
+  const mirrorHdAeroBreakersToMaingear =
+    ideum05OverlayMode || ideum07OverlayMode || isHdAeroIdeumLoaded || isP2R18IdeumLoaded;
   const ideum05OverlaySaveTarget = isIdeum05
     ? getIdeum05OverlaySaveTarget(ideum05NavScreen)
     : null;
-  const canSaveToIdeum = Boolean(ideum05OverlaySaveTarget);
+  const ideum07OverlaySaveTarget = isIdeum07
+    ? getIdeum07OverlaySaveTarget(ideum07NavScreen)
+    : null;
+  const canSaveToIdeum = Boolean(ideum05OverlaySaveTarget || ideum07OverlaySaveTarget);
   const ideum05ShowControls = !isIdeum05 || isIdeum05DesignScreen(ideum05NavScreen);
-  const showConfigurator = configuratorOpen || (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen));
+  const ideum07ShowControls = !isIdeum07 || isIdeum07DesignScreen(ideum07NavScreen);
+  const showConfigurator =
+    configuratorOpen
+    || (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen))
+    || (isIdeum07 && isConfiguratorShell);
   const effectiveConfiguratorMode =
-    isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen) && configuratorMode === 'full'
+    (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen) && configuratorMode === 'full')
+    || (isIdeum07 && isConfiguratorShell)
       ? 'ideum'
       : configuratorMode;
 
@@ -4083,15 +4117,26 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isMaltaTouchClient(machineRole, maltaView)) return;
-    if (maltaIdeum05BootRef.current || isIdeum05) return;
-    maltaIdeum05BootRef.current = true;
-    void loadDesignFromCatalog(IDEUM05_CATALOG);
-  }, [machineRole, maltaView, isIdeum05, loadDesignFromCatalog]);
+    const mv = getMaltaViewFromUrl();
+    const isTouchTable =
+      isMaltaTouchClient(machineRole, mv)
+      || Boolean(machineRole?.isIdeum && !machineRole?.isMalta);
+    if (!isTouchTable) return;
+    if (ideumTableBootRef.current || isIdeum05 || isIdeum07) return;
+    ideumTableBootRef.current = true;
+    void loadDesignFromCatalog(IDEUM07_CATALOG);
+  }, [machineRole, isIdeum05, isIdeum07, loadDesignFromCatalog]);
 
-  /** Ideum06 Back — focus DCS wall and reload Ideum05 root menu. */
+  /** Ideum06 Back — focus DCS wall and reload Ideum07 (or Ideum05) root menu. */
   const handleIdeum06Back = useCallback(() => {
     fireKioskFocusFast('showDcs');
+    const home = ideumKioskHomeCatalogRef.current || IDEUM07_CATALOG;
+    if (home === IDEUM07_CATALOG) {
+      setIdeum07NavStack([IDEUM07_NAV_ROOT]);
+      void loadDesignFromCatalog(IDEUM07_CATALOG);
+      return;
+    }
+    setIdeum05NavStack([IDEUM05_NAV_ROOT]);
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [fireKioskFocusFast, loadDesignFromCatalog]);
 
@@ -4100,15 +4145,45 @@ function App() {
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [loadDesignFromCatalog]);
 
-  /** Child shells (200 MW / Configurator / 500 MW) Back — return to DataCenter menu. */
+  const handleIdeum07RefArchChildBack = useCallback(() => {
+    void sendIdeumCloseConfiguratorWall();
+    pendingIdeum07NavStackRef.current = [
+      IDEUM07_NAV_ROOT,
+      IDEUM07_DATA_CENTERS_HUB,
+      IDEUM07_REFERENCE_ARCHITECTURES,
+    ];
+    void loadDesignFromCatalog(IDEUM07_CATALOG);
+  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
+
+  /** Child shells (200 MW / Configurator / 500 MW) Back — return to prior Ideum menu. */
   const handleDataCenterChildBack = useCallback(() => {
+    if (ideumKioskHomeCatalogRef.current === IDEUM07_CATALOG) {
+      if (isConfiguratorShell) {
+        void sendIdeumCloseConfiguratorWall();
+        pendingIdeum07NavStackRef.current = [IDEUM07_NAV_ROOT, IDEUM07_DATA_CENTERS_HUB];
+        void loadDesignFromCatalog(IDEUM07_CATALOG);
+        return;
+      }
+      handleIdeum07RefArchChildBack();
+      return;
+    }
     void sendIdeumCloseConfiguratorWall();
     void loadDesignFromCatalog(DATA_CENTER_CATALOG);
-  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
+  }, [
+    isConfiguratorShell,
+    loadDesignFromCatalog,
+    sendIdeumCloseConfiguratorWall,
+    handleIdeum07RefArchChildBack,
+  ]);
 
   /** Configurator ✕ — exit Data Centers flow (unload configurator + DataCenter menu). */
   const handleConfiguratorShellClose = useCallback(() => {
     void sendIdeumCloseConfiguratorWall();
+    if (ideumKioskHomeCatalogRef.current === IDEUM07_CATALOG) {
+      pendingIdeum07NavStackRef.current = [IDEUM07_NAV_ROOT, IDEUM07_DATA_CENTERS_HUB];
+      void loadDesignFromCatalog(IDEUM07_CATALOG);
+      return;
+    }
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
@@ -4169,6 +4244,73 @@ function App() {
     }
     setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   }, [isIdeum05, ideum05NavStack, captureIdeum05ViewportForScreen]);
+
+  const handleIdeum07HubOpenConfigurator = useCallback(() => {
+    pendingIdeum07NavStackRef.current = [IDEUM07_NAV_ROOT, IDEUM07_DATA_CENTERS_HUB];
+    void loadDesignFromCatalog(DATA_CONFIGURATOR_CATALOG);
+  }, [loadDesignFromCatalog]);
+
+  const handleIdeum07HubOpenReferenceArchitectures = useCallback(() => {
+    setIdeum07NavStack([
+      IDEUM07_NAV_ROOT,
+      IDEUM07_DATA_CENTERS_HUB,
+      IDEUM07_REFERENCE_ARCHITECTURES,
+    ]);
+  }, []);
+
+  const handleIdeum07NavSelect = useCallback((cardId) => {
+    const screenId = getIdeum07NavScreen(ideum07NavStack);
+    const loadCatalog = getIdeum07NavLoadDesignCatalog(screenId, cardId);
+    if (loadCatalog) {
+      if (loadCatalog === IDEUM06_CATALOG) {
+        fireKioskFocusFast('showVernova');
+      } else if (loadCatalog === 'ref200Mw' || loadCatalog === 'hd_aero_ideum') {
+        pendingIdeum07NavStackRef.current = [
+          IDEUM07_NAV_ROOT,
+          IDEUM07_DATA_CENTERS_HUB,
+          IDEUM07_REFERENCE_ARCHITECTURES,
+        ];
+      }
+      void loadDesignFromCatalog(loadCatalog);
+      return;
+    }
+    const navClusterCmd = getIdeum07NavClusterCommand(screenId, cardId);
+    if (navClusterCmd) {
+      if (isDirectKioskFocusCommand(navClusterCmd)) {
+        fireKioskFocusFast(navClusterCmd);
+      } else {
+        void sendIdeumClusterCommand(navClusterCmd);
+      }
+    }
+    const drillTarget = getIdeum07NavDrillTarget(screenId, cardId);
+    if (drillTarget) {
+      if (isIdeum07) {
+        captureIdeum05ViewportForScreen(screenId);
+      }
+      const overlayCmd = getIdeum07OverlayClusterCommand(drillTarget);
+      const controlsCmd = getIdeum07ControlsClusterCommand(drillTarget);
+      if (overlayCmd) {
+        void sendIdeumClusterCommand(overlayCmd);
+      } else if (controlsCmd) {
+        void sendIdeumClusterCommand(controlsCmd);
+      }
+      setIdeum07NavStack((prev) => [...prev, drillTarget]);
+    }
+  }, [
+    ideum07NavStack,
+    isIdeum07,
+    captureIdeum05ViewportForScreen,
+    fireKioskFocusFast,
+    loadDesignFromCatalog,
+    sendIdeumClusterCommand,
+  ]);
+
+  const handleIdeum07NavBack = useCallback(() => {
+    if (isIdeum07) {
+      captureIdeum05ViewportForScreen(getIdeum07NavScreen(ideum07NavStack));
+    }
+    setIdeum07NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }, [isIdeum07, ideum07NavStack, captureIdeum05ViewportForScreen]);
 
   const applyIdeum05DesignOverlay = useCallback((loadedConfig, overlayScreenId) => {
     const { data } = loadedConfig || {};
@@ -4323,6 +4465,23 @@ function App() {
   }, [isIdeum05, ideum05NavScreen, applyIdeum05ViewportForScreen]);
 
   useEffect(() => {
+    if (!isIdeum07) {
+      return;
+    }
+    const screen = ideum07NavScreen;
+    if (ideum05SkipViewportApplyRef.current) {
+      ideum05SkipViewportApplyRef.current = false;
+      ideum05PrevNavScreenRef.current = screen;
+      return;
+    }
+    const prev = ideum05PrevNavScreenRef.current;
+    if (prev !== null && prev !== screen) {
+      applyIdeum05ViewportForScreen(screen);
+    }
+    ideum05PrevNavScreenRef.current = screen;
+  }, [isIdeum07, ideum07NavScreen, applyIdeum05ViewportForScreen]);
+
+  useEffect(() => {
     if (!isHdAeroIdeumLoaded || isIdeum05) return;
     void sendIdeumClusterCommand('loadHdAero');
   }, [isHdAeroIdeumLoaded, isIdeum05, sendIdeumClusterCommand]);
@@ -4471,79 +4630,6 @@ function App() {
     applyHdAeroDefaultState,
   ]);
 
-  /** Default P2R_18 wall state: conf3 layout, noBessNoStatcom preset, simulation playing. */
-  const applyP2R18DefaultState = useCallback(async () => {
-    if (!designApiPath) return false;
-    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
-      return false;
-    }
-
-    stopLiveRtdsStream();
-    handleStopSimulation();
-    handleWorkspaceLayoutPresetChange('conf3');
-    applyNoBessNoStatcomCanvas();
-
-    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
-      pendingP2R18InitRef.current = true;
-      return false;
-    }
-
-    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
-    if (!ensemble) {
-      pendingP2R18InitRef.current = true;
-      return false;
-    }
-
-    pendingP2R18InitRef.current = false;
-
-    const sameDesignEnsemble =
-      simulationMetadataRef.current?.ensembleId === ensemble.id
-      && simulationDesignPathRef.current === designApiPath;
-    if (!sameDesignEnsemble) {
-      await handleSelectEnsemble(ensemble);
-    }
-
-    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
-    if (presetOk) {
-      await restartSimulationPlaybackFromStart();
-      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
-      if (shortcut) {
-        setActiveQuickScenarioPlaying(shortcut);
-      }
-    }
-
-    setQuickScenarioDesignPrimedPreset(null);
-    setRightRailCollapsed(false);
-    setRightRailGridPeek(true);
-    return presetOk;
-  }, [
-    designApiPath,
-    currentConfigName,
-    designEnsembles,
-    quickScenarioButtons,
-    stopLiveRtdsStream,
-    handleStopSimulation,
-    handleWorkspaceLayoutPresetChange,
-    applyNoBessNoStatcomCanvas,
-    handleSelectEnsemble,
-    handleActivateNamedSimulationConfig,
-  ]);
-
-  useEffect(() => {
-    if (!pendingP2R18InitRef.current) return;
-    if (!designApiPath || !csvStatus?.use_design_dir) return;
-    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
-      return;
-    }
-    void applyP2R18DefaultState();
-  }, [
-    designApiPath,
-    csvStatus?.use_design_dir,
-    currentConfigName,
-    designEnsembles,
-    applyP2R18DefaultState,
-  ]);
-
   const handleCanvasUpdateComponent = useCallback((componentId, updates) => {
     handleUpdateComponent(componentId, updates);
     maybeApplyHdAeroBreakerPreset(componentId, updates);
@@ -4615,6 +4701,79 @@ function App() {
     designExpansion,
     designApiPath,
     currentConfigName,
+  ]);
+
+  /** Default P2R_18 wall state: conf3 layout, noBessNoStatcom preset, simulation playing. */
+  const applyP2R18DefaultState = useCallback(async () => {
+    if (!designApiPath) return false;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return false;
+    }
+
+    stopLiveRtdsStream();
+    handleStopSimulation();
+    handleWorkspaceLayoutPresetChange('conf3');
+    applyNoBessNoStatcomCanvas();
+
+    if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
+    if (!ensemble) {
+      pendingP2R18InitRef.current = true;
+      return false;
+    }
+
+    pendingP2R18InitRef.current = false;
+
+    const sameDesignEnsemble =
+      simulationMetadataRef.current?.ensembleId === ensemble.id
+      && simulationDesignPathRef.current === designApiPath;
+    if (!sameDesignEnsemble) {
+      await handleSelectEnsemble(ensemble);
+    }
+
+    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
+    if (presetOk) {
+      await restartSimulationPlaybackFromStart();
+      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
+      if (shortcut) {
+        setActiveQuickScenarioPlaying(shortcut);
+      }
+    }
+
+    setQuickScenarioDesignPrimedPreset(null);
+    setRightRailCollapsed(false);
+    setRightRailGridPeek(true);
+    return presetOk;
+  }, [
+    designApiPath,
+    currentConfigName,
+    designEnsembles,
+    quickScenarioButtons,
+    stopLiveRtdsStream,
+    handleStopSimulation,
+    handleWorkspaceLayoutPresetChange,
+    applyNoBessNoStatcomCanvas,
+    handleSelectEnsemble,
+    handleActivateNamedSimulationConfig,
+  ]);
+
+  useEffect(() => {
+    if (!pendingP2R18InitRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
+      return;
+    }
+    void applyP2R18DefaultState();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    applyP2R18DefaultState,
   ]);
 
   const handleLiveRtds = useCallback(async () => {
@@ -7760,12 +7919,29 @@ function App() {
     setIdeumSimulationSpeedMirror(1);
     const pendingNavStack = pendingIdeum05NavStackRef.current;
     pendingIdeum05NavStackRef.current = null;
-    setIdeum05NavStack(
-      Array.isArray(pendingNavStack) && pendingNavStack.length
-        ? pendingNavStack
-        : [IDEUM05_NAV_ROOT],
-    );
+    const pendingNavStack07 = pendingIdeum07NavStackRef.current;
+    pendingIdeum07NavStackRef.current = null;
     const loadedIsIdeum05 = isIdeum05DesignName(loadedConfig.name);
+    const loadedIsIdeum07 = isIdeum07DesignName(loadedConfig.name);
+    if (loadedIsIdeum07) {
+      ideumKioskHomeCatalogRef.current = IDEUM07_CATALOG;
+      setIdeum07NavStack(
+        Array.isArray(pendingNavStack07) && pendingNavStack07.length
+          ? pendingNavStack07
+          : [IDEUM07_NAV_ROOT],
+      );
+      setIdeum05NavStack([IDEUM05_NAV_ROOT]);
+    } else {
+      setIdeum05NavStack(
+        Array.isArray(pendingNavStack) && pendingNavStack.length
+          ? pendingNavStack
+          : [IDEUM05_NAV_ROOT],
+      );
+      if (loadedIsIdeum05) {
+        ideumKioskHomeCatalogRef.current = IDEUM05_CATALOG;
+      }
+      setIdeum07NavStack([IDEUM07_NAV_ROOT]);
+    }
     const catalogRel = loadedConfig.csv_status?.design_catalog_rel;
     const loadedIsDataCenter =
       isIdeumDataCenterOnlyConfig(data)
@@ -7801,13 +7977,15 @@ function App() {
     } else {
       setIdeumShellMode(null);
     }
-    if (loadedIsIdeum05) {
-      ideum05NavViewportsRef.current = normalizeIdeum05NavViewports(
-        data.ideum05NavViewports ?? dus?.ideum05NavViewports,
+    if (loadedIsIdeum05 || loadedIsIdeum07) {
+      const normalizeNav = loadedIsIdeum07 ? normalizeIdeum07NavViewports : normalizeIdeum05NavViewports;
+      const navRoot = loadedIsIdeum07 ? IDEUM07_NAV_ROOT : IDEUM05_NAV_ROOT;
+      ideum05NavViewportsRef.current = normalizeNav(
+        data.ideum07NavViewports ?? data.ideum05NavViewports ?? dus?.ideum05NavViewports,
         data.systemState,
       );
       ideum05SkipViewportApplyRef.current = true;
-      ideum05PrevNavScreenRef.current = IDEUM05_NAV_ROOT;
+      ideum05PrevNavScreenRef.current = navRoot;
     } else {
       ideum05NavViewportsRef.current = {};
       ideum05BaseSnapshotRef.current = null;
@@ -8471,7 +8649,7 @@ function App() {
     const onClusterLan = typeof window !== 'undefined'
       && window.location.hostname.startsWith('192.168.50.');
     const shouldConnect =
-      (isIdeum05 || isIdeum06)
+      (isIdeum05 || isIdeum06 || isIdeum07)
       && (isClusterTouchCommandSource(machineRole, mv) || onClusterLan);
     if (!shouldConnect) {
       ideumMouseClientRef.current?.disconnect();
@@ -9356,6 +9534,9 @@ function App() {
               if (isIdeum05 && isIdeum05ConfiguratorScreen(ideum05NavScreen)) {
                 setIdeum05NavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
               }
+              if (isIdeum07 && isConfiguratorShell) {
+                handleConfiguratorShellClose();
+              }
             }}
           />
         </div>
@@ -9460,14 +9641,23 @@ function App() {
               ideumSimulationSpeedMirror={ideumSimulationSpeedMirror}
               onIdeumSimulationSpeedClick={handleIdeumSimulationSpeedRemoteClick}
               disableCanvasPan={isIdeumDesignName(currentConfigName)}
-              disableCanvasGestureZoom={isIdeum05}
+              disableCanvasGestureZoom={isIdeum05 || isIdeum07}
               isIdeum05={isIdeum05}
+              isIdeum07={isIdeum07}
               ideum05ShowControls={ideum05ShowControls}
+              ideum07ShowControls={ideum07ShowControls}
               ideum05OverlayMode={ideum05OverlayMode}
+              ideum07OverlayMode={ideum07OverlayMode}
               ideum05NavScreen={ideum05NavScreen}
+              ideum07NavScreen={ideum07NavScreen}
               ideum05NavStack={ideum05NavStack}
+              ideum07NavStack={ideum07NavStack}
               onIdeum05NavSelect={handleIdeum05NavSelect}
+              onIdeum07NavSelect={handleIdeum07NavSelect}
               onIdeum05NavBack={handleIdeum05NavBack}
+              onIdeum07NavBack={handleIdeum07NavBack}
+              onIdeum07HubOpenConfigurator={handleIdeum07HubOpenConfigurator}
+              onIdeum07HubOpenReferenceArchitectures={handleIdeum07HubOpenReferenceArchitectures}
               onIdeum05Reset={handleIdeum05Reset}
               onIdeum05LiveRtds={handleIdeum05LiveRtds}
               ideumHdAeroViewCompact={ideumExpansionMirror.peripheralsCompact}

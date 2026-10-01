@@ -10,6 +10,7 @@ import SplitPaneTitleLines from './SplitPaneTitleLines';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
+import Ideum07NavLayer from '../IdeumKiosk/Ideum07NavLayer';
 import Ideum05BackButton from '../IdeumKiosk/Ideum05BackButton';
 import Ideum05ResetButton from '../IdeumKiosk/Ideum05ResetButton';
 import Ideum05LiveRtdsButton from '../IdeumKiosk/Ideum05LiveRtdsButton';
@@ -316,12 +317,21 @@ const Canvas = forwardRef(({
   ideumSimulationSpeedMirror = 1,
   onIdeumSimulationSpeedClick,
   isIdeum05 = false,
+  isIdeum07 = false,
   ideum05ShowControls = true,
+  ideum07ShowControls = true,
   ideum05OverlayMode = false,
+  ideum07OverlayMode = false,
   ideum05NavScreen = 'root',
+  ideum07NavScreen = 'root',
   ideum05NavStack = ['root'],
+  ideum07NavStack = ['root'],
   onIdeum05NavSelect,
+  onIdeum07NavSelect,
   onIdeum05NavBack,
+  onIdeum07NavBack,
+  onIdeum07HubOpenConfigurator,
+  onIdeum07HubOpenReferenceArchitectures,
   onIdeum05Reset,
   onIdeum05LiveRtds,
   ideumHdAeroViewCompact = true,
@@ -560,6 +570,22 @@ const Canvas = forwardRef(({
   const renderIdeumKioskLayer = useCallback(
     (ideumComponents, panePan, { primaryPane = true } = {}) => {
       if (!ideumKioskMode) return null;
+      if (isIdeum07 && !ideum07ShowControls) {
+        if (!primaryPane) return null;
+        return (
+          <Ideum07NavLayer
+            screenId={ideum07NavScreen}
+            pan={panePan}
+            zoom={zoom}
+            canvasRef={canvasRef}
+            onSelectCard={onIdeum07NavSelect}
+            onBack={onIdeum07NavBack}
+            showBack={(ideum07NavStack?.length ?? 0) > 1}
+            onHubOpenConfigurator={onIdeum07HubOpenConfigurator}
+            onHubOpenReferenceArchitectures={onIdeum07HubOpenReferenceArchitectures}
+          />
+        );
+      }
       if (isIdeum05 && !ideum05ShowControls) {
         if (!primaryPane) return null;
         return (
@@ -574,14 +600,16 @@ const Canvas = forwardRef(({
           />
         );
       }
-      if (isIdeum05 && ideum05OverlayMode) {
+      if ((isIdeum05 && ideum05OverlayMode) || (isIdeum07 && ideum07OverlayMode)) {
         if (!primaryPane) return null;
-        const showIdeum05Back = (ideum05NavStack?.length ?? 0) > 1;
+        const navStack = isIdeum07 ? ideum07NavStack : ideum05NavStack;
+        const onNavBack = isIdeum07 ? onIdeum07NavBack : onIdeum05NavBack;
+        const showIdeumNavBack = (navStack?.length ?? 0) > 1;
         return (
           <div className="ideum05-nav-layer" aria-hidden={false}>
-            {showIdeum05Back ? (
+            {showIdeumNavBack ? (
               <div className="ideum05-nav-top-actions">
-                <Ideum05BackButton onBack={onIdeum05NavBack} />
+                <Ideum05BackButton onBack={onNavBack} />
               </div>
             ) : null}
             <IdeumComponentLayer
@@ -604,8 +632,18 @@ const Canvas = forwardRef(({
       }
       if (!ideumComponents?.length) return null;
       const showIdeum05Back = isIdeum05 && (ideum05NavStack?.length ?? 0) > 1;
+      const showIdeum07Back = isIdeum07 && (ideum07NavStack?.length ?? 0) > 1;
       return (
         <div className="ideum05-nav-layer" aria-hidden={false}>
+          {isIdeum07 && ideum07ShowControls && !ideum07OverlayMode && primaryPane && (
+            <div className="ideum05-nav-top-actions">
+              {showIdeum07Back ? (
+                <Ideum05BackButton onBack={onIdeum07NavBack} />
+              ) : null}
+              <Ideum05ResetButton onReset={onIdeum05Reset} />
+              <Ideum05LiveRtdsButton onLiveRtds={onIdeum05LiveRtds} />
+            </div>
+          )}
           {isIdeum05 && ideum05ShowControls && !ideum05OverlayMode && primaryPane && (
             <div className="ideum05-nav-top-actions">
               {showIdeum05Back ? (
@@ -641,15 +679,24 @@ const Canvas = forwardRef(({
     [
       ideumKioskMode,
       isIdeum05,
+      isIdeum07,
       ideum05ShowControls,
+      ideum07ShowControls,
       ideum05OverlayMode,
+      ideum07OverlayMode,
       ideum05NavScreen,
+      ideum07NavScreen,
       ideum05NavStack,
+      ideum07NavStack,
       zoom,
       canvasRef,
       canvasBlockTypeScale,
       onIdeum05NavSelect,
+      onIdeum07NavSelect,
       onIdeum05NavBack,
+      onIdeum07NavBack,
+      onIdeum07HubOpenConfigurator,
+      onIdeum07HubOpenReferenceArchitectures,
       onIdeum05Reset,
       onIdeum05LiveRtds,
       ideumHdAeroViewCompact,
