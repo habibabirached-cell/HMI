@@ -1,10 +1,13 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import {
   getIdeum07NavCardLayout,
   getIdeum07NavCards,
+  getIdeum07RootLayoutChrome,
   IDEUM07_DATA_CENTERS_HUB,
   IDEUM07_DATA_CENTERS_PREVIEW_ASPECT,
   IDEUM07_DATA_CENTERS_PREVIEW_MATCH_GROUP,
+  IDEUM07_NAV_ROOT,
+  isIdeum07AutoFitNavScreen,
   isIdeum07NavCardDisabled,
   isIdeum07NavCardFeatured,
 } from '../../utils/ideum07Navigation';
@@ -16,32 +19,48 @@ import Ideum05Nav3DViewer from './Ideum05Nav3DViewer';
 import Ideum07DataCentersHub from './Ideum07DataCentersHub';
 
 const TITLE_BAR_PX = 44;
+/** Ideum07 root subcard title strip — thin vs bucket chrome (~42px at zoom 1). */
+const IDEUM07_SUBNAV_TITLE_BAR_SHARE = 0.48;
 const INNER_PAD_PX = 12;
 const STACKED_MIN_MODEL_PX = 72;
+const NAV_PAN_ORIGIN = { x: 0, y: 0 };
+
+function ideum07SubnavTitleHeight(zoom) {
+  return Math.max(20, Math.round(TITLE_BAR_PX * IDEUM07_SUBNAV_TITLE_BAR_SHARE * zoom));
+}
+
+function ideum07SubnavTitleFontPx(zoom) {
+  return Math.max(9, Math.round(11 * zoom));
+}
+
+function ideum07RootSubcardBucket(cardId) {
+  return cardId === 'grid-connected' ? 'stability' : 'applications';
+}
 
 function stackedPreviewWidth(slot) {
   return Math.max(8, Math.round(slot.width));
 }
 
-function stackedPreviewHeight(slot, zoom) {
+function stackedPreviewHeight(slot, titleBarPx) {
   return Math.max(
     120,
-    slot.pixelHeight - Math.round(TITLE_BAR_PX * zoom),
+    slot.pixelHeight - Math.round(titleBarPx),
   );
 }
 
-function previewAreaSize(slot, zoom, stacked = false) {
+function previewAreaSize(slot, zoom, stacked = false, titleBarPx = TITLE_BAR_PX * zoom) {
+  const titleH = Math.round(titleBarPx);
   if (stacked) {
     return {
       width: stackedPreviewWidth(slot),
-      height: stackedPreviewHeight(slot, zoom),
+      height: stackedPreviewHeight(slot, titleH),
     };
   }
   return {
     width: Math.max(8, Math.round(slot.width - INNER_PAD_PX * 2 * zoom)),
     height: Math.max(
       80,
-      slot.pixelHeight - Math.round((TITLE_BAR_PX + INNER_PAD_PX * 2) * zoom),
+      slot.pixelHeight - Math.round(titleH + INNER_PAD_PX * 2 * zoom),
     ),
   };
 }
@@ -83,8 +102,8 @@ function previewImageStripHeight(slot, zoom, area, matchedImageSizes) {
   return Math.max(48, Math.round(area.height * share));
 }
 
-function computeStackedSplit(slot, zoom, matchedImageSizes) {
-  const area = previewAreaSize(slot, zoom, true);
+function computeStackedSplit(slot, zoom, matchedImageSizes, titleBarPx = TITLE_BAR_PX * zoom) {
+  const area = previewAreaSize(slot, zoom, true, titleBarPx);
   const imageStripH = previewImageStripHeight(slot, zoom, area, matchedImageSizes);
   return {
     previewW: area.width,
@@ -161,8 +180,15 @@ export default function Ideum07NavLayer({
   onHubOpenReferenceArchitectures,
 }) {
   const [slots, setSlots] = useState([]);
+  const [rootChrome, setRootChrome] = useState(null);
   const cards = getIdeum07NavCards(screenId);
   const isHub = screenId === IDEUM07_DATA_CENTERS_HUB;
+  const isRoot = screenId === IDEUM07_NAV_ROOT;
+  const autoFitNav = isIdeum07AutoFitNavScreen(screenId);
+  const navPan = useMemo(
+    () => (autoFitNav ? NAV_PAN_ORIGIN : pan),
+    [autoFitNav, pan],
+  );
 
   useLayoutEffect(() => {
     if (isHub) {
@@ -175,27 +201,31 @@ export default function Ideum07NavLayer({
     }
 
     const measureViewport = () => {
-      const container = viewportRef?.current ?? canvasRef?.current?.parentElement;
-      const width = Math.max(
-        container?.clientWidth ?? 0,
-        typeof window !== 'undefined' ? window.innerWidth : 1920,
-      );
-      const height = Math.max(
-        container?.clientHeight ?? 0,
-        typeof window !== 'undefined' ? window.innerHeight : 1080,
-      );
+      const svg = canvasRef?.current;
+      if (svg?.getBoundingClientRect) {
+        const rect = svg.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          return { width: rect.width, height: rect.height, zoom };
+        }
+      }
+      const container = viewportRef?.current ?? svg?.parentElement;
+      const width = container?.clientWidth
+        ?? (typeof window !== 'undefined' ? window.innerWidth : 1920);
+      const height = container?.clientHeight
+        ?? (typeof window !== 'undefined' ? window.innerHeight : 1080);
       return { width, height, zoom };
     };
 
     const update = () => {
       const viewport = measureViewport();
       const cardLayout = getIdeum07NavCardLayout(screenId, viewport);
+      setRootChrome(isRoot ? getIdeum07RootLayoutChrome(screenId, viewport) : null);
       setSlots(
         cards
           .map((card, i) => {
             const layout = cardLayout[i];
             if (!layout) return null;
-            return layoutNavCard(card, layout, pan, zoom);
+            return layoutNavCard(card, layout, navPan, zoom);
           })
           .filter(Boolean),
       );
@@ -212,7 +242,7 @@ export default function Ideum07NavLayer({
 
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [cards, pan, zoom, canvasRef, viewportRef, screenId, isHub]);
+  }, [cards, navPan, zoom, canvasRef, viewportRef, screenId, isHub, isRoot]);
 
   if (isHub) {
     return (
@@ -237,30 +267,98 @@ export default function Ideum07NavLayer({
   return (
     <div className="ideum05-nav-layer" aria-hidden={false}>
       {showBack && <Ideum05BackButton onBack={onBack} />}
+      {isRoot && rootChrome ? (() => {
+        const bucketTitleH = Math.max(28, Math.round(42 * zoom));
+        const bucketWallH = Math.max(14, Math.round(bucketTitleH * 0.5));
+        const bucketTitleFont = Math.max(13, Math.round(20 * zoom));
+        const bucketWallStyle = {
+          '--ideum07-bucket-title': `${bucketTitleH}px`,
+          '--ideum07-bucket-wall': `${bucketWallH}px`,
+        };
+        return (
+        <>
+          <div
+            className="ideum07-root-bucket ideum07-root-bucket--stability"
+            style={{
+              ...bucketWallStyle,
+              left: navPan.x + rootChrome.stability.x * zoom,
+              top: navPan.y + rootChrome.stability.y * zoom,
+              width: rootChrome.stability.width * zoom,
+              height: rootChrome.stability.height * zoom,
+            }}
+          >
+            <span className="ideum07-root-bucket__ring" aria-hidden />
+            <span className="ideum07-root-bucket__well" aria-hidden />
+            <span
+              className="ideum07-root-bucket__label"
+              style={{
+                height: bucketTitleH,
+                fontSize: bucketTitleFont,
+              }}
+            >
+              Stability Solutions
+            </span>
+          </div>
+          <div
+            className="ideum07-root-bucket ideum07-root-bucket--applications"
+            style={{
+              ...bucketWallStyle,
+              left: navPan.x + rootChrome.applications.x * zoom,
+              top: navPan.y + rootChrome.applications.y * zoom,
+              width: rootChrome.applications.width * zoom,
+              height: rootChrome.applications.height * zoom,
+            }}
+          >
+            <span className="ideum07-root-bucket__ring" aria-hidden />
+            <span className="ideum07-root-bucket__well" aria-hidden />
+            <span
+              className="ideum07-root-bucket__label"
+              style={{
+                height: bucketTitleH,
+                fontSize: bucketTitleFont,
+              }}
+            >
+              Applications
+            </span>
+          </div>
+        </>
+        );
+      })() : null}
       {slots.map((slot) => {
+        const titleBarPx = isRoot
+          ? ideum07SubnavTitleHeight(zoom)
+          : Math.round(TITLE_BAR_PX * zoom);
         const stacked = hasStackedImageAndModel(slot.card);
         const matchedImageSizesForSlot = matchedImageSizes;
         const split = stacked
-          ? computeStackedSplit(slot, zoom, matchedImageSizesForSlot)
+          ? computeStackedSplit(slot, zoom, matchedImageSizesForSlot, titleBarPx)
           : null;
         const previewW = split?.previewW
           ?? Math.max(8, Math.round(slot.width - INNER_PAD_PX * 2 * zoom));
         const previewH = split?.previewH
           ?? Math.max(
             80,
-            slot.pixelHeight - Math.round((TITLE_BAR_PX + INNER_PAD_PX * 2) * zoom),
+            slot.pixelHeight - Math.round(titleBarPx + INNER_PAD_PX * 2 * zoom),
           );
         const imageStripH = split?.imageStripH ?? previewH;
         const modelStripH = split?.modelStripH ?? previewH;
         const disabled = isIdeum07NavCardDisabled(slot.card);
         const featured = isIdeum07NavCardFeatured(slot.card);
         const dimmed = slot.card.navDimmedPreview === true;
+        const subnavTitlePx = isRoot ? ideum07SubnavTitleFontPx(zoom) : slot.titleFontPx;
+        const subnavTitleH = titleBarPx;
         return (
           <button
             key={slot.id}
             type="button"
             disabled={disabled}
             className={`ideum-component-btn ideum-component-btn--nav-card${
+              isRoot ? ' ideum07-root-subcard' : ''
+            }${
+              isRoot
+                ? ` ideum07-root-subcard--${ideum07RootSubcardBucket(slot.id)}`
+                : ''
+            }${
               featured ? ' ideum-component-btn--nav-card-featured' : ''
             }${disabled ? ' ideum-component-btn--nav-card-disabled' : ''}${
               dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''
@@ -282,13 +380,19 @@ export default function Ideum07NavLayer({
           >
             <span
               className={`ideum-component-btn__title${
+                isRoot ? ' ideum07-subnav-title' : ''
+              }${
                 featured ? ' ideum-component-btn__title--featured' : ''
               }${slot.card.navTitleActive ? ' ideum-component-btn__title--active' : ''}${
                 disabled ? ' ideum-component-btn__title--disabled' : ''
               }`}
-              style={{ fontSize: slot.titleFontPx, height: TITLE_BAR_PX * zoom }}
+              style={{ fontSize: subnavTitlePx, height: subnavTitleH }}
             >
-              {slot.card.label}
+              {isRoot ? (
+                <span className="ideum07-subnav-title__text">{slot.card.label}</span>
+              ) : (
+                slot.card.label
+              )}
             </span>
             <div
               className={`ideum05-nav-card__preview${

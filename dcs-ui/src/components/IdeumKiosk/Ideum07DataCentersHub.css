@@ -5,7 +5,7 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  padding: 48px 56px 56px;
+  padding: clamp(20px, 4vmin, 56px) clamp(24px, 4.5vmin, 56px);
   box-sizing: border-box;
   background: linear-gradient(165deg, #f4f6f8 0%, #e8ecf0 45%, #dfe5eb 100%);
   pointer-events: auto;
@@ -14,7 +14,7 @@
 .ideum07-hub__divider {
   width: 2px;
   flex-shrink: 0;
-  margin: 24px 32px;
+  margin: clamp(12px, 2.5vmin, 32px) clamp(16px, 3vmin, 32px);
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -31,7 +31,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: clamp(10px, 1.5vmin, 16px);
 }
 
 .ideum07-hub__title {
@@ -94,5 +94,278 @@
   font-weight: 500;
   color: #5a6d75;
   letter-spacing: 0.04em;
+}
+
+/* Ideum07 root — Stability Solutions | Applications super-buckets (behind nav cards) */
+.ideum05-nav-layer .ideum-component-btn--nav-card {
+  z-index: 515;
+}
+
+.ideum07-root-bucket {
+  --ideum07-bucket-title: 42px;
+  --ideum07-bucket-wall: 21px;
+  --bucket-chrome-hi: rgba(0, 112, 108, 0.94);
+  --bucket-chrome-mid: rgba(0, 68, 72, 0.9);
+  --bucket-chrome-seam: rgba(0, 48, 52, 0.88);
+  --bucket-chrome-lo: rgba(0, 34, 38, 0.94);
+  --bucket-chrome-floor: rgba(0, 24, 28, 0.98);
+  position: absolute;
+  z-index: 505;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+}
+
+.ideum07-root-bucket--applications {
+  --bucket-chrome-hi: rgba(0, 118, 112, 0.95);
+  --bucket-chrome-mid: rgba(0, 72, 76, 0.91);
+  --bucket-chrome-seam: rgba(0, 50, 54, 0.89);
+  box-shadow:
+    0 0 28px rgba(13, 110, 110, 0.2),
+    0 10px 32px rgba(0, 0, 0, 0.32);
+}
+
+/* Single top→bottom gradient on the frame ring (sides + bottom continue from header) */
+.ideum07-root-bucket__ring {
+  position: absolute;
+  inset: 0;
+  z-index: 506;
+  border-radius: 12px;
+  padding: var(--ideum07-bucket-wall);
+  box-sizing: border-box;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--bucket-chrome-hi) 0%,
+    var(--bucket-chrome-mid) 14%,
+    var(--bucket-chrome-mid) 42%,
+    var(--bucket-chrome-lo) 78%,
+    var(--bucket-chrome-floor) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.ideum07-root-bucket__label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: clamp(15px, 1.35vw, 21px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9af5e0;
+  text-shadow:
+    0 0 20px rgba(0, 212, 168, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.55);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  background: linear-gradient(
+    180deg,
+    var(--bucket-chrome-hi) 0%,
+    var(--bucket-chrome-mid) 58%,
+    var(--bucket-chrome-seam) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -8px 16px rgba(0, 212, 168, 0.06);
+}
+
+.ideum07-root-bucket__label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 42%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.05) 58%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.ideum07-root-bucket__well {
+  position: absolute;
+  z-index: 505;
+  top: var(--ideum07-bucket-title);
+  left: var(--ideum07-bucket-wall);
+  right: var(--ideum07-bucket-wall);
+  bottom: var(--ideum07-bucket-wall);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 10, 12, 0.5) 0%,
+    rgba(2, 5, 7, 0.62) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(0, 212, 168, 0.12),
+    inset 0 0 48px rgba(0, 212, 168, 0.05);
+}
+
+/* —— Ideum07 root: nav tiles as submenus inside Stability / Applications buckets —— */
+.ideum07-root-subcard.ideum-component-btn--nav-card {
+  border-width: 1px;
+  border-color: rgba(0, 212, 168, 0.38);
+  background: rgba(4, 8, 10, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(0, 212, 168, 0.06);
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card:hover {
+  border-color: rgba(0, 212, 168, 0.62);
+  background: rgba(0, 40, 44, 0.35);
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-featured {
+  border-color: rgba(0, 212, 168, 0.58);
+  box-shadow:
+    0 0 16px rgba(0, 212, 168, 0.2),
+    0 6px 22px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(0, 212, 168, 0.12);
+}
+
+.ideum07-root-subcard .ideum07-subnav-title {
+  position: relative;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 0 10px 0 0;
+  line-height: 1.1;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-style: normal;
+  color: #8fd4c8;
+  text-shadow: none;
+  background: linear-gradient(
+    105deg,
+    rgba(0, 48, 50, 0.55) 0%,
+    rgba(6, 10, 12, 0.72) 55%,
+    rgba(4, 7, 9, 0.78) 100%
+  );
+  border-bottom: 1px solid rgba(0, 212, 168, 0.14);
+  box-shadow:
+    inset 2px 0 0 rgba(0, 212, 168, 0.42),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.ideum07-root-subcard .ideum07-subnav-title::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  transform: translateY(-50%) rotate(45deg);
+  background: rgba(0, 212, 168, 0.65);
+  box-shadow: 0 0 6px rgba(0, 212, 168, 0.35);
+  pointer-events: none;
+}
+
+.ideum07-root-subcard .ideum07-subnav-title__text {
+  display: block;
+  width: 100%;
+  padding-left: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.ideum07-root-subcard--stability .ideum07-subnav-title {
+  box-shadow:
+    inset 2px 0 0 rgba(0, 212, 168, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.ideum07-root-subcard--applications .ideum07-subnav-title {
+  background: linear-gradient(
+    105deg,
+    rgba(0, 72, 74, 0.68) 0%,
+    rgba(8, 14, 16, 0.88) 45%,
+    rgba(4, 8, 10, 0.92) 100%
+  );
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-featured .ideum07-subnav-title {
+  color: #c8ede6;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  background: linear-gradient(
+    105deg,
+    rgba(0, 72, 68, 0.62) 0%,
+    rgba(0, 44, 48, 0.78) 50%,
+    rgba(6, 10, 12, 0.82) 100%
+  );
+  border-bottom-color: rgba(0, 212, 168, 0.26);
+  box-shadow:
+    inset 2px 0 0 rgba(0, 212, 168, 0.62),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-featured .ideum07-subnav-title::before {
+  background: rgba(0, 232, 184, 0.85);
+  box-shadow: 0 0 8px rgba(0, 232, 184, 0.45);
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-featured .ideum07-subnav-title__text {
+  font-weight: 500;
+  color: #ecfbf7;
+}
+
+/* Submenu titles: no full-width “hero” chrome from Ideum05 featured/active */
+.ideum07-root-subcard .ideum-component-btn__title--featured,
+.ideum07-root-subcard .ideum-component-btn__title--active {
+  animation: none;
+}
+
+.ideum07-root-subcard .ideum-component-btn__title--featured::before,
+.ideum07-root-subcard .ideum-component-btn__title--featured::after,
+.ideum07-root-subcard .ideum-component-btn__title--active::before,
+.ideum07-root-subcard .ideum-component-btn__title--active::after {
+  content: none;
+  display: none;
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-disabled .ideum07-subnav-title,
+.ideum07-root-subcard .ideum-component-btn__title--disabled {
+  color: rgba(132, 138, 140, 0.92);
+  background: linear-gradient(
+    105deg,
+    rgba(32, 34, 36, 0.65) 0%,
+    rgba(18, 20, 22, 0.82) 100%
+  );
+  border-bottom-color: rgba(72, 78, 80, 0.35);
+  box-shadow: inset 2px 0 0 rgba(80, 86, 88, 0.45);
+  text-shadow: none;
+}
+
+.ideum07-root-subcard.ideum-component-btn--nav-card-disabled .ideum07-subnav-title::before {
+  background: rgba(110, 116, 118, 0.65);
+  box-shadow: none;
 }
 

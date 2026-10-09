@@ -4710,11 +4710,6 @@ function App() {
       return false;
     }
 
-    stopLiveRtdsStream();
-    handleStopSimulation();
-    handleWorkspaceLayoutPresetChange('conf3');
-    applyNoBessNoStatcomCanvas();
-
     if (ensemblesHydratedForPathRef.current !== designApiPath || !designEnsembles.length) {
       pendingP2R18InitRef.current = true;
       return false;
@@ -4727,6 +4722,11 @@ function App() {
     }
 
     pendingP2R18InitRef.current = false;
+
+    stopLiveRtdsStream();
+    handleStopSimulation();
+    handleWorkspaceLayoutPresetChange('conf3');
+    applyNoBessNoStatcomCanvas();
 
     const sameDesignEnsemble =
       simulationMetadataRef.current?.ensembleId === ensemble.id
@@ -4767,6 +4767,12 @@ function App() {
     if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
       return;
     }
+    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
+    if (!designEnsembles.length) return;
+
+    const ensemble = resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID);
+    if (!ensemble) return;
+
     void applyP2R18DefaultState();
   }, [
     designApiPath,
