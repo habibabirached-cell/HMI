@@ -78,7 +78,6 @@ import {
   isDirectKioskFocusCommand,
   KIOSK_FOCUS_BY_COMMAND,
   sendKioskFocusDirect,
-  sendKioskFocusViaMaingearBackend,
   shouldIdeumSkipDirectKioskFocusHttp,
 } from './utils/ideumRemoteFocus';
 import { IdeumRemoteMouseClient, resolveMaingearMouseWebSocketUrl } from './utils/ideumRemoteMouse';
@@ -285,14 +284,6 @@ import {
   clampFontPxShift,
 } from './contexts/FontScaleContext';
 import './styles/App.css';
-
-/** ref200Mw touch presets → P2R_18 on Maingear (focus DCS + remote, same pattern as Grid Connected → Vernova). */
-const REF200_MAINGEAR_PRESET_COMMANDS = new Set([
-  'add8Turbines',
-  'addBessOnly',
-  'addGfmeOnly',
-  'addStatcomAndGFMe',
-]);
 
 function resolveConfiguratorFromUrl() {
   if (typeof window === 'undefined') return { open: false, mode: 'full' };
@@ -3790,20 +3781,6 @@ function App() {
       );
       return;
     }
-    if (REF200_MAINGEAR_PRESET_COMMANDS.has(command)) {
-      try {
-        const result = await sendIdeumClusterCommand(command);
-        if (result && !result.deliveredToClients) {
-          alert(
-            'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
-          );
-        }
-      } catch (e) {
-        console.warn(e);
-        alert(e.message || 'Failed to send command to Maingear.');
-      }
-      return;
-    }
     try {
       if (command === 'add8Turbines') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
@@ -3998,7 +3975,7 @@ function App() {
     }
   };
 
-  /** Raise Vernova/DCS on Maingear — WS :8767 + backend relay (not Ideum browser -> :8766). */
+  /** Grid Connected / nav — WS :8767 focus; optional :8766 only when not on physical Ideum. */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
@@ -4019,8 +3996,6 @@ function App() {
         void sendKioskFocusDirect(machineRole, target).catch((e) => {
           console.warn('[cluster] http focus retry failed', command, e);
         });
-      } else {
-        void sendKioskFocusViaMaingearBackend(machineRole, command);
       }
     });
 
@@ -4028,8 +4003,6 @@ function App() {
       void sendKioskFocusDirect(machineRole, target).catch((e) => {
         console.warn('[cluster] direct http focus failed', command, e);
       });
-    } else {
-      void sendKioskFocusViaMaingearBackend(machineRole, command);
     }
   }, [machineRole]);
   fireKioskFocusFastRef.current = fireKioskFocusFast;
@@ -4060,20 +4033,6 @@ function App() {
 
     if (command === 'loadP2R18' || command === 'loadHdAero') {
       fireKioskFocusFast('showDcs');
-    }
-
-    if (REF200_MAINGEAR_PRESET_COMMANDS.has(command)) {
-      fireKioskFocusFast('showDcs');
-      try {
-        if (command === 'add8Turbines') {
-          await sendRemoteCommandToMaingear(role, 'loadP2R18', payload);
-        }
-        return await sendRemoteCommandToMaingear(role, command, payload);
-      } catch (e) {
-        console.warn('[cluster] ref200 preset failed', command, e);
-        alert(e.message || `Failed to send "${command}" to Maingear.`);
-        return null;
-      }
     }
 
     try {
@@ -4316,12 +4275,12 @@ function App() {
     ]);
   }, []);
 
-  /** 200 MW submenu tile → focus DCS on Maingear + P2R_18 presets (stay on ideum07). */
+  /** 200 MW submenu — same Maingear relay as ref200Mw “Add 8 turbine” (loadP2R18 then preset). */
   const handleIdeum07Ref200MwCommand = useCallback(
     (command) => {
-      void sendIdeumClusterCommand(command);
+      void handleIdeumControlButtonClick({ command });
     },
-    [sendIdeumClusterCommand],
+    [handleIdeumControlButtonClick],
   );
 
   const handleIdeum07NavSelect = useCallback((cardId) => {
