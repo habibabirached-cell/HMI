@@ -27,6 +27,7 @@ import {
   technologyIdsFromPreferences,
 } from './utils/conf_technologyPreferences';
 import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
+import { API_BASE_URL } from '../apiConfig';
 import { fetchMachineRole } from '../utils/clusterPeer';
 import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
 import Conf3dToggleButton from './components/Conf3dToggleButton';
@@ -195,7 +196,11 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             return;
           }
         }
-        const backendUrl = resolveMaingearBackendUrl(role);
+        // Ideum: POST same-origin → Ideum backend forwards to peerBackendUrl (avoids cross-origin + matches cluster API).
+        const backendUrl =
+          role?.isIdeum && role?.peerBackendUrl && !isLocalClusterDev()
+            ? (API_BASE_URL || '')
+            : resolveMaingearBackendUrl(role);
         const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
         if (session.status === 'error' || !session.result?.ok) {
           setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');

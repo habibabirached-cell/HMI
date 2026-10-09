@@ -313,6 +313,15 @@ body {
   background: #0f1419;
 }
 
+/* Wall configurator over P2R / ref200 / Vernova kiosk shells on Maingear */
+.ideum-configurator-wall-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  width: 100%;
+  height: 100%;
+}
+
 /* Design view wrapper: canvas / image / split modes */
 .design-view-wrapper {
   flex: 1;

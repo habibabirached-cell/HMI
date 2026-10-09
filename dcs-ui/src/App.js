@@ -4204,6 +4204,11 @@ function App() {
     void loadDesignFromCatalog(IDEUM05_CATALOG);
   }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
+  const handleConfiguratorWallClose = useCallback(() => {
+    setConfiguratorOpen(false);
+    clearConfiguratorViewFromUrl();
+  }, []);
+
   /** DataCenter card tap — load isolated shell design per card. */
   const handleDataCenterNavSelect = useCallback((cardId) => {
     const loadCatalog = getIdeum05NavLoadDesignCatalog('data-centers', cardId);
@@ -8639,6 +8644,7 @@ function App() {
     return connectClusterWebSocket((msg) => {
       if (msg?.type === 'configurator_open_wall') {
         setConfiguratorWallMountKey((k) => k + 1);
+        fireKioskFocusFastRef.current('showDcs');
         handleOpenConfiguratorRef.current('wall');
         return;
       }
@@ -9195,6 +9201,20 @@ function App() {
     </div>
   );
 
+  /** Maingear 4-wall / kiosk shells — full-screen overlay (main app path already has inline configurator). */
+  const configuratorWallLayer =
+    showConfigurator && effectiveConfiguratorMode === 'wall' ? (
+      <div className="app-container app-container--configurator-wall ideum-configurator-wall-overlay">
+        <div className="app-main app-main--configurator">
+          <DataCenterConfigurator
+            key={`wall-${configuratorWallMountKey}`}
+            mode="wall"
+            onClose={handleConfiguratorWallClose}
+          />
+        </div>
+      </div>
+    ) : null;
+
   if (isDataCenter) {
     return (
       <FontScaleProvider
@@ -9237,6 +9257,7 @@ function App() {
             </div>
           </div>
         )}
+        {configuratorWallLayer}
       </FontScaleProvider>
     );
   }
@@ -9287,6 +9308,7 @@ function App() {
             </div>
           </div>
         )}
+        {configuratorWallLayer}
       </FontScaleProvider>
     );
   }
@@ -9449,6 +9471,7 @@ function App() {
             </div>
           </div>
         )}
+        {configuratorWallLayer}
       </FontScaleProvider>
     );
   }
@@ -9491,6 +9514,7 @@ function App() {
             </div>
           </div>
         )}
+        {configuratorWallLayer}
       </FontScaleProvider>
     );
   }
@@ -9585,10 +9609,10 @@ function App() {
       </header>
       )}
 
-      {showConfigurator ? (
+      {showConfigurator && effectiveConfiguratorMode !== 'wall' ? (
         <div className="app-main app-main--configurator">
           <DataCenterConfigurator
-            key={effectiveConfiguratorMode === 'wall' ? `wall-${configuratorWallMountKey}` : effectiveConfiguratorMode}
+            key={effectiveConfiguratorMode}
             mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);
@@ -9602,7 +9626,9 @@ function App() {
             }}
           />
         </div>
-      ) : (
+      ) : null}
+      {configuratorWallLayer}
+      {!showConfigurator || effectiveConfiguratorMode === 'wall' ? (
       <div className="app-main">
         {viewMode === 'designer' && !ideumKioskMode && (
           <ComponentLibrary
@@ -9731,7 +9757,7 @@ function App() {
 
         {!ideumKioskMode && controlsDockRight && controlsRail}
       </div>
-      )}
+      ) : null}
 
       {/* Save/Load Dialog */}
       {showDialog && (
