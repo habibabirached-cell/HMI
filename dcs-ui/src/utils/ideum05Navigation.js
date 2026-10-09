@@ -14,6 +14,8 @@ export const IDEUM05_NAV_MODEL_URLS = {
   submarine: `${PUBLIC}/models/Submareen/model.gltf`,
   /** Heavy-duty 7HA-class (configurator / HD+Aero previews). */
   hd7Ha: `${PUBLIC}/models/7HA.glb`,
+  windTurbineField: `${PUBLIC}/models/windTurbineField.glb`,
+  solarField: `${PUBLIC}/models/solar/model.gltf`,
 };
 
 /** Upper share cap when image + 3D are stacked (aspect ratio usually sets the actual split). */

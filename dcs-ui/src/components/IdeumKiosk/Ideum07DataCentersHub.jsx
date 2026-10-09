@@ -3,9 +3,12 @@ import {
   IDEUM05_NAV_IMAGE_URLS,
   IDEUM05_NAV_MODEL_URLS,
 } from '../../utils/ideum05Navigation';
-import { IDEUM07_NAV_IMAGE_URLS } from '../../utils/ideum07Navigation';
-import Ideum05BackButton from './Ideum05BackButton';
+import {
+  getIdeum07RootBucketChrome,
+  IDEUM07_NAV_IMAGE_URLS,
+} from '../../utils/ideum07Navigation';
 import Ideum05Nav3DViewer from './Ideum05Nav3DViewer';
+import Ideum07SuperBucket from './Ideum07SuperBucket';
 import './Ideum05NavLayer.css';
 import './Ideum07DataCentersHub.css';
 
@@ -126,44 +129,81 @@ function HubStackedTile({
   );
 }
 
+function HubSuperBucket({ title, variant, children, bucketChrome }) {
+  return (
+    <Ideum07SuperBucket
+      className="ideum07-hub-bucket"
+      contentClassName="ideum07-hub-bucket__content"
+      title={title}
+      variant={variant}
+      bucketChrome={bucketChrome}
+    >
+      {children}
+    </Ideum07SuperBucket>
+  );
+}
+
 /**
- * Two-panel Data Centers hub (Technoeconomic Design | High-Fidelity Analysis).
+ * Two-panel Data Centers hub (Techno-Economics | Advanced Analysis).
  */
 export default function Ideum07DataCentersHub({
+  zoom = 1,
   onBack,
   onOpenConfigurator,
   onOpenReferenceArchitectures,
 }) {
+  const bucketChrome = getIdeum07RootBucketChrome(zoom);
+  const hubInsetPx = Math.max(8, Math.round(8 * zoom));
+
   return (
-    <div className="ideum07-hub" role="region" aria-label="Data Centers">
-      <Ideum05BackButton onBack={onBack} />
-      <div className="ideum07-hub__panel ideum07-hub__panel--left">
-        <h2 className="ideum07-hub__title">Technoeconomic Design</h2>
-        <HubStackedTile
-          ariaLabel="Open Data Center Configurator"
-          imageUrl={IDEUM05_NAV_IMAGE_URLS.configurator}
-          imageAlt="Data Center Configurator preview"
-          modelUrl={IDEUM05_NAV_MODEL_URLS.outdoorDataCenter}
-          modelFitScale={0.78}
-          modelYOffset={0.54}
-          cameraPitchLift={0.42}
-          onClick={onOpenConfigurator}
-        />
-      </div>
-      <div className="ideum07-hub__divider" aria-hidden />
-      <div className="ideum07-hub__panel ideum07-hub__panel--right">
-        <h2 className="ideum07-hub__title">High-Fidelity Analysis</h2>
-        <HubStackedTile
-          ariaLabel="Open Reference Architectures"
-          imageUrl={IDEUM07_NAV_IMAGE_URLS.highFidelityHub}
-          imageAlt="Reference architectures site diagram"
-          modelUrl={IDEUM05_NAV_MODEL_URLS.ref200Mw}
-          modelFitScale={0.92}
-          modelYOffset={0.1}
-          cameraPitchLift={0.5}
-          onClick={onOpenReferenceArchitectures}
-        />
-      </div>
+    <div
+      className="ideum07-hub ideum05-nav-layer"
+      role="region"
+      aria-label="Data Centers"
+      style={{ padding: hubInsetPx }}
+    >
+      <Ideum07SuperBucket
+        className="ideum07-hub-screen"
+        contentClassName="ideum07-hub-screen__content"
+        title="Data Centers"
+        bucketChrome={bucketChrome}
+        showBack
+        onBack={onBack}
+      >
+        <div
+          className="ideum07-hub__row"
+          style={{ gap: bucketChrome.bucketGapPx }}
+        >
+        <HubSuperBucket title="Techno-Economics" bucketChrome={bucketChrome}>
+          <HubStackedTile
+            ariaLabel="Open Data Center Configurator"
+            imageUrl={IDEUM05_NAV_IMAGE_URLS.configurator}
+            imageAlt="Data Center Configurator preview"
+            modelUrl={IDEUM05_NAV_MODEL_URLS.outdoorDataCenter}
+            modelFitScale={0.78}
+            modelYOffset={0.54}
+            cameraPitchLift={0.42}
+            onClick={onOpenConfigurator}
+          />
+        </HubSuperBucket>
+        <HubSuperBucket
+          title="Advanced Analysis"
+          variant="applications"
+          bucketChrome={bucketChrome}
+        >
+          <HubStackedTile
+            ariaLabel="Open Reference Architectures"
+            imageUrl={IDEUM07_NAV_IMAGE_URLS.highFidelityHub}
+            imageAlt="Reference architectures site diagram"
+            modelUrl={IDEUM05_NAV_MODEL_URLS.ref200Mw}
+            modelFitScale={0.92}
+            modelYOffset={0.1}
+            cameraPitchLift={0.5}
+            onClick={onOpenReferenceArchitectures}
+          />
+        </HubSuperBucket>
+        </div>
+      </Ideum07SuperBucket>
     </div>
   );
 }

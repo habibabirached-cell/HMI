@@ -1,0 +1,265 @@
+.ideum07-ref200-submenu {
+  z-index: 1200;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu .ideum07-hub-screen.ideum07-root-bucket {
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu__row {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu .ideum07-ref200-submenu__column-bucket.ideum07-hub-bucket.ideum07-root-bucket {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  height: auto;
+  max-height: 100%;
+  align-self: stretch;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu__bucket {
+  flex: 1;
+  min-width: 0;
+}
+
+.ideum07-ref200-submenu__bucket--baseline {
+  flex: 1.15;
+}
+
+.ideum07-ref200-submenu__bucket-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ideum07-ref200-submenu__bucket-content--baseline {
+  gap: 0;
+}
+
+/* Nav cards are position:absolute in IdeumComponentLayer — keep in bucket flow here */
+.ideum07-ref200-submenu .ideum-component-btn.ideum-component-btn--nav-card {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ideum07-ref200-submenu__stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu__stack .ideum07-ref200__tile {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+}
+
+.ideum07-ref200-submenu__pair-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu__pair-row .ideum07-ref200__tile--pair {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  min-height: 0;
+}
+
+.ideum07-ref200-submenu__stack--augmented .ideum07-ref200__tile--tall {
+  flex: 2 1 0;
+}
+
+.ideum07-ref200__tile--baseline {
+  flex: 0 0 50%;
+  min-height: 0;
+  max-height: 50%;
+  position: relative;
+  width: 100%;
+}
+
+.ideum07-ref200__tile {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.ideum07-ref200__tile--side-title {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/* Left vertical title rail — width hugs label */
+.ideum07-ref200-submenu .ideum07-ref200__side-title.ideum07-subnav-title {
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 38%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 5px 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: none;
+  border-right: 1px solid rgba(0, 212, 168, 0.26);
+  box-shadow:
+    inset 3px 0 0 rgba(0, 212, 168, 0.62),
+    inset 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.ideum07-ref200-submenu .ideum07-root-subcard--stability .ideum07-ref200__side-title.ideum07-subnav-title {
+  box-shadow:
+    inset 3px 0 0 rgba(0, 212, 168, 0.5),
+    inset 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.ideum07-ref200-submenu .ideum07-ref200__side-title.ideum07-subnav-title::before {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.ideum07-ref200-submenu .ideum07-ref200__side-title-text {
+  display: block;
+  width: max-content;
+  max-height: 100%;
+  padding: 10px 0 0;
+  padding-left: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--ideum07-ref200-title-font, 12px);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.02;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+.ideum07-ref200__tile--side-title .ideum07-ref200__preview {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ideum07-ref200__preview {
+  flex: 1;
+  min-height: 0;
+  padding: 0 !important;
+}
+
+.ideum07-ref200__preview--dual {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.ideum07-ref200__preview-dual {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 6px;
+  box-sizing: border-box;
+  padding: 0 2px;
+}
+
+.ideum07-ref200__preview-dual .ideum05-nav-card__preview-dual-cell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.ideum07-ref200__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 0;
+  padding-top: 8px;
+  flex-shrink: 0;
+  color: rgba(200, 210, 212, 0.85);
+}
+
+.ideum07-ref200__toggle-label {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+
+.ideum07-ref200__toggle-label--active {
+  opacity: 1;
+  color: #9af5e0;
+}
+
+.ideum07-ref200__toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 212, 168, 0.35);
+  background: rgba(20, 28, 30, 0.95);
+  padding: 0;
+  cursor: pointer;
+}
+
+.ideum07-ref200__toggle--on {
+  background: rgba(0, 94, 96, 0.55);
+  border-color: rgba(0, 212, 168, 0.65);
+}
+
+.ideum07-ref200__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #9af5e0;
+  transition: transform 0.15s ease;
+}
+
+.ideum07-ref200__toggle--on .ideum07-ref200__toggle-thumb {
+  transform: translateX(20px);
+}

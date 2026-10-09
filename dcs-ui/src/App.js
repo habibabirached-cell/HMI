@@ -141,6 +141,8 @@ import {
   IDEUM07_CATALOG,
   IDEUM07_DATA_CENTERS_HUB,
   IDEUM07_NAV_ROOT,
+  IDEUM07_ADVANCED_ANALYSIS,
+  IDEUM07_REF_200MW_SUBMENU,
   IDEUM07_REFERENCE_ARCHITECTURES,
 } from './utils/ideum07Navigation';
 import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
@@ -195,7 +197,15 @@ import {
   clampChartPanelOpacity,
   CHART_PANEL_OPACITY_DEFAULT,
 } from './utils/chartPanelLimits';
-import { parseSimulationDeepLink, buildSimulationDeepLinkQuery, lastScenarioSessionStorageKey } from './utils/simDeepLink';
+import {
+  applyDesignToUrl,
+  buildSimulationDeepLinkQuery,
+  designCatalogPathFromConfig,
+  lastScenarioSessionStorageKey,
+  parseDesignOnlyDeepLink,
+  parseSimulationDeepLink,
+  stripSimulationParamsFromUrl,
+} from './utils/simDeepLink';
 import {
   getMaltaViewFromUrl,
   isClusterTouchCommandSource,
@@ -4147,13 +4157,18 @@ function App() {
 
   const handleIdeum07RefArchChildBack = useCallback(() => {
     void sendIdeumCloseConfiguratorWall();
-    pendingIdeum07NavStackRef.current = [
-      IDEUM07_NAV_ROOT,
-      IDEUM07_DATA_CENTERS_HUB,
-      IDEUM07_REFERENCE_ARCHITECTURES,
-    ];
+    const menuStack = ideum07NavStack.filter(Boolean);
+    pendingIdeum07NavStackRef.current =
+      menuStack.length > 1
+        ? [...menuStack]
+        : [
+            IDEUM07_NAV_ROOT,
+            IDEUM07_DATA_CENTERS_HUB,
+            IDEUM07_ADVANCED_ANALYSIS,
+            IDEUM07_REFERENCE_ARCHITECTURES,
+          ];
     void loadDesignFromCatalog(IDEUM07_CATALOG);
-  }, [loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
+  }, [ideum07NavStack, loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
   /** Child shells (200 MW / Configurator / 500 MW) Back — return to prior Ideum menu. */
   const handleDataCenterChildBack = useCallback(() => {
@@ -4254,9 +4269,23 @@ function App() {
     setIdeum07NavStack([
       IDEUM07_NAV_ROOT,
       IDEUM07_DATA_CENTERS_HUB,
-      IDEUM07_REFERENCE_ARCHITECTURES,
+      IDEUM07_ADVANCED_ANALYSIS,
     ]);
   }, []);
+
+  const handleIdeum07OpenRef200MwDesign = useCallback(() => {
+    pendingIdeum07NavStackRef.current =
+      ideum07NavStack.length > 0
+        ? [...ideum07NavStack]
+        : [
+            IDEUM07_NAV_ROOT,
+            IDEUM07_DATA_CENTERS_HUB,
+            IDEUM07_ADVANCED_ANALYSIS,
+            IDEUM07_REFERENCE_ARCHITECTURES,
+            IDEUM07_REF_200MW_SUBMENU,
+          ];
+    void loadDesignFromCatalog('ref200Mw');
+  }, [ideum07NavStack, loadDesignFromCatalog]);
 
   const handleIdeum07NavSelect = useCallback((cardId) => {
     const screenId = getIdeum07NavScreen(ideum07NavStack);
@@ -4264,12 +4293,23 @@ function App() {
     if (loadCatalog) {
       if (loadCatalog === IDEUM06_CATALOG) {
         fireKioskFocusFast('showVernova');
-      } else if (loadCatalog === 'ref200Mw' || loadCatalog === 'hd_aero_ideum') {
+      } else if (loadCatalog === 'ref200Mw') {
         pendingIdeum07NavStackRef.current = [
           IDEUM07_NAV_ROOT,
           IDEUM07_DATA_CENTERS_HUB,
+          IDEUM07_ADVANCED_ANALYSIS,
           IDEUM07_REFERENCE_ARCHITECTURES,
         ];
+      } else if (loadCatalog === 'hd_aero_ideum') {
+        pendingIdeum07NavStackRef.current =
+          ideum07NavStack.length > 0
+            ? [...ideum07NavStack]
+            : [
+                IDEUM07_NAV_ROOT,
+                IDEUM07_DATA_CENTERS_HUB,
+                IDEUM07_ADVANCED_ANALYSIS,
+                IDEUM07_REFERENCE_ARCHITECTURES,
+              ];
       }
       void loadDesignFromCatalog(loadCatalog);
       return;
@@ -8247,6 +8287,11 @@ function App() {
       skipSessionRestore,
       willTriggerSessionRestore: !skipSessionRestore && !!loadedConfig.csv_status?.use_design_dir,
     });
+
+    const catalogPath = designCatalogPathFromConfig(loadedConfig);
+    if (catalogPath) {
+      applyDesignToUrl(catalogPath);
+    }
   };
 
   /**
@@ -8685,24 +8730,35 @@ function App() {
     handleRunSimulationRef.current = handleRunSimulation;
   });
 
-  // Step 3: optional startup URL ?design=catalogPath&sim=ScenarioId&config=NamedPreset — load canvas from disk, then hydrate charts like a manual scenario click.
+  // Step 3: optional startup URL ?design=catalogPath (&sim=…&config=…) — load canvas from disk; sim params run scenario after load.
   // React Strict Mode runs mount → cleanup → mount again; we must reset deepLinkBootstrapStartedRef in cleanup or the remount exits early and never fetches.
   useEffect(() => {
     if (deepLinkBootstrapStartedRef.current) return;
-    const parsed = parseSimulationDeepLink(window.location.search);
-    if (!parsed) return;
+    const simParsed = parseSimulationDeepLink(window.location.search);
+    const designOnlyParsed = simParsed ? null : parseDesignOnlyDeepLink(window.location.search);
+    const catalogDesign = simParsed?.design ?? designOnlyParsed?.design;
+    if (!catalogDesign) return;
     deepLinkBootstrapStartedRef.current = true;
     dcsSimDbg('URL bootstrap parsed', {
-      design: parsed.design,
-      sim: parsed.sim,
-      config: parsed.config ?? '(current draft)',
+      design: catalogDesign,
+      sim: simParsed?.sim ?? '(design only)',
+      config: simParsed?.config ?? '(current draft)',
       rawSearch: window.location.search,
     });
-    console.log('[Deep link] Parsed URL → design=%s sim=%s config=%s', parsed.design, parsed.sim, parsed.config ?? '(current draft)');
+    if (simParsed) {
+      console.log(
+        '[Deep link] Parsed URL → design=%s sim=%s config=%s',
+        catalogDesign,
+        simParsed.sim,
+        simParsed.config ?? '(current draft)',
+      );
+    } else {
+      console.log('[Deep link] Parsed URL → design=%s (design only)', catalogDesign);
+    }
     let cancelled = false;
     (async () => {
       try {
-        const url = `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(parsed.design)}/load`;
+        const url = `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(catalogDesign)}/load`;
         const res = await fetch(url);
         if (!res.ok) {
           if (!cancelled) console.warn('[Deep link] Design load failed', res.status, await res.text());
@@ -8716,7 +8772,9 @@ function App() {
         console.log('[Deep link] Design loaded, applying canvas…');
         loadSkipSessionRestoreRef.current = true;
         handleConfigurationLoadedRef.current?.(loadedConfig);
-        setSimDeepLinkFollowup({ sim: parsed.sim, config: parsed.config });
+        if (simParsed) {
+          setSimDeepLinkFollowup({ sim: simParsed.sim, config: simParsed.config });
+        }
       } catch (e) {
         if (!cancelled) console.warn('[Deep link] Error', e);
       }
@@ -8823,11 +8881,13 @@ function App() {
           setActiveNamedSimulationConfig(config);
           setLastNamedPresetForUi(config);
         }
-        dcsSimDbg('deepLink follow-up ✓ finished UI flags; stripping URL query if present', {
-          hadDesignQuery: typeof window !== 'undefined' && window.location.search.includes('design='),
+        dcsSimDbg('deepLink follow-up ✓ finished; keeping ?design=, removing sim/config from URL if present', {
+          designApiPath,
         });
-        if (typeof window !== 'undefined' && window.location.search.includes('design=')) {
-          window.history.replaceState(null, '', `${window.location.pathname}${window.location.hash || ''}`);
+        if (designApiPath) {
+          applyDesignToUrl(designApiPath);
+        } else {
+          stripSimulationParamsFromUrl();
         }
       } catch (e) {
         if (followupStillCurrent()) console.warn('Deep link follow-up failed', e);
@@ -9664,6 +9724,7 @@ function App() {
               onIdeum07NavBack={handleIdeum07NavBack}
               onIdeum07HubOpenConfigurator={handleIdeum07HubOpenConfigurator}
               onIdeum07HubOpenReferenceArchitectures={handleIdeum07HubOpenReferenceArchitectures}
+              onIdeum07OpenRef200MwDesign={handleIdeum07OpenRef200MwDesign}
               onIdeum05Reset={handleIdeum05Reset}
               onIdeum05LiveRtds={handleIdeum05LiveRtds}
               ideumHdAeroViewCompact={ideumExpansionMirror.peripheralsCompact}

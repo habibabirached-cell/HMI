@@ -333,6 +333,25 @@
   line-height: 0;
 }
 
+.ideum05-nav-card__preview-3d-strip .ideum05-nav-card__preview-dual {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 6px;
+  box-sizing: border-box;
+  padding: 0 2px;
+}
+
+.ideum05-nav-card__preview-dual-cell {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 168, 0.12);
+}
+
 .ideum05-nav-card__preview-image {
   width: 100%;
   height: 100%;
