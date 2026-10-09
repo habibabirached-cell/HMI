@@ -142,7 +142,6 @@ import {
   IDEUM07_DATA_CENTERS_HUB,
   IDEUM07_NAV_ROOT,
   IDEUM07_ADVANCED_ANALYSIS,
-  IDEUM07_REF_200MW_SUBMENU,
   IDEUM07_REFERENCE_ARCHITECTURES,
 } from './utils/ideum07Navigation';
 import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
@@ -284,6 +283,14 @@ import {
   clampFontPxShift,
 } from './contexts/FontScaleContext';
 import './styles/App.css';
+
+/** ref200Mw touch presets → P2R_18 on Maingear (focus DCS + remote, same pattern as Grid Connected → Vernova). */
+const REF200_MAINGEAR_PRESET_COMMANDS = new Set([
+  'add8Turbines',
+  'addBessOnly',
+  'addGfmeOnly',
+  'addStatcomAndGFMe',
+]);
 
 function resolveConfiguratorFromUrl() {
   if (typeof window === 'undefined') return { open: false, mode: 'full' };
@@ -3781,6 +3788,20 @@ function App() {
       );
       return;
     }
+    if (REF200_MAINGEAR_PRESET_COMMANDS.has(command)) {
+      try {
+        const result = await sendIdeumClusterCommand(command);
+        if (result && !result.deliveredToClients) {
+          alert(
+            'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
+          );
+        }
+      } catch (e) {
+        console.warn(e);
+        alert(e.message || 'Failed to send command to Maingear.');
+      }
+      return;
+    }
     try {
       if (command === 'add8Turbines') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
@@ -4033,6 +4054,20 @@ function App() {
       fireKioskFocusFast('showDcs');
     }
 
+    if (REF200_MAINGEAR_PRESET_COMMANDS.has(command)) {
+      fireKioskFocusFast('showDcs');
+      try {
+        if (command === 'add8Turbines') {
+          await sendRemoteCommandToMaingear(role, 'loadP2R18', payload);
+        }
+        return await sendRemoteCommandToMaingear(role, command, payload);
+      } catch (e) {
+        console.warn('[cluster] ref200 preset failed', command, e);
+        alert(e.message || `Failed to send "${command}" to Maingear.`);
+        return null;
+      }
+    }
+
     try {
       return await sendRemoteCommandToMaingear(role, command, payload);
     } catch (e) {
@@ -4273,10 +4308,12 @@ function App() {
     ]);
   }, []);
 
-  /** 200 MW submenu tile → same Maingear presets as ref200Mw touch buttons (stay on ideum07). */
+  /** 200 MW submenu tile → focus DCS on Maingear + P2R_18 presets (stay on ideum07). */
   const handleIdeum07Ref200MwCommand = useCallback(
-    (command) => handleIdeumControlButtonClick({ command }),
-    [handleIdeumControlButtonClick],
+    (command) => {
+      void sendIdeumClusterCommand(command);
+    },
+    [sendIdeumClusterCommand],
   );
 
   const handleIdeum07NavSelect = useCallback((cardId) => {
@@ -4522,11 +4559,6 @@ function App() {
     if (!isRef200MwShell) return;
     void sendIdeumClusterCommand('loadP2R18');
   }, [isRef200MwShell, currentConfigName, sendIdeumClusterCommand]);
-
-  useEffect(() => {
-    if (!isIdeum07 || ideum07NavScreen !== IDEUM07_REF_200MW_SUBMENU) return;
-    void sendIdeumClusterCommand('loadP2R18');
-  }, [isIdeum07, ideum07NavScreen, sendIdeumClusterCommand]);
 
   useEffect(() => {
     if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;

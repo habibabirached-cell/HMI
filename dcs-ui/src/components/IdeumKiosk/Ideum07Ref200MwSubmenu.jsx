@@ -1,10 +1,9 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { getComponentVisualConfig } from '../../data/componentVisuals';
-import { IDEUM05_NAV_MODEL_URLS } from '../../utils/ideum05Navigation';
 import { getBess3DModelUrl } from '../../utils/bess3dLayout';
 import { getGFMe3DModelUrl } from '../../utils/gfme3dLayout';
 import { getGasTurbine3DModelUrl } from '../../utils/gasTurbine3dLayout';
-import { getIdeum07RootBucketChrome } from '../../utils/ideum07Navigation';
+import { getIdeum07RootBucketChrome, IDEUM07_NAV_IMAGE_URLS } from '../../utils/ideum07Navigation';
 import Ideum05Nav3DViewer from './Ideum05Nav3DViewer';
 import Ideum07SuperBucket from './Ideum07SuperBucket';
 import './Ideum05NavLayer.css';
@@ -14,12 +13,8 @@ import './Ideum07Ref200MwSubmenu.css';
 const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
 const LM2500_3D_VISUAL = getComponentVisualConfig('gas-turbine-3d');
 const LM2500_MODEL = getGasTurbine3DModelUrl(LM2500_3D_VISUAL);
-const TURBINE_MODEL = LM2500_MODEL;
 const BESS_MODEL = getBess3DModelUrl(BESS_VISUAL);
 const GFME_MODEL = getGFMe3DModelUrl();
-const GRID_MODEL = `${process.env.PUBLIC_URL || ''}/models/GridConnected/model.gltf`;
-const FUEL_CELL_MODEL = `${process.env.PUBLIC_URL || ''}/models/FuelCell/model.gltf`;
-const RECIP_MODEL = `${process.env.PUBLIC_URL || ''}/models/recipEngine/model.gltf`;
 
 /** Same ideumCommand strings as ref200Mw.conf.json → P2R_18 presets on Maingear. */
 export const REF200_IDEUM_COMMANDS = {
@@ -42,6 +37,54 @@ function ref200BucketWellPadding(subsetGapPx) {
     paddingRight: subsetGapPx,
     paddingBottom: subsetGapPx,
   };
+}
+
+function SubmenuUseCaseTile({
+  label,
+  imageUrl,
+  imageAlt,
+  disabled = false,
+  dimmed = false,
+  ideumCommand = null,
+  onIdeumCommand,
+  zoom = 1,
+}) {
+  const titleFontPx = Math.max(11, Math.round(12 * Math.max(Number(zoom) || 1, 0.01)));
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      className={`ideum07-ref200__tile ideum07-ref200__tile--use-case ideum-component-btn ideum-component-btn--nav-card ideum07-root-subcard ideum07-root-subcard--applications${
+        disabled ? ' ideum-component-btn--nav-card-disabled' : ' ideum-component-btn--nav-card-featured'
+      }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}`}
+      onClick={(e) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (ideumCommand && onIdeumCommand) {
+          onIdeumCommand(ideumCommand);
+        }
+      }}
+      aria-label={label}
+      aria-disabled={disabled || undefined}
+    >
+      <span
+        className="ideum-component-btn__title ideum07-ref200__use-case-title ideum-component-btn__title--featured"
+        style={{ fontSize: titleFontPx }}
+      >
+        {label}
+      </span>
+      <div className="ideum05-nav-card__preview ideum05-nav-card__preview--image ideum07-ref200__use-case-preview">
+        <img
+          className="ideum05-nav-card__preview-image ideum05-nav-card__preview-image--fill"
+          src={imageUrl}
+          alt={imageAlt || label}
+          draggable={false}
+        />
+      </div>
+    </button>
+  );
 }
 
 function SubmenuModelTile({
@@ -346,35 +389,31 @@ export default function Ideum07Ref200MwSubmenu({
               className="ideum07-ref200-submenu__stack"
               style={{ gap: bucketChrome.subsetGapPx }}
             >
-              <SubmenuModelTile
+              <SubmenuUseCaseTile
                 zoom={zoom}
                 label="Forced Power Oscillation"
-                modelUrl={RECIP_MODEL}
-                fitScale={0.55}
+                imageUrl={IDEUM07_NAV_IMAGE_URLS.ref200ForcedPowerOscillation}
                 ideumCommand={REF200_IDEUM_COMMANDS.forcedPowerOscillation}
                 onIdeumCommand={onIdeumCommand}
               />
-              <SubmenuModelTile
+              <SubmenuUseCaseTile
                 zoom={zoom}
                 label="Contingency scenarios"
-                modelUrl={IDEUM05_NAV_MODEL_URLS.ref200Mw}
-                fitScale={0.42}
+                imageUrl={IDEUM07_NAV_IMAGE_URLS.ref200ContingencyScenarios}
                 disabled
                 dimmed
               />
-              <SubmenuModelTile
+              <SubmenuUseCaseTile
                 zoom={zoom}
                 label="SSTI"
-                modelUrl={GRID_MODEL}
-                fitScale={0.5}
+                imageUrl={IDEUM07_NAV_IMAGE_URLS.ref200Ssti}
                 disabled
                 dimmed
               />
-              <SubmenuModelTile
+              <SubmenuUseCaseTile
                 zoom={zoom}
                 label="Ride through performance"
-                modelUrl={TURBINE_MODEL}
-                fitScale={0.45}
+                imageUrl={IDEUM07_NAV_IMAGE_URLS.ref200RideThrough}
                 disabled
                 dimmed
               />

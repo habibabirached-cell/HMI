@@ -39,6 +39,10 @@ export const IDEUM07_NAV_IMAGE_URLS = {
   renewablePoweredDatacenters: `${PUBLIC}/models/ideum07-renewable-powered-datacenters.jpg`,
   hilTestRefArchOperation: `${PUBLIC}/models/ideum07-hil-test-ref-arch-operation.jpg`,
   hilTestAdvancedControlsPerformance: `${PUBLIC}/models/ideum07-hil-test-advanced-controls-performance.jpg`,
+  ref200ForcedPowerOscillation: `${PUBLIC}/models/ideum07-ref200-forced-power-oscillation.jpg`,
+  ref200ContingencyScenarios: `${PUBLIC}/models/ideum07-ref200-contingency-scenarios.jpg`,
+  ref200Ssti: `${PUBLIC}/models/ideum07-ref200-ssti.jpg`,
+  ref200RideThrough: `${PUBLIC}/models/ideum07-ref200-ride-through.jpg`,
 };
 
 export const IDEUM07_ADVANCED_ANALYSIS_PREVIEW_MATCH_GROUP = 'ideum07-advanced-analysis-preview';

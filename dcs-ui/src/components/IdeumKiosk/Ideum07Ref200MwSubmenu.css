@@ -263,3 +263,45 @@
 .ideum07-ref200__toggle--on .ideum07-ref200__toggle-thumb {
   transform: translateX(20px);
 }
+
+/* Use Cases — horizontal title + 2D photo (no side rail / 3D) */
+.ideum07-ref200__tile--use-case {
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.ideum07-ref200-submenu .ideum07-ref200__use-case-title {
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 212, 168, 0.26);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ideum07-ref200__tile--use-case .ideum07-ref200__use-case-preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 0 !important;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  background: #0a0e10;
+}
+
+.ideum07-ref200__tile--use-case .ideum05-nav-card__preview-image--fill {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
