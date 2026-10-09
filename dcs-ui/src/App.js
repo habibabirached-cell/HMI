@@ -78,6 +78,8 @@ import {
   isDirectKioskFocusCommand,
   KIOSK_FOCUS_BY_COMMAND,
   sendKioskFocusDirect,
+  sendKioskFocusViaMaingearBackend,
+  shouldIdeumSkipDirectKioskFocusHttp,
 } from './utils/ideumRemoteFocus';
 import { IdeumRemoteMouseClient, resolveMaingearMouseWebSocketUrl } from './utils/ideumRemoteMouse';
 import { getIdeumComponents, isIdeumDesignName } from './utils/ideumComponent';
@@ -3996,14 +3998,12 @@ function App() {
     }
   };
 
-  /** Grid Connected / Back — HTTP :8766 on Maingear + WS :8767 mouse bridge (either can raise Vernova/DCS). */
+  /** Raise Vernova/DCS on Maingear — WS :8767 + backend relay (not Ideum browser -> :8766). */
   const fireKioskFocusFast = useCallback((command) => {
     const target = KIOSK_FOCUS_BY_COMMAND[command];
     if (!target) return;
 
-    void sendKioskFocusDirect(machineRole, target).catch((e) => {
-      console.warn('[cluster] direct http focus failed', command, e);
-    });
+    const useDirectHttp = !shouldIdeumSkipDirectKioskFocusHttp(machineRole);
 
     let client = ideumMouseClientRef.current;
     if (!client) {
@@ -4015,10 +4015,22 @@ function App() {
     void client.sendFocusAsync(target).then((ok) => {
       if (ok) return;
       console.warn('[cluster] ws focus failed or timed out', command);
-      void sendKioskFocusDirect(machineRole, target).catch((e) => {
-        console.warn('[cluster] http focus retry failed', command, e);
-      });
+      if (useDirectHttp) {
+        void sendKioskFocusDirect(machineRole, target).catch((e) => {
+          console.warn('[cluster] http focus retry failed', command, e);
+        });
+      } else {
+        void sendKioskFocusViaMaingearBackend(machineRole, command);
+      }
     });
+
+    if (useDirectHttp) {
+      void sendKioskFocusDirect(machineRole, target).catch((e) => {
+        console.warn('[cluster] direct http focus failed', command, e);
+      });
+    } else {
+      void sendKioskFocusViaMaingearBackend(machineRole, command);
+    }
   }, [machineRole]);
   fireKioskFocusFastRef.current = fireKioskFocusFast;
 
@@ -4042,12 +4054,8 @@ function App() {
     }
 
     if (isDirectKioskFocusCommand(command)) {
-      try {
-        const result = await sendKioskFocusDirect(role, KIOSK_FOCUS_BY_COMMAND[command]);
-        return { ok: true, command, direct: true, ...result };
-      } catch (e) {
-        console.warn('[cluster] kiosk focus direct failed, trying backend relay', command, e);
-      }
+      fireKioskFocusFast(command);
+      return { ok: true, command, focus: true };
     }
 
     if (command === 'loadP2R18' || command === 'loadHdAero') {

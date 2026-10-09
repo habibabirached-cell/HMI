@@ -734,12 +734,11 @@ async def post_cluster_remote_command(body: dict):
         focus_result = await trigger_kiosk_focus(focus_target)
         print(f"[cluster] kiosk focus result: {focus_result}", flush=True)
         if not focus_result.get("ok"):
-            raise HTTPException(
-                status_code=503,
-                detail=focus_result.get("error")
-                or focus_result.get("hint")
-                or f"Kiosk focus failed for {focus_target}. "
-                "On Maingear run BAT\\start-kiosk-focus-server.bat or z_genesis.start.bat.",
+            # Best-effort: Ideum must not block presets when :8766 is down on cluster Ethernet.
+            print(
+                f"[cluster] kiosk focus failed for {focus_target} (continuing remote command): "
+                f"{focus_result.get('error') or focus_result.get('hint')}",
+                flush=True,
             )
 
     delivered = await cluster_manager.broadcast(message)
