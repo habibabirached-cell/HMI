@@ -4273,19 +4273,11 @@ function App() {
     ]);
   }, []);
 
-  const handleIdeum07OpenRef200MwDesign = useCallback(() => {
-    pendingIdeum07NavStackRef.current =
-      ideum07NavStack.length > 0
-        ? [...ideum07NavStack]
-        : [
-            IDEUM07_NAV_ROOT,
-            IDEUM07_DATA_CENTERS_HUB,
-            IDEUM07_ADVANCED_ANALYSIS,
-            IDEUM07_REFERENCE_ARCHITECTURES,
-            IDEUM07_REF_200MW_SUBMENU,
-          ];
-    void loadDesignFromCatalog('ref200Mw');
-  }, [ideum07NavStack, loadDesignFromCatalog]);
+  /** 200 MW submenu tile → same Maingear presets as ref200Mw touch buttons (stay on ideum07). */
+  const handleIdeum07Ref200MwCommand = useCallback(
+    (command) => handleIdeumControlButtonClick({ command }),
+    [handleIdeumControlButtonClick],
+  );
 
   const handleIdeum07NavSelect = useCallback((cardId) => {
     const screenId = getIdeum07NavScreen(ideum07NavStack);
@@ -4530,6 +4522,11 @@ function App() {
     if (!isRef200MwShell) return;
     void sendIdeumClusterCommand('loadP2R18');
   }, [isRef200MwShell, currentConfigName, sendIdeumClusterCommand]);
+
+  useEffect(() => {
+    if (!isIdeum07 || ideum07NavScreen !== IDEUM07_REF_200MW_SUBMENU) return;
+    void sendIdeumClusterCommand('loadP2R18');
+  }, [isIdeum07, ideum07NavScreen, sendIdeumClusterCommand]);
 
   useEffect(() => {
     if (!isIdeum05 || !isIdeum05ControlsScreen(ideum05NavScreen)) return;
@@ -9724,7 +9721,7 @@ function App() {
               onIdeum07NavBack={handleIdeum07NavBack}
               onIdeum07HubOpenConfigurator={handleIdeum07HubOpenConfigurator}
               onIdeum07HubOpenReferenceArchitectures={handleIdeum07HubOpenReferenceArchitectures}
-              onIdeum07OpenRef200MwDesign={handleIdeum07OpenRef200MwDesign}
+              onIdeum07Ref200MwCommand={handleIdeum07Ref200MwCommand}
               onIdeum05Reset={handleIdeum05Reset}
               onIdeum05LiveRtds={handleIdeum05LiveRtds}
               ideumHdAeroViewCompact={ideumExpansionMirror.peripheralsCompact}

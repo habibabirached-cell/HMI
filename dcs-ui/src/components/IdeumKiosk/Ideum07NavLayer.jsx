@@ -287,7 +287,7 @@ export default function Ideum07NavLayer({
   showBack = false,
   onHubOpenConfigurator,
   onHubOpenReferenceArchitectures,
-  onOpenRef200MwDesign,
+  onIdeumRef200MwCommand,
   onIdeum05Reset,
   onIdeum05LiveRtds,
 }) {
@@ -382,7 +382,7 @@ export default function Ideum07NavLayer({
       <Ideum07Ref200MwSubmenu
         zoom={zoom}
         onBack={onBack}
-        onOpenRef200Design={onOpenRef200MwDesign}
+        onIdeumCommand={onIdeumRef200MwCommand}
         onReset={onIdeum05Reset}
         onLiveRtds={onIdeum05LiveRtds}
       />

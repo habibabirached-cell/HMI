@@ -21,6 +21,15 @@ const GRID_MODEL = `${process.env.PUBLIC_URL || ''}/models/GridConnected/model.g
 const FUEL_CELL_MODEL = `${process.env.PUBLIC_URL || ''}/models/FuelCell/model.gltf`;
 const RECIP_MODEL = `${process.env.PUBLIC_URL || ''}/models/recipEngine/model.gltf`;
 
+/** Same ideumCommand strings as ref200Mw.conf.json → P2R_18 presets on Maingear. */
+export const REF200_IDEUM_COMMANDS = {
+  baselineLm2500: 'add8Turbines',
+  addBess: 'addBessOnly',
+  addGfme: 'addGfmeOnly',
+  addBessAndGfme: 'addStatcomAndGFMe',
+  forcedPowerOscillation: 'add8Turbines',
+};
+
 function ref200SideTitleFontPx(zoom = 1) {
   const z = Math.max(Number(zoom) || 1, 0.01);
   return Math.max(12, Math.round(11 * 1.12 * z));
@@ -46,7 +55,8 @@ function SubmenuModelTile({
   disabled = false,
   dimmed = false,
   modelComingSoon = false,
-  onClick,
+  ideumCommand = null,
+  onIdeumCommand,
   className = '',
   zoom = 1,
 }) {
@@ -96,10 +106,12 @@ function SubmenuModelTile({
         disabled ? ' ideum-component-btn--nav-card-disabled' : ' ideum-component-btn--nav-card-featured'
       }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}${className ? ` ${className}` : ''}`}
       onClick={(e) => {
-        if (disabled) return;
+        if (disabled || modelComingSoon) return;
         e.preventDefault();
         e.stopPropagation();
-        onClick?.();
+        if (ideumCommand && onIdeumCommand) {
+          onIdeumCommand(ideumCommand);
+        }
       }}
       aria-label={label}
       aria-disabled={disabled || undefined}
@@ -210,7 +222,7 @@ function DampedToggleRow({ zoom }) {
 export default function Ideum07Ref200MwSubmenu({
   zoom = 1,
   onBack,
-  onOpenRef200Design,
+  onIdeumCommand,
   onReset,
   onLiveRtds,
 }) {
@@ -258,7 +270,8 @@ export default function Ideum07Ref200MwSubmenu({
               fitScale={0.68}
               modelYOffset={0.1}
               cameraPitchLift={0.52}
-              onClick={onOpenRef200Design}
+              ideumCommand={REF200_IDEUM_COMMANDS.baselineLm2500}
+              onIdeumCommand={onIdeumCommand}
             />
             <DampedToggleRow zoom={zoom} />
           </Ref200ColumnBucket>
@@ -283,7 +296,8 @@ export default function Ideum07Ref200MwSubmenu({
                   label="Add BESS"
                   modelUrl={BESS_MODEL}
                   fitScale={0.55}
-                  onClick={onOpenRef200Design}
+                  ideumCommand={REF200_IDEUM_COMMANDS.addBess}
+                  onIdeumCommand={onIdeumCommand}
                 />
                 <SubmenuModelTile
                   zoom={zoom}
@@ -291,7 +305,8 @@ export default function Ideum07Ref200MwSubmenu({
                   label="Add GFMe"
                   modelUrl={GFME_MODEL}
                   fitScale={0.58}
-                  onClick={onOpenRef200Design}
+                  ideumCommand={REF200_IDEUM_COMMANDS.addGfme}
+                  onIdeumCommand={onIdeumCommand}
                 />
               </div>
               <SubmenuModelTile
@@ -302,7 +317,8 @@ export default function Ideum07Ref200MwSubmenu({
                 modelUrlSecondary={GFME_MODEL}
                 fitScale={0.5}
                 fitScaleSecondary={0.48}
-                onClick={onOpenRef200Design}
+                ideumCommand={REF200_IDEUM_COMMANDS.addBessAndGfme}
+                onIdeumCommand={onIdeumCommand}
               />
               <SubmenuModelTile
                 zoom={zoom}
@@ -335,7 +351,8 @@ export default function Ideum07Ref200MwSubmenu({
                 label="Forced Power Oscillation"
                 modelUrl={RECIP_MODEL}
                 fitScale={0.55}
-                onClick={onOpenRef200Design}
+                ideumCommand={REF200_IDEUM_COMMANDS.forcedPowerOscillation}
+                onIdeumCommand={onIdeumCommand}
               />
               <SubmenuModelTile
                 zoom={zoom}
