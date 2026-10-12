@@ -3,6 +3,7 @@ import ConfInputPanel from './components/conf_InputPanel';
 import ConfIdeumInputPanel from './components/conf_IdeumInputPanel';
 import ConfWallQuadrantDisplay from './components/conf_WallQuadrantDisplay';
 import ConfIdeumPageTabs, { IDEUM_DATA_EXPLORATION_TAB_ID } from './components/conf_IdeumPageTabs';
+import DataVisPanel from './dataVis/DataVisPanel';
 import ConfTradeSpacePanel from './components/conf_TradeSpacePanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
 import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
@@ -411,11 +412,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_DATA_EXPLORATION_TAB_ID && (
-          <div
-            className="conf-results-panel conf-results-panel--filled conf-data-exploration-placeholder"
-            data-screen-region="data-exploration"
-            aria-label="Data Exploration (coming soon)"
-          />
+          <DataVisPanel />
         )}
         {!isIdeumMode && !isWallMode && (
           <ConfInputPanel

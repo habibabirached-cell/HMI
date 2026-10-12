@@ -4777,3 +4777,18 @@ body.conf-wall-bezel-dragging-both {
   padding: 10px 12px;
 }
 
+.conf-layout--ideum-trade .dataVis-root {
+  height: 100%;
+  min-height: 0;
+  border-radius: 12px;
+}
+
+.conf-layout--ideum-trade .dataVis-main {
+  flex: 1;
+  min-height: 0;
+}
+
+.conf-layout--ideum-trade .dataVis-tabPanel .dataVis-tableWrap {
+  max-height: none;
+}
+

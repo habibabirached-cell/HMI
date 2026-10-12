@@ -1,0 +1,418 @@
+/* Data exploration — matches configurator light theme + touch-friendly type */
+
+.dataVis-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  min-height: 0;
+  padding: 16px 20px 20px;
+  overflow: hidden;
+  color: var(--conf-text, #1f2933);
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.45;
+}
+
+.dataVis-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.dataVis-title {
+  margin: 0;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 700;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-subtitle {
+  margin: 0.2rem 0 0;
+  font-size: clamp(14px, 1.15vw, 17px);
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dataVis-tab {
+  border: 1px solid var(--conf-border, #d8dee6);
+  background: #fff;
+  color: var(--conf-text, #1f2933);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: clamp(14px, 1.15vw, 17px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dataVis-tab:hover {
+  border-color: var(--conf-evergreen, #00695c);
+  color: var(--conf-evergreen, #00695c);
+}
+
+.dataVis-tab--active {
+  border-color: var(--conf-evergreen, #00695c);
+  background: var(--conf-evergreen, #00695c);
+  color: #fff;
+}
+
+.dataVis-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataVis-filterBar {
+  flex-shrink: 0;
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: #f4f7fa;
+}
+
+.dataVis-filterBar__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.dataVis-filterBar__title {
+  font-weight: 700;
+  font-size: clamp(15px, 1.2vw, 18px);
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-filterBar__count {
+  font-size: clamp(14px, 1.1vw, 16px);
+  color: var(--conf-text-dim, #5f6b7a);
+  font-weight: 600;
+}
+
+.dataVis-filterBar__reset {
+  margin-left: auto;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--conf-border, #d8dee6);
+  color: var(--conf-text, #1f2933);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+}
+
+.dataVis-filterBar__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+.dataVis-filterBar__label {
+  display: block;
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 600;
+  color: var(--conf-text, #1f2933);
+  margin-bottom: 0.35rem;
+}
+
+.dataVis-filterBar__inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dataVis-filterBar__inputs input {
+  width: 100%;
+  max-width: 8rem;
+  background: #fff;
+  border: 1px solid var(--conf-border, #d8dee6);
+  color: var(--conf-text, #1f2933);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font-size: clamp(14px, 1.1vw, 16px);
+}
+
+.dataVis-tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.dataVis-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.dataVis-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 200px;
+}
+
+.dataVis-field--grow {
+  flex: 1;
+  min-width: 280px;
+}
+
+.dataVis-field__label {
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 600;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-field select,
+.dataVis-field input[type='text'] {
+  background: #fff;
+  border: 1px solid var(--conf-border, #d8dee6);
+  color: var(--conf-text, #1f2933);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font-size: clamp(14px, 1.1vw, 16px);
+}
+
+.dataVis-kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.dataVis-kpiCard {
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+}
+
+.dataVis-kpiCard__title {
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 600;
+  color: var(--conf-text-dim, #5f6b7a);
+  margin-bottom: 0.45rem;
+}
+
+.dataVis-kpiCard__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: clamp(14px, 1.1vw, 16px);
+  margin-top: 0.25rem;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-kpiCard__row strong {
+  font-weight: 700;
+  color: var(--conf-evergreen, #00695c);
+}
+
+.dataVis-kpiCard__value {
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 700;
+  color: var(--conf-evergreen, #00695c);
+}
+
+.dataVis-chartBlock {
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 12px;
+  padding: 0.5rem;
+  background: #fff;
+  flex: 1;
+  min-height: 360px;
+}
+
+.dataVis-sectionTitle {
+  margin: 0 0 0.5rem 0.35rem;
+  font-size: clamp(16px, 1.35vw, 20px);
+  font-weight: 700;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-tableWrap {
+  flex: 1;
+  min-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.dataVis-tableWrap--wide {
+  min-height: 400px;
+}
+
+.dataVis-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(14px, 1.15vw, 17px);
+}
+
+.dataVis-table th,
+.dataVis-table td {
+  border-bottom: 1px solid var(--conf-border, #d8dee6);
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-table th {
+  position: sticky;
+  top: 0;
+  background: var(--conf-evergreen, #00695c);
+  color: #fff;
+  font-weight: 700;
+  z-index: 1;
+}
+
+.dataVis-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.dataVis-table--compact td {
+  white-space: nowrap;
+}
+
+.dataVis-chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.dataVis-chip {
+  border: 1px solid var(--conf-border, #d8dee6);
+  background: #fff;
+  color: var(--conf-text, #1f2933);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dataVis-chip--on {
+  background: var(--conf-evergreen-light, #e0f2f1);
+  border-color: var(--conf-evergreen, #00695c);
+  color: var(--conf-evergreen, #00695c);
+}
+
+.dataVis-pager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 600;
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-pager button {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--conf-border, #d8dee6);
+  color: var(--conf-text, #1f2933);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.dataVis-pager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dataVis-primaryBtn {
+  cursor: pointer;
+  background: var(--conf-evergreen, #00695c);
+  border: 1px solid var(--conf-evergreen, #00695c);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 700;
+}
+
+.dataVis-linkBtn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--conf-evergreen, #00695c);
+  text-decoration: underline;
+  font-size: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+
+.dataVis-qualityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dataVis-qualityItem {
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--conf-border, #d8dee6);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: clamp(14px, 1.1vw, 16px);
+  color: var(--conf-text, #1f2933);
+}
+
+.dataVis-qualityItem--ok {
+  border-left: 4px solid #2e7d52;
+}
+
+.dataVis-qualityItem--warn {
+  border-left: 4px solid #c9a227;
+}
+
+.dataVis-qualityItem--error {
+  border-left: 4px solid #c0392b;
+}
+
+.dataVis-qualityItem--info {
+  border-left: 4px solid var(--conf-evergreen, #00695c);
+}
+
+.dataVis-qualityDetails {
+  margin: 0.25rem 0 0 1rem;
+  font-size: clamp(13px, 1.05vw, 15px);
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-muted {
+  color: var(--conf-text-dim, #5f6b7a);
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 500;
+}
+
+.dataVis-error {
+  color: #991b1b;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 600;
+}
+
+.dataVis-scenario {
+  font-size: clamp(14px, 1.1vw, 16px);
+  color: var(--conf-text-dim, #5f6b7a);
+  margin: 0;
+  font-weight: 500;
+}

@@ -17,8 +17,10 @@ from configurator.cluster_state import (
 )
 from configurator.conf_consolidated import generate_configurator_result
 from configurator.conf_schemas import ConfiguratorGenerateResponse, ConfiguratorInputs
+from configurator.dataVis.router import router as datavis_router
 
 router = APIRouter(prefix="/api/configurator", tags=["configurator"])
+router.include_router(datavis_router)
 
 
 async def _forward_cluster_submit_to_peer(peer_base: str, body: dict) -> dict:

@@ -1,0 +1,316 @@
+"""Business logic for dataVis endpoints."""
+
+from __future__ import annotations
+
+import math
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from configurator.dataVis.column_metadata import (
+    COLUMN_BY_KEY,
+    COLUMNS,
+    DEFAULT_HEATMAP_X,
+    DEFAULT_HEATMAP_Y,
+    DEFAULT_HEATMAP_Z,
+    DEFAULT_SCATTER_COLOR,
+    DEFAULT_SCATTER_X,
+    DEFAULT_SCATTER_Y,
+    PARALLEL_DEFAULT_DIMS,
+)
+from configurator.dataVis.filters import apply_filters
+from configurator.dataVis.loader import column_stats, load_waco_dataframe
+from configurator.dataVis.paths import DATAVIS_WACO_SHEET, DATAVIS_WACO_XLSX, SCENARIO_CONTEXT
+from configurator.dataVis.quality import run_quality_checks
+
+
+def _json_safe(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, (float, np.floating)):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return float(value)
+    if isinstance(value, (int, np.integer)):
+        return int(value)
+    if isinstance(value, (str, bool)):
+        return value
+    if pd.isna(value):
+        return None
+    return value
+
+
+def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
+    rows = df.to_dict(orient="records")
+    return [{k: _json_safe(v) for k, v in row.items()} for row in rows]
+
+
+def get_health() -> dict[str, Any]:
+    try:
+        df = load_waco_dataframe()
+        return {
+            "ok": True,
+            "rows": len(df),
+            "workbook": str(DATAVIS_WACO_XLSX.name),
+            "sheet": DATAVIS_WACO_SHEET,
+        }
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": str(exc)}
+
+
+def get_meta() -> dict[str, Any]:
+    df = load_waco_dataframe()
+    stats = [column_stats(df, c["key"]) for c in COLUMNS if c["key"] in df.columns]
+    extra_cols = [c for c in df.columns if c not in COLUMN_BY_KEY]
+    for col in extra_cols:
+        stats.append(column_stats(df, col))
+
+    return {
+        "scenario": SCENARIO_CONTEXT,
+        "row_count": len(df),
+        "column_count": len(df.columns),
+        "columns": COLUMNS,
+        "column_stats": stats,
+        "defaults": {
+            "scatter": {
+                "x": DEFAULT_SCATTER_X,
+                "y": DEFAULT_SCATTER_Y,
+                "color": DEFAULT_SCATTER_COLOR,
+            },
+            "heatmap": {
+                "x": DEFAULT_HEATMAP_X,
+                "y": DEFAULT_HEATMAP_Y,
+                "z": DEFAULT_HEATMAP_Z,
+            },
+            "parallel_dimensions": [
+                d for d in PARALLEL_DEFAULT_DIMS if d in df.columns
+            ],
+        },
+    }
+
+
+def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), filters)
+    n = len(df)
+    if n == 0:
+        return {"filtered_count": 0, "kpis": {}}
+
+    kpis: dict[str, Any] = {"filtered_count": n}
+
+    def q(col: str, stat: str):
+        if col not in df.columns:
+            return None
+        s = df[col].dropna()
+        if s.empty:
+            return None
+        if stat == "min":
+            return _json_safe(s.min())
+        if stat == "max":
+            return _json_safe(s.max())
+        if stat == "mean":
+            return _json_safe(s.mean())
+        if stat == "median":
+            return _json_safe(s.median())
+        return None
+
+    kpis["project_lcoe"] = {
+        "min": q("Project LCOE ($/MWh)", "min"),
+        "max": q("Project LCOE ($/MWh)", "max"),
+        "median": q("Project LCOE ($/MWh)", "median"),
+    }
+    kpis["load_compliance"] = {
+        "min": q("Year 1 Load Compliance (%)", "min"),
+        "max": q("Year 1 Load Compliance (%)", "max"),
+        "median": q("Year 1 Load Compliance (%)", "median"),
+    }
+    kpis["cfe"] = {
+        "min": q("Carbon Free Energy (%)", "min"),
+        "max": q("Carbon Free Energy (%)", "max"),
+        "median": q("Carbon Free Energy (%)", "median"),
+    }
+
+    if "Year 1 Load Compliance (%)" in df.columns:
+        kpis["pct_meeting_99_load"] = _json_safe(
+            100.0 * (df["Year 1 Load Compliance (%)"] >= 99).mean()
+        )
+
+    pareto_n = min(50, n)
+    if "Project LCOE ($/MWh)" in df.columns:
+        best = df.nsmallest(pareto_n, "Project LCOE ($/MWh)")
+        kpis["pareto_preview"] = _records(
+            best[
+                [
+                    c
+                    for c in [
+                        "dataVis_row_id",
+                        "Project LCOE ($/MWh)",
+                        "Year 1 Load Compliance (%)",
+                        "Solar AC Nameplate (MWac)",
+                        "Wind Nameplate (MWac)",
+                    ]
+                    if c in best.columns
+                ]
+            ]
+        )
+
+    return {"filtered_count": n, "kpis": kpis}
+
+
+def get_doe_summary(filters: list[dict] | None = None) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), filters)
+    input_cols = [
+        c["key"]
+        for c in COLUMNS
+        if c.get("role") == "input" and c["key"] in df.columns
+    ]
+    summaries = []
+    for col in input_cols:
+        s = df[col].dropna()
+        uniq = int(s.nunique())
+        summaries.append(
+            {
+                "column": col,
+                "unique_values": uniq,
+                "min": _json_safe(s.min()) if not s.empty else None,
+                "max": _json_safe(s.max()) if not s.empty else None,
+                "sample_values": sorted(s.unique().tolist())[:12]
+                if uniq <= 12
+                else None,
+            }
+        )
+    return {"filtered_count": len(df), "inputs": summaries}
+
+
+def get_rows(req: dict) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    total = len(df)
+    sort_col = req.get("sort_column")
+    if sort_col and sort_col in df.columns:
+        df = df.sort_values(sort_col, ascending=bool(req.get("sort_asc", True)))
+    offset = max(0, int(req.get("offset", 0)))
+    limit = min(500, max(1, int(req.get("limit", 100))))
+    slice_df = df.iloc[offset : offset + limit]
+    cols = req.get("columns")
+    if cols:
+        keep = [c for c in cols if c in slice_df.columns]
+        if "dataVis_row_id" not in keep and "dataVis_row_id" in slice_df.columns:
+            keep = ["dataVis_row_id", *keep]
+        slice_df = slice_df[keep]
+    return {"total": total, "offset": offset, "limit": limit, "rows": _records(slice_df)}
+
+
+def build_scatter(req: dict) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    x, y = req["x"], req["y"]
+    for col in (x, y):
+        if col not in df.columns:
+            raise ValueError(f"Unknown column: {col}")
+    color = req.get("color")
+    size = req.get("size")
+    max_points = int(req.get("max_points", 5000))
+    if len(df) > max_points:
+        df = df.sample(n=max_points, random_state=42)
+
+    payload: dict[str, Any] = {
+        "count": len(df),
+        "x": df[x].tolist(),
+        "y": df[y].tolist(),
+        "x_label": x,
+        "y_label": y,
+        "row_ids": df["dataVis_row_id"].tolist()
+        if "dataVis_row_id" in df.columns
+        else list(range(len(df))),
+    }
+    if color and color in df.columns:
+        payload["color"] = df[color].tolist()
+        payload["color_label"] = color
+    if size and size in df.columns:
+        payload["size"] = df[size].tolist()
+        payload["size_label"] = size
+    return payload
+
+
+def build_heatmap(req: dict) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    x, y, z = req["x"], req["y"], req["z"]
+    for col in (x, y, z):
+        if col not in df.columns:
+            raise ValueError(f"Unknown column: {col}")
+    sub = df[[x, y, z]].dropna()
+    if sub.empty:
+        return {"x": [], "y": [], "z": [], "x_label": x, "y_label": y, "z_label": z}
+
+    x_bins = int(req.get("x_bins", 25))
+    y_bins = int(req.get("y_bins", 25))
+    agg = req.get("agg", "mean")
+
+    x_vals = sub[x].astype(float)
+    y_vals = sub[y].astype(float)
+    try:
+        x_cat = pd.cut(x_vals, bins=min(x_bins, max(3, x_vals.nunique())), duplicates="drop")
+        y_cat = pd.cut(y_vals, bins=min(y_bins, max(3, y_vals.nunique())), duplicates="drop")
+        grouped = sub.assign(_xb=x_cat, _yb=y_cat).groupby(["_yb", "_xb"], observed=True)[z]
+    except ValueError:
+        grouped = sub.groupby([y, x])[z]
+
+    if agg == "count":
+        pivot = grouped.count().unstack(fill_value=np.nan)
+    elif agg == "median":
+        pivot = grouped.median().unstack(fill_value=np.nan)
+    elif agg == "min":
+        pivot = grouped.min().unstack(fill_value=np.nan)
+    elif agg == "max":
+        pivot = grouped.max().unstack(fill_value=np.nan)
+    else:
+        pivot = grouped.mean().unstack(fill_value=np.nan)
+
+    x_labels = [str(c) for c in pivot.columns]
+    y_labels = [str(i) for i in pivot.index]
+    z_grid = pivot.values.tolist()
+    z_clean = [[_json_safe(v) for v in row] for row in z_grid]
+    return {
+        "x": x_labels,
+        "y": y_labels,
+        "z": z_clean,
+        "x_label": x,
+        "y_label": y,
+        "z_label": z,
+        "agg": agg,
+    }
+
+
+def build_parallel(req: dict) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    dims = [d for d in req.get("dimensions", []) if d in df.columns]
+    if not dims:
+        raise ValueError("No valid parallel dimensions")
+    max_rows = int(req.get("max_rows", 2000))
+    if len(df) > max_rows:
+        df = df.sample(n=max_rows, random_state=42)
+    color = req.get("color")
+    out: dict[str, Any] = {
+        "dimensions": dims,
+        "values": {d: df[d].tolist() for d in dims},
+        "row_ids": df["dataVis_row_id"].tolist()
+        if "dataVis_row_id" in df.columns
+        else list(range(len(df))),
+    }
+    if color and color in df.columns:
+        out["color"] = df[color].tolist()
+        out["color_label"] = color
+    return out
+
+
+def get_quality(filters: list[dict] | None = None) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), filters)
+    return {"filtered_count": len(df), "checks": run_quality_checks(df)}
+
+
+def compare_rows(row_ids: list[int]) -> dict[str, Any]:
+    df = load_waco_dataframe()
+    if "dataVis_row_id" not in df.columns:
+        raise ValueError("Row ids not available")
+    sub = df[df["dataVis_row_id"].isin(row_ids)]
+    ordered = sub.set_index("dataVis_row_id").loc[row_ids].reset_index()
+    return {"rows": _records(ordered)}
