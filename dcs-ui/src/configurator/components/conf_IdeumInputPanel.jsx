@@ -9,9 +9,10 @@ import {
   GRID_CONNECTION_MODES,
 } from '../../configuratorData/conf_constants';
 import {
-  createDefaultTechnologyPreferences,
-  technologyIdsFromPreferences,
-} from '../utils/conf_technologyPreferences';
+  createDefaultTechnologyCapex,
+  ideumConfiguratorTechnologyIds,
+  normalizeTechnologyCapex,
+} from '../utils/conf_technologyCapex';
 import { formatPercent } from '../utils/conf_formatters';
 
 const RELIABILITY_SLIDER_SCALE = 10000;
@@ -184,10 +185,10 @@ export default function ConfIdeumInputPanel({
     }
   }, [inputs.gridConnectionMode]);
 
-  const handlePreferencesChange = (technologyPreferences) => {
+  const handleCapexChange = (technologyCapex) => {
     update({
-      technologyPreferences,
-      technologies: technologyIdsFromPreferences(technologyPreferences),
+      technologyCapex: normalizeTechnologyCapex(technologyCapex),
+      technologies: ideumConfiguratorTechnologyIds(),
     });
   };
 
@@ -268,8 +269,8 @@ export default function ConfIdeumInputPanel({
       <div className="conf-ideum-grid">
         <section className="conf-ideum-block conf-ideum-block--tech">
           <ConfIdeumTechnologyHub
-            technologyPreferences={inputs.technologyPreferences || createDefaultTechnologyPreferences()}
-            onPreferencesChange={handlePreferencesChange}
+            technologyCapex={inputs.technologyCapex || createDefaultTechnologyCapex()}
+            onCapexChange={handleCapexChange}
             loadEditor={loadEditor}
             gridEditor={gridEditor}
             corridor={corridor}

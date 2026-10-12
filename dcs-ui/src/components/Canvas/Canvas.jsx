@@ -11,6 +11,7 @@ import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
 import Ideum07NavLayer from '../IdeumKiosk/Ideum07NavLayer';
+import Ideum08NavLayer from '../IdeumKiosk/Ideum08NavLayer';
 import Ideum05BackButton from '../IdeumKiosk/Ideum05BackButton';
 import Ideum05ResetButton from '../IdeumKiosk/Ideum05ResetButton';
 import Ideum05LiveRtdsButton from '../IdeumKiosk/Ideum05LiveRtdsButton';
@@ -318,6 +319,7 @@ const Canvas = forwardRef(({
   onIdeumSimulationSpeedClick,
   isIdeum05 = false,
   isIdeum07 = false,
+  isIdeum08 = false,
   ideum05ShowControls = true,
   ideum07ShowControls = true,
   ideum05OverlayMode = false,
@@ -333,6 +335,7 @@ const Canvas = forwardRef(({
   onIdeum07HubOpenConfigurator,
   onIdeum07HubOpenReferenceArchitectures,
   onIdeum07Ref200MwCommand,
+  onIdeumKioskHome,
   onIdeum05Reset,
   onIdeum05LiveRtds,
   ideumHdAeroViewCompact = true,
@@ -573,8 +576,9 @@ const Canvas = forwardRef(({
       if (!ideumKioskMode) return null;
       if (isIdeum07 && !ideum07ShowControls) {
         if (!primaryPane) return null;
+        const KioskNavLayer = isIdeum08 ? Ideum08NavLayer : Ideum07NavLayer;
         return (
-          <Ideum07NavLayer
+          <KioskNavLayer
             screenId={ideum07NavScreen}
             pan={panePan}
             zoom={zoom}
@@ -585,8 +589,11 @@ const Canvas = forwardRef(({
             onHubOpenConfigurator={onIdeum07HubOpenConfigurator}
             onHubOpenReferenceArchitectures={onIdeum07HubOpenReferenceArchitectures}
             onIdeumRef200MwCommand={onIdeum07Ref200MwCommand}
+            onHome={onIdeumKioskHome}
             onIdeum05Reset={onIdeum05Reset}
             onIdeum05LiveRtds={onIdeum05LiveRtds}
+            ideumExpansionMirror={ideumExpansionMirror}
+            onIdeumExpansionToggle={onIdeumExpansionToggle}
           />
         );
       }
@@ -684,6 +691,7 @@ const Canvas = forwardRef(({
       ideumKioskMode,
       isIdeum05,
       isIdeum07,
+      isIdeum08,
       ideum05ShowControls,
       ideum07ShowControls,
       ideum05OverlayMode,
@@ -702,13 +710,14 @@ const Canvas = forwardRef(({
       onIdeum07HubOpenConfigurator,
       onIdeum07HubOpenReferenceArchitectures,
       onIdeum07Ref200MwCommand,
+      onIdeumKioskHome,
+      onIdeumExpansionToggle,
       onIdeum05Reset,
       onIdeum05LiveRtds,
       ideumHdAeroViewCompact,
       onIdeumHdAeroViewToggle,
       onIdeumControlButtonClick,
       ideumExpansionMirror,
-      onIdeumExpansionToggle,
       ideumSimulationMirror,
       onIdeumSimulationClick,
       ideumSimulateMirror,

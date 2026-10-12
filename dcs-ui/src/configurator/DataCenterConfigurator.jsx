@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ConfInputPanel from './components/conf_InputPanel';
 import ConfIdeumInputPanel from './components/conf_IdeumInputPanel';
 import ConfWallQuadrantDisplay from './components/conf_WallQuadrantDisplay';
-import ConfIdeumPageTabs from './components/conf_IdeumPageTabs';
+import ConfIdeumPageTabs, { IDEUM_DATA_EXPLORATION_TAB_ID } from './components/conf_IdeumPageTabs';
 import ConfTradeSpacePanel from './components/conf_TradeSpacePanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
 import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
@@ -407,8 +407,15 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             generateLabel="CONFIGURE"
           />
         )}
-        {!isWallMode && isIdeumMode && ideumTab !== 'configure' && (
+        {!isWallMode && isIdeumMode && ideumTab !== 'configure' && ideumTab !== IDEUM_DATA_EXPLORATION_TAB_ID && (
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
+        )}
+        {!isWallMode && isIdeumMode && ideumTab === IDEUM_DATA_EXPLORATION_TAB_ID && (
+          <div
+            className="conf-results-panel conf-results-panel--filled conf-data-exploration-placeholder"
+            data-screen-region="data-exploration"
+            aria-label="Data Exploration (coming soon)"
+          />
         )}
         {!isIdeumMode && !isWallMode && (
           <ConfInputPanel

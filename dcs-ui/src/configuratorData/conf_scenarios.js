@@ -1,9 +1,10 @@
 /** Example preset scenarios for live demonstrations. */
 
+import { createDefaultTechnologyPreferences } from '../configurator/utils/conf_technologyPreferences';
 import {
-  createDefaultTechnologyPreferences,
-  technologyIdsFromPreferences,
-} from '../configurator/utils/conf_technologyPreferences';
+  createDefaultTechnologyCapex,
+  ideumConfiguratorTechnologyIds,
+} from '../configurator/utils/conf_technologyCapex';
 
 const DEFAULT_TECH_PREFS = createDefaultTechnologyPreferences();
 
@@ -178,5 +179,6 @@ export const CONFIGURATOR_DEFAULT_INPUTS = {
   optimizationObjective: 'lowestCost',
   technologyMinPercent: {},
   technologyPreferences: DEFAULT_TECH_PREFS,
-  technologies: technologyIdsFromPreferences(DEFAULT_TECH_PREFS),
+  technologyCapex: createDefaultTechnologyCapex(),
+  technologies: ideumConfiguratorTechnologyIds(),
 };

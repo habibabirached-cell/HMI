@@ -1,0 +1,147 @@
+/** Unit CAPEX defaults for Ideum configurator hub (not yet wired to optimizer). */
+
+export const IDEUM_CAPEX_TECH_IDS = [
+  'solar',
+  'wind',
+  'heavyDutyGT',
+  'aeroderivativeGT',
+  'battery',
+];
+
+export const IDEUM_CAPEX_DISABLED_TECH_IDS = ['recipEngine', 'nuclear', 'fuelCell'];
+
+export const HD_GT_CYCLE_MODE = {
+  COMBINED: 'combined',
+  SIMPLE: 'simple',
+};
+
+/** Installed/EPC-style indicative defaults (global, not location-adjusted). */
+export const HD_GT_CAPEX_DEFAULT_BY_MODE = {
+  [HD_GT_CYCLE_MODE.COMBINED]: 1000,
+  [HD_GT_CYCLE_MODE.SIMPLE]: 836,
+};
+
+export const TECH_CAPEX_FIELD_DEFAULTS = {
+  solar: { capexPerKwAc: 1500 },
+  wind: { capexPerKw: 1400 },
+  heavyDutyGT: {
+    cycleMode: HD_GT_CYCLE_MODE.COMBINED,
+    capexPerKw: HD_GT_CAPEX_DEFAULT_BY_MODE[HD_GT_CYCLE_MODE.COMBINED],
+  },
+  aeroderivativeGT: { capexPerKw: 1200 },
+  battery: { capexPerKw: 372, capexPerKwh: 334 },
+};
+
+export function createDefaultTechnologyCapex() {
+  return JSON.parse(JSON.stringify(TECH_CAPEX_FIELD_DEFAULTS));
+}
+
+function parsePositiveNumber(value, fallback) {
+  if (value === '' || value == null) return fallback;
+  const n = Number(String(value).replace(/,/g, ''));
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return n;
+}
+
+export function normalizeTechnologyCapex(raw) {
+  const base = createDefaultTechnologyCapex();
+  if (!raw || typeof raw !== 'object') return base;
+
+  base.solar.capexPerKwAc = parsePositiveNumber(
+    raw.solar?.capexPerKwAc,
+    base.solar.capexPerKwAc,
+  );
+  base.wind.capexPerKw = parsePositiveNumber(raw.wind?.capexPerKw, base.wind.capexPerKw);
+  base.aeroderivativeGT.capexPerKw = parsePositiveNumber(
+    raw.aeroderivativeGT?.capexPerKw,
+    base.aeroderivativeGT.capexPerKw,
+  );
+  base.battery.capexPerKw = parsePositiveNumber(
+    raw.battery?.capexPerKw,
+    base.battery.capexPerKw,
+  );
+  base.battery.capexPerKwh = parsePositiveNumber(
+    raw.battery?.capexPerKwh,
+    base.battery.capexPerKwh,
+  );
+
+  const mode = raw.heavyDutyGT?.cycleMode === HD_GT_CYCLE_MODE.SIMPLE
+    ? HD_GT_CYCLE_MODE.SIMPLE
+    : HD_GT_CYCLE_MODE.COMBINED;
+  base.heavyDutyGT.cycleMode = mode;
+  const hdDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[mode];
+  base.heavyDutyGT.capexPerKw = parsePositiveNumber(
+    raw.heavyDutyGT?.capexPerKw,
+    hdDefault,
+  );
+
+  return base;
+}
+
+export function setTechnologyCapexField(capex, techId, field, value) {
+  const next = normalizeTechnologyCapex(capex);
+  if (!next[techId]) return next;
+  next[techId] = { ...next[techId], [field]: value };
+  return normalizeTechnologyCapex(next);
+}
+
+export function setHeavyDutyCycleMode(capex, mode) {
+  const next = normalizeTechnologyCapex(capex);
+  const resolved = mode === HD_GT_CYCLE_MODE.SIMPLE
+    ? HD_GT_CYCLE_MODE.SIMPLE
+    : HD_GT_CYCLE_MODE.COMBINED;
+  const prevDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[next.heavyDutyGT.cycleMode];
+  const nextDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[resolved];
+  const wasDefault = next.heavyDutyGT.capexPerKw === prevDefault;
+  next.heavyDutyGT.cycleMode = resolved;
+  if (wasDefault) {
+    next.heavyDutyGT.capexPerKw = nextDefault;
+  }
+  return normalizeTechnologyCapex(next);
+}
+
+export function formatCapexDisplay(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '';
+  return Math.round(n).toLocaleString('en-US');
+}
+
+/** Touch-table wheel ranges (installed unit CAPEX). */
+export const CAPEX_WHEEL_PRESETS = {
+  solarPerKwAc: { min: 800, max: 2400, step: 25 },
+  generationPerKw: { min: 500, max: 2200, step: 25 },
+  bessPowerPerKw: { min: 200, max: 600, step: 5 },
+  bessEnergyPerKwh: { min: 100, max: 500, step: 5 },
+};
+
+export function buildCapexWheelOptions({ min, max, step }) {
+  const lo = Number(min);
+  const hi = Number(max);
+  const st = Number(step);
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || !Number.isFinite(st) || st <= 0) return [];
+  const out = [];
+  for (let v = lo; v <= hi + st * 0.001; v += st) {
+    out.push(Math.round(v * 1000) / 1000);
+  }
+  return out;
+}
+
+export function nearestCapexWheelOption(value, options) {
+  if (!options?.length) return Number(value);
+  const n = Number(value);
+  if (!Number.isFinite(n)) return options[0];
+  let best = options[0];
+  let bestDist = Math.abs(best - n);
+  for (let i = 1; i < options.length; i += 1) {
+    const d = Math.abs(options[i] - n);
+    if (d < bestDist) {
+      best = options[i];
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+export function ideumConfiguratorTechnologyIds() {
+  return [...IDEUM_CAPEX_TECH_IDS];
+}

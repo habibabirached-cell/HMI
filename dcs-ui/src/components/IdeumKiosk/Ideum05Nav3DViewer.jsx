@@ -43,7 +43,13 @@ function frameObject(
   THREE,
   object,
   camera,
-  { fitScale = 0.92, modelYOffset = 0, cameraPitchLift = DEFAULT_CAMERA_PITCH_LIFT, shiftUP = 0 } = {},
+  {
+    fitScale = 0.92,
+    modelYOffset = 0,
+    cameraPitchLift = DEFAULT_CAMERA_PITCH_LIFT,
+    shiftUP = 0,
+    shiftScreenX = 0,
+  } = {},
 ) {
   const box = new THREE.Box3().setFromObject(object);
   const center = box.getCenter(new THREE.Vector3());
@@ -73,6 +79,13 @@ function frameObject(
     object.updateMatrixWorld(true);
   }
 
+  // Screen-space horizontal shift (+ = model appears farther right on screen).
+  if (shiftScreenX) {
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    object.position.addScaledVector(right, maxDim * shiftScreenX);
+    object.updateMatrixWorld(true);
+  }
+
   camera.near = Math.max(maxDim / 1000, 0.001);
   camera.far = Math.max(maxDim * 20, 100);
   camera.updateProjectionMatrix();
@@ -93,6 +106,7 @@ export default function Ideum05Nav3DViewer({
   fitScale = 0.92,
   modelYOffset = 0,
   shiftUP = 0,
+  shiftScreenX = 0,
   cameraPitchLift = DEFAULT_CAMERA_PITCH_LIFT,
   rotationMode = 'turntable',
   pendulumAmplitudeDeg = DEFAULT_PENDULUM_AMPLITUDE_DEG,
@@ -201,6 +215,7 @@ export default function Ideum05Nav3DViewer({
               modelYOffset,
               cameraPitchLift,
               shiftUP,
+              shiftScreenX,
             });
             baseCameraPos = camera.position.clone();
             baseLookAt = new THREE.Vector3(0, frameMeta.targetY, 0);
@@ -344,6 +359,7 @@ export default function Ideum05Nav3DViewer({
     fitScale,
     modelYOffset,
     shiftUP,
+    shiftScreenX,
     cameraPitchLift,
     rotationMode,
     pendulumAmplitudeDeg,

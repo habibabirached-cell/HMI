@@ -21,7 +21,7 @@ import '../styles/SaveLoadDialog.css';
 import { API_BASE_URL } from '../apiConfig';
 
 /** Curated quick-load entries (designs/ folder names). Shown under Active Designs. */
-const ACTIVE_DESIGN_CATALOG_DIRS = ['ideum05', 'ideum07'];
+const ACTIVE_DESIGN_CATALOG_DIRS = ['ideum05', 'ideum07', 'ideum08'];
 
 function isActiveFeaturedDesign(config) {
   const dir = String(config?.design_dir || '').trim().toLowerCase();

@@ -8,13 +8,17 @@ import { getBess3DModelUrl } from '../../utils/bess3dLayout';
 import { getGasTurbine3DModelUrl } from '../../utils/gasTurbine3dLayout';
 import { IDEUM05_NAV_MODEL_URLS } from '../../utils/ideum05Navigation';
 import {
-  countElevatedTechnologies,
-  isTechnologyElevated,
-  normalizeTechnologyPreferences,
-  setTechnologyPreference,
-  TECH_PREFERENCE,
-} from '../utils/conf_technologyPreferences';
+  CAPEX_WHEEL_PRESETS,
+  HD_GT_CYCLE_MODE,
+  IDEUM_CAPEX_DISABLED_TECH_IDS,
+  normalizeTechnologyCapex,
+  setHeavyDutyCycleMode,
+  setTechnologyCapexField,
+} from '../utils/conf_technologyCapex';
+import ConfCapexValueField from './conf_CapexValueField';
 import { useConf3d } from '../utils/conf_3dContext';
+
+const DISABLED_HUB_TECH = new Set(IDEUM_CAPEX_DISABLED_TECH_IDS);
 
 const HUB_MODEL_URLS = {
   battery: getBess3DModelUrl(),
@@ -24,6 +28,7 @@ const HUB_MODEL_URLS = {
   solar: `${process.env.PUBLIC_URL || ''}/models/solar/model.gltf`,
   fuelCell: `${process.env.PUBLIC_URL || ''}/models/FuelCell/model.gltf`,
   recipEngine: `${process.env.PUBLIC_URL || ''}/models/recipEngine/model.gltf`,
+  nuclearPhoto: `${process.env.PUBLIC_URL || ''}/models/conf-nuclear-bwrx300.jpg`,
 };
 
 /** Hub card metadata — model3d for in-card WebGL previews where available. */
@@ -61,14 +66,6 @@ const IDEUM_HUB_TECH_META = {
     model3d: 'wind',
     model3dUrl: HUB_MODEL_URLS.wind,
   },
-  fuelCell: {
-    slot: 'right-bottom',
-    category: 'Fuel Cell',
-    modelName: 'Solid-oxide FC',
-    model3d: 'turbine',
-    model3dUrl: HUB_MODEL_URLS.fuelCell,
-    model3dNeutralLight: true,
-  },
   recipEngine: {
     slot: 'bottom',
     category: 'Reciprocating Engine',
@@ -77,13 +74,22 @@ const IDEUM_HUB_TECH_META = {
     model3dUrl: HUB_MODEL_URLS.recipEngine,
     model3dCameraDist: 1.0,
   },
+  nuclear: {
+    slot: 'bottom-mid',
+    category: 'Nuclear Energy',
+    modelName: 'BWRX-300 SMR',
+    previewImageUrl: HUB_MODEL_URLS.nuclearPhoto,
+    previewImageAlt: 'GE Hitachi BWRX-300 small modular reactor site',
+  },
+  fuelCell: {
+    slot: 'right-bottom',
+    category: 'Fuel Cell',
+    modelName: 'Solid-oxide FC',
+    model3d: 'turbine',
+    model3dUrl: HUB_MODEL_URLS.fuelCell,
+    model3dNeutralLight: true,
+  },
 };
-
-const PREF_ROWS = [
-  { key: TECH_PREFERENCE.MUST, label: 'Must have' },
-  { key: TECH_PREFERENCE.SHOULD, label: 'Should have' },
-  { key: TECH_PREFERENCE.IF_NECESSARY, label: 'If necessary', locked: true },
-];
 
 const SLOT_GRID_AREAS = {
   'left-top': 'lt',
@@ -103,14 +109,119 @@ const TECH_ICONS = {
   battery: '🔋',
   fuelcell: '⚡',
   recip: '▣',
+  nuclear: '☢',
 };
 
-const BOTTOM_TIER_SLOTS = new Set(['left-bottom', 'bottom', 'right-bottom']);
-const BOTTOM_TIER_ORDER = ['left-bottom', 'bottom', 'right-bottom'];
-const PULSE_TRAVEL_MS = 1100;
-const PULSE_GAP_MS = 280;
-const PULSE_REPEAT_COUNT = 5;
-const CENTER_FLASH_MS = 480;
+const BOTTOM_TIER_SLOTS = new Set(['left-bottom', 'bottom', 'bottom-mid', 'right-bottom']);
+const BOTTOM_TIER_ORDER = ['left-bottom', 'bottom', 'bottom-mid', 'right-bottom'];
+
+const COMING_SOON_RIBBONS = {
+  nuclear: 'Coming Q4 2027',
+  fuelCell: 'Coming Q2 2027',
+};
+function TechCapexPanel({ techId, capex, onCapexChange }) {
+  const patch = useCallback((field, raw) => {
+    onCapexChange(setTechnologyCapexField(capex, techId, field, raw));
+  }, [capex, onCapexChange, techId]);
+
+  if (techId === 'solar') {
+    return (
+      <ConfCapexValueField
+        id="conf-capex-solar"
+        label="Installed CAPEX"
+        unit="/ kW AC"
+        value={capex.solar.capexPerKwAc}
+        wheelPreset={CAPEX_WHEEL_PRESETS.solarPerKwAc}
+        onCommit={(v) => patch('capexPerKwAc', v)}
+      />
+    );
+  }
+  if (techId === 'wind') {
+    return (
+      <ConfCapexValueField
+        id="conf-capex-wind"
+        label="Installed CAPEX"
+        unit="/ kW"
+        value={capex.wind.capexPerKw}
+        wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
+        onCommit={(v) => patch('capexPerKw', v)}
+      />
+    );
+  }
+  if (techId === 'aeroderivativeGT') {
+    return (
+      <ConfCapexValueField
+        id="conf-capex-aero"
+        label="Installed CAPEX"
+        unit="/ kW"
+        value={capex.aeroderivativeGT.capexPerKw}
+        wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
+        onCommit={(v) => patch('capexPerKw', v)}
+      />
+    );
+  }
+  if (techId === 'heavyDutyGT') {
+    const isSimple = capex.heavyDutyGT.cycleMode === HD_GT_CYCLE_MODE.SIMPLE;
+    return (
+      <div className="conf-ideum-capex-panel conf-ideum-capex-panel--hd">
+        <div
+          className={`conf-ideum-capex-vswitch${isSimple ? ' conf-ideum-capex-vswitch--simple' : ''}`}
+          role="group"
+          aria-label="Heavy duty gas turbine cycle type"
+        >
+          <span className="conf-ideum-capex-vswitch__thumb" aria-hidden="true" />
+          <button
+            type="button"
+            className="conf-ideum-capex-vswitch__option"
+            aria-pressed={!isSimple}
+            onClick={() => onCapexChange(setHeavyDutyCycleMode(capex, HD_GT_CYCLE_MODE.COMBINED))}
+          >
+            Combined cycle
+          </button>
+          <button
+            type="button"
+            className="conf-ideum-capex-vswitch__option"
+            aria-pressed={isSimple}
+            onClick={() => onCapexChange(setHeavyDutyCycleMode(capex, HD_GT_CYCLE_MODE.SIMPLE))}
+          >
+            Simple cycle
+          </button>
+        </div>
+        <ConfCapexValueField
+          id="conf-capex-hd"
+          label="Installed CAPEX"
+          unit="/ kW"
+          value={capex.heavyDutyGT.capexPerKw}
+          wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
+          onCommit={(v) => patch('capexPerKw', v)}
+        />
+      </div>
+    );
+  }
+  if (techId === 'battery') {
+    return (
+      <div className="conf-ideum-capex-panel conf-ideum-capex-panel--bess">
+        <ConfCapexValueField
+          id="conf-capex-bess-kw"
+          label="Power"
+          unit="/ kW"
+          value={capex.battery.capexPerKw}
+          wheelPreset={CAPEX_WHEEL_PRESETS.bessPowerPerKw}
+          onCommit={(v) => patch('capexPerKw', v)}
+        />
+        <ConfCapexValueField
+          id="conf-capex-bess-kwh"
+          label="Energy"
+          unit="/ kWh"
+          value={capex.battery.capexPerKwh}
+          wheelPreset={CAPEX_WHEEL_PRESETS.bessEnergyPerKwh}
+          onCommit={(v) => patch('capexPerKwh', v)}
+        />
+      </div>
+    );
+  }
+  return null;
+}
 
 function TechPlaceholderArt({ icon }) {
   return (
@@ -139,6 +250,19 @@ function TechCard3DPreview({ tech, meta }) {
   }, []);
 
   const ready = enable3d && size.w > 24 && size.h > 24;
+
+  if (meta.previewImageUrl) {
+    return (
+      <div ref={hostRef} className="conf-ideum-tech-card__media-viewer conf-ideum-tech-card__media-viewer--photo">
+        <img
+          className="conf-ideum-tech-card__photo"
+          src={meta.previewImageUrl}
+          alt={meta.previewImageAlt || tech.label}
+          draggable={false}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={hostRef} className="conf-ideum-tech-card__media-viewer">
@@ -171,27 +295,11 @@ function TechCard3DPreview({ tech, meta }) {
 function HubTechCard({
   tech,
   meta,
-  preference,
-  elevated,
-  integrating,
+  capex,
+  disabled,
   cardRef,
-  onPreferenceClick,
+  onCapexChange,
 }) {
-  const [popKey, setPopKey] = useState(null);
-  const popTimerRef = useRef(null);
-
-  useEffect(() => () => {
-    if (popTimerRef.current) window.clearTimeout(popTimerRef.current);
-  }, []);
-
-  const handlePrefClick = useCallback((rowKey, isLocked) => {
-    if (isLocked) return;
-    setPopKey(rowKey);
-    if (popTimerRef.current) window.clearTimeout(popTimerRef.current);
-    popTimerRef.current = window.setTimeout(() => setPopKey(null), 360);
-    onPreferenceClick(tech.id, rowKey);
-  }, [onPreferenceClick, tech.id]);
-
   const gridArea = BOTTOM_TIER_SLOTS.has(meta.slot)
     ? undefined
     : SLOT_GRID_AREAS[meta.slot];
@@ -199,8 +307,9 @@ function HubTechCard({
   return (
     <article
       ref={cardRef}
-      className={`conf-ideum-tech-card conf-ideum-tech-card--${meta.slot}${elevated ? ' conf-ideum-tech-card--selected' : ''}${integrating ? ' conf-ideum-tech-card--integrating' : ''}`}
+      className={`conf-ideum-tech-card conf-ideum-tech-card--${meta.slot}${tech.id === 'fuelCell' ? ' conf-ideum-tech-card--fuel-cell' : ''}${tech.id === 'nuclear' ? ' conf-ideum-tech-card--nuclear' : ''}${disabled ? ' conf-ideum-tech-card--disabled' : ''}`}
       style={gridArea ? { gridArea } : undefined}
+      aria-disabled={disabled || undefined}
     >
       <div className="conf-ideum-tech-card__head">
         <div className="conf-ideum-tech-card__titles">
@@ -211,30 +320,25 @@ function HubTechCard({
             ) : null}
           </span>
         </div>
-        {elevated && <span className="conf-ideum-tech-card__integrated-badge">Integrated</span>}
       </div>
 
       <div className="conf-ideum-tech-card__body">
-        <div className="conf-ideum-tech-card__prefs" role="group" aria-label={`${meta.category} priority`}>
-          {PREF_ROWS.map((row) => {
-            const checked = preference === row.key;
-            const isLocked = row.locked === true;
-            return (
-              <button
-                key={row.key}
-                type="button"
-                className={`conf-ideum-tech-pref${checked ? ' conf-ideum-tech-pref--checked' : ''}${isLocked ? ' conf-ideum-tech-pref--locked' : ''}${popKey === row.key ? ' conf-ideum-tech-pref--pop' : ''}`}
-                aria-pressed={checked}
-                disabled={isLocked}
-                onClick={() => handlePrefClick(row.key, isLocked)}
-              >
-                <span className="conf-ideum-tech-pref__box" aria-hidden="true">
-                  {checked ? '✓' : ''}
-                </span>
-                <span className="conf-ideum-tech-pref__label">{row.label}</span>
-              </button>
-            );
-          })}
+        {COMING_SOON_RIBBONS[tech.id] && (
+          <span className="conf-ideum-tech-card__ribbon" aria-hidden="true">
+            {COMING_SOON_RIBBONS[tech.id]}
+          </span>
+        )}
+        <div
+          className={`conf-ideum-tech-card__capex${disabled ? ' conf-ideum-tech-card__capex--empty' : ''}`}
+          aria-label={disabled ? `${meta.category} (coming soon)` : `${meta.category} CAPEX`}
+        >
+          {!disabled && capex && onCapexChange ? (
+            <TechCapexPanel
+              techId={tech.id}
+              capex={capex}
+              onCapexChange={onCapexChange}
+            />
+          ) : null}
         </div>
         <div className="conf-ideum-tech-card__media">
           <TechCard3DPreview tech={tech} meta={meta} />
@@ -244,7 +348,7 @@ function HubTechCard({
   );
 }
 
-function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flash }) {
+function HubCenter({ loadEditor, gridEditor, centerStageRef }) {
   const { enable3d } = useConf3d();
   const hostRef = useRef(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -269,8 +373,7 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
 
   return (
     <div
-      className={`conf-ideum-tech-hub__center${elevatedCount > 0 ? ' conf-ideum-tech-hub__center--active' : ''}`}
-      data-integrated-count={elevatedCount}
+      className="conf-ideum-tech-hub__center"
     >
       <div className="conf-ideum-tech-hub__center-label">
         {loadEditor || (
@@ -282,7 +385,7 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
       </div>
       <div
         ref={setStageRef}
-        className={`conf-ideum-tech-hub__center-stage${flash ? ' conf-ideum-tech-hub__center-stage--flash' : ''}`}
+        className="conf-ideum-tech-hub__center-stage"
       >
         {!enable3d && (
           <div className="conf-ideum-tech-hub__center-placeholder" aria-hidden="true">
@@ -299,15 +402,6 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
             cameraPitchLift={0.38}
           />
         )}
-        {elevatedCount > 0 && (
-          <div className="conf-ideum-tech-hub__center-glow" aria-hidden="true" />
-        )}
-        {flash && <div className="conf-ideum-tech-hub__center-burst" aria-hidden="true" />}
-        {elevatedCount > 0 && (
-          <div className="conf-ideum-tech-hub__center-count">
-            {elevatedCount} integrated
-          </div>
-        )}
       </div>
       {gridEditor && (
         <div className="conf-ideum-tech-hub__center-footer">
@@ -318,36 +412,9 @@ function HubCenter({ elevatedCount, loadEditor, gridEditor, centerStageRef, flas
   );
 }
 
-function IntegrationPulseLayer({ pulses }) {
-  if (!pulses.length) return null;
-  return (
-    <div className="conf-ideum-tech-hub__fx" aria-hidden="true">
-      {pulses.map((pulse) => (
-        <span
-          key={pulse.id}
-          className="conf-ideum-tech-hub__pulse"
-          style={{
-            '--pulse-from-x': `${pulse.fromX}px`,
-            '--pulse-from-y': `${pulse.fromY}px`,
-            '--pulse-dx': `${pulse.dx}px`,
-            '--pulse-dy': `${pulse.dy}px`,
-            '--pulse-travel-ms': `${PULSE_TRAVEL_MS}ms`,
-          }}
-        >
-          <span className="conf-ideum-tech-hub__pulse-core" />
-          <span className="conf-ideum-tech-hub__pulse-trail" />
-          {pulse.icon && (
-            <span className="conf-ideum-tech-hub__pulse-icon">{TECH_ICONS[pulse.icon] || '◆'}</span>
-          )}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export default function ConfIdeumTechnologyHub({
-  technologyPreferences,
-  onPreferencesChange,
+  technologyCapex,
+  onCapexChange,
   loadEditor = null,
   gridEditor = null,
   corridor,
@@ -355,14 +422,10 @@ export default function ConfIdeumTechnologyHub({
   const hubRef = useRef(null);
   const centerStageRef = useRef(null);
   const cardRefs = useRef({});
-  const pulseTimersRef = useRef([]);
-  const [pulses, setPulses] = useState([]);
-  const [integratingIds, setIntegratingIds] = useState([]);
-  const [centerFlash, setCenterFlash] = useState(false);
 
-  const preferences = useMemo(
-    () => normalizeTechnologyPreferences(technologyPreferences),
-    [technologyPreferences],
+  const capex = useMemo(
+    () => normalizeTechnologyCapex(technologyCapex),
+    [technologyCapex],
   );
 
   const hubItems = useMemo(
@@ -389,119 +452,32 @@ export default function ConfIdeumTechnologyHub({
     [hubItems],
   );
 
-  const elevatedCount = countElevatedTechnologies(preferences);
-
-  useEffect(() => () => {
-    pulseTimersRef.current.forEach((t) => window.clearTimeout(t));
-  }, []);
-
-  const spawnPulse = useCallback((techId, pulseIndex) => {
-    const hub = hubRef.current;
-    const cardEl = cardRefs.current[techId];
-    const centerEl = centerStageRef.current;
-    const tech = CONFIGURATOR_TECHNOLOGIES.find((t) => t.id === techId);
-    if (!hub || !cardEl || !centerEl) return;
-
-    const hubRect = hub.getBoundingClientRect();
-    const cardRect = cardEl.getBoundingClientRect();
-    const centerRect = centerEl.getBoundingClientRect();
-
-    const fromX = cardRect.left + cardRect.width / 2 - hubRect.left;
-    const fromY = cardRect.top + cardRect.height / 2 - hubRect.top;
-    const toX = centerRect.left + centerRect.width / 2 - hubRect.left;
-    const toY = centerRect.top + centerRect.height / 2 - hubRect.top;
-
-    const pulseId = `${techId}-${Date.now()}-${pulseIndex}`;
-    setPulses((prev) => [...prev, {
-      id: pulseId,
-      fromX,
-      fromY,
-      dx: toX - fromX,
-      dy: toY - fromY,
-      icon: tech?.icon,
-    }]);
-
-    const clearPulse = window.setTimeout(() => {
-      setPulses((prev) => prev.filter((p) => p.id !== pulseId));
-    }, PULSE_TRAVEL_MS);
-    pulseTimersRef.current.push(clearPulse);
-
-    const flashCenter = window.setTimeout(() => {
-      setCenterFlash(true);
-      const clearFlash = window.setTimeout(() => setCenterFlash(false), CENTER_FLASH_MS);
-      pulseTimersRef.current.push(clearFlash);
-    }, PULSE_TRAVEL_MS - 100);
-    pulseTimersRef.current.push(flashCenter);
-  }, []);
-
-  const triggerIntegrationFxRepeat = useCallback((techId) => {
-    setIntegratingIds((prev) => (prev.includes(techId) ? prev : [...prev, techId]));
-
-    for (let i = 0; i < PULSE_REPEAT_COUNT; i += 1) {
-      const startTimer = window.setTimeout(() => {
-        spawnPulse(techId, i);
-      }, i * (PULSE_TRAVEL_MS + PULSE_GAP_MS));
-      pulseTimersRef.current.push(startTimer);
-    }
-
-    const totalMs = PULSE_REPEAT_COUNT * (PULSE_TRAVEL_MS + PULSE_GAP_MS);
-    const clearIntegrating = window.setTimeout(() => {
-      setIntegratingIds((prev) => prev.filter((id) => id !== techId));
-    }, totalMs);
-    pulseTimersRef.current.push(clearIntegrating);
-  }, [spawnPulse]);
-
-  const handlePreferenceClick = useCallback((techId, prefKey) => {
-    if (prefKey === TECH_PREFERENCE.IF_NECESSARY) return;
-
-    const prev = preferences[techId];
-    const nextPrefs = setTechnologyPreference(preferences, techId, prefKey);
-    const wasElevated = isTechnologyElevated(prev);
-    const nowElevated = isTechnologyElevated(nextPrefs[techId]);
-
-    onPreferencesChange(nextPrefs);
-
-    if (!wasElevated && nowElevated) {
-      requestAnimationFrame(() => triggerIntegrationFxRepeat(techId));
-    }
-  }, [preferences, onPreferencesChange, triggerIntegrationFxRepeat]);
-
   return (
     <div className="conf-ideum-tech-hub" ref={hubRef}>
-      <IntegrationPulseLayer pulses={pulses} />
+      {upperHubItems.map(({ tech, meta }) => (
+        <HubTechCard
+          key={tech.id}
+          tech={tech}
+          meta={meta}
+          capex={capex}
+          disabled={DISABLED_HUB_TECH.has(tech.id)}
+          cardRef={(el) => { cardRefs.current[tech.id] = el; }}
+          onCapexChange={onCapexChange}
+        />
+      ))}
 
-      {upperHubItems.map(({ tech, meta }) => {
-        const pref = preferences[tech.id] || TECH_PREFERENCE.IF_NECESSARY;
-        return (
+      <div className="conf-ideum-tech-hub__bottom-tier">
+        {bottomHubItems.map(({ tech, meta }) => (
           <HubTechCard
             key={tech.id}
             tech={tech}
             meta={meta}
-            preference={pref}
-            elevated={isTechnologyElevated(pref)}
-            integrating={integratingIds.includes(tech.id)}
+            capex={capex}
+            disabled={DISABLED_HUB_TECH.has(tech.id)}
             cardRef={(el) => { cardRefs.current[tech.id] = el; }}
-            onPreferenceClick={handlePreferenceClick}
+            onCapexChange={onCapexChange}
           />
-        );
-      })}
-
-      <div className="conf-ideum-tech-hub__bottom-tier">
-        {bottomHubItems.map(({ tech, meta }) => {
-          const pref = preferences[tech.id] || TECH_PREFERENCE.IF_NECESSARY;
-          return (
-            <HubTechCard
-              key={tech.id}
-              tech={tech}
-              meta={meta}
-              preference={pref}
-              elevated={isTechnologyElevated(pref)}
-              integrating={integratingIds.includes(tech.id)}
-              cardRef={(el) => { cardRefs.current[tech.id] = el; }}
-              onPreferenceClick={handlePreferenceClick}
-            />
-          );
-        })}
+        ))}
       </div>
 
       {corridor?.top && (
@@ -518,11 +494,9 @@ export default function ConfIdeumTechnologyHub({
       )}
 
       <HubCenter
-        elevatedCount={elevatedCount}
         loadEditor={loadEditor}
         gridEditor={gridEditor}
         centerStageRef={centerStageRef}
-        flash={centerFlash}
       />
     </div>
   );

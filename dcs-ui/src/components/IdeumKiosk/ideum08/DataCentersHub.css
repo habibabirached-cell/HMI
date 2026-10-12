@@ -87,15 +87,24 @@
 
 .ideum07-root-bucket__label--with-back {
   justify-content: center;
-  padding-left: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 2.2);
+  padding-left: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 3.4);
   padding-right: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 2.2);
+  box-sizing: border-box;
+}
+
+@import '../common/IdeumKioskHomeCluster.css';
+
+.ideum07-root-bucket__label--with-home {
+  box-sizing: border-box;
+}
+
+.ideum07-root-bucket__label--with-back.ideum07-root-bucket__label--with-home {
   box-sizing: border-box;
 }
 
 .ideum07-root-bucket__label--with-title-actions {
   justify-content: center;
-  padding-left: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 9.2);
-  padding-right: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 2.2);
+  padding-left: calc(var(--ideum07-bucket-wall) + var(--ideum07-bucket-title) * 3.4);
   box-sizing: border-box;
 }
 
@@ -135,10 +144,10 @@
   touch-action: manipulation;
 }
 
-.ideum07-root-bucket__label .ideum07-root-bucket__title-actions .ideum05-nav-back.ideum07-root-bucket__title-action-btn {
-  border-color: rgba(0, 212, 168, 0.75);
-  background: rgba(13, 13, 13, 0.88);
-  color: #e8f4f4;
+.ideum07-root-bucket__label .ideum07-root-bucket__title-actions .ideum-kiosk-back.ideum07-root-bucket__title-action-btn {
+  min-width: calc(var(--ideum07-bucket-title) * 1.55);
+  height: calc(var(--ideum07-bucket-title) * 0.72);
+  padding: 0;
 }
 
 .ideum07-root-bucket__label .ideum07-root-bucket__title-actions .ideum05-nav-reset.ideum07-root-bucket__title-action-btn {
@@ -153,33 +162,16 @@
   color: #ffe0b2;
 }
 
-/* Hub title + Reference Architectures floating back — match super-bucket title thickness */
-.ideum07-root-bucket__label--with-back .ideum05-nav-back,
-.ideum05-nav-back.ideum05-nav-back--bucket-chrome {
-  margin: 0;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(var(--ideum07-bucket-title) * 0.42);
-  padding: 0 calc(var(--ideum07-bucket-title) * 0.55);
-  border-radius: calc(var(--ideum07-bucket-title) * 0.18);
-  border-width: max(2px, calc(var(--ideum07-bucket-title) * 0.048));
-  line-height: 1.1;
-  min-width: calc(var(--ideum07-bucket-title) * 2.5);
-}
-
-.ideum07-root-bucket__label--with-back .ideum05-nav-back {
+.ideum07-root-bucket__label--with-back .ideum05-nav-back.ideum-kiosk-back {
   position: absolute;
   left: var(--ideum07-bucket-wall);
   top: 50%;
   transform: translateY(-50%);
   z-index: 3;
   pointer-events: auto;
-  padding: calc(var(--ideum07-bucket-title) * 0.26) calc(var(--ideum07-bucket-title) * 0.48);
 }
 
-/* Direct back in bucket title only — not the ref200 Back|Reset|Live row */
+/* Direct back in bucket title only — not the ref200 title-actions row */
 .ideum07-root-bucket__label > .ideum05-nav-back.ideum05-nav-back--bucket-chrome {
   position: absolute;
   z-index: 522;
@@ -191,6 +183,35 @@
   z-index: 1;
   text-align: center;
   min-width: 0;
+}
+
+/* Subset panels (column buckets inside a hub screen) — lighter title typography */
+.ideum07-hub-bucket.ideum07-root-bucket > .ideum07-root-bucket__label {
+  justify-content: flex-start;
+  padding-top: calc(var(--ideum07-bucket-title, 42px) * 0.16);
+  padding-bottom: calc(var(--ideum07-bucket-title, 42px) * 0.16);
+  padding-left: calc(var(--ideum07-bucket-wall, 14px) * 0.85);
+  padding-right: calc(var(--ideum07-bucket-wall, 14px) * 0.35);
+  font-size: max(11px, calc(var(--ideum07-bucket-title, 42px) * 0.36)) !important;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.055em;
+  line-height: 1.25;
+  color: #b8f5e8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.ideum07-hub-bucket.ideum07-root-bucket > .ideum07-root-bucket__label .ideum07-root-bucket__label-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 0.25em 0 0;
+  line-height: 1.25;
+  text-align: left;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ideum07-hub__tile {
@@ -288,6 +309,13 @@
   min-height: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Ideum08 root — “E-E: Ecosystem Enlightener” (mixed case, longer title). */
+.ideum08-root-bucket--ecosystem-enlightener .ideum07-root-bucket__label {
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-size: clamp(13px, 1.15vw, 19px);
 }
 
 .ideum07-root-bucket--applications {

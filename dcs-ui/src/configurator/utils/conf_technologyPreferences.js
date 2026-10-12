@@ -40,7 +40,7 @@ export function isTechnologyElevated(preference) {
 /** All technologies are always candidates; preferences add must/should hints. */
 export function technologyIdsFromPreferences(preferences) {
   const prefs = normalizeTechnologyPreferences(preferences);
-  const ids = ALL_TECH_IDS.filter((id) => id !== 'recipEngine');
+  const ids = ALL_TECH_IDS.filter((id) => id !== 'recipEngine' && id !== 'nuclear');
   if (isTechnologyElevated(prefs.recipEngine)) {
     ids.push('recipEngine');
   }
