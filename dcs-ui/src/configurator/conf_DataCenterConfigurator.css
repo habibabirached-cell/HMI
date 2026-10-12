@@ -285,6 +285,9 @@
   justify-self: start;
   min-width: 0;
   flex-wrap: wrap;
+  /* Match back control to tab pills (≈ “Sensitivity Heatmap” width). */
+  --conf-ideum-nav-btn-height: clamp(40px, 3.6vw, 48px);
+  --conf-ideum-nav-btn-width-ref: 10.625rem;
 }
 
 .conf-page-header__titles--center {
@@ -313,6 +316,30 @@
   left: auto;
   top: auto;
   flex-shrink: 0;
+}
+
+.conf-page-header--ideum .conf-ideum-header-back-btn.ideum-kiosk-back {
+  width: var(--conf-ideum-nav-btn-width-ref);
+  min-width: var(--conf-ideum-nav-btn-width-ref);
+  height: var(--conf-ideum-nav-btn-height);
+  min-height: var(--conf-ideum-nav-btn-height);
+  padding: 8px 16px;
+  border: 2px solid rgba(0, 94, 96, 0.22);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--conf-evergreen);
+  box-shadow: none;
+}
+
+.conf-page-header--ideum .conf-ideum-header-back-btn.ideum-kiosk-back:hover {
+  border-color: var(--conf-evergreen);
+  background: var(--conf-evergreen-light);
+  color: var(--conf-evergreen);
+}
+
+.conf-page-header--ideum .conf-ideum-header-back-btn .ideum-kiosk-back__icon {
+  width: clamp(20px, 1.6vw, 26px);
+  height: clamp(20px, 1.6vw, 26px);
 }
 
 .conf-page-header--ideum h1 {
@@ -1220,8 +1247,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 4px;
+  margin-bottom: 2px;
   min-height: 0;
   flex: 0 0 auto;
 }
@@ -1274,14 +1301,16 @@
 .conf-ideum-tech-card__capex {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 10px;
+  justify-content: flex-start;
+  align-self: stretch;
+  gap: 4px;
   width: max-content;
   max-width: min(300px, 52vw);
   min-width: 200px;
   min-height: 0;
+  height: 100%;
   flex-shrink: 0;
-  padding: 6px 4px;
+  padding: 0 2px 2px;
 }
 
 .conf-ideum-tech-card__capex--empty {
@@ -1329,13 +1358,15 @@
 }
 
 .conf-ideum-tech-card--fuel-cell .conf-ideum-tech-card__body,
-.conf-ideum-tech-card--nuclear .conf-ideum-tech-card__body {
+.conf-ideum-tech-card--nuclear .conf-ideum-tech-card__body,
+.conf-ideum-tech-card--bottom .conf-ideum-tech-card__body {
   position: relative;
 }
 
 /* Coming-soon corner sash (upper-left), text centered on band */
 .conf-ideum-tech-card--fuel-cell .conf-ideum-tech-card__ribbon,
-.conf-ideum-tech-card--nuclear .conf-ideum-tech-card__ribbon {
+.conf-ideum-tech-card--nuclear .conf-ideum-tech-card__ribbon,
+.conf-ideum-tech-card--bottom .conf-ideum-tech-card__ribbon {
   position: absolute;
   top: 42px;
   left: -34px;
@@ -1375,19 +1406,46 @@
 .conf-ideum-capex-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.conf-ideum-capex-panel--hd,
+.conf-ideum-capex-panel--gt {
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+}
+
+.conf-ideum-capex-panel--hd .conf-ideum-capex-field,
+.conf-ideum-capex-panel--gt .conf-ideum-capex-field {
+  flex: 1;
+  min-height: 0;
 }
 
 .conf-ideum-capex-panel--bess {
   gap: 8px;
 }
 
+.conf-ideum-capex-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
 .conf-ideum-capex-field__stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .conf-ideum-capex-field__label {
@@ -1397,7 +1455,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: rgba(15, 35, 52, 0.62);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .conf-ideum-capex-field__label--installed {
@@ -1411,7 +1469,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 8px 10px;
+  flex-shrink: 0;
   border-radius: 12px;
   border: 1px solid rgba(15, 35, 52, 0.14);
   background: linear-gradient(180deg, #ffffff 0%, #f3f6f8 100%);
@@ -1448,11 +1507,17 @@
 
 .conf-ideum-capex-wheel {
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .conf-ideum-capex-wheel__window {
   position: relative;
   overflow: hidden;
+  flex: 1;
+  min-height: 132px;
   border-radius: 12px;
   border: 1px solid rgba(15, 35, 52, 0.12);
   background: linear-gradient(180deg, #eef2f5 0%, #f8fafb 48%, #eef2f5 100%);
@@ -1511,7 +1576,6 @@
   left: 8px;
   right: 8px;
   top: 50%;
-  height: 52px;
   transform: translateY(-50%);
   border-radius: 10px;
   border: 2px solid rgba(0, 94, 96, 0.28);
@@ -1544,8 +1608,9 @@
   display: grid;
   grid-template-rows: 1fr 1fr;
   width: 100%;
-  min-height: 112px;
-  padding: 4px;
+  min-height: 96px;
+  flex-shrink: 0;
+  padding: 3px;
   border-radius: 14px;
   border: 2px solid rgba(15, 35, 52, 0.14);
   background: linear-gradient(180deg, #e8ecef 0%, #dfe5ea 100%);
@@ -1579,7 +1644,7 @@
   position: relative;
   z-index: 1;
   margin: 0;
-  padding: 10px 12px;
+  padding: 6px 10px;
   border: none;
   background: transparent;
   font-size: clamp(15px, 1.45vw, 20px);
@@ -1590,6 +1655,13 @@
   text-align: center;
   touch-action: manipulation;
   transition: color 0.18s ease;
+}
+
+.conf-ideum-capex-vswitch__option--disabled,
+.conf-ideum-capex-vswitch__option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: var(--conf-text-dim);
 }
 
 .conf-ideum-capex-vswitch__option[aria-pressed='true'] {
@@ -4413,6 +4485,19 @@ body.conf-wall-bezel-dragging-both {
   max-width: 42ch;
 }
 
+.conf-wall-overlay-state--martin {
+  background: linear-gradient(180deg, #f4faf9 0%, #ffffff 55%);
+}
+
+.conf-wall-martin-soon__eyebrow {
+  font-size: clamp(18px, 1.8vw, 26px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--conf-evergreen);
+  margin: 0;
+}
+
 .conf-loading-spinner--wall {
   width: 72px;
   height: 72px;
@@ -4734,6 +4819,7 @@ body.conf-wall-bezel-dragging-both {
   color: var(--conf-evergreen);
   border-radius: 10px;
   padding: 8px 16px;
+  min-height: var(--conf-ideum-nav-btn-height, clamp(40px, 3.6vw, 48px));
   font-size: clamp(14px, 1.2vw, 16px);
   font-weight: 700;
   cursor: pointer;
@@ -4749,6 +4835,18 @@ body.conf-wall-bezel-dragging-both {
   border-color: var(--conf-evergreen);
   background: var(--conf-evergreen);
   color: #fff;
+}
+
+.conf-ideum-page-tabs__btn--legacyWall {
+  border-color: var(--conf-evergreen);
+  background: #fff;
+  color: var(--conf-evergreen);
+  font-weight: 800;
+}
+
+.conf-ideum-page-tabs__btn--legacyWall:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .conf-layout--ideum-trade {

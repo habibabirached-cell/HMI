@@ -16,21 +16,170 @@
 .dataVis-header {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.45rem;
   flex-shrink: 0;
 }
 
-.dataVis-title {
+.dataVis-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.dataVis-layoutToggle {
+  display: inline-flex;
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.dataVis-layoutToggle__btn {
+  border: none;
+  background: transparent;
+  color: var(--conf-text, #1f2933);
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+
+.dataVis-layoutToggle__btn--active {
+  background: var(--conf-evergreen, #00695c);
+  color: #fff;
+}
+
+.dataVis-root--quad {
+  gap: 0.5rem;
+}
+
+.dataVis-main--quad {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataVis-quadShell {
+  flex: 1;
+  min-height: 0;
+  background: #e8ecef !important;
+}
+
+.dataVis-quadShell .conf-wall-bezel-divider--vertical::after,
+.dataVis-quadShell .conf-wall-bezel-divider--horizontal::after {
+  background: #1f2933;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.dataVis-quadShell .conf-wall-bezel-joint {
+  background: #1f2933;
+  border: 2px solid #fff;
+}
+
+.dataVis-quadSlot {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+.dataVis-quadSlot__head {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 800;
+  color: var(--conf-evergreen, #00695c);
+  border-bottom: 1px solid var(--conf-border, #d8dee6);
+  background: #f8fafc;
+}
+
+.dataVis-quadSlot__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.dataVis-quadHistogramGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  height: 100%;
+  min-height: 0;
+}
+
+.dataVis-quadHistogramGrid .dataVis-histogramSlot {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataVis-quadHistogramGrid .dataVis-histogramSlot__head {
+  flex-shrink: 0;
+}
+
+.dataVis-quadHistogramGrid .dataVis-chartBlock--histogram {
+  flex: 1;
+  min-height: 80px;
+  padding: 0.25rem;
+}
+
+.dataVis-quadHistogramGrid .dataVis-sectionTitle {
+  font-size: clamp(11px, 0.95vw, 13px);
   margin: 0;
-  font-size: clamp(22px, 2.2vw, 30px);
+}
+
+.dataVis-tabPanel--compact {
+  gap: 0.35rem;
+  padding: 4px 6px;
+}
+
+.dataVis-tabPanel--compact .dataVis-chartBlock {
+  min-height: 140px;
+}
+
+.dataVis-histogramGrid--compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dataVis-toolbar--compact {
+  margin-bottom: 0.15rem;
+}
+
+.dataVis-headerLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.45rem;
+  margin: 0;
+  font-size: clamp(14px, 1.15vw, 17px);
+  line-height: 1.35;
+}
+
+.dataVis-headerLine__title {
+  margin: 0;
+  font-size: inherit;
   font-weight: 700;
   color: var(--conf-text, #1f2933);
 }
 
-.dataVis-subtitle {
-  margin: 0.2rem 0 0;
-  font-size: clamp(14px, 1.15vw, 17px);
+.dataVis-headerLine__meta {
+  font-size: inherit;
+  font-weight: 600;
   color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-headerLine__sep {
+  color: var(--conf-text-dim, #5f6b7a);
+  font-weight: 600;
 }
 
 .dataVis-tabs {
@@ -79,21 +228,109 @@
 
 .dataVis-filterBar__head {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.65rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  margin-bottom: 0.45rem;
+  font-size: clamp(13px, 1.05vw, 15px);
+  line-height: 1.35;
 }
 
 .dataVis-filterBar__title {
   font-weight: 700;
-  font-size: clamp(15px, 1.2vw, 18px);
+  font-size: inherit;
   color: var(--conf-text, #1f2933);
 }
 
 .dataVis-filterBar__count {
-  font-size: clamp(14px, 1.1vw, 16px);
+  font-size: inherit;
   color: var(--conf-text-dim, #5f6b7a);
   font-weight: 600;
+}
+
+.dataVis-filterBar__sep {
+  color: var(--conf-text-dim, #5f6b7a);
+  font-weight: 600;
+}
+
+.dataVis-filterBar__help {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-columnChipPicker {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dataVis-columnChipPicker__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--conf-evergreen, #00695c);
+  background: #fff;
+  color: var(--conf-evergreen, #00695c);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dataVis-columnChipPicker__btn:hover,
+.dataVis-columnChipPicker__btn--open {
+  background: var(--conf-evergreen-light, #e0f2f1);
+}
+
+.dataVis-columnChipPicker__count {
+  font-weight: 600;
+  font-size: 0.92em;
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-columnChipMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: min(1280px, calc(100vw - 40px));
+  min-width: min(1280px, calc(100vw - 40px));
+  max-width: calc(100vw - 40px);
+  max-height: none;
+  overflow: visible;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 35, 52, 0.18);
+}
+
+.dataVis-columnChipMenu__hint {
+  margin: 0 0 0.65rem 0;
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 500;
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-chipRow--columnMenu {
+  max-height: none;
+  overflow: visible;
+}
+
+.dataVis-tabPanel__toolbar {
+  flex-shrink: 0;
+  margin-bottom: 0.35rem;
+}
+
+.dataVis-toolbar--tableHead {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.35rem;
 }
 
 .dataVis-filterBar__reset {
@@ -114,29 +351,86 @@
   gap: 0.75rem 1.25rem;
 }
 
-.dataVis-filterBar__label {
-  display: block;
-  font-size: clamp(13px, 1.05vw, 15px);
-  font-weight: 600;
-  color: var(--conf-text, #1f2933);
-  margin-bottom: 0.35rem;
-}
-
-.dataVis-filterBar__inputs {
-  display: flex;
-  align-items: center;
+.dataVis-filterBar__grid--histograms {
+  width: 100%;
   gap: 0.5rem;
 }
 
-.dataVis-filterBar__inputs input {
-  width: 100%;
-  max-width: 8rem;
+.dataVis-filterMini {
   background: #fff;
   border: 1px solid var(--conf-border, #d8dee6);
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem 0.25rem;
+  min-width: 0;
+}
+
+.dataVis-filterMini--active {
+  border-color: rgba(0, 105, 92, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(0, 105, 92, 0.12);
+}
+
+.dataVis-filterMini__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+.dataVis-filterMini__label {
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(11px, 0.95vw, 13px);
+  font-weight: 700;
   color: var(--conf-text, #1f2933);
-  border-radius: 8px;
-  padding: 0.45rem 0.55rem;
-  font-size: clamp(14px, 1.1vw, 16px);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dataVis-filterMini__clear {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--conf-evergreen, #00695c);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dataVis-filterMini__plot {
+  min-height: 96px;
+  overflow: hidden;
+}
+
+.dataVis-filterMini__plot .js-plotly-plot,
+.dataVis-filterMini__plot .plotly {
+  width: 100% !important;
+}
+
+.dataVis-filterMini__placeholder {
+  height: 92px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+  border-radius: 6px;
+}
+
+.dataVis-filterMini__error {
+  font-size: 12px;
+  margin: 0.25rem 0;
+}
+
+.dataVis-filterMini__range,
+.dataVis-filterMini__hint {
+  margin: 0.15rem 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--conf-text-dim, #5f6b7a);
+  text-align: center;
+}
+
+.dataVis-filterMini--active .dataVis-filterMini__range {
+  color: var(--conf-evergreen, #00695c);
 }
 
 .dataVis-tabPanel {
@@ -231,6 +525,49 @@
   min-height: 360px;
 }
 
+.dataVis-tabPanel--histogram {
+  gap: 0.75rem;
+}
+
+.dataVis-histogramGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.dataVis-histogramSlot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.dataVis-histogramSlot__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+}
+
+.dataVis-histogramSlot__head .dataVis-sectionTitle {
+  margin: 0;
+  font-size: clamp(15px, 1.2vw, 18px);
+}
+
+.dataVis-histogramSlot__head .dataVis-muted {
+  font-size: clamp(13px, 1.05vw, 15px);
+}
+
+.dataVis-chartBlock--histogram {
+  width: 100%;
+  min-height: 280px;
+}
+
 .dataVis-sectionTitle {
   margin: 0 0 0.5rem 0.35rem;
   font-size: clamp(16px, 1.35vw, 20px);
@@ -273,6 +610,42 @@
   color: #fff;
   font-weight: 700;
   z-index: 1;
+  padding: 0;
+}
+
+.dataVis-sortBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 100%;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dataVis-sortBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dataVis-sortBtn--active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dataVis-sortBtn__icon {
+  opacity: 0.85;
+  font-size: 0.85em;
+  flex-shrink: 0;
+}
+
+.dataVis-table__thStatic {
+  padding: 0.65rem 0.85rem;
 }
 
 .dataVis-table tbody tr:nth-child(even) {
@@ -289,6 +662,46 @@
   gap: 0.5rem;
   max-height: 160px;
   overflow: auto;
+}
+
+.dataVis-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dataVis-thInner {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 100%;
+}
+
+.dataVis-thInner .dataVis-sortBtn {
+  flex: 1;
+  min-width: 0;
+}
+
+.dataVis-sortBtn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dataVis-colRemove {
+  flex-shrink: 0;
+  width: 2rem;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dataVis-colRemove:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .dataVis-chip {
@@ -415,4 +828,12 @@
   color: var(--conf-text-dim, #5f6b7a);
   margin: 0;
   font-weight: 500;
+}
+
+.dataVis-axisCaption {
+  margin: 0.5rem 0.35rem 0;
+  font-size: clamp(14px, 1.1vw, 16px);
+  font-weight: 600;
+  color: var(--conf-text, #1f2933);
+  text-align: center;
 }

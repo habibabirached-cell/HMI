@@ -46,19 +46,33 @@ export async function closeConfiguratorWallOnMaingear(maingearBackendUrl) {
   return data;
 }
 
-export async function submitConfiguratorToMaingear(maingearBackendUrl, inputs) {
+async function postConfiguratorClusterSubmit(maingearBackendUrl, inputs, { pipeline = 'legacy' } = {}) {
   const base = (maingearBackendUrl ?? '').replace(/\/$/, '');
   const url = base ? `${base}/api/configurator/cluster/submit` : '/api/configurator/cluster/submit';
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...normalizePayload(inputs), source: 'ideum' }),
+    body: JSON.stringify({
+      ...normalizePayload(inputs),
+      source: pipeline === 'martin' ? 'ideum-martin' : 'ideum',
+      pipeline,
+    }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.detail || `Cluster submit failed (${res.status})`);
   }
   return data.session;
+}
+
+/** Legacy consolidated / synthetic optimizer → Maingear wall (header Configure). */
+export async function submitConfiguratorToMaingear(maingearBackendUrl, inputs) {
+  return postConfiguratorClusterSubmit(maingearBackendUrl, inputs, { pipeline: 'legacy' });
+}
+
+/** Martin Waco DOE path → Maingear wall (footer CONFIGURE). Placeholder until wired. */
+export async function submitConfiguratorMartinToMaingear(maingearBackendUrl, inputs) {
+  return postConfiguratorClusterSubmit(maingearBackendUrl, inputs, { pipeline: 'martin' });
 }
 
 /** Wall display (on Maingear): fetch latest session snapshot. */

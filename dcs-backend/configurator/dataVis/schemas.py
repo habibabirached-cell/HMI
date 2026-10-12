@@ -51,5 +51,9 @@ class ParallelRequest(FilterRequest):
     max_rows: int = 2000
 
 
+class HistogramRequest(FilterRequest):
+    column: str
+
+
 class CompareRequest(BaseModel):
     row_ids: list[int] = Field(..., min_length=1, max_length=8)

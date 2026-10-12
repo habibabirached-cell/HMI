@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { postDataVisParallel } from '../api/conf_dataVisApi';
+import DataVisColumnChipMenu from '../components/DataVisColumnChipMenu';
 import DataVisPlot from '../components/DataVisPlot';
 import { numericColumnsFromStats } from '../utils/dataVisFilters';
 
-export default function DataVisParallelTab({ filters, defaults, columnStats }) {
+const MAX_PARALLEL_DIMS = 8;
+
+export default function DataVisParallelTab({ filters, defaults, columnStats, compact = false }) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const defaultDims = defaults?.parallel_dimensions || numericCols.slice(0, 6);
   const [dimensions, setDimensions] = useState(defaultDims);
@@ -53,25 +56,23 @@ export default function DataVisParallelTab({ filters, defaults, columnStats }) {
   const toggleDim = (col) => {
     setDimensions((prev) => {
       if (prev.includes(col)) return prev.filter((c) => c !== col);
-      if (prev.length >= 8) return prev;
+      if (prev.length >= MAX_PARALLEL_DIMS) return prev;
       return [...prev, col];
     });
   };
 
   return (
-    <div className="dataVis-tabPanel">
-      <p className="dataVis-muted">Select up to 8 numeric dimensions (parallel coordinates).</p>
-      <div className="dataVis-chipRow">
-        {numericCols.map((col) => (
-          <button
-            key={col}
-            type="button"
-            className={`dataVis-chip ${dimensions.includes(col) ? 'dataVis-chip--on' : ''}`}
-            onClick={() => toggleDim(col)}
-          >
-            {col}
-          </button>
-        ))}
+    <div className={`dataVis-tabPanel${compact ? ' dataVis-tabPanel--compact' : ''}`}>
+      <div className="dataVis-tabPanel__toolbar">
+        <DataVisColumnChipMenu
+          columns={numericCols}
+          mode="multi"
+          selectedMulti={dimensions}
+          maxSelected={MAX_PARALLEL_DIMS}
+          buttonText="Choose dimensions"
+          menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
+          onToggle={toggleDim}
+        />
       </div>
       {error && <p className="dataVis-error">{error}</p>}
       {!payload && !error && <p className="dataVis-muted">Loading parallel coords…</p>}
@@ -81,7 +82,9 @@ export default function DataVisParallelTab({ filters, defaults, columnStats }) {
             data={plotData}
             layout={{
               title: { text: 'Parallel coordinates', font: { size: 16 } },
-              height: Math.max(440, Math.round(window.innerHeight * 0.55)),
+              height: compact
+                ? Math.max(200, Math.round(window.innerHeight * 0.22))
+                : Math.max(440, Math.round(window.innerHeight * 0.55)),
             }}
           />
         </div>

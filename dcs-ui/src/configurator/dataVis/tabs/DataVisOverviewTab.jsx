@@ -1,18 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { postDataVisOverview } from '../api/conf_dataVisApi';
+import { postDataVisOverview, postDataVisRows } from '../api/conf_dataVisApi';
 import DataVisPlot from '../components/DataVisPlot';
+
+/** Lowest-LCOE bar chart — always this many when enough rows match filters. */
+export const DATAVIS_OVERVIEW_LCOE_TOP_N = 150;
 
 export default function DataVisOverviewTab({ filters, scenario, onFilteredCount }) {
   const [data, setData] = useState(null);
+  const [lcoeRankRows, setLcoeRankRows] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    postDataVisOverview(filters)
-      .then((res) => {
+    Promise.all([
+      postDataVisOverview(filters),
+      postDataVisRows({
+        filters,
+        offset: 0,
+        limit: DATAVIS_OVERVIEW_LCOE_TOP_N,
+        sort_column: 'Project LCOE ($/MWh)',
+        sort_asc: true,
+        columns: ['dataVis_row_id', 'Project LCOE ($/MWh)'],
+      }),
+    ])
+      .then(([overview, rowsRes]) => {
         if (!cancelled) {
-          setData(res);
-          onFilteredCount?.(res.filtered_count);
+          setData(overview);
+          setLcoeRankRows(rowsRes.rows || []);
+          onFilteredCount?.(overview.filtered_count);
         }
       })
       .catch((err) => {
@@ -27,15 +42,19 @@ export default function DataVisOverviewTab({ filters, scenario, onFilteredCount 
   if (!data) return <p className="dataVis-muted">Loading overview…</p>;
 
   const kpis = data.kpis || {};
-  const pareto = kpis.pareto_preview || [];
+  const pareto = lcoeRankRows;
+  const topN = DATAVIS_OVERVIEW_LCOE_TOP_N;
 
   const barData = [
     {
       type: 'bar',
-      x: pareto.map((r) => `#${r.dataVis_row_id}`),
+      x: pareto.map((_, i) => i + 1),
       y: pareto.map((r) => r['Project LCOE ($/MWh)']),
       marker: { color: '#3d9bdc' },
       name: 'Project LCOE',
+      customdata: pareto.map((r) => r.dataVis_row_id),
+      hovertemplate:
+        'Rank %{x} (lowest LCOE first)<br>LCOE: %{y:.2f} $/MWh<br>Spreadsheet row %{customdata}<extra></extra>',
     },
   ];
 
@@ -58,16 +77,26 @@ export default function DataVisOverviewTab({ filters, scenario, onFilteredCount 
         </div>
       </div>
       <div className="dataVis-chartBlock">
-        <h3 className="dataVis-sectionTitle">Lowest project LCOE (preview)</h3>
+        <h3 className="dataVis-sectionTitle">
+          Lowest project LCOE — top {Math.min(pareto.length, topN)} of {topN} ranked cases
+          {pareto.length < topN ? ' (fewer rows match filters)' : ''}
+        </h3>
         <DataVisPlot
           data={barData}
           layout={{
-            title: { text: 'Best cases by project LCOE', font: { size: 14 } },
-            xaxis: { title: 'Row id' },
-            yaxis: { title: '$/MWh' },
+            title: { text: 'Project LCOE sorted low → high', font: { size: 16 } },
+            xaxis: {
+              title: 'Rank (1 = lowest LCOE)',
+              dtick: pareto.length > 60 ? 10 : 5,
+            },
+            yaxis: { title: 'Project LCOE ($/MWh)' },
             height: Math.max(320, Math.round(window.innerHeight * 0.38)),
           }}
         />
+        <p className="dataVis-axisCaption">
+          X-axis: rank after sorting filtered scenarios by project LCOE (cheapest on the left). Hover a bar for
+          the spreadsheet row number.
+        </p>
       </div>
     </div>
   );

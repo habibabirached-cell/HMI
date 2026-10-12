@@ -72,6 +72,53 @@ async def submit_configurator_cluster(
     return await get_configurator_session()
 
 
+async def submit_configurator_martin_placeholder_cluster(
+    inputs: dict[str, Any],
+    *,
+    source: str | None,
+    broadcast: Callable[[dict[str, Any]], Awaitable[int]],
+) -> dict[str, Any]:
+    """Martin Waco DOE pipeline placeholder — full wall coming-soon until wired to dataVis."""
+    now = datetime.now(timezone.utc).isoformat()
+    session_id = str(uuid.uuid4())
+
+    async with _lock:
+        _session.update(
+            {
+                "sessionId": session_id,
+                "status": "generating",
+                "updatedAt": now,
+                "inputs": inputs,
+                "result": None,
+                "error": None,
+                "errorDetails": None,
+                "source": source or "ideum-martin",
+                "pipeline": "martin",
+            }
+        )
+
+    await broadcast({"type": "configurator_open_wall", "source": source or "ideum"})
+    await broadcast({"type": "configurator_update", "session": await get_configurator_session()})
+
+    result: dict[str, Any] = {
+        "ok": True,
+        "wallPresentation": "martin_coming_soon",
+        "title": "Martin Waco 1 GW study",
+        "message": "Coming soon — this CONFIGURE path will use the Martin DOE dataset.",
+        "source": "martin-placeholder",
+    }
+
+    async with _lock:
+        _session["status"] = "ready"
+        _session["result"] = result
+        _session["error"] = None
+        _session["errorDetails"] = None
+        _session["updatedAt"] = datetime.now(timezone.utc).isoformat()
+
+    await broadcast({"type": "configurator_update", "session": await get_configurator_session()})
+    return await get_configurator_session()
+
+
 async def close_configurator_wall_cluster(
     *,
     source: str | None,

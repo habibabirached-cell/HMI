@@ -11,17 +11,37 @@ import {
   nearestCapexWheelOption,
 } from '../utils/conf_technologyCapex';
 
-const WHEEL_ITEM_PX = 52;
 const WHEEL_VIEW_ROWS = 3;
-const WHEEL_VIEW_PX = WHEEL_ITEM_PX * WHEEL_VIEW_ROWS;
-const WHEEL_PAD_PX = WHEEL_ITEM_PX * Math.floor(WHEEL_VIEW_ROWS / 2);
+const WHEEL_ITEM_PX_MIN = 44;
+const WHEEL_ITEM_PX_MAX = 88;
+const WHEEL_ITEM_PX_DEFAULT = 52;
 
-function CapexWheelPicker({ options, value, onChange, idSuffix }) {
+function CapexWheelPicker({ options, value, onChange, idSuffix, formatWheelValue }) {
+  const fmt = formatWheelValue || formatCapexDisplay;
   const listRef = useRef(null);
+  const windowRef = useRef(null);
   const scrollEndTimer = useRef(null);
   const programmatic = useRef(false);
   const valueRef = useRef(value);
   valueRef.current = value;
+
+  const [itemPx, setItemPx] = useState(WHEEL_ITEM_PX_DEFAULT);
+  const padPx = itemPx * Math.floor(WHEEL_VIEW_ROWS / 2);
+
+  useEffect(() => {
+    const el = windowRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const sync = () => {
+      const h = el.clientHeight;
+      if (h < WHEEL_ITEM_PX_MIN * WHEEL_VIEW_ROWS) return;
+      const next = Math.round(h / WHEEL_VIEW_ROWS);
+      setItemPx(Math.max(WHEEL_ITEM_PX_MIN, Math.min(WHEEL_ITEM_PX_MAX, next)));
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const indexForValue = useCallback((val) => {
     const n = nearestCapexWheelOption(val, options);
@@ -33,15 +53,15 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
     const el = listRef.current;
     if (!el || idx < 0 || idx >= options.length) return;
     programmatic.current = true;
-    el.scrollTo({ top: idx * WHEEL_ITEM_PX, behavior });
+    el.scrollTo({ top: idx * itemPx, behavior });
     window.setTimeout(() => {
       programmatic.current = false;
     }, behavior === 'smooth' ? 320 : 0);
-  }, [options.length]);
+  }, [itemPx, options.length]);
 
   useEffect(() => {
     scrollToIndex(indexForValue(value), 'auto');
-  }, [value, indexForValue, scrollToIndex]);
+  }, [value, indexForValue, scrollToIndex, itemPx]);
 
   const commitIndex = useCallback((idx) => {
     const clamped = Math.max(0, Math.min(options.length - 1, idx));
@@ -58,17 +78,17 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
     scrollEndTimer.current = window.setTimeout(() => {
       const el = listRef.current;
       if (!el) return;
-      const idx = Math.round(el.scrollTop / WHEEL_ITEM_PX);
+      const idx = Math.round(el.scrollTop / itemPx);
       commitIndex(idx);
     }, 90);
-  }, [commitIndex]);
+  }, [commitIndex, itemPx]);
 
   useEffect(() => {
     const el = listRef.current;
     if (!el) return undefined;
     const onScrollEnd = () => {
       if (programmatic.current) return;
-      const idx = Math.round(el.scrollTop / WHEEL_ITEM_PX);
+      const idx = Math.round(el.scrollTop / itemPx);
       commitIndex(idx);
     };
     el.addEventListener('scroll', handleScroll, { passive: true });
@@ -78,7 +98,7 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
       el.removeEventListener('scrollend', onScrollEnd);
       if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current);
     };
-  }, [commitIndex, handleScroll]);
+  }, [commitIndex, handleScroll, itemPx]);
 
   const selectedIdx = indexForValue(value);
 
@@ -88,12 +108,16 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
       aria-hidden={options.length === 0}
     >
       <div
+        ref={windowRef}
         className="conf-ideum-capex-wheel__window"
-        style={{ height: WHEEL_VIEW_PX }}
       >
         <div className="conf-ideum-capex-wheel__fade conf-ideum-capex-wheel__fade--top" />
         <div className="conf-ideum-capex-wheel__fade conf-ideum-capex-wheel__fade--bottom" />
-        <div className="conf-ideum-capex-wheel__rail" aria-hidden="true" />
+        <div
+          className="conf-ideum-capex-wheel__rail"
+          aria-hidden="true"
+          style={{ height: itemPx }}
+        />
         <ul
           ref={listRef}
           className="conf-ideum-capex-wheel__list"
@@ -102,7 +126,7 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
           aria-label="Scroll to select value"
           aria-activedescendant={`${idSuffix}-opt-${selectedIdx}`}
         >
-          <li className="conf-ideum-capex-wheel__pad" style={{ height: WHEEL_PAD_PX }} aria-hidden />
+          <li className="conf-ideum-capex-wheel__pad" style={{ height: padPx }} aria-hidden />
           {options.map((opt, idx) => (
             <li
               key={opt}
@@ -110,13 +134,13 @@ function CapexWheelPicker({ options, value, onChange, idSuffix }) {
               role="option"
               aria-selected={idx === selectedIdx}
               className={`conf-ideum-capex-wheel__item${idx === selectedIdx ? ' conf-ideum-capex-wheel__item--selected' : ''}`}
-              style={{ height: WHEEL_ITEM_PX }}
+              style={{ height: itemPx, fontSize: `clamp(18px, ${Math.round(itemPx * 0.42)}px, 32px)` }}
               onClick={() => commitIndex(idx)}
             >
-              {formatCapexDisplay(opt)}
+              {fmt(opt)}
             </li>
           ))}
-          <li className="conf-ideum-capex-wheel__pad" style={{ height: WHEEL_PAD_PX }} aria-hidden />
+          <li className="conf-ideum-capex-wheel__pad" style={{ height: padPx }} aria-hidden />
         </ul>
       </div>
     </div>
@@ -129,9 +153,11 @@ export default function ConfCapexValueField({
   unit,
   value,
   wheelPreset,
+  formatDisplay = formatCapexDisplay,
   onCommit,
 }) {
-  const [draft, setDraft] = useState(formatCapexDisplay(value));
+  const fmt = formatDisplay;
+  const [draft, setDraft] = useState(() => fmt(value));
   const [focused, setFocused] = useState(false);
 
   const options = useMemo(
@@ -141,9 +167,9 @@ export default function ConfCapexValueField({
 
   useEffect(() => {
     if (!focused) {
-      setDraft(formatCapexDisplay(value));
+      setDraft(fmt(value));
     }
-  }, [value, focused]);
+  }, [value, focused, fmt]);
 
   const commitNumber = useCallback((raw) => {
     const cleaned = String(raw).replace(/,/g, '').trim();
@@ -196,6 +222,7 @@ export default function ConfCapexValueField({
             options={options}
             value={value}
             onChange={onCommit}
+            formatWheelValue={fmt}
           />
         ) : null}
       </div>

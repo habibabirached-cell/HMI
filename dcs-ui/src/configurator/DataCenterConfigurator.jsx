@@ -18,6 +18,7 @@ import {
   isLocalClusterDev,
   resolveMaingearBackendUrl,
   sessionToWallState,
+  submitConfiguratorMartinToMaingear,
   submitConfiguratorToMaingear,
 } from './utils/conf_configuratorCluster';
 import { inputsEqual } from './utils/conf_configuratorEngine';
@@ -159,20 +160,24 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     };
   }, [isWallMode, applyWallSession]);
 
-  const handleGenerate = useCallback(async () => {
-    setError(null);
-    setErrorDetails([]);
+  const submitIdeumToMaingearWall = useCallback(
+    async (pipeline) => {
+      setError(null);
+      setErrorDetails([]);
 
-    const validation = validateConfiguratorInputs({ ...inputs, uiMode });
-    if (!validation.ok) {
-      setError(validation.error);
-      setErrorDetails(validation.details || []);
-      return;
-    }
+      const validation = validateConfiguratorInputs({ ...inputs, uiMode });
+      if (!validation.ok) {
+        setError(validation.error);
+        setErrorDetails(validation.details || []);
+        return;
+      }
 
-    if (isIdeumMode) {
       setIsGenerating(true);
-      setStatusMessage('Sending to Maingear wall display…');
+      setStatusMessage(
+        pipeline === 'martin'
+          ? 'Sending Martin study to Maingear wall…'
+          : 'Sending to Maingear wall display…',
+      );
       try {
         let role = null;
         try {
@@ -197,12 +202,13 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             return;
           }
         }
-        // Ideum: POST same-origin → Ideum backend forwards to peerBackendUrl (avoids cross-origin + matches cluster API).
         const backendUrl =
           role?.isIdeum && role?.peerBackendUrl && !isLocalClusterDev()
             ? (API_BASE_URL || '')
             : resolveMaingearBackendUrl(role);
-        const session = await submitConfiguratorToMaingear(backendUrl, { ...inputs, uiMode });
+        const submitFn =
+          pipeline === 'martin' ? submitConfiguratorMartinToMaingear : submitConfiguratorToMaingear;
+        const session = await submitFn(backendUrl, { ...inputs, uiMode });
         if (session.status === 'error' || !session.result?.ok) {
           setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
           setErrorDetails(session.errorDetails || session.result?.details || []);
@@ -213,6 +219,35 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       } finally {
         setIsGenerating(false);
       }
+    },
+    [inputs, uiMode],
+  );
+
+  const handleGenerateLegacyWall = useCallback(() => {
+    if (isIdeumMode) {
+      submitIdeumToMaingearWall('legacy');
+    }
+  }, [isIdeumMode, submitIdeumToMaingearWall]);
+
+  const handleGenerateMartinWall = useCallback(() => {
+    if (isIdeumMode) {
+      submitIdeumToMaingearWall('martin');
+    }
+  }, [isIdeumMode, submitIdeumToMaingearWall]);
+
+  const handleGenerate = useCallback(async () => {
+    setError(null);
+    setErrorDetails([]);
+
+    const validation = validateConfiguratorInputs({ ...inputs, uiMode });
+    if (!validation.ok) {
+      setError(validation.error);
+      setErrorDetails(validation.details || []);
+      return;
+    }
+
+    if (isIdeumMode) {
+      handleGenerateMartinWall();
       return;
     }
 
@@ -307,9 +342,17 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           <>
             <div className="conf-page-header__ideum-start">
               {!IDEUM_HIDE_HEADER_CHROME && handleBack && (
-                <Ideum05BackButton onBack={handleBack} />
+                <Ideum05BackButton onBack={handleBack} className="conf-ideum-header-back-btn" />
               )}
-              <ConfIdeumPageTabs activeTab={ideumTab} onSelectTab={setIdeumTab} />
+              <ConfIdeumPageTabs
+                activeTab={ideumTab}
+                onSelectTab={setIdeumTab}
+                onLegacyWallConfigure={
+                  ideumTab === 'configure' ? handleGenerateLegacyWall : undefined
+                }
+                legacyWallBusy={isGenerating}
+                legacyWallDisabled={!inputs.technologies?.length}
+              />
             </div>
             <div className="conf-page-header__titles conf-page-header__titles--center">
               <h1>{meta.title}</h1>

@@ -85,6 +85,15 @@ export async function postDataVisParallel(payload) {
   return parseJson(res);
 }
 
+export async function postDataVisHistogram(payload) {
+  const res = await fetch(`${DATAVIS_BASE}/chart/histogram`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return parseJson(res);
+}
+
 export async function postDataVisQuality(filters = []) {
   const res = await fetch(`${DATAVIS_BASE}/quality`, {
     method: 'POST',

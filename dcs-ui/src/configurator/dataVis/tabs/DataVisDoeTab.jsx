@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { postDataVisDoeSummary } from '../api/conf_dataVisApi';
 
-export default function DataVisDoeTab({ filters }) {
+export default function DataVisDoeTab({ filters, compact = false }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -23,10 +23,12 @@ export default function DataVisDoeTab({ filters }) {
   if (!data) return <p className="dataVis-muted">Loading DOE summary…</p>;
 
   return (
-    <div className="dataVis-tabPanel">
-      <p className="dataVis-muted">
-        Design-of-experiments inputs across {data.filtered_count} filtered scenarios.
-      </p>
+    <div className={`dataVis-tabPanel${compact ? ' dataVis-tabPanel--compact' : ''}`}>
+      {!compact && (
+        <p className="dataVis-muted">
+          Design-of-experiments inputs across {data.filtered_count} filtered scenarios.
+        </p>
+      )}
       <div className="dataVis-tableWrap">
         <table className="dataVis-table">
           <thead>

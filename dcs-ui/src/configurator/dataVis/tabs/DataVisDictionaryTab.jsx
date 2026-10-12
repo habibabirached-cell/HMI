@@ -26,11 +26,16 @@ export default function DataVisDictionaryTab({ columns }) {
             ))}
           </select>
         </label>
+        <span className="dataVis-muted">
+          {filtered.length} column{filtered.length === 1 ? '' : 's'}
+          {group === 'all' ? ' in dictionary' : ` (${group})`}
+        </span>
       </div>
       <div className="dataVis-tableWrap">
         <table className="dataVis-table">
           <thead>
             <tr>
+              <th>#</th>
               <th>Column</th>
               <th>Role</th>
               <th>Unit</th>
@@ -38,8 +43,9 @@ export default function DataVisDictionaryTab({ columns }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((c) => (
+            {filtered.map((c, index) => (
               <tr key={c.key}>
+                <td>{index + 1}</td>
                 <td>{c.label || c.key}</td>
                 <td>{c.role}</td>
                 <td>{c.unit || '—'}</td>

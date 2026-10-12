@@ -14,6 +14,7 @@ from configurator.cluster_state import (
     close_configurator_wall_cluster,
     get_configurator_session,
     submit_configurator_cluster,
+    submit_configurator_martin_placeholder_cluster,
 )
 from configurator.conf_consolidated import generate_configurator_result
 from configurator.conf_schemas import ConfiguratorGenerateResponse, ConfiguratorInputs
@@ -59,7 +60,8 @@ async def _forward_cluster_submit_to_peer(peer_base: str, body: dict) -> dict:
 
 async def _run_maingear_cluster_submit(body: dict) -> dict:
     source = (body.get("source") or "ideum").strip()
-    payload = {k: v for k, v in body.items() if k != "source"}
+    pipeline = (body.get("pipeline") or "legacy").strip().lower()
+    payload = {k: v for k, v in body.items() if k not in ("source", "pipeline")}
     try:
         inputs = ConfiguratorInputs(**payload)
     except Exception as exc:  # noqa: BLE001
@@ -70,12 +72,19 @@ async def _run_maingear_cluster_submit(body: dict) -> dict:
     async def broadcast(message: dict) -> int:
         return await cluster_manager.broadcast(message)
 
-    session = await submit_configurator_cluster(
-        inputs_dict,
-        source=source,
-        run_engine=generate_configurator_result,
-        broadcast=broadcast,
-    )
+    if pipeline == "martin":
+        session = await submit_configurator_martin_placeholder_cluster(
+            inputs_dict,
+            source=source or "ideum-martin",
+            broadcast=broadcast,
+        )
+    else:
+        session = await submit_configurator_cluster(
+            inputs_dict,
+            source=source,
+            run_engine=generate_configurator_result,
+            broadcast=broadcast,
+        )
     return {"ok": True, "session": session}
 
 

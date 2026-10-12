@@ -25,10 +25,11 @@ export const TECH_CAPEX_FIELD_DEFAULTS = {
   solar: { capexPerKwAc: 1500 },
   wind: { capexPerKw: 1400 },
   heavyDutyGT: {
-    cycleMode: HD_GT_CYCLE_MODE.COMBINED,
-    capexPerKw: HD_GT_CAPEX_DEFAULT_BY_MODE[HD_GT_CYCLE_MODE.COMBINED],
+    cycleMode: HD_GT_CYCLE_MODE.SIMPLE,
+    capexPerKw: HD_GT_CAPEX_DEFAULT_BY_MODE[HD_GT_CYCLE_MODE.SIMPLE],
+    gasPricePerMmbtu: 6,
   },
-  aeroderivativeGT: { capexPerKw: 1200 },
+  aeroderivativeGT: { capexPerKw: 1200, gasPricePerMmbtu: 6 },
   battery: { capexPerKw: 372, capexPerKwh: 334 },
 };
 
@@ -65,14 +66,20 @@ export function normalizeTechnologyCapex(raw) {
     base.battery.capexPerKwh,
   );
 
-  const mode = raw.heavyDutyGT?.cycleMode === HD_GT_CYCLE_MODE.SIMPLE
-    ? HD_GT_CYCLE_MODE.SIMPLE
-    : HD_GT_CYCLE_MODE.COMBINED;
-  base.heavyDutyGT.cycleMode = mode;
-  const hdDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[mode];
+  // Combined cycle not selectable in UI yet — always simple cycle.
+  base.heavyDutyGT.cycleMode = HD_GT_CYCLE_MODE.SIMPLE;
+  const hdDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[HD_GT_CYCLE_MODE.SIMPLE];
   base.heavyDutyGT.capexPerKw = parsePositiveNumber(
     raw.heavyDutyGT?.capexPerKw,
     hdDefault,
+  );
+  base.heavyDutyGT.gasPricePerMmbtu = parsePositiveNumber(
+    raw.heavyDutyGT?.gasPricePerMmbtu,
+    base.heavyDutyGT.gasPricePerMmbtu,
+  );
+  base.aeroderivativeGT.gasPricePerMmbtu = parsePositiveNumber(
+    raw.aeroderivativeGT?.gasPricePerMmbtu,
+    base.aeroderivativeGT.gasPricePerMmbtu,
   );
 
   return base;
@@ -87,9 +94,10 @@ export function setTechnologyCapexField(capex, techId, field, value) {
 
 export function setHeavyDutyCycleMode(capex, mode) {
   const next = normalizeTechnologyCapex(capex);
-  const resolved = mode === HD_GT_CYCLE_MODE.SIMPLE
-    ? HD_GT_CYCLE_MODE.SIMPLE
-    : HD_GT_CYCLE_MODE.COMBINED;
+  if (mode !== HD_GT_CYCLE_MODE.SIMPLE) {
+    return next;
+  }
+  const resolved = HD_GT_CYCLE_MODE.SIMPLE;
   const prevDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[next.heavyDutyGT.cycleMode];
   const nextDefault = HD_GT_CAPEX_DEFAULT_BY_MODE[resolved];
   const wasDefault = next.heavyDutyGT.capexPerKw === prevDefault;
@@ -106,12 +114,23 @@ export function formatCapexDisplay(value) {
   return Math.round(n).toLocaleString('en-US');
 }
 
+export function formatGasPriceDisplay(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '';
+  const rounded = Math.round(n * 100) / 100;
+  return rounded.toLocaleString('en-US', {
+    minimumFractionDigits: Number.isInteger(rounded) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 /** Touch-table wheel ranges (installed unit CAPEX). */
 export const CAPEX_WHEEL_PRESETS = {
   solarPerKwAc: { min: 800, max: 2400, step: 25 },
   generationPerKw: { min: 500, max: 2200, step: 25 },
   bessPowerPerKw: { min: 200, max: 600, step: 5 },
   bessEnergyPerKwh: { min: 100, max: 500, step: 5 },
+  gasPricePerMmbtu: { min: 2, max: 16, step: 0.25 },
 };
 
 export function buildCapexWheelOptions({ min, max, step }) {

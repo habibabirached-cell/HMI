@@ -135,9 +135,11 @@ def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
             100.0 * (df["Year 1 Load Compliance (%)"] >= 99).mean()
         )
 
-    pareto_n = min(50, n)
+    pareto_n = min(150, n)  # overview KPI preview; UI chart uses /rows with same limit
     if "Project LCOE ($/MWh)" in df.columns:
-        best = df.nsmallest(pareto_n, "Project LCOE ($/MWh)")
+        best = df.nsmallest(pareto_n, "Project LCOE ($/MWh)").sort_values(
+            "Project LCOE ($/MWh)", ascending=True
+        )
         kpis["pareto_preview"] = _records(
             best[
                 [
@@ -277,6 +279,21 @@ def build_heatmap(req: dict) -> dict[str, Any]:
         "y_label": y,
         "z_label": z,
         "agg": agg,
+    }
+
+
+def build_histogram(req: dict) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    col = req["column"]
+    if col not in df.columns:
+        raise ValueError(f"Unknown column: {col}")
+    series = pd.to_numeric(df[col], errors="coerce")
+    vals = series.dropna().astype(float).tolist()
+    return {
+        "column": col,
+        "values": [_json_safe(v) for v in vals],
+        "count": len(vals),
+        "filtered_count": len(df),
     }
 
 

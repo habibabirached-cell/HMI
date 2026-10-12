@@ -9,6 +9,7 @@ import { getGasTurbine3DModelUrl } from '../../utils/gasTurbine3dLayout';
 import { IDEUM05_NAV_MODEL_URLS } from '../../utils/ideum05Navigation';
 import {
   CAPEX_WHEEL_PRESETS,
+  formatGasPriceDisplay,
   HD_GT_CYCLE_MODE,
   IDEUM_CAPEX_DISABLED_TECH_IDS,
   normalizeTechnologyCapex,
@@ -118,6 +119,7 @@ const BOTTOM_TIER_ORDER = ['left-bottom', 'bottom', 'bottom-mid', 'right-bottom'
 const COMING_SOON_RIBBONS = {
   nuclear: 'Coming Q4 2027',
   fuelCell: 'Coming Q2 2027',
+  recipEngine: 'Coming soon',
 };
 function TechCapexPanel({ techId, capex, onCapexChange }) {
   const patch = useCallback((field, raw) => {
@@ -150,14 +152,25 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
   }
   if (techId === 'aeroderivativeGT') {
     return (
-      <ConfCapexValueField
-        id="conf-capex-aero"
-        label="Installed CAPEX"
-        unit="/ kW"
-        value={capex.aeroderivativeGT.capexPerKw}
-        wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
-        onCommit={(v) => patch('capexPerKw', v)}
-      />
+      <div className="conf-ideum-capex-panel conf-ideum-capex-panel--gt">
+        <ConfCapexValueField
+          id="conf-capex-aero"
+          label="Installed CAPEX"
+          unit="/ kW"
+          value={capex.aeroderivativeGT.capexPerKw}
+          wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
+          onCommit={(v) => patch('capexPerKw', v)}
+        />
+        <ConfCapexValueField
+          id="conf-capex-aero-gas"
+          label="Gas price"
+          unit="/ MMBtu"
+          value={capex.aeroderivativeGT.gasPricePerMmbtu}
+          wheelPreset={CAPEX_WHEEL_PRESETS.gasPricePerMmbtu}
+          formatDisplay={formatGasPriceDisplay}
+          onCommit={(v) => patch('gasPricePerMmbtu', v)}
+        />
+      </div>
     );
   }
   if (techId === 'heavyDutyGT') {
@@ -172,9 +185,10 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
           <span className="conf-ideum-capex-vswitch__thumb" aria-hidden="true" />
           <button
             type="button"
-            className="conf-ideum-capex-vswitch__option"
-            aria-pressed={!isSimple}
-            onClick={() => onCapexChange(setHeavyDutyCycleMode(capex, HD_GT_CYCLE_MODE.COMBINED))}
+            className="conf-ideum-capex-vswitch__option conf-ideum-capex-vswitch__option--disabled"
+            aria-pressed={false}
+            disabled
+            title="Combined cycle — not available yet"
           >
             Combined cycle
           </button>
@@ -195,29 +209,28 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
           wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
           onCommit={(v) => patch('capexPerKw', v)}
         />
+        <ConfCapexValueField
+          id="conf-capex-hd-gas"
+          label="Gas price"
+          unit="/ MMBtu"
+          value={capex.heavyDutyGT.gasPricePerMmbtu}
+          wheelPreset={CAPEX_WHEEL_PRESETS.gasPricePerMmbtu}
+          formatDisplay={formatGasPriceDisplay}
+          onCommit={(v) => patch('gasPricePerMmbtu', v)}
+        />
       </div>
     );
   }
   if (techId === 'battery') {
     return (
-      <div className="conf-ideum-capex-panel conf-ideum-capex-panel--bess">
-        <ConfCapexValueField
-          id="conf-capex-bess-kw"
-          label="Power"
-          unit="/ kW"
-          value={capex.battery.capexPerKw}
-          wheelPreset={CAPEX_WHEEL_PRESETS.bessPowerPerKw}
-          onCommit={(v) => patch('capexPerKw', v)}
-        />
-        <ConfCapexValueField
-          id="conf-capex-bess-kwh"
-          label="Energy"
-          unit="/ kWh"
-          value={capex.battery.capexPerKwh}
-          wheelPreset={CAPEX_WHEEL_PRESETS.bessEnergyPerKwh}
-          onCommit={(v) => patch('capexPerKwh', v)}
-        />
-      </div>
+      <ConfCapexValueField
+        id="conf-capex-bess-kwh"
+        label="Installed CAPEX"
+        unit="/ kWh"
+        value={capex.battery.capexPerKwh}
+        wheelPreset={CAPEX_WHEEL_PRESETS.bessEnergyPerKwh}
+        onCommit={(v) => patch('capexPerKwh', v)}
+      />
     );
   }
   return null;

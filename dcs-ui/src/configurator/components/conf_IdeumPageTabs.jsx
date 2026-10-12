@@ -12,9 +12,26 @@ const IDEUM_PAGE_TABS = [
   { id: IDEUM_DATA_EXPLORATION_TAB_ID, label: 'Data Exploration' },
 ];
 
-export default function ConfIdeumPageTabs({ activeTab, onSelectTab }) {
+export default function ConfIdeumPageTabs({
+  activeTab,
+  onSelectTab,
+  onLegacyWallConfigure,
+  legacyWallBusy = false,
+  legacyWallDisabled = false,
+}) {
   return (
     <nav className="conf-ideum-page-tabs" aria-label="Configurator views">
+      {onLegacyWallConfigure && (
+        <button
+          type="button"
+          className="conf-ideum-page-tabs__btn conf-ideum-page-tabs__btn--legacyWall"
+          onClick={onLegacyWallConfigure}
+          disabled={legacyWallBusy || legacyWallDisabled}
+          title="Send to Maingear wall (classic optimizer)"
+        >
+          {legacyWallBusy ? 'Sending…' : 'Configure'}
+        </button>
+      )}
       {IDEUM_PAGE_TABS.map((tab) => (
         <button
           key={tab.id}

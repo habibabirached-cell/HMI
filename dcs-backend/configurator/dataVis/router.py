@@ -9,6 +9,7 @@ from configurator.dataVis.schemas import (
     CompareRequest,
     FilterRequest,
     HeatmapRequest,
+    HistogramRequest,
     ParallelRequest,
     RowsRequest,
     ScatterRequest,
@@ -72,6 +73,16 @@ def datavis_scatter(body: ScatterRequest):
 def datavis_heatmap(body: HeatmapRequest):
     try:
         return service.build_heatmap(body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/chart/histogram")
+def datavis_histogram(body: HistogramRequest):
+    try:
+        return service.build_histogram(body.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
