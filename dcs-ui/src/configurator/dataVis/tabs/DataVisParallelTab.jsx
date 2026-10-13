@@ -26,6 +26,7 @@ export default function DataVisParallelTab({
   parcoordsRanges = null,
   highlightRowIds = null,
   onClearAll,
+  onDimensionsChange,
 }) {
   const queryFilters = chartFilters ?? filters;
   const queryFiltersKey = JSON.stringify(queryFilters);
@@ -86,6 +87,10 @@ export default function DataVisParallelTab({
       cancelled = true;
     };
   }, [queryFilters, queryFiltersKey, dimensions]);
+
+  useEffect(() => {
+    onDimensionsChange?.(dimensions);
+  }, [dimensions, onDimensionsChange]);
 
   useEffect(() => {
     constraintsRef.current = {};

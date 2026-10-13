@@ -58,6 +58,7 @@ export default function DataVisPanel() {
   const [filteredCount, setFilteredCount] = useState(null);
   const [compareIds, setCompareIds] = useState([]);
   const [parcoordsRanges, setParcoordsRanges] = useState({});
+  const [parallelDimensions, setParallelDimensions] = useState(null);
   const [scatterRowIds, setScatterRowIds] = useState(null);
   const [highlightRowIds, setHighlightRowIds] = useState(null);
   const [binCount, setBinCountState] = useState(readStoredFilterBinCount);
@@ -82,6 +83,12 @@ export default function DataVisPanel() {
       /* ignore */
     }
   }, [layoutMode]);
+
+  useEffect(() => {
+    if (meta?.defaults?.parallel_dimensions?.length) {
+      setParallelDimensions(meta.defaults.parallel_dimensions);
+    }
+  }, [meta?.defaults?.parallel_dimensions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,6 +261,8 @@ export default function DataVisPanel() {
             meta={meta}
             onSelectRowIds={handleSelectRow}
             onParcoordsRangesChange={setParcoordsRanges}
+            onParallelDimensionsChange={setParallelDimensions}
+            parallelDimensions={parallelDimensions}
             parcoordsActive={parcoordsActive}
             scatterActive={scatterActive}
             plotContextFilters={plotContextFilters}
@@ -299,6 +308,7 @@ export default function DataVisPanel() {
                 defaults={meta.defaults}
                 columnStats={meta.column_stats}
                 onParcoordsRangesChange={setParcoordsRanges}
+                onDimensionsChange={setParallelDimensions}
                 parcoordsActive={parcoordsActive}
                 parcoordsRanges={parcoordsRanges}
                 onClearAll={clearAllFilters}
@@ -318,6 +328,8 @@ export default function DataVisPanel() {
               <DataVisTableTab
                 filters={filters}
                 columnStats={meta.column_stats}
+                defaults={meta.defaults}
+                parallelDimensions={parallelDimensions}
                 onSelectRowIds={handleSelectRow}
               />
             )}

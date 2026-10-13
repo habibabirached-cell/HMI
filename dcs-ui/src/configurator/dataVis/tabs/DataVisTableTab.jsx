@@ -7,15 +7,46 @@ const ROW_ID_COL = 'dataVis_row_id';
 const MAX_TABLE_COLUMNS = 15;
 const PAGE_SIZE = 200;
 
-const DEFAULT_VISIBLE_COLUMNS = [
+const FALLBACK_VISIBLE_COLUMNS = [
+  'Solar AC Nameplate (MWac)',
+  'Wind Nameplate (MWac)',
+  'BESS power Nameplate (MW)',
+  '7HA Unit #',
+  'LM2500 Unit #',
   'Project LCOE ($/MWh)',
   'Year 1 Load Compliance (%)',
   'Carbon Free Energy (%)',
 ];
 
-export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, compact = false }) {
+function resolveInitialTableColumns(defaults, parallelDimensions) {
+  const dims = parallelDimensions?.length
+    ? parallelDimensions
+    : defaults?.parallel_dimensions;
+  if (Array.isArray(dims) && dims.length) {
+    return dims.filter((c) => c !== ROW_ID_COL).slice(0, MAX_TABLE_COLUMNS);
+  }
+  return FALLBACK_VISIBLE_COLUMNS;
+}
+
+export default function DataVisTableTab({
+  filters,
+  columnStats,
+  onSelectRowIds,
+  compact = false,
+  defaults = null,
+  parallelDimensions = null,
+}) {
   const allColumns = useMemo(() => allColumnsFromStats(columnStats), [columnStats]);
-  const [visibleColumns, setVisibleColumns] = useState(DEFAULT_VISIBLE_COLUMNS);
+  const [visibleColumns, setVisibleColumns] = useState(() =>
+    resolveInitialTableColumns(defaults, parallelDimensions),
+  );
+  const [columnsCustomized, setColumnsCustomized] = useState(false);
+
+  useEffect(() => {
+    if (columnsCustomized) return;
+    const next = resolveInitialTableColumns(defaults, parallelDimensions);
+    setVisibleColumns(next);
+  }, [columnsCustomized, defaults, parallelDimensions]);
   const [page, setPage] = useState(0);
   const [sortCol, setSortCol] = useState('Project LCOE ($/MWh)');
   const [sortAsc, setSortAsc] = useState(true);
@@ -50,6 +81,7 @@ export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, 
 
   const toggleColumn = (col) => {
     if (col === ROW_ID_COL) return;
+    setColumnsCustomized(true);
     setVisibleColumns((prev) => {
       if (prev.includes(col)) {
         const next = prev.filter((c) => c !== col);
@@ -66,6 +98,7 @@ export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, 
 
   const removeColumn = (col) => {
     if (col === ROW_ID_COL) return;
+    setColumnsCustomized(true);
     setVisibleColumns((prev) => {
       const next = prev.filter((c) => c !== col);
       if (!next.length) return prev;
@@ -124,8 +157,8 @@ export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, 
           </button>
         </div>
       </div>
-      <div className="dataVis-tableWrap dataVis-tableWrap--wide">
-        <table className="dataVis-table dataVis-table--compact">
+      <div className="dataVis-tableWrap dataVis-tableWrap--wide dataVis-tableWrap--hug">
+        <table className="dataVis-table dataVis-table--compact dataVis-table--hug">
           <thead>
             <tr>
               {displayCols.map((c) => {
@@ -160,24 +193,16 @@ export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, 
                   </th>
                 );
               })}
-              <th className="dataVis-table__thStatic">Compare</th>
             </tr>
           </thead>
           <tbody>
             {data.rows.map((row) => (
               <tr key={row.dataVis_row_id}>
                 {displayCols.map((c) => (
-                  <td key={c}>{fmtCell(row[c])}</td>
+                  <td key={c} className={c === ROW_ID_COL ? 'dataVis-table__cell--id' : 'dataVis-table__cell--num'}>
+                    {fmtCell(row[c], c)}
+                  </td>
                 ))}
-                <td>
-                  <button
-                    type="button"
-                    className="dataVis-linkBtn"
-                    onClick={() => onSelectRowIds?.([row.dataVis_row_id])}
-                  >
-                    Add
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -187,8 +212,16 @@ export default function DataVisTableTab({ filters, columnStats, onSelectRowIds, 
   );
 }
 
-function fmtCell(v) {
+function fmtCell(v, column) {
   if (v == null) return '—';
-  if (typeof v === 'number') return Number(v).toLocaleString(undefined, { maximumFractionDigits: 3 });
+  if (typeof v === 'number') {
+    const isPercent = column?.includes('(%)') || column?.includes('Compliance');
+    const isUnitCount = column?.includes('Unit #');
+    const maxFrac = isUnitCount ? 0 : isPercent ? 4 : 2;
+    return Number(v).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: maxFrac,
+    });
+  }
   return String(v);
 }

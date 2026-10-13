@@ -30,6 +30,8 @@ export default function DataVisQuadLayout({
   meta,
   onSelectRowIds,
   onParcoordsRangesChange,
+  onParallelDimensionsChange,
+  parallelDimensions = null,
   parcoordsActive = false,
   scatterActive = false,
   plotContextFilters,
@@ -79,6 +81,7 @@ export default function DataVisQuadLayout({
           columnStats={meta.column_stats}
           compact
           onParcoordsRangesChange={onParcoordsRangesChange}
+          onDimensionsChange={onParallelDimensionsChange}
           parcoordsActive={parcoordsActive}
           parcoordsRanges={parcoordsRanges}
           highlightRowIds={highlightRowIds}
@@ -120,6 +123,8 @@ export default function DataVisQuadLayout({
         <DataVisTableTab
           filters={filters}
           columnStats={meta.column_stats}
+          defaults={meta.defaults}
+          parallelDimensions={parallelDimensions}
           onSelectRowIds={onSelectRowIds}
           compact
         />
