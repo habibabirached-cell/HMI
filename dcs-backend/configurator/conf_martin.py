@@ -14,6 +14,8 @@ COL_LOAD_COMPLIANCE = "Year 1 Load Compliance (%)"
 COL_LCOE = "Project LCOE ($/MWh)"
 COL_CARBON = "Carbon Density (lb CO2/MWh)"
 COL_TOTAL_AEP_GWH = "Total Yr1 AEP (GWh)"
+COL_SOLAR_MW = "Solar AC Nameplate (MWac)"
+COL_WIND_MW = "Wind Nameplate (MWac)"
 
 # Display nameplates for unit-count thermal assets (Waco row stores counts, not MW).
 MW_PER_7HA_UNIT = 430.0
@@ -54,11 +56,12 @@ def _mix_row(
     battery_mwh: float | None = None,
     capacity_factor: float | None = None,
     utilization: float | None = None,
+    unit_count: float | None = None,
 ) -> dict[str, Any] | None:
     if installed_mw <= 0 and (battery_mwh or 0) <= 0:
         return None
     spec = TECH_SPECS[tech_id]
-    return {
+    row: dict[str, Any] = {
         "id": tech_id,
         "label": spec["label"],
         "fullLabel": spec["fullLabel"],
@@ -71,6 +74,9 @@ def _mix_row(
         "lcoe": lcoe if lcoe is not None else spec["defaultLcoe"],
         "cfeClass": spec["cfeClass"],
     }
+    if unit_count is not None and unit_count > 0:
+        row["unitCount"] = int(round(unit_count))
+    return row
 
 
 def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], float, float, float, float]:
@@ -125,8 +131,8 @@ def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], fl
         battery_mwh=bess_mwh if bess_mwh > 0 else None,
         utilization=None,
     )
-    add("hd7ha02", ha_mw, ha_gwh, "7HA LCOE ($/MWh)")
-    add("lm2500g4", lm_mw, lm_gwh, "LM2500 LCOE ($/MWh)")
+    add("hd7ha02", ha_mw, ha_gwh, "7HA LCOE ($/MWh)", unit_count=ha_units if ha_units > 0 else None)
+    add("lm2500g4", lm_mw, lm_gwh, "LM2500 LCOE ($/MWh)", unit_count=lm_units if lm_units > 0 else None)
 
     total_energy = sum(r["energyContributionGWh"] for r in candidates)
     if total_energy <= 0:
@@ -150,26 +156,54 @@ def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], fl
     return candidates, total_energy, cfe_energy, portfolio_lcoe, carbon
 
 
-def _filter_waco_dataframe(df: pd.DataFrame, min_cfe_fraction: float, reliability_target: float) -> pd.DataFrame:
+def _filter_waco_dataframe(
+    df: pd.DataFrame,
+    min_cfe_fraction: float,
+    max_cfe_fraction: float,
+    reliability_target: float,
+    min_solar_mw: float,
+    max_solar_mw: float,
+    min_wind_mw: float,
+    max_wind_mw: float,
+) -> pd.DataFrame:
     cfe = df[COL_CFE]
     load = df[COL_LOAD_COMPLIANCE]
     lcoe = df[COL_LCOE]
+    solar = df[COL_SOLAR_MW] if COL_SOLAR_MW in df.columns else None
+    wind = df[COL_WIND_MW] if COL_WIND_MW in df.columns else None
+    lo = min(min_cfe_fraction, max_cfe_fraction)
+    hi = max(min_cfe_fraction, max_cfe_fraction)
+    solar_lo = min(min_solar_mw, max_solar_mw)
+    solar_hi = max(min_solar_mw, max_solar_mw)
+    wind_lo = min(min_wind_mw, max_wind_mw)
+    wind_hi = max(min_wind_mw, max_wind_mw)
     mask = (
         cfe.notna()
         & load.notna()
         & lcoe.notna()
-        & (cfe >= min_cfe_fraction)
+        & (cfe >= lo)
+        & (cfe <= hi)
         & (load >= reliability_target)
     )
+    if solar is not None:
+        mask &= solar.notna() & (solar >= solar_lo) & (solar <= solar_hi)
+    if wind is not None:
+        mask &= wind.notna() & (wind >= wind_lo) & (wind <= wind_hi)
     return df.loc[mask].copy()
 
 
 def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any]:
     min_cfe_percent = float(inputs.get("minCfePercent") if inputs.get("minCfePercent") is not None else inputs.get("cfeTarget") or 0)
+    max_cfe_percent = float(inputs.get("maxCfePercent") if inputs.get("maxCfePercent") is not None else 100)
     reliability_target = float(inputs.get("reliabilityTarget") or 99.99)
     load_mw = float(inputs.get("loadMW") or 1350)
+    min_solar_mw = float(inputs.get("minSolarMW") if inputs.get("minSolarMW") is not None else 0)
+    max_solar_mw = float(inputs.get("maxSolarMW") if inputs.get("maxSolarMW") is not None else 4000)
+    min_wind_mw = float(inputs.get("minWindMW") if inputs.get("minWindMW") is not None else 0)
+    max_wind_mw = float(inputs.get("maxWindMW") if inputs.get("maxWindMW") is not None else 3000)
 
     min_cfe_fraction = min(1.0, max(0.0, min_cfe_percent / 100.0))
+    max_cfe_fraction = min(1.0, max(0.0, max_cfe_percent / 100.0))
 
     try:
         df = load_waco_dataframe()
@@ -180,14 +214,25 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
             "details": [str(exc)],
         }
 
-    filtered = _filter_waco_dataframe(df, min_cfe_fraction, reliability_target)
+    filtered = _filter_waco_dataframe(
+        df,
+        min_cfe_fraction,
+        max_cfe_fraction,
+        reliability_target,
+        min_solar_mw,
+        max_solar_mw,
+        min_wind_mw,
+        max_wind_mw,
+    )
     if filtered.empty:
         return {
             "ok": False,
-            "error": "No Martin study cases meet your carbon-free and availability targets.",
+            "error": "No Martin study cases meet your filters.",
             "details": [
-                f"Minimum carbon-free energy: {min_cfe_percent:.0f}% (dataset uses 0–1 scale).",
+                f"Carbon-free energy band: {min(min_cfe_percent, max_cfe_percent):.0f}%–{max(min_cfe_percent, max_cfe_percent):.0f}% (dataset uses 0–1 scale).",
                 f"Minimum Year 1 load compliance: {reliability_target:.4f}%.",
+                f"Solar nameplate band: {min(min_solar_mw, max_solar_mw):.0f}–{max(min_solar_mw, max_solar_mw):.0f} MW AC.",
+                f"Wind nameplate band: {min(min_wind_mw, max_wind_mw):.0f}–{max(min_wind_mw, max_wind_mw):.0f} MW.",
             ],
         }
 
@@ -210,7 +255,8 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
         "location": {"state": "Texas", "study": "Martin Waco 1 GW DOE"},
         "gridConnectionMode": inputs.get("gridConnectionMode") or "grid-connected",
         "summary": (
-            f"Least-cost Martin Waco case meeting ≥{min_cfe_percent:.0f}% carbon-free energy "
+            f"Least-cost Martin Waco case with carbon-free energy "
+            f"{min(min_cfe_percent, max_cfe_percent):.0f}–{max(min_cfe_percent, max_cfe_percent):.0f}% "
             f"and ≥{reliability_target:.2f}% Year 1 load compliance."
         ),
         "totalInstalledMW": total_installed,
@@ -221,6 +267,7 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
             "reliabilityTarget": reliability_target,
             "achievedCfe": achieved_cfe_percent,
             "minCfePercent": min_cfe_percent,
+            "maxCfePercent": max_cfe_percent,
             "lcoe": int(round(portfolio_lcoe)),
             "carbonIntensity": int(round(carbon)) if carbon > 0 else None,
         },
@@ -244,7 +291,9 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
         "annualGenerationGWh": round(total_energy, 1),
         "targets": {
             "relMet": achieved_rel >= reliability_target,
-            "cfeMet": achieved_cfe_fraction >= min_cfe_fraction,
+            "cfeMet": min(min_cfe_fraction, max_cfe_fraction)
+            <= achieved_cfe_fraction
+            <= max(min_cfe_fraction, max_cfe_fraction),
             "loadMet": True,
             "notes": [f"Selected from {len(filtered)} qualifying Waco cases (minimum project LCOE)."],
         },

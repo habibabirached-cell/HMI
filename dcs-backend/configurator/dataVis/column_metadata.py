@@ -234,6 +234,8 @@ PARALLEL_DEFAULT_DIMS = [
     "Solar AC Nameplate (MWac)",
     "Wind Nameplate (MWac)",
     "BESS power Nameplate (MW)",
+    "7HA Unit #",
+    "LM2500 Unit #",
     "Project LCOE ($/MWh)",
     "Year 1 Load Compliance (%)",
     "Carbon Free Energy (%)",

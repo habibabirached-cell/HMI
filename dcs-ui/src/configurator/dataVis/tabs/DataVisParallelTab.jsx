@@ -7,6 +7,14 @@ import { constraintsFromParcoordsFigure } from '../utils/dataVisParcoordsFilter'
 
 const MAX_PARALLEL_DIMS = 8;
 
+function constraintrangeFromBand(band) {
+  if (!band || (band.min == null && band.max == null)) return undefined;
+  const lo = band.min ?? band.max;
+  const hi = band.max ?? band.min;
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return undefined;
+  return [[Math.min(lo, hi), Math.max(lo, hi)]];
+}
+
 export default function DataVisParallelTab({
   chartFilters,
   filters,
@@ -15,7 +23,9 @@ export default function DataVisParallelTab({
   compact = false,
   onParcoordsRangesChange,
   parcoordsActive = false,
+  parcoordsRanges = null,
   highlightRowIds = null,
+  onClearAll,
 }) {
   const queryFilters = chartFilters ?? filters;
   const queryFiltersKey = JSON.stringify(queryFilters);
@@ -81,6 +91,10 @@ export default function DataVisParallelTab({
     constraintsRef.current = {};
     onParcoordsRangesChange?.({});
   }, [dimensions, onParcoordsRangesChange]);
+
+  useEffect(() => {
+    constraintsRef.current = { ...(parcoordsRanges || {}) };
+  }, [parcoordsRanges]);
 
   const publishConstraints = useCallback(
     (merged) => {
@@ -157,8 +171,8 @@ export default function DataVisParallelTab({
       ...(compact
         ? {
             domain: {
-              x: showParcoordsScale ? [0, 0.96] : [0, 1],
-              y: [0.14, 0.86],
+              x: showParcoordsScale ? [0.02, 0.96] : [0.02, 1],
+              y: [0.16, 0.88],
             },
             labelfont: { size: 10, color: '#1f2933' },
             rangefont: { size: 9, color: '#5f6b7a' },
@@ -179,19 +193,21 @@ export default function DataVisParallelTab({
         cmin: payload.color ? Math.min(...payload.color.filter((v) => v != null)) : undefined,
         cmax: payload.color ? Math.max(...payload.color.filter((v) => v != null)) : undefined,
       },
-      dimensions: dims.map((key) => ({
-        label: key,
-        values: payload.values[key],
-        ...(compact ? { tickfont: { size: 9 } } : {}),
-      })),
+      dimensions: dims.map((key) => {
+        const band =
+          constraintsRef.current?.[key] ?? parcoordsRanges?.[key] ?? null;
+        const constraintrange = constraintrangeFromBand(band);
+        return {
+          label: key,
+          values: payload.values[key],
+          labelangle: -45,
+          ...(constraintrange ? { constraintrange } : {}),
+          ...(compact ? { tickfont: { size: 9 } } : {}),
+        };
+      }),
     };
     return [line];
-  }, [compact, highlightSet, payload, showParcoordsScale, uirevision]);
-
-  const clearParcoordsBrush = useCallback(() => {
-    constraintsRef.current = {};
-    onParcoordsRangesChange?.({});
-  }, [onParcoordsRangesChange]);
+  }, [compact, highlightSet, parcoordsRanges, payload, showParcoordsScale, uirevision]);
 
   const toggleDim = (col) => {
     setDimensions((prev) => {
@@ -215,10 +231,18 @@ export default function DataVisParallelTab({
           menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
           onToggle={toggleDim}
         />
-        {compact ? (
+        {!compact ? (
           <span className="dataVis-muted dataVis-parcoordsHint">
-            Drag axes to filter{parcoordsActive ? ' · active' : ''} · double-click axis to reset
+            Drag on any axis to filter — use several axes at once. Double-click an axis to reset
+            that axis only{parcoordsActive ? ' · parallel filter active' : ''}.
           </span>
+        ) : parcoordsActive ? (
+          <span className="dataVis-muted dataVis-parcoordsHint">Parallel filter active</span>
+        ) : null}
+        {onClearAll && !compact ? (
+          <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
+            Clear all filters
+          </button>
         ) : null}
       </div>
       {error && <p className="dataVis-error">{error}</p>}
@@ -237,13 +261,13 @@ export default function DataVisParallelTab({
                 : Math.max(440, Math.round(window.innerHeight * 0.55)),
               margin: compact
                 ? {
-                    l: 28,
-                    r: showParcoordsScale ? 36 : 12,
-                    t: 48,
-                    b: 44,
-                    pad: 2,
+                    l: 72,
+                    r: showParcoordsScale ? 40 : 16,
+                    t: 52,
+                    b: 56,
+                    pad: 4,
                   }
-                : { l: 64, r: 24, t: 48, b: 88 },
+                : { l: 80, r: 28, t: 48, b: 100 },
             }}
             style={
               compact
@@ -266,7 +290,6 @@ export default function DataVisParallelTab({
             onRestyle={() => {
               requestAnimationFrame(() => syncConstraintsFromGraph());
             }}
-            onDeselect={clearParcoordsBrush}
           />
         </div>
       )}

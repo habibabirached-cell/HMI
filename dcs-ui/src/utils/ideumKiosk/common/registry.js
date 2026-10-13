@@ -3,6 +3,9 @@
 export const IDEUM07_CATALOG = 'ideum07';
 export const IDEUM08_CATALOG = 'ideum08';
 
+/** Default kiosk menu loaded on Ideum / Malta touch-table boot. */
+export const DEFAULT_IDEUM_KIOSK_CATALOG = IDEUM08_CATALOG;
+
 export function isIdeum07DesignName(name) {
   return typeof name === 'string' && /^Ideum07$/i.test(name.trim());
 }

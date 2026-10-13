@@ -45,6 +45,9 @@ function WallDetailsTable({ mix }) {
               <td>{row.fullLabel || row.label}</td>
               <td>
                 {formatMWExact(row.installedMW)}
+                {row.unitCount != null && Number(row.unitCount) > 0
+                  ? ` · ${Math.round(row.unitCount)} unit${Math.round(row.unitCount) === 1 ? '' : 's'}`
+                  : ''}
                 {row.batteryMWh ? ` / ${Math.round(row.batteryMWh).toLocaleString()} MWh` : ''}
               </td>
               <td>{formatPercent(row.capacitySharePercent ?? row.energySharePercent, 2)}</td>
@@ -107,7 +110,7 @@ export default function ConfWallQuadrantDisplay({
           <h2>Ready — waiting for Ideum</h2>
           <p>
             Open <strong>Data Center Configurator</strong> on the touch table, set requirements, and press{' '}
-            <strong>CONFIGURE</strong> (footer) or <strong>Configure</strong> (top-left, classic).
+            <strong>CONFIGURE</strong> in the footer to send the Martin study to this wall.
           </p>
           <p className="conf-wall-overlay-state__status">
             Status:{' '}

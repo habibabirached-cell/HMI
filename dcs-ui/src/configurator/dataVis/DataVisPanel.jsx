@@ -98,7 +98,11 @@ export default function DataVisPanel() {
   }, []);
 
   const rangeFilters = useMemo(() => buildRangeFilters(ranges), [ranges]);
-  const plotContextFilters = useMemo(() => [], []);
+  /** Chart data: histogram + scatter filters only (not parallel brushes — avoids refetch wiping multi-axis brushes). */
+  const plotContextFilters = useMemo(
+    () => buildDataVisFilters(ranges, {}, scatterRowIds),
+    [ranges, scatterRowIds],
+  );
   const filters = useMemo(
     () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds),
     [ranges, parcoordsRanges, scatterRowIds],
@@ -296,6 +300,8 @@ export default function DataVisPanel() {
                 columnStats={meta.column_stats}
                 onParcoordsRangesChange={setParcoordsRanges}
                 parcoordsActive={parcoordsActive}
+                parcoordsRanges={parcoordsRanges}
+                onClearAll={clearAllFilters}
               />
             )}
             {tab === 'histogram' && (

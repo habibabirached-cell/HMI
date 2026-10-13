@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import ConfIdeumTechnologyHub from './conf_IdeumTechnologyHub';
 import Conf3dToggleButton from './Conf3dToggleButton';
-import IdeumCorridorRail from './conf_IdeumCorridorRail';
+import IdeumCorridorRangeRail from './conf_IdeumCorridorRangeRail';
 import { CONFIGURATOR_PRESET_SCENARIOS } from '../../configuratorData/conf_scenarios';
 import {
-  RELIABILITY_LEVELS,
-  MIN_CFE_PRESETS,
   GRID_CONNECTION_MODES,
 } from '../../configuratorData/conf_constants';
 import {
@@ -20,26 +18,21 @@ const RELIABILITY_SLIDER_SCALE = 10000;
 function clampReliabilityTarget(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 99.99;
-  return Math.min(99.9999, Math.max(99, Math.round(n * RELIABILITY_SLIDER_SCALE) / RELIABILITY_SLIDER_SCALE));
+  return Math.min(100, Math.max(99, Math.round(n * RELIABILITY_SLIDER_SCALE) / RELIABILITY_SLIDER_SCALE));
 }
 
 function formatReliabilityDisplay(value) {
-  return formatPercent(clampReliabilityTarget(value), 4);
+  const clamped = clampReliabilityTarget(value);
+  if (clamped >= 100 - 1e-9) return '100%';
+  return formatPercent(clamped, 4);
 }
 
-function reliabilityPresetActive(target, presetValue) {
-  return Math.abs(clampReliabilityTarget(target) - presetValue) < 0.00005;
+function formatAvailabilityEndpoint(value) {
+  const clamped = clampReliabilityTarget(value);
+  if (clamped >= 100 - 1e-9) return '100%';
+  if (clamped <= 99.00005) return '99%';
+  return formatPercent(clamped, 4);
 }
-
-const RELIABILITY_PRESETS = RELIABILITY_LEVELS.map((level) => ({
-  value: level.value,
-  label: level.label,
-}));
-
-const CFE_PRESETS = MIN_CFE_PRESETS.map((pct) => ({
-  value: pct,
-  label: `${pct}%`,
-}));
 
 const IDEUM_LOCATION_OPTIONS = [
   { id: 'texas', label: 'Texas', cityId: 'dallas_tx' },
@@ -176,6 +169,11 @@ export default function ConfIdeumInputPanel({
   previewSlot = null,
 }) {
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
+  const maxCfe = inputs.maxCfePercent ?? 100;
+  const minSolarMW = inputs.minSolarMW ?? 0;
+  const maxSolarMW = inputs.maxSolarMW ?? 4000;
+  const minWindMW = inputs.minWindMW ?? 0;
+  const maxWindMW = inputs.maxWindMW ?? 3000;
   const reliabilityTarget = clampReliabilityTarget(inputs.reliabilityTarget ?? 99.99);
   const update = (patch) => onChange({ ...inputs, ...patch });
 
@@ -184,6 +182,12 @@ export default function ConfIdeumInputPanel({
       update({ gridConnectionMode: GRID_CONNECTION_MODES.ISLANDED });
     }
   }, [inputs.gridConnectionMode]);
+
+  useEffect(() => {
+    if (!inputs.technologies?.length) {
+      update({ technologies: ideumConfiguratorTechnologyIds() });
+    }
+  }, [inputs.technologies?.length]);
 
   const handleCapexChange = (technologyCapex) => {
     update({
@@ -232,34 +236,38 @@ export default function ConfIdeumInputPanel({
 
   const corridor = {
     left: (
-      <IdeumCorridorRail
+      <IdeumCorridorRangeRail
         side="left"
         label="Availability"
         min={99}
-        max={99.9999}
+        max={100}
         step={0.0001}
-        value={reliabilityTarget}
-        onChange={(reliabilityTarget) => update({ reliabilityTarget: clampReliabilityTarget(reliabilityTarget) })}
-        presets={RELIABILITY_PRESETS}
-        formatDisplay={formatReliabilityDisplay}
-        isPresetActive={(presetValue) => reliabilityPresetActive(reliabilityTarget, presetValue)}
-        ariaLabel="Availability fine adjust"
-        presetSizing="reliability"
+        minBandSpan={0}
+        fixedUpper={100}
+        gutterTicks={[99, 100]}
+        lowerValue={reliabilityTarget}
+        upperValue={100}
+        scaleMode="availability-nines"
+        formatValue={formatAvailabilityEndpoint}
+        onChange={(lower) => update({ reliabilityTarget: clampReliabilityTarget(lower) })}
+        ariaLabel="Minimum availability target"
       />
     ),
     right: (
-      <IdeumCorridorRail
+      <IdeumCorridorRangeRail
         side="right"
         label="Carbon Free"
         min={0}
         max={100}
         step={1}
-        value={minCfe}
-        onChange={(next) => update({ minCfePercent: next, cfeTarget: next })}
-        presets={CFE_PRESETS}
-        formatDisplay={(v) => `${Math.round(v)}%`}
-        isPresetActive={(presetValue) => Math.round(minCfe) === presetValue}
-        ariaLabel="Carbon Free fine adjust"
+        lowerValue={minCfe}
+        upperValue={maxCfe}
+        onChange={(lower, upper) => update({
+          minCfePercent: lower,
+          maxCfePercent: upper,
+          cfeTarget: lower,
+        })}
+        ariaLabel="Carbon-free energy acceptable band"
       />
     ),
   };
@@ -274,6 +282,18 @@ export default function ConfIdeumInputPanel({
             loadEditor={loadEditor}
             gridEditor={gridEditor}
             corridor={corridor}
+            renewableCapacityBands={{
+              solar: {
+                lower: minSolarMW,
+                upper: maxSolarMW,
+                onChange: (lower, upper) => update({ minSolarMW: lower, maxSolarMW: upper }),
+              },
+              wind: {
+                lower: minWindMW,
+                upper: maxWindMW,
+                onChange: (lower, upper) => update({ minWindMW: lower, maxWindMW: upper }),
+              },
+            }}
           />
         </section>
 
@@ -300,7 +320,7 @@ export default function ConfIdeumInputPanel({
             type="button"
             className="conf-ideum-configure-btn"
             onClick={onGenerate}
-            disabled={isGenerating || !inputs.technologies?.length}
+            disabled={isGenerating}
           >
             {isGenerating ? 'Sending…' : generateLabel}
           </button>

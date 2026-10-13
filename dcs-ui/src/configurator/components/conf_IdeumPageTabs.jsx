@@ -4,7 +4,7 @@ import { TRADE_SPACE_VIZ_OPTIONS } from './conf_TradeSpacePanel';
 export const IDEUM_DATA_EXPLORATION_TAB_ID = 'data-exploration';
 
 const IDEUM_PAGE_TABS = [
-  { id: 'configure', label: 'Configure' },
+  { id: 'configure', label: 'Inputs' },
   ...TRADE_SPACE_VIZ_OPTIONS.map((opt) => ({
     id: opt.id,
     label: opt.label.replace(/^\d+\s·\s/, ''),
@@ -15,21 +15,20 @@ const IDEUM_PAGE_TABS = [
 export default function ConfIdeumPageTabs({
   activeTab,
   onSelectTab,
-  onLegacyWallConfigure,
-  legacyWallBusy = false,
-  legacyWallDisabled = false,
+  onLocalMartinConfigure,
+  localMartinBusy = false,
 }) {
   return (
     <nav className="conf-ideum-page-tabs" aria-label="Configurator views">
-      {onLegacyWallConfigure && (
+      {onLocalMartinConfigure && (
         <button
           type="button"
-          className="conf-ideum-page-tabs__btn conf-ideum-page-tabs__btn--legacyWall"
-          onClick={onLegacyWallConfigure}
-          disabled={legacyWallBusy || legacyWallDisabled}
-          title="Send to Maingear wall (classic optimizer)"
+          className="conf-ideum-page-tabs__btn conf-ideum-page-tabs__btn--localMartin"
+          onClick={onLocalMartinConfigure}
+          disabled={localMartinBusy}
+          title="Run Martin Waco study and show the wall layout on this screen (does not send to Maingear)"
         >
-          {legacyWallBusy ? 'Sending…' : 'Configure'}
+          {localMartinBusy ? 'Running…' : 'Preview'}
         </button>
       )}
       {IDEUM_PAGE_TABS.map((tab) => (

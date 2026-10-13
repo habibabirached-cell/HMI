@@ -143,6 +143,7 @@ import {
   normalizeIdeum07NavViewports,
   IDEUM07_CATALOG,
   IDEUM08_CATALOG,
+  DEFAULT_IDEUM_KIOSK_CATALOG,
   IDEUM07_DATA_CENTERS_HUB,
   IDEUM07_NAV_ROOT,
   IDEUM07_ADVANCED_ANALYSIS,
@@ -1146,7 +1147,7 @@ function App() {
   /** After loadDesignFromCatalog(ideum05), restore this nav stack (e.g. from DataCenter drill). */
   const pendingIdeum05NavStackRef = useRef(null);
   const pendingIdeum07NavStackRef = useRef(null);
-  const ideumKioskHomeCatalogRef = useRef(IDEUM07_CATALOG);
+  const ideumKioskHomeCatalogRef = useRef(DEFAULT_IDEUM_KIOSK_CATALOG);
   const ideumTableBootRef = useRef(false);
   /** Isolated Ideum kiosk shells: trackpad (ideum06) or data-centers menu only. */
   const [ideumShellMode, setIdeumShellMode] = useState(null);
@@ -4196,13 +4197,13 @@ function App() {
     if (!isTouchTable) return;
     if (ideumTableBootRef.current || isIdeum05 || isIdeumKiosk) return;
     ideumTableBootRef.current = true;
-    void loadDesignFromCatalog(IDEUM07_CATALOG);
+    void loadDesignFromCatalog(DEFAULT_IDEUM_KIOSK_CATALOG);
   }, [machineRole, isIdeum05, isIdeumKiosk, loadDesignFromCatalog]);
 
   /** Ideum06 Back — focus DCS wall and reload Ideum07 (or Ideum05) root menu. */
   const handleIdeum06Back = useCallback(() => {
     fireKioskFocusFast('showDcs');
-    const home = ideumKioskHomeCatalogRef.current || IDEUM07_CATALOG;
+    const home = ideumKioskHomeCatalogRef.current || DEFAULT_IDEUM_KIOSK_CATALOG;
     if (isIdeum07KioskCatalog(home)) {
       setIdeum07NavStack([ideumKioskNav.NAV_ROOT]);
       void loadDesignFromCatalog(home);
@@ -4217,7 +4218,7 @@ function App() {
     void sendIdeumCloseConfiguratorWall();
     const catalog =
       ideumKioskHomeCatalogRef.current
-      || (isIdeum08 ? IDEUM08_CATALOG : IDEUM07_CATALOG);
+      || (isIdeum08 ? IDEUM08_CATALOG : isIdeum07 ? IDEUM07_CATALOG : DEFAULT_IDEUM_KIOSK_CATALOG);
     setIdeum07NavStack([
       catalog === IDEUM08_CATALOG ? IDEUM08_NAV_ROOT : IDEUM07_NAV_ROOT,
     ]);
@@ -4250,7 +4251,7 @@ function App() {
             ideumKioskNav.ADVANCED_ANALYSIS,
             ideumKioskNav.REFERENCE_ARCHITECTURES,
           ];
-    void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || IDEUM07_CATALOG);
+    void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || DEFAULT_IDEUM_KIOSK_CATALOG);
   }, [ideum07NavStack, ideumKioskNav, loadDesignFromCatalog, sendIdeumCloseConfiguratorWall]);
 
   /** Child shells (200 MW / Configurator / 500 MW) Back — return to prior Ideum menu. */
@@ -4262,7 +4263,7 @@ function App() {
           ideumKioskNav.NAV_ROOT,
           ideumKioskNav.DATA_CENTERS_HUB,
         ];
-        void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || IDEUM07_CATALOG);
+        void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || DEFAULT_IDEUM_KIOSK_CATALOG);
         return;
       }
       handleIdeum07RefArchChildBack();
@@ -4286,7 +4287,7 @@ function App() {
         ideumKioskNav.NAV_ROOT,
         ideumKioskNav.DATA_CENTERS_HUB,
       ];
-      void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || IDEUM07_CATALOG);
+      void loadDesignFromCatalog(ideumKioskHomeCatalogRef.current || DEFAULT_IDEUM_KIOSK_CATALOG);
       return;
     }
     void loadDesignFromCatalog(IDEUM05_CATALOG);
@@ -8066,7 +8067,7 @@ function App() {
     const loadedIsIdeumKiosk = loadedIsIdeum07 || loadedIsIdeum08;
     if (loadedIsIdeumKiosk) {
       ideumKioskHomeCatalogRef.current =
-        ideumKioskCatalogForDesignName(loadedConfig.name) || IDEUM07_CATALOG;
+        ideumKioskCatalogForDesignName(loadedConfig.name) || DEFAULT_IDEUM_KIOSK_CATALOG;
       setIdeum07NavStack(
         Array.isArray(pendingNavStack07) && pendingNavStack07.length
           ? pendingNavStack07

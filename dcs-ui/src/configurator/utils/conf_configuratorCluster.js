@@ -16,6 +16,11 @@ function normalizePayload(inputs) {
   return {
     ...inputs,
     minCfePercent: cfe,
+    maxCfePercent: inputs.maxCfePercent ?? 100,
+    minSolarMW: inputs.minSolarMW ?? 0,
+    maxSolarMW: inputs.maxSolarMW ?? 4000,
+    minWindMW: inputs.minWindMW ?? 0,
+    maxWindMW: inputs.maxWindMW ?? 3000,
     cfeTarget: cfe,
     gridConnectionMode: inputs.gridConnectionMode ?? 'grid-connected',
   };

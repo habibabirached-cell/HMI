@@ -63,7 +63,15 @@ export default function DataVisQuadLayout({
         />
       </DataVisQuadPane>
 
-      <DataVisQuadPane title="Parallel coordinates">
+      <DataVisQuadPane
+        title="Parallel coordinates"
+        hint="Drag axes to filter (multiple axes) · double-click axis to reset"
+        actions={
+          <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
+            Clear all filters
+          </button>
+        }
+      >
         <DataVisParallelTab
           chartFilters={chartFilters}
           filters={filters}
@@ -72,7 +80,9 @@ export default function DataVisQuadLayout({
           compact
           onParcoordsRangesChange={onParcoordsRangesChange}
           parcoordsActive={parcoordsActive}
+          parcoordsRanges={parcoordsRanges}
           highlightRowIds={highlightRowIds}
+          onClearAll={onClearAll}
         />
       </DataVisQuadPane>
 

@@ -147,15 +147,23 @@ function capacityFactorForAsset(capacityFactors, assetId) {
   return (capacityFactors || []).find((row) => row.id === assetId) ?? null;
 }
 
+function formatUnitCountSuffix(asset) {
+  const n = Number(asset.unitCount);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  const rounded = Math.round(n);
+  return ` · ${rounded} unit${rounded === 1 ? '' : 's'}`;
+}
+
 function formatAssetCapacityLine(asset) {
   const share = asset.capacitySharePercent ?? asset.percent ?? 0;
   const mwText = compactMW(asset.installedMW);
   const shareText = formatPercent(share, 2);
+  const unitsText = formatUnitCountSuffix(asset);
   if (asset.batteryMWh) {
     const mwhText = Math.round(asset.batteryMWh).toLocaleString();
-    return `capacity: ${mwText} (${shareText}) / ${mwhText} MWh`;
+    return `capacity: ${mwText} (${shareText})${unitsText} / ${mwhText} MWh`;
   }
-  return `capacity: ${mwText} (${shareText})`;
+  return `capacity: ${mwText} (${shareText})${unitsText}`;
 }
 
 function formatAssetUtilizationLine(asset, cfRow) {

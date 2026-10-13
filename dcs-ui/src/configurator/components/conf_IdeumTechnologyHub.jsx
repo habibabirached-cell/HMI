@@ -17,7 +17,17 @@ import {
   setTechnologyCapexField,
 } from '../utils/conf_technologyCapex';
 import ConfCapexValueField from './conf_CapexValueField';
+import IdeumCorridorRangeRail from './conf_IdeumCorridorRangeRail';
 import { useConf3d } from '../utils/conf_3dContext';
+
+const SOLAR_MW_BAND_MAX = 4000;
+const WIND_MW_BAND_MAX = 3000;
+
+function formatMwBandValue(value) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return '—';
+  return `${n.toLocaleString()} MW`;
+}
 
 const DISABLED_HUB_TECH = new Set(IDEUM_CAPEX_DISABLED_TECH_IDS);
 
@@ -305,6 +315,32 @@ function TechCard3DPreview({ tech, meta }) {
   );
 }
 
+function RenewableMwBand({ techId, band }) {
+  if (!band) return null;
+  const isSolar = techId === 'solar';
+  const max = isSolar ? SOLAR_MW_BAND_MAX : WIND_MW_BAND_MAX;
+  const title = isSolar ? 'Solar' : 'Wind';
+  return (
+    <div className="conf-ideum-tech-card__capacity-band" aria-label={`${title} nameplate band`}>
+      <IdeumCorridorRangeRail
+        side="right"
+        layout="tech"
+        label={title}
+        min={0}
+        max={max}
+        step={10}
+        minBandSpan={10}
+        lowerValue={band.lower}
+        upperValue={band.upper}
+        formatValue={formatMwBandValue}
+        gutterTicks={[0, max]}
+        onChange={band.onChange}
+        ariaLabel={`${title} AC nameplate acceptable range in megawatts`}
+      />
+    </div>
+  );
+}
+
 function HubTechCard({
   tech,
   meta,
@@ -312,15 +348,17 @@ function HubTechCard({
   disabled,
   cardRef,
   onCapexChange,
+  capacityBand = null,
 }) {
   const gridArea = BOTTOM_TIER_SLOTS.has(meta.slot)
     ? undefined
     : SLOT_GRID_AREAS[meta.slot];
+  const showCapacityBand = capacityBand && (tech.id === 'solar' || tech.id === 'wind') && !disabled;
 
   return (
     <article
       ref={cardRef}
-      className={`conf-ideum-tech-card conf-ideum-tech-card--${meta.slot}${tech.id === 'fuelCell' ? ' conf-ideum-tech-card--fuel-cell' : ''}${tech.id === 'nuclear' ? ' conf-ideum-tech-card--nuclear' : ''}${disabled ? ' conf-ideum-tech-card--disabled' : ''}`}
+      className={`conf-ideum-tech-card conf-ideum-tech-card--${meta.slot}${tech.id === 'fuelCell' ? ' conf-ideum-tech-card--fuel-cell' : ''}${tech.id === 'nuclear' ? ' conf-ideum-tech-card--nuclear' : ''}${disabled ? ' conf-ideum-tech-card--disabled' : ''}${showCapacityBand ? ' conf-ideum-tech-card--with-capacity-band' : ''}`}
       style={gridArea ? { gridArea } : undefined}
       aria-disabled={disabled || undefined}
     >
@@ -335,7 +373,7 @@ function HubTechCard({
         </div>
       </div>
 
-      <div className="conf-ideum-tech-card__body">
+      <div className={`conf-ideum-tech-card__body${showCapacityBand ? ' conf-ideum-tech-card__body--with-band' : ''}`}>
         {COMING_SOON_RIBBONS[tech.id] && (
           <span className="conf-ideum-tech-card__ribbon" aria-hidden="true">
             {COMING_SOON_RIBBONS[tech.id]}
@@ -356,6 +394,9 @@ function HubTechCard({
         <div className="conf-ideum-tech-card__media">
           <TechCard3DPreview tech={tech} meta={meta} />
         </div>
+        {showCapacityBand ? (
+          <RenewableMwBand techId={tech.id} band={capacityBand} />
+        ) : null}
       </div>
     </article>
   );
@@ -431,6 +472,7 @@ export default function ConfIdeumTechnologyHub({
   loadEditor = null,
   gridEditor = null,
   corridor,
+  renewableCapacityBands = null,
 }) {
   const hubRef = useRef(null);
   const centerStageRef = useRef(null);
@@ -476,6 +518,7 @@ export default function ConfIdeumTechnologyHub({
           disabled={DISABLED_HUB_TECH.has(tech.id)}
           cardRef={(el) => { cardRefs.current[tech.id] = el; }}
           onCapexChange={onCapexChange}
+          capacityBand={renewableCapacityBands?.[tech.id]}
         />
       ))}
 
@@ -489,6 +532,7 @@ export default function ConfIdeumTechnologyHub({
             disabled={DISABLED_HUB_TECH.has(tech.id)}
             cardRef={(el) => { cardRefs.current[tech.id] = el; }}
             onCapexChange={onCapexChange}
+            capacityBand={renewableCapacityBands?.[tech.id]}
           />
         ))}
       </div>
