@@ -254,6 +254,16 @@
   height: 100%;
 }
 
+.conf-ideum-local-wall {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(8, 18, 28, 0.92);
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
 .conf-layout--ideum .conf-input-panel--ideum {
   height: 100%;
   overflow: hidden;

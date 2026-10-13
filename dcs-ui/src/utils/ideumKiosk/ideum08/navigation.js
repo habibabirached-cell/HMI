@@ -65,9 +65,8 @@ const IDEUM08_ADVANCED_ANALYSIS_PREVIEW_IMAGE = {
 export { IDEUM08_CATALOG } from '../common/registry';
 export const IDEUM08_NAV_ROOT = 'root';
 /** Ideum08 root super-bucket title (replaces Ideum07 “Applications”). */
-export const IDEUM08_ROOT_SUPER_BUCKET_TITLE = 'E-E: Ecosystem Enlightener';
-export const IDEUM08_ROOT_SUPER_BUCKET_ARIA =
-  'The ecosystem enlightener. E-E: Ecosystem Enlightener.';
+export const IDEUM08_ROOT_SUPER_BUCKET_TITLE = 'GE Vernova Integrated Solutions';
+export const IDEUM08_ROOT_SUPER_BUCKET_ARIA = 'GE Vernova Integrated Solutions.';
 export const IDEUM08_DATA_CENTERS_HUB = 'data-centers-hub';
 export const IDEUM08_ADVANCED_ANALYSIS = 'advanced-analysis';
 export const IDEUM08_ADVANCED_CONTROLS = 'advanced-controls';

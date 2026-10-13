@@ -14,9 +14,9 @@ from configurator.cluster_state import (
     close_configurator_wall_cluster,
     get_configurator_session,
     submit_configurator_cluster,
-    submit_configurator_martin_placeholder_cluster,
 )
 from configurator.conf_consolidated import generate_configurator_result
+from configurator.conf_martin import generate_martin_configurator_result
 from configurator.conf_schemas import ConfiguratorGenerateResponse, ConfiguratorInputs
 from configurator.dataVis.router import router as datavis_router
 
@@ -73,9 +73,10 @@ async def _run_maingear_cluster_submit(body: dict) -> dict:
         return await cluster_manager.broadcast(message)
 
     if pipeline == "martin":
-        session = await submit_configurator_martin_placeholder_cluster(
+        session = await submit_configurator_cluster(
             inputs_dict,
             source=source or "ideum-martin",
+            run_engine=generate_martin_configurator_result,
             broadcast=broadcast,
         )
     else:
@@ -94,9 +95,15 @@ async def configurator_health():
 
 
 @router.post("/generate", response_model=ConfiguratorGenerateResponse)
-async def generate_configuration(body: ConfiguratorInputs):
-    result = generate_configurator_result(body.model_dump())
-    return ConfiguratorGenerateResponse(**result, source=result.get("source", "backend"))
+async def generate_configuration(body: ConfiguratorInputs, pipeline: str = "legacy"):
+    inputs = body.model_dump()
+    if (pipeline or "legacy").strip().lower() == "martin":
+        result = generate_martin_configurator_result(inputs)
+    else:
+        result = generate_configurator_result(inputs)
+    payload = dict(result)
+    payload.setdefault("source", "backend")
+    return ConfiguratorGenerateResponse(**payload)
 
 
 @router.get("/cluster/session")

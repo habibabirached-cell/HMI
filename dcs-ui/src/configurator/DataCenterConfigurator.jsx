@@ -10,8 +10,10 @@ import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios'
 import { UI_MODES } from '../configuratorData/conf_constants';
 import {
   generateConfiguratorResult,
+  generateMartinConfiguratorResult,
   GENERATION_STATUS_MESSAGES,
 } from './utils/conf_configuratorApi';
+import ConfIdeumPreviewSummary from './components/conf_IdeumPreviewSummary';
 import {
   connectConfiguratorClusterUpdates,
   fetchConfiguratorClusterSession,
@@ -85,6 +87,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const [ideumTab, setIdeumTab] = useState('configure');
 
   const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
+
+  const showIdeumLocalMartinWall =
+    isIdeumMode
+    && !isWallMode
+    && isLocalClusterDev()
+    && ideumTab === 'configure'
+    && result?.ok
+    && result?.source === 'martin-waco-doe';
 
   useEffect(() => {
     const syncFullscreen = () => {
@@ -214,6 +224,12 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           setErrorDetails(session.errorDetails || session.result?.details || []);
           return;
         }
+        if (session.result?.ok) {
+          const payload = { ...inputs, uiMode };
+          setResult(session.result);
+          setLastRunInputs({ ...payload, technologies: [...(payload.technologies || [])] });
+          setResultsView('architecture');
+        }
       } catch (e) {
         setError(e.message || 'Could not send configuration to wall display.');
       } finally {
@@ -229,11 +245,60 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
   }, [isIdeumMode, submitIdeumToMaingearWall]);
 
-  const handleGenerateMartinWall = useCallback(() => {
-    if (isIdeumMode) {
-      submitIdeumToMaingearWall('martin');
+  const runIdeumMartinConfigure = useCallback(async () => {
+    setError(null);
+    setErrorDetails([]);
+
+    const validation = validateConfiguratorInputs({ ...inputs, uiMode });
+    if (!validation.ok) {
+      setError(validation.error);
+      setErrorDetails(validation.details || []);
+      return;
     }
-  }, [isIdeumMode, submitIdeumToMaingearWall]);
+
+    const payload = { ...inputs, uiMode };
+
+    if (isLocalClusterDev()) {
+      setIsGenerating(true);
+      setStatusMessage('Running Martin Waco study…');
+      try {
+        const next = await generateMartinConfiguratorResult(payload, { preferBackend: true });
+        if (!next.ok) {
+          setError(next.error || 'Martin configuration could not be generated.');
+          setErrorDetails(next.details || []);
+          setResult(null);
+          return;
+        }
+        setResult(next);
+        setLastRunInputs({ ...payload, technologies: [...(payload.technologies || [])] });
+        setResultsView('architecture');
+
+        try {
+          let role = null;
+          try {
+            role = await fetchMachineRole();
+          } catch (_) {
+            /* optional */
+          }
+          const backendUrl = resolveMaingearBackendUrl(role);
+          const session = await submitConfiguratorMartinToMaingear(backendUrl, payload);
+          if (session.result?.ok) {
+            setResult(session.result);
+          }
+        } catch (_) {
+          /* dev without Maingear cluster role — local result still shown */
+        }
+      } catch (e) {
+        setError(e.message || 'Martin configuration failed.');
+      } finally {
+        setIsGenerating(false);
+        setStatusMessage('');
+      }
+      return;
+    }
+
+    await submitIdeumToMaingearWall('martin');
+  }, [inputs, uiMode, submitIdeumToMaingearWall]);
 
   const handleGenerate = useCallback(async () => {
     setError(null);
@@ -247,7 +312,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
 
     if (isIdeumMode) {
-      handleGenerateMartinWall();
+      runIdeumMartinConfigure();
       return;
     }
 
@@ -449,7 +514,21 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             onLoadPreset={handleLoadPreset}
             isGenerating={isGenerating}
             generateLabel="CONFIGURE"
+            previewSlot={
+              !showIdeumLocalMartinWall ? <ConfIdeumPreviewSummary result={result} /> : null
+            }
           />
+        )}
+        {showIdeumLocalMartinWall && (
+          <div className="conf-ideum-local-wall" aria-label="Martin configuration result">
+            <ConfWallQuadrantDisplay
+              result={result}
+              inputs={inputs}
+              isGenerating={false}
+              statusMessage={statusMessage}
+              wallSessionStatus="ready"
+            />
+          </div>
         )}
         {!isWallMode && isIdeumMode && ideumTab !== 'configure' && ideumTab !== IDEUM_DATA_EXPLORATION_TAB_ID && (
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />

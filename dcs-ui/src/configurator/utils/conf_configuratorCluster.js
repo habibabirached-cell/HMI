@@ -70,7 +70,7 @@ export async function submitConfiguratorToMaingear(maingearBackendUrl, inputs) {
   return postConfiguratorClusterSubmit(maingearBackendUrl, inputs, { pipeline: 'legacy' });
 }
 
-/** Martin Waco DOE path → Maingear wall (footer CONFIGURE). Placeholder until wired. */
+/** Martin Waco DOE path → Maingear wall (footer CONFIGURE). */
 export async function submitConfiguratorMartinToMaingear(maingearBackendUrl, inputs) {
   return postConfiguratorClusterSubmit(maingearBackendUrl, inputs, { pipeline: 'martin' });
 }
