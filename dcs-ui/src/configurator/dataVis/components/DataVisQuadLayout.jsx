@@ -1,73 +1,50 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import WallBezelShell, { useWallBezelSplit } from '../../components/conf_WallBezelShell';
-import DataVisDoeTab from '../tabs/DataVisDoeTab';
-import { HistogramSlot } from '../tabs/DataVisHistogramTab';
 import DataVisParallelTab from '../tabs/DataVisParallelTab';
 import DataVisTableTab from '../tabs/DataVisTableTab';
-import { numericColumnsFromStats } from '../utils/dataVisFilters';
+import DataVisQuadHistogramGrid from './DataVisQuadHistogramGrid';
+import DataVisQuadScatterGrid from './DataVisQuadScatterGrid';
 
 const DATAVIS_QUAD_SPLIT_KEY = 'dcs-dataVis-quad-split';
 
-const QUAD_HISTOGRAM_DEFAULTS = [
-  'Project LCOE ($/MWh)',
-  'Year 1 Load Compliance (%)',
-  'Solar AC Nameplate (MWac)',
-  'Carbon Free Energy (%)',
-];
-
-function DataVisQuadPane({ title, children }) {
+function DataVisQuadPane({ title, hint, actions, children }) {
   return (
     <section className="dataVis-quadSlot" aria-label={title}>
-      <header className="dataVis-quadSlot__head">{title}</header>
+      <header className="dataVis-quadSlot__head">
+        <span className="dataVis-quadSlot__title">{title}</span>
+        {hint ? <span className="dataVis-quadSlot__hint">{hint}</span> : null}
+        {actions ? <div className="dataVis-quadSlot__actions">{actions}</div> : null}
+      </header>
       <div className="dataVis-quadSlot__body">{children}</div>
     </section>
   );
 }
 
-function QuadHistogramGrid({ filters, columnStats }) {
-  const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
-  const [columns, setColumns] = useState(QUAD_HISTOGRAM_DEFAULTS);
-
-  useEffect(() => {
-    if (!numericCols.length) return;
-    setColumns((prev) => {
-      const next = prev.map((col, i) => {
-        if (numericCols.includes(col)) return col;
-        const fallback = QUAD_HISTOGRAM_DEFAULTS[i];
-        if (fallback && numericCols.includes(fallback)) return fallback;
-        return numericCols[i] || numericCols[0];
-      });
-      return next.every((c, i) => c === prev[i]) ? prev : next;
-    });
-  }, [numericCols]);
-
-  const setColumnAt = (index) => (col) => {
-    setColumns((prev) => {
-      const next = [...prev];
-      next[index] = col;
-      return next;
-    });
-  };
-
-  return (
-    <div className="dataVis-quadHistogramGrid">
-      {columns.map((col, index) => (
-        <HistogramSlot
-          key={`quad-hist-${index}`}
-          slotLabel={`Hist ${index + 1}`}
-          column={col}
-          onSelectColumn={setColumnAt(index)}
-          numericCols={numericCols}
-          filters={filters}
-          compact
-        />
-      ))}
-    </div>
-  );
-}
-
-export default function DataVisQuadLayout({ filters, meta, onSelectRowIds }) {
+export default function DataVisQuadLayout({
+  filters,
+  chartFilters,
+  ranges,
+  onRangesChange,
+  onClearAll,
+  parcoordsRanges,
+  meta,
+  onSelectRowIds,
+  onParcoordsRangesChange,
+  parcoordsActive = false,
+  scatterActive = false,
+  plotContextFilters,
+  highlightRowIds,
+  onScatterRowIdsChange,
+  filteredCount,
+  totalCount,
+  binCount,
+  onBinCountChange,
+}) {
   const { split, setSplit, resetSplit } = useWallBezelSplit(DATAVIS_QUAD_SPLIT_KEY);
+
+  const hasHistRanges = Object.values(ranges || {}).some(
+    (b) => b && (b.min != null || b.max != null),
+  );
 
   return (
     <WallBezelShell
@@ -76,21 +53,57 @@ export default function DataVisQuadLayout({ filters, meta, onSelectRowIds }) {
       resetSplit={resetSplit}
       shellClassName="dataVis-quadShell"
     >
-      <DataVisQuadPane title="DOE Explorer">
-        <DataVisDoeTab filters={filters} compact />
+      <DataVisQuadPane title="2D plots" hint="Drag to select points">
+        <DataVisQuadScatterGrid
+          plotContextFilters={plotContextFilters}
+          highlightRowIds={highlightRowIds}
+          onScatterRowIdsChange={onScatterRowIdsChange}
+          columnStats={meta.column_stats}
+          defaults={meta.defaults}
+        />
       </DataVisQuadPane>
 
       <DataVisQuadPane title="Parallel coordinates">
         <DataVisParallelTab
+          chartFilters={chartFilters}
           filters={filters}
           defaults={meta.defaults}
           columnStats={meta.column_stats}
           compact
+          onParcoordsRangesChange={onParcoordsRangesChange}
+          parcoordsActive={parcoordsActive}
+          highlightRowIds={highlightRowIds}
         />
       </DataVisQuadPane>
 
-      <DataVisQuadPane title="Histograms">
-        <QuadHistogramGrid filters={filters} columnStats={meta.column_stats} />
+      <DataVisQuadPane
+        title="Filters"
+        hint="Drag a histogram to filter the page"
+        actions={
+          <>
+            <span className="dataVis-quadSlot__count">
+              {filteredCount != null ? `${filteredCount} / ${totalCount} rows` : ''}
+              {parcoordsActive ? ' · parallel on' : ''}
+              {hasHistRanges ? ' · histogram on' : ''}
+              {scatterActive ? ' · 2D select on' : ''}
+            </span>
+            <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
+              Clear all
+            </button>
+          </>
+        }
+      >
+        <DataVisQuadHistogramGrid
+          gridId="filters"
+          filters={filters}
+          columnStats={meta.column_stats}
+          parcoordsRanges={parcoordsRanges}
+          binCount={binCount}
+          onBinCountChange={onBinCountChange}
+          brushFilter
+          ranges={ranges}
+          onRangesChange={onRangesChange}
+        />
       </DataVisQuadPane>
 
       <DataVisQuadPane title="Table">

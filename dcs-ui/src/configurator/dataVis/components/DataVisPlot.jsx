@@ -33,7 +33,21 @@ const DEFAULT_LAYOUT = {
   coloraxis: { colorbar: { tickfont: { color: '#1f2933', size: 13 } } },
 };
 
-export default function DataVisPlot({ data, layout, config, className, style }) {
+export default function DataVisPlot({
+  data,
+  layout,
+  config,
+  className,
+  style,
+  useResizeHandler = true,
+  onRelayout,
+  onRestyle,
+  onInitialized,
+  onPurge,
+  onUpdate,
+  onSelected,
+  onDeselect,
+}) {
   const mergedLayout = useMemo(
     () => ({
       ...DEFAULT_LAYOUT,
@@ -56,7 +70,14 @@ export default function DataVisPlot({ data, layout, config, className, style }) 
         displaylogo: false,
         ...config,
       }}
-      useResizeHandler
+      useResizeHandler={useResizeHandler}
+      onRelayout={onRelayout}
+      onRestyle={onRestyle}
+      onInitialized={onInitialized}
+      onPurge={onPurge}
+      onUpdate={onUpdate}
+      onSelected={onSelected}
+      onDeselect={onDeselect}
     />
   );
 }

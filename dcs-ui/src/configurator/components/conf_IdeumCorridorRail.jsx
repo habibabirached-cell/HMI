@@ -1,20 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-function corridorPresetSizeClass(text, sizing = 'default') {
-  const digits = String(text).replace(/[^\d.]/g, '').length;
-  if (sizing === 'reliability') {
-    if (digits <= 2) return 'conf-ideum-corridor-btn--size-xl';
-    if (digits <= 3) return 'conf-ideum-corridor-btn--size-lg';
-    if (digits <= 5) return 'conf-ideum-corridor-btn--size-lg';
-    return 'conf-ideum-corridor-btn--size-md';
-  }
-  if (digits <= 2) return 'conf-ideum-corridor-btn--size-xl';
-  if (digits <= 3) return 'conf-ideum-corridor-btn--size-lg';
-  if (digits <= 4) return 'conf-ideum-corridor-btn--size-md';
-  if (digits <= 5) return 'conf-ideum-corridor-btn--size-sm';
-  return 'conf-ideum-corridor-btn--size-xs';
-}
-
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -74,16 +59,102 @@ function ratioFromClientY(clientY, rect) {
   return clamp(1 - (clientY - rect.top) / rect.height, 0, 1);
 }
 
-/** Fill height (0–100) for a preset box as value rises from the box below. */
-function presetFillPercent(value, presetValue, lowerBound) {
-  if (value >= presetValue) return 100;
-  if (value <= lowerBound) return 0;
-  if (presetValue <= lowerBound) return 0;
-  return clamp(((value - lowerBound) / (presetValue - lowerBound)) * 100, 0, 100);
+const PRESET_LABEL_MARGIN = 5;
+
+function fitVerticalPresetLabel(buttonEl, textEl) {
+  if (!buttonEl || !textEl) return;
+  const margin = PRESET_LABEL_MARGIN;
+  const maxW = buttonEl.clientWidth - margin * 2;
+  const maxH = buttonEl.clientHeight - margin * 2;
+  if (maxW <= 4 || maxH <= 4) return;
+
+  /* Horizontal metrics, rotated −90° → visual width = th, visual height = tw */
+  let lo = 8;
+  let hi = 72;
+  let best = 10;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    textEl.style.fontSize = `${mid}px`;
+    const tw = textEl.offsetWidth;
+    const th = textEl.offsetHeight;
+    if (th <= maxW && tw <= maxH) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  textEl.style.fontSize = `${Math.max(8, Math.round(best * 0.9))}px`;
+}
+
+function VerticalPresetLabel({ text, containerRef }) {
+  const textRef = useRef(null);
+
+  const fit = useCallback(() => {
+    fitVerticalPresetLabel(containerRef.current, textRef.current);
+  }, [containerRef, text]);
+
+  useEffect(() => {
+    let raf = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => fit());
+    };
+    scheduleFit();
+    const btn = containerRef.current;
+    if (!btn) return undefined;
+    const ro = new ResizeObserver(scheduleFit);
+    ro.observe(btn);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [containerRef, fit]);
+
+  return (
+    <span ref={textRef} className="conf-ideum-corridor-btn__value conf-ideum-corridor-btn__value--vertical">
+      {text}
+    </span>
+  );
+}
+
+function CorridorPresetButton({ labelText, fillPct, active, onSelect }) {
+  const btnRef = useRef(null);
+  return (
+    <button
+      ref={btnRef}
+      type="button"
+      className={`conf-ideum-corridor-btn${active ? ' conf-ideum-corridor-btn--active' : ''}${fillPct > 0 ? ' conf-ideum-corridor-btn--filling' : ''}`}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+    >
+      <span
+        className="conf-ideum-corridor-btn__fill"
+        style={{ height: `${fillPct}%` }}
+        aria-hidden="true"
+      />
+      <VerticalPresetLabel text={labelText} containerRef={btnRef} />
+    </button>
+  );
+}
+
+/** Green from top of column down to arrow; each row fills from its top toward the knob. */
+function presetFillFromKnobRatio(knobRatio, topIndex, presetCount) {
+  const n = presetCount;
+  if (n <= 0) return 0;
+  const rowTop = 1 - topIndex / n;
+  const rowBottom = 1 - (topIndex + 1) / n;
+  const r = clamp(knobRatio, 0, 1);
+  if (rowTop <= r + 1e-9) return 0;
+  if (rowBottom >= r - 1e-9) return 100;
+  return clamp(((rowTop - r) / (rowTop - rowBottom)) * 100, 0, 100);
 }
 
 /**
- * Ideum corridor rail — diagonal title, arrow + live value, bottom-up presets with water fill.
+ * Ideum corridor rail — diagonal title, arrow + live value, presets with top-down water fill.
  * Pointer Y maps 1:1 to arrow position; value uses equal-height segments (non-linear presets).
  */
 export default function IdeumCorridorRail({
@@ -98,7 +169,6 @@ export default function IdeumCorridorRail({
   formatDisplay,
   isPresetActive,
   ariaLabel,
-  presetSizing = 'default',
 }) {
   const bodyRef = useRef(null);
   const draggingRef = useRef(false);
@@ -131,6 +201,7 @@ export default function IdeumCorridorRail({
   const displayValue = activePreset
     ? (activePreset.label ?? formatDisplay(activePreset.value))
     : formatDisplay(value);
+  const arrowLabel = `> ${displayValue}`;
 
   const applyPointerY = useCallback((clientY) => {
     const el = bodyRef.current;
@@ -214,7 +285,7 @@ export default function IdeumCorridorRail({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}
-        aria-valuetext={displayValue}
+        aria-valuetext={arrowLabel}
         tabIndex={0}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -228,40 +299,35 @@ export default function IdeumCorridorRail({
             className={`conf-ideum-corridor-arrow conf-ideum-corridor-arrow--${side}`}
             style={arrowStyle}
             aria-hidden="true"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
-            <span className="conf-ideum-corridor-arrow__value">{displayValue}</span>
+            <span className="conf-ideum-corridor-arrow__value">{arrowLabel}</span>
             <span className="conf-ideum-corridor-arrow__head" />
           </div>
         </div>
 
-        <div className="conf-ideum-corridor-stack conf-ideum-corridor-stack--bottom-up">
+        <div className="conf-ideum-corridor-stack conf-ideum-corridor-stack--top-down">
           {presetsTopDown.map((preset, topIndex) => {
             const bottomIndex = presetsTopDown.length - 1 - topIndex;
-            const lowerBound = bottomIndex === 0
-              ? min
-              : presetsBottomUp[bottomIndex - 1].value;
-            const fillPct = presetFillPercent(value, preset.value, lowerBound);
+            const fillPct = presetFillFromKnobRatio(
+              knobRatio,
+              topIndex,
+              presetsTopDown.length,
+            );
             const active = isPresetActive(preset.value);
             const labelText = preset.label ?? `${preset.value}%`;
 
             return (
-              <button
+              <CorridorPresetButton
                 key={preset.value}
-                type="button"
-                className={`conf-ideum-corridor-btn ${corridorPresetSizeClass(labelText, presetSizing)}${active ? ' conf-ideum-corridor-btn--active' : ''}${fillPct > 0 ? ' conf-ideum-corridor-btn--filling' : ''}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePresetSelect(preset.value, bottomIndex);
-                }}
-              >
-                <span
-                  className="conf-ideum-corridor-btn__fill"
-                  style={{ height: `${fillPct}%` }}
-                  aria-hidden="true"
-                />
-                <span className="conf-ideum-corridor-btn__value">{labelText}</span>
-              </button>
+                labelText={labelText}
+                fillPct={fillPct}
+                active={active}
+                onSelect={() => handlePresetSelect(preset.value, bottomIndex)}
+              />
             );
           })}
         </div>

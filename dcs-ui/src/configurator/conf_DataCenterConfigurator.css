@@ -481,6 +481,8 @@
 }
 
 .conf-ideum-corridor--left {
+  --conf-corridor-preset-col: clamp(88px, 10cqi, 108px);
+  --conf-corridor-track-col: clamp(98px, 10.5cqi, 114px);
   padding: 8px 5px 10px 3px;
   width: 100%;
   max-width: 185px;
@@ -489,6 +491,8 @@
 }
 
 .conf-ideum-corridor--right {
+  --conf-corridor-preset-col: clamp(88px, 10cqi, 108px);
+  --conf-corridor-track-col: clamp(98px, 10.5cqi, 114px);
   width: 100%;
   max-width: 185px;
   justify-self: start;
@@ -497,7 +501,7 @@
   overflow: visible;
 }
 
-/* Corridor rail — diagonal title, arrow value, bottom-up presets */
+/* Corridor rail — diagonal title, arrow value, top-down presets */
 .conf-ideum-corridor-rail {
   display: flex;
   flex-direction: column;
@@ -579,6 +583,12 @@
   pointer-events: none;
 }
 
+.conf-ideum-corridor-track-col--left,
+.conf-ideum-corridor-track-col--right {
+  flex: 0 0 var(--conf-corridor-track-col, 104px);
+  max-width: var(--conf-corridor-track-col, 104px);
+}
+
 .conf-ideum-corridor-track-line {
   position: absolute;
   top: 0;
@@ -594,32 +604,38 @@
 
 .conf-ideum-corridor-arrow {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%) translateY(50%);
   display: flex;
   align-items: center;
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: ns-resize;
+  touch-action: none;
 }
 
 .conf-ideum-corridor-arrow--left {
+  left: 0;
+  right: auto;
+  transform: translateY(50%);
   flex-direction: row;
 }
 
 .conf-ideum-corridor-arrow--right {
+  left: 0;
+  right: auto;
+  transform: translateY(50%);
   flex-direction: row-reverse;
 }
 
 .conf-ideum-corridor-arrow__value {
-  font-size: clamp(40px, 4vw, 50px);
+  font-size: clamp(28px, 2.85vw, 38px);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--conf-evergreen);
   white-space: nowrap;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
-  border: 2px solid rgba(0, 0, 0, 0.55);
+  border: 1.5px solid rgba(0, 0, 0, 0.55);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 2px 4px rgba(0, 94, 96, 0.18);
@@ -637,20 +653,23 @@
 }
 
 .conf-ideum-corridor-arrow--left .conf-ideum-corridor-arrow__head {
-  border-top: 36px solid transparent;
-  border-bottom: 36px solid transparent;
-  border-left: 56px solid var(--conf-evergreen);
+  border-top: 22px solid transparent;
+  border-bottom: 22px solid transparent;
+  border-left: 34px solid var(--conf-evergreen);
 }
 
 .conf-ideum-corridor-arrow--right .conf-ideum-corridor-arrow__head {
-  border-top: 36px solid transparent;
-  border-bottom: 36px solid transparent;
-  border-right: 56px solid var(--conf-evergreen);
+  border-top: 22px solid transparent;
+  border-bottom: 22px solid transparent;
+  border-right: 34px solid var(--conf-evergreen);
 }
 
-.conf-ideum-corridor-stack--bottom-up {
-  flex: 1;
-  min-width: 0;
+.conf-ideum-corridor-stack--bottom-up,
+.conf-ideum-corridor-stack--top-down {
+  flex: 1 1 auto;
+  width: var(--conf-corridor-preset-col, 82px);
+  min-width: var(--conf-corridor-preset-col, 82px);
+  max-width: var(--conf-corridor-preset-col, 82px);
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -661,14 +680,14 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  top: 0;
   z-index: 0;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px 8px 0 0;
   background: linear-gradient(
     180deg,
-    rgba(88, 220, 200, 0.62) 0%,
-    rgba(0, 120, 118, 0.78) 45%,
-    rgba(0, 78, 80, 0.92) 100%
+    rgba(0, 78, 80, 0.92) 0%,
+    rgba(0, 120, 118, 0.78) 55%,
+    rgba(88, 220, 200, 0.62) 100%
   );
   transition: height 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
@@ -677,7 +696,7 @@
 .conf-ideum-corridor-btn__fill::after {
   content: '';
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 10%;
   right: 10%;
   height: 3px;
@@ -918,10 +937,13 @@
     0 5px 10px rgba(0, 94, 96, 0.14);
 }
 
-.conf-ideum-corridor--left .conf-ideum-corridor-stack {
-  flex: 1;
+.conf-ideum-corridor--left .conf-ideum-corridor-stack,
+.conf-ideum-corridor--right .conf-ideum-corridor-stack {
+  flex: 1 1 auto;
   gap: 6px;
-  width: 100%;
+  width: var(--conf-corridor-preset-col, 82px);
+  min-width: var(--conf-corridor-preset-col, 82px);
+  max-width: var(--conf-corridor-preset-col, 82px);
   min-height: 0;
 }
 .conf-ideum-corridor--left { grid-area: left; }
@@ -932,6 +954,11 @@
   cursor: pointer;
   text-align: center;
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  padding: 5px 5px;
+  align-items: center;
+  justify-content: center;
 }
 
 .conf-ideum-corridor--left .conf-ideum-corridor-btn {
@@ -1047,28 +1074,26 @@
     0 3px 5px rgba(0, 94, 96, 0.16);
 }
 
+.conf-ideum-corridor-btn__value--vertical {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  display: block;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+  font-size: 12px;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
 .conf-ideum-corridor-rail--left .conf-ideum-corridor-arrow__value {
-  font-size: clamp(36px, 3.7vw, 48px);
-}
-
-.conf-ideum-corridor-btn--size-xl .conf-ideum-corridor-btn__value {
-  font-size: clamp(25px, 2.45vw, 33px);
-}
-
-.conf-ideum-corridor-btn--size-lg .conf-ideum-corridor-btn__value {
-  font-size: clamp(21px, 2.06vw, 28px);
-}
-
-.conf-ideum-corridor-btn--size-md .conf-ideum-corridor-btn__value {
-  font-size: clamp(19px, 1.81vw, 24px);
-}
-
-.conf-ideum-corridor-btn--size-sm .conf-ideum-corridor-btn__value {
-  font-size: clamp(16px, 1.56vw, 21px);
-}
-
-.conf-ideum-corridor-btn--size-xs .conf-ideum-corridor-btn__value {
-  font-size: clamp(14px, 1.31vw, 18px);
+  font-size: clamp(24px, 2.5vw, 34px);
+  padding: 3px 6px;
 }
 
 .conf-ideum-corridor-btn--sm {

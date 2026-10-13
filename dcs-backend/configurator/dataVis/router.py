@@ -33,6 +33,15 @@ def datavis_meta():
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@router.post("/filter-row-ids")
+def datavis_filter_row_ids(body: FilterRequest):
+    try:
+        filters = [f.model_dump() for f in body.filters]
+        return service.get_filtered_row_ids(filters)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @router.post("/overview")
 def datavis_overview(body: FilterRequest):
     try:

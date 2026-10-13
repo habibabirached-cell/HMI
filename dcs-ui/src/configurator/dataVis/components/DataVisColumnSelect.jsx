@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function DataVisColumnSelect({ label, value, options, onChange, id }) {
+export default function DataVisColumnSelect({ label, value, options, onChange, id, className = 'dataVis-field' }) {
   return (
-    <label className="dataVis-field" htmlFor={id}>
+    <label className={className} htmlFor={id}>
       <span className="dataVis-field__label">{label}</span>
       <select id={id} value={value || ''} onChange={(e) => onChange(e.target.value)}>
         {options.map((opt) => (

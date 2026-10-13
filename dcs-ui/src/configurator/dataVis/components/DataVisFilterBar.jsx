@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  buildOverlayFilters,
   buildRangeFiltersExcluding,
   numericColumnsFromStats,
   statsByColumn,
@@ -10,14 +11,23 @@ import DataVisFilterMiniHistogram from './DataVisFilterMiniHistogram';
 const DEFAULT_FILTER_COLUMNS = [
   'Project LCOE ($/MWh)',
   'Year 1 Load Compliance (%)',
-  'Solar AC Nameplate (MWac)',
-  'Wind Nameplate (MWac)',
-  'BESS power Nameplate (MW)',
+  'Carbon Free Energy (%)',
 ];
 
 const MAX_FILTER_HISTOGRAMS = 12;
 
-export default function DataVisFilterBar({ columnStats, ranges, onChange, filteredCount, totalCount }) {
+export default function DataVisFilterBar({
+  columnStats,
+  ranges,
+  parcoordsRanges = null,
+  onChange,
+  onClearAll,
+  parcoordsActive = false,
+  filteredCount,
+  totalCount,
+  binCount,
+  onBinCountChange,
+}) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const statMap = useMemo(() => statsByColumn(columnStats), [columnStats]);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_FILTER_COLUMNS);
@@ -28,7 +38,7 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
       const kept = prev.filter((c) => numericCols.includes(c));
       if (kept.length) return kept;
       const defaults = DEFAULT_FILTER_COLUMNS.filter((c) => numericCols.includes(c));
-      return defaults.length ? defaults : numericCols.slice(0, 5);
+      return defaults.length ? defaults : numericCols.slice(0, 3);
     });
   }, [numericCols]);
 
@@ -45,6 +55,14 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
     return map;
   }, [displayColumns, ranges]);
 
+  const overlayFiltersByColumn = useMemo(() => {
+    const map = {};
+    displayColumns.forEach((col) => {
+      map[col] = buildOverlayFilters(ranges, parcoordsRanges, col);
+    });
+    return map;
+  }, [displayColumns, parcoordsRanges, ranges]);
+
   const filterKeysByColumn = useMemo(() => {
     const map = {};
     Object.entries(filtersByColumn).forEach(([col, filters]) => {
@@ -52,6 +70,14 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
     });
     return map;
   }, [filtersByColumn]);
+
+  const overlayKeysByColumn = useMemo(() => {
+    const map = {};
+    Object.entries(overlayFiltersByColumn).forEach(([col, filters]) => {
+      map[col] = JSON.stringify(filters);
+    });
+    return map;
+  }, [overlayFiltersByColumn]);
 
   const toggleColumn = (col) => {
     setVisibleColumns((prev) => {
@@ -69,12 +95,19 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
     });
   };
 
-  const reset = () => onChange({});
+  const reset = () => {
+    if (onClearAll) onClearAll();
+    else onChange({});
+  };
 
   const setBand = (column, band) => {
-    onChange({
-      ...ranges,
-      [column]: band,
+    onChange((prev) => {
+      const next = { ...(prev || {}), [column]: band };
+      if (band?.min == null && band?.max == null) {
+        const { [column]: _removed, ...rest } = next;
+        return rest;
+      }
+      return next;
     });
   };
 
@@ -101,7 +134,8 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
           ·
         </span>
         <span className="dataVis-filterBar__help">
-          Drag a mini histogram to filter — highlight only, no zoom.
+          Mini histograms or parallel axis drag filter the page
+          {parcoordsActive ? ' · parallel filter on' : ''}.
         </span>
         <button type="button" className="dataVis-filterBar__reset" onClick={reset}>
           Clear all
@@ -123,8 +157,12 @@ export default function DataVisFilterBar({ columnStats, ranges, onChange, filter
               axisMax={st?.max}
               filtersKey={filterKeysByColumn[col]}
               filters={filtersByColumn[col]}
+              overlayFiltersKey={overlayKeysByColumn[col]}
+              overlayFilters={overlayFiltersByColumn[col]}
               band={ranges[col] || {}}
               onBandChange={(band) => setBand(col, band)}
+              binCount={binCount}
+              onBinCountChange={onBinCountChange}
             />
           );
         })}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchDataVisMeta, postDataVisOverview } from './api/conf_dataVisApi';
+import { fetchDataVisMeta, postDataVisOverview, postDataVisRowIds } from './api/conf_dataVisApi';
 import DataVisFilterBar from './components/DataVisFilterBar';
 import DataVisQuadLayout from './components/DataVisQuadLayout';
 import './dataVisPanel.css';
@@ -13,7 +13,16 @@ import DataVisOverviewTab from './tabs/DataVisOverviewTab';
 import DataVisParallelTab from './tabs/DataVisParallelTab';
 import DataVisQualityTab from './tabs/DataVisQualityTab';
 import DataVisTableTab from './tabs/DataVisTableTab';
-import { buildRangeFilters } from './utils/dataVisFilters';
+import {
+  buildDataVisFilters,
+  buildRangeFilters,
+  hasActiveViewFilters,
+} from './utils/dataVisFilters';
+import {
+  clampFilterBinCount,
+  FILTER_BINS_STORAGE_KEY,
+  readStoredFilterBinCount,
+} from './utils/dataVisHistogramBins';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -48,6 +57,23 @@ export default function DataVisPanel() {
   const [ranges, setRanges] = useState({});
   const [filteredCount, setFilteredCount] = useState(null);
   const [compareIds, setCompareIds] = useState([]);
+  const [parcoordsRanges, setParcoordsRanges] = useState({});
+  const [scatterRowIds, setScatterRowIds] = useState(null);
+  const [highlightRowIds, setHighlightRowIds] = useState(null);
+  const [binCount, setBinCountState] = useState(readStoredFilterBinCount);
+
+  const setBinCount = (next) => {
+    setBinCountState((prev) => {
+      const value =
+        typeof next === 'function' ? clampFilterBinCount(next(prev)) : clampFilterBinCount(next);
+      try {
+        localStorage.setItem(FILTER_BINS_STORAGE_KEY, String(value));
+      } catch {
+        /* ignore */
+      }
+      return value;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -71,7 +97,44 @@ export default function DataVisPanel() {
     };
   }, []);
 
-  const filters = useMemo(() => buildRangeFilters(ranges), [ranges]);
+  const rangeFilters = useMemo(() => buildRangeFilters(ranges), [ranges]);
+  const plotContextFilters = useMemo(() => [], []);
+  const filters = useMemo(
+    () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds),
+    [ranges, parcoordsRanges, scatterRowIds],
+  );
+
+  const parcoordsActive = Object.keys(parcoordsRanges).length > 0;
+  const scatterActive = scatterRowIds != null;
+  const viewSelectionActive = useMemo(
+    () => hasActiveViewFilters(ranges, parcoordsRanges, scatterRowIds),
+    [ranges, parcoordsRanges, scatterRowIds],
+  );
+
+  const clearAllFilters = () => {
+    setRanges({});
+    setParcoordsRanges({});
+    setScatterRowIds(null);
+  };
+
+  useEffect(() => {
+    if (!meta) return undefined;
+    if (!viewSelectionActive) {
+      setHighlightRowIds(null);
+      return undefined;
+    }
+    let cancelled = false;
+    postDataVisRowIds(filters)
+      .then((res) => {
+        if (!cancelled) setHighlightRowIds(res.row_ids || []);
+      })
+      .catch(() => {
+        if (!cancelled) setHighlightRowIds([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filters, meta, viewSelectionActive]);
 
   useEffect(() => {
     if (!meta) return undefined;
@@ -160,20 +223,42 @@ export default function DataVisPanel() {
         )}
       </header>
 
-      <DataVisFilterBar
-        columnStats={meta.column_stats}
-        ranges={ranges}
-        onChange={setRanges}
-        filteredCount={filteredCount ?? meta.row_count}
-        totalCount={meta.row_count}
-      />
+      {layoutMode !== 'quad' && (
+        <DataVisFilterBar
+          columnStats={meta.column_stats}
+          ranges={ranges}
+          onChange={setRanges}
+          onClearAll={clearAllFilters}
+          parcoordsActive={parcoordsActive}
+          parcoordsRanges={parcoordsRanges}
+          filteredCount={filteredCount ?? meta.row_count}
+          totalCount={meta.row_count}
+          binCount={binCount}
+          onBinCountChange={setBinCount}
+        />
+      )}
 
       <main className={`dataVis-main${layoutMode === 'quad' ? ' dataVis-main--quad' : ''}`}>
         {layoutMode === 'quad' ? (
           <DataVisQuadLayout
             filters={filters}
+            chartFilters={plotContextFilters}
+            ranges={ranges}
+            onRangesChange={setRanges}
+            onClearAll={clearAllFilters}
+            parcoordsRanges={parcoordsRanges}
             meta={meta}
             onSelectRowIds={handleSelectRow}
+            onParcoordsRangesChange={setParcoordsRanges}
+            parcoordsActive={parcoordsActive}
+            scatterActive={scatterActive}
+            plotContextFilters={plotContextFilters}
+            highlightRowIds={highlightRowIds}
+            onScatterRowIdsChange={setScatterRowIds}
+            filteredCount={filteredCount ?? meta.row_count}
+            totalCount={meta.row_count}
+            binCount={binCount}
+            onBinCountChange={setBinCount}
           />
         ) : (
           <>
@@ -188,7 +273,9 @@ export default function DataVisPanel() {
             {tab === 'dictionary' && <DataVisDictionaryTab columns={meta.columns} />}
             {tab === 'chart' && (
               <DataVisChartLabTab
-                filters={filters}
+                plotContextFilters={plotContextFilters}
+                highlightRowIds={highlightRowIds}
+                onScatterRowIdsChange={setScatterRowIds}
                 defaults={meta.defaults}
                 columnStats={meta.column_stats}
               />
@@ -202,13 +289,24 @@ export default function DataVisPanel() {
             )}
             {tab === 'parallel' && (
               <DataVisParallelTab
+                chartFilters={plotContextFilters}
                 filters={filters}
+                highlightRowIds={highlightRowIds}
                 defaults={meta.defaults}
                 columnStats={meta.column_stats}
+                onParcoordsRangesChange={setParcoordsRanges}
+                parcoordsActive={parcoordsActive}
               />
             )}
             {tab === 'histogram' && (
-              <DataVisHistogramTab filters={filters} columnStats={meta.column_stats} />
+              <DataVisHistogramTab
+                filters={filters}
+                ranges={ranges}
+                columnStats={meta.column_stats}
+                parcoordsRanges={parcoordsRanges}
+                binCount={binCount}
+                onBinCountChange={setBinCount}
+              />
             )}
             {tab === 'table' && (
               <DataVisTableTab

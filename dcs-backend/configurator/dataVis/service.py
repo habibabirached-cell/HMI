@@ -90,6 +90,15 @@ def get_meta() -> dict[str, Any]:
     }
 
 
+def get_filtered_row_ids(filters: list[dict] | None = None) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), filters)
+    if "dataVis_row_id" in df.columns:
+        ids = df["dataVis_row_id"].astype(int).tolist()
+    else:
+        ids = list(range(len(df)))
+    return {"count": len(df), "row_ids": ids}
+
+
 def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
     df = apply_filters(load_waco_dataframe(), filters)
     n = len(df)

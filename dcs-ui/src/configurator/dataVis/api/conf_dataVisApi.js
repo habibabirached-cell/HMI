@@ -40,6 +40,15 @@ export async function postDataVisOverview(filters = []) {
   return parseJson(res);
 }
 
+export async function postDataVisRowIds(filters = []) {
+  const res = await fetch(`${DATAVIS_BASE}/filter-row-ids`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filters }),
+  });
+  return parseJson(res);
+}
+
 export async function postDataVisDoeSummary(filters = []) {
   const res = await fetch(`${DATAVIS_BASE}/doe-summary`, {
     method: 'POST',
