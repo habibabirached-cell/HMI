@@ -197,15 +197,16 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     publishConfiguratorExploreSync(inputs, uiMode);
     try {
       const role = await fetchMachineRole().catch(() => null);
-      const local = await postConfiguratorExploreSync(null, inputs, uiMode);
-      logExploreSyncResult('ideum-local', local);
-      if (role?.isIdeum) {
-        const peerBase = resolveMaingearPeerPostBase(role);
-        if (peerBase) {
-          const peer = await postConfiguratorExploreSyncToPeer(peerBase, inputs, uiMode);
-          logExploreSyncResult('maingear-peer', peer);
-        }
+      const peerBase = role?.isIdeum ? resolveMaingearPeerPostBase(role) : '';
+      // Ideum → Maingear: browser POST direct to Ethernet (same as clean-data). Avoid Ideum
+      // backend forward — it often 502s when the server cannot reach Maingear even if the browser can.
+      if (peerBase) {
+        const peer = await postConfiguratorExploreSyncToPeer(peerBase, inputs, uiMode);
+        logExploreSyncResult('maingear-peer', peer);
+        return;
       }
+      const local = await postConfiguratorExploreSync(null, inputs, uiMode);
+      logExploreSyncResult('local-backend', local);
     } catch (err) {
       console.warn('[configurator] explore-sync to Maingear failed:', err?.message || err);
     }

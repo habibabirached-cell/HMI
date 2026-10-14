@@ -269,6 +269,26 @@ async def configurator_cluster_explore_sync(body: dict):
         return {"ok": True, "deliveredToClients": delivered}
 
     peer_url = (role.get("peerBackendUrl") or "").strip()
+    if peer_url and role.get("isIdeum"):
+        # Touch-table UI POSTs Maingear directly; do not fail the Ideum proxy if server-side forward breaks.
+        try:
+            return await _forward_cluster_explore_sync_to_peer(
+                peer_url,
+                {
+                    "inputs": inputs,
+                    "uiMode": ui_mode,
+                    "ranges": ranges,
+                    "source": message["source"],
+                    "at": message.get("at"),
+                },
+            )
+        except HTTPException as exc:
+            return {
+                "ok": False,
+                "forwarded": False,
+                "detail": exc.detail,
+                "hint": "Use direct Maingear explore-sync from the Ideum browser (peerBackendUrl).",
+            }
     if peer_url:
         return await _forward_cluster_explore_sync_to_peer(
             peer_url,
