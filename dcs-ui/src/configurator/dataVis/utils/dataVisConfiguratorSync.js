@@ -49,7 +49,7 @@ export async function shouldSyncConfiguratorToDataVis() {
   if (typeof window === 'undefined') return false;
   try {
     const role = await fetchMachineRole();
-    if (role?.isIdeum) return true;
+    if (role?.isIdeum || role?.isMaingear) return true;
   } catch {
     /* dev fallback below */
   }
@@ -60,6 +60,16 @@ export async function shouldSyncConfiguratorToDataVis() {
   } catch {
     return isLocalClusterDev();
   }
+}
+
+/** Apply explore_data_sync payload (cluster WS or catch-up GET). */
+export function exploreSyncPayloadFromMessage(msg) {
+  if (!msg || msg.type !== 'explore_data_sync') return null;
+  return {
+    ranges: msg.ranges,
+    inputs: msg.inputs,
+    uiMode: msg.uiMode,
+  };
 }
 
 export function persistConfiguratorRangesForDataVis(ranges) {

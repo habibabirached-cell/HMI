@@ -189,15 +189,24 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     };
   }, [isIdeumMode]);
 
+  const pushExploreSyncToCluster = useCallback(async () => {
+    publishConfiguratorExploreSync(inputs, uiMode);
+    try {
+      await postConfiguratorExploreSync(null, inputs, uiMode);
+    } catch (err) {
+      console.warn('[configurator] explore-sync to Maingear failed:', err?.message || err);
+    }
+  }, [inputs, uiMode]);
+
   /** Inputs corridor bands + Martin inputs → Explore Data / Data Exploration (real-time). */
   useEffect(() => {
     if (!isIdeumMode || ideumTab !== 'configure') return undefined;
     publishConfiguratorExploreSync(inputs, uiMode);
     const timer = window.setTimeout(() => {
-      postConfiguratorExploreSync(null, inputs, uiMode).catch(() => {});
+      void pushExploreSyncToCluster();
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [ideumTab, inputs, isIdeumMode, uiMode]);
+  }, [ideumTab, inputs, isIdeumMode, pushExploreSyncToCluster, uiMode]);
 
   useEffect(() => {
     if (!isIdeumMode) return undefined;
@@ -643,6 +652,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       try {
         dataExplorationTunnelRef.current?.();
         await requestDataExplorationOnMaingear(role);
+        await pushExploreSyncToCluster();
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Data Exploration opened on Maingear (touch table stays on current view).');
         setError(null);
@@ -653,7 +663,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
 
     setIdeumTab(IDEUM_DATA_EXPLORATION_TAB_ID);
-  }, []);
+  }, [pushExploreSyncToCluster]);
 
   const handleExploreData = useCallback(async () => {
     let role = null;
@@ -671,6 +681,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       try {
         dataExplorationTunnelRef.current?.();
         await requestExploreDataOnMaingear(role);
+        await pushExploreSyncToCluster();
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Explore Data opened on Maingear (touch table stays on Inputs).');
         setError(null);
@@ -680,7 +691,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       return;
     }
     setIdeumTab(IDEUM_EXPLORE_DATA_TAB_ID);
-  }, []);
+  }, [pushExploreSyncToCluster]);
 
   /** Header Preview — Martin on this machine (same as Maingear optimized). */
   const handleMartinLocalConfigure = useCallback(async () => {

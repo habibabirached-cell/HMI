@@ -10,6 +10,7 @@ import urllib.request
 from fastapi import APIRouter, HTTPException
 
 from cluster_peer import cluster_manager, resolve_machine_role
+from configurator.cluster_explore_sync import get_last_explore_data_sync, remember_explore_data_sync
 from configurator.cluster_state import (
     close_configurator_wall_cluster,
     get_configurator_session,
@@ -260,6 +261,8 @@ async def configurator_cluster_explore_sync(body: dict):
         "at": body.get("at"),
     }
 
+    remember_explore_data_sync(message)
+
     role = resolve_machine_role()
     if role.get("isMaingear"):
         delivered = await cluster_manager.broadcast(message)
@@ -269,8 +272,14 @@ async def configurator_cluster_explore_sync(body: dict):
     if peer_url:
         return await _forward_cluster_explore_sync_to_peer(
             peer_url,
-            {"inputs": inputs, "uiMode": ui_mode, "ranges": ranges, "source": message["source"]},
+            {"inputs": inputs, "uiMode": ui_mode, "ranges": ranges, "source": message["source"], "at": message.get("at")},
         )
 
     delivered = await cluster_manager.broadcast(message)
     return {"ok": True, "deliveredToClients": delivered, "localOnly": True}
+
+
+@router.get("/cluster/explore-sync/latest")
+async def configurator_cluster_explore_sync_latest():
+    """Maingear Data Exploration / Explore Data — apply last corridor sync after open."""
+    return {"ok": True, "sync": get_last_explore_data_sync()}

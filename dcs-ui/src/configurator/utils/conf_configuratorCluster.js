@@ -156,6 +156,15 @@ export async function postConfiguratorExploreSync(_maingearBackendUrl, inputs, u
   return data;
 }
 
+export async function fetchConfiguratorExploreSyncLatest() {
+  const res = await fetch(`${API_BASE_URL}/api/configurator/cluster/explore-sync/latest`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || `Explore sync latest failed (${res.status})`);
+  }
+  return data;
+}
+
 /**
  * Map backend session → wall UI state.
  * @param {object} [options.onlyAfter] ISO timestamp — ignore stale results from before wall opened

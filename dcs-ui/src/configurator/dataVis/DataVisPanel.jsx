@@ -47,12 +47,15 @@ import {
   readStoredFilterBinCount,
 } from './utils/dataVisHistogramBins';
 import {
+  exploreSyncPayloadFromMessage,
+  persistConfiguratorInputsForDataVis,
+  persistConfiguratorRangesForDataVis,
   readPersistedConfiguratorInputs,
   readPersistedConfiguratorRanges,
   shouldSyncConfiguratorToDataVis,
   subscribeConfiguratorExploreSync,
-  subscribeConfiguratorFiltersToDataVis,
 } from './utils/dataVisConfiguratorSync';
+import { fetchConfiguratorExploreSyncLatest } from '../utils/conf_configuratorCluster';
 import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
 const TABS = [
@@ -339,46 +342,64 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     setParcoordsRanges({});
   }, []);
 
-  useEffect(() => {
-    if (isExploreWall) return undefined;
-    let cancelled = false;
-    let unsubscribe = () => {};
-    shouldSyncConfiguratorToDataVis().then((enabled) => {
-      if (cancelled || !enabled) return;
-      setConfiguratorSyncActive(true);
-      const stored = readPersistedConfiguratorRanges();
-      if (stored) applyConfiguratorSyncRanges(stored);
-      unsubscribe = subscribeConfiguratorFiltersToDataVis(applyConfiguratorSyncRanges);
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [applyConfiguratorSyncRanges, isExploreWall]);
+  const handleExploreSyncPayload = useCallback(
+    (payload) => {
+      if (!payload) return;
+      if (isExploreWall) {
+        applyConfiguratorExploreSync(payload);
+        return;
+      }
+      if (payload.ranges) applyConfiguratorSyncRanges(payload.ranges);
+    },
+    [applyConfiguratorExploreSync, applyConfiguratorSyncRanges, isExploreWall],
+  );
 
   useEffect(() => {
-    if (!isExploreWall) return undefined;
-    setConfiguratorSyncActive(true);
-    const storedRanges = readPersistedConfiguratorRanges();
-    if (storedRanges) applyConfiguratorSyncRanges(storedRanges);
-    const storedInputs = readPersistedConfiguratorInputs();
-    if (storedInputs?.inputs) {
-      void runMartinFromInputs(storedInputs.inputs, storedInputs.uiMode);
-    }
-    const unsubscribeChannel = subscribeConfiguratorExploreSync(applyConfiguratorExploreSync);
+    let cancelled = false;
+    let unsubscribeChannel = () => {};
     const unsubscribeCluster = connectClusterWebSocket((msg) => {
-      if (msg?.type !== 'explore_data_sync') return;
-      applyConfiguratorExploreSync({
-        ranges: msg.ranges,
-        inputs: msg.inputs,
-        uiMode: msg.uiMode,
+      const payload = exploreSyncPayloadFromMessage(msg);
+      if (!payload) return;
+      if (payload.ranges) persistConfiguratorRangesForDataVis(payload.ranges);
+      if (payload.inputs) persistConfiguratorInputsForDataVis(payload.inputs, payload.uiMode);
+      handleExploreSyncPayload(payload);
+    });
+
+    const bootstrapLocal = () => {
+      const storedRanges = readPersistedConfiguratorRanges();
+      if (storedRanges) applyConfiguratorSyncRanges(storedRanges);
+      if (isExploreWall) {
+        const storedInputs = readPersistedConfiguratorInputs();
+        if (storedInputs?.inputs) {
+          void runMartinFromInputs(storedInputs.inputs, storedInputs.uiMode);
+        }
+      }
+    };
+
+    bootstrapLocal();
+    setConfiguratorSyncActive(true);
+
+    fetchConfiguratorExploreSyncLatest()
+      .then((res) => {
+        if (cancelled) return;
+        const payload = exploreSyncPayloadFromMessage(res?.sync);
+        if (payload) handleExploreSyncPayload(payload);
+      })
+      .catch(() => {});
+
+    shouldSyncConfiguratorToDataVis().then((useBroadcast) => {
+      if (cancelled || !useBroadcast) return;
+      unsubscribeChannel = subscribeConfiguratorExploreSync((payload) => {
+        handleExploreSyncPayload(payload);
       });
     });
+
     return () => {
+      cancelled = true;
       unsubscribeChannel();
       unsubscribeCluster();
     };
-  }, [applyConfiguratorExploreSync, applyConfiguratorSyncRanges, isExploreWall, runMartinFromInputs]);
+  }, [applyConfiguratorSyncRanges, handleExploreSyncPayload, isExploreWall, runMartinFromInputs]);
 
   useEffect(() => {
     if (!meta) return undefined;
