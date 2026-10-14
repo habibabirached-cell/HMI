@@ -360,6 +360,13 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     const unsubscribeCluster = connectClusterWebSocket((msg) => {
       const payload = exploreSyncPayloadFromMessage(msg);
       if (!payload) return;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage.getItem('dcs.debug.exploreSync') === '1') {
+          console.info('[explore-sync] maingear-ws', msg);
+        }
+      } catch {
+        /* ignore */
+      }
       if (payload.ranges) persistConfiguratorRangesForDataVis(payload.ranges);
       if (payload.inputs) persistConfiguratorInputsForDataVis(payload.inputs, payload.uiMode);
       handleExploreSyncPayload(payload);

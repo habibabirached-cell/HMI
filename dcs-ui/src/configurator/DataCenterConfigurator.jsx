@@ -39,9 +39,13 @@ import {
 } from './utils/conf_technologyPreferences';
 import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { API_BASE_URL } from '../apiConfig';
-import { fetchMachineRole } from '../utils/clusterPeer';
+import { fetchMachineRole, resolveMaingearPeerPostBase } from '../utils/clusterPeer';
 import { publishConfiguratorExploreSync } from './dataVis/utils/dataVisConfiguratorSync';
-import { postConfiguratorExploreSync } from './utils/conf_configuratorCluster';
+import {
+  logExploreSyncResult,
+  postConfiguratorExploreSync,
+  postConfiguratorExploreSyncToPeer,
+} from './utils/conf_configuratorCluster';
 import {
   applyDataVisDatasetMode,
   readPersistedDataQualityMode,
@@ -192,7 +196,16 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const pushExploreSyncToCluster = useCallback(async () => {
     publishConfiguratorExploreSync(inputs, uiMode);
     try {
-      await postConfiguratorExploreSync(null, inputs, uiMode);
+      const role = await fetchMachineRole().catch(() => null);
+      const local = await postConfiguratorExploreSync(null, inputs, uiMode);
+      logExploreSyncResult('ideum-local', local);
+      if (role?.isIdeum) {
+        const peerBase = resolveMaingearPeerPostBase(role);
+        if (peerBase) {
+          const peer = await postConfiguratorExploreSyncToPeer(peerBase, inputs, uiMode);
+          logExploreSyncResult('maingear-peer', peer);
+        }
+      }
     } catch (err) {
       console.warn('[configurator] explore-sync to Maingear failed:', err?.message || err);
     }

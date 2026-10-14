@@ -137,23 +137,54 @@ export function connectConfiguratorClusterUpdates(onSession) {
   });
 }
 
-/** Ideum Inputs → Maingear Explore Data (WebSocket explore_data_sync). */
-export async function postConfiguratorExploreSync(_maingearBackendUrl, inputs, uiMode) {
-  const res = await fetch(`${API_BASE_URL}/api/configurator/cluster/explore-sync`, {
+function exploreSyncBody(inputs, uiMode) {
+  return {
+    inputs,
+    uiMode,
+    source: 'ideum',
+    at: Date.now(),
+  };
+}
+
+async function postExploreSyncToUrl(url, inputs, uiMode) {
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      inputs,
-      uiMode,
-      source: 'ideum',
-      at: Date.now(),
-    }),
+    body: JSON.stringify(exploreSyncBody(inputs, uiMode)),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.detail || `Explore sync failed (${res.status})`);
   }
   return data;
+}
+
+/** Same-origin (Ideum backend may forward to peer). */
+export async function postConfiguratorExploreSync(_maingearBackendUrl, inputs, uiMode) {
+  const base = (API_BASE_URL || '').replace(/\/$/, '');
+  const url = base
+    ? `${base}/api/configurator/cluster/explore-sync`
+    : '/api/configurator/cluster/explore-sync';
+  return postExploreSyncToUrl(url, inputs, uiMode);
+}
+
+/** Direct Ethernet POST to Maingear (mirrors clean-data dataset-mode peer call). */
+export async function postConfiguratorExploreSyncToPeer(peerBackendUrl, inputs, uiMode) {
+  const base = (peerBackendUrl || '').replace(/\/$/, '');
+  if (!base) {
+    throw new Error('Maingear peerBackendUrl is not configured');
+  }
+  return postExploreSyncToUrl(`${base}/api/configurator/cluster/explore-sync`, inputs, uiMode);
+}
+
+export function logExploreSyncResult(label, data) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (window.localStorage.getItem('dcs.debug.exploreSync') !== '1') return;
+  } catch {
+    return;
+  }
+  console.info(`[explore-sync] ${label}`, data);
 }
 
 export async function fetchConfiguratorExploreSyncLatest() {
