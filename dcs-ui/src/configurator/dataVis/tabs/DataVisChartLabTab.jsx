@@ -24,7 +24,7 @@ function isPlotlyGraphDiv(gd) {
   return Boolean(gd && typeof gd.emit === 'function');
 }
 const COMPACT_AXIS_TITLE_FONT = {
-  size: 32,
+  size: 22,
   color: '#1f2933',
   family: 'system-ui, sans-serif',
   weight: 700,
@@ -77,22 +77,48 @@ function scatterHoverLines(index, payload, detailColumns) {
     .join('<br>');
 }
 
-function scatterColorbarConfig(payload, compact) {
+const SCATTER_COLORBAR_LCOE_TITLE_FONT = {
+  size: 22,
+  color: '#1f2933',
+  family: 'system-ui, sans-serif',
+  weight: 400,
+  style: 'italic',
+};
+
+function scatterColorbarTitle(colorLabel) {
+  return /lcoe/i.test(String(colorLabel || '')) ? 'LCOE' : '';
+}
+
+function scatterColorbarConfig(compact, colorLabel) {
+  const titleText = scatterColorbarTitle(colorLabel);
+  const title = titleText
+    ? {
+        text: titleText,
+        side: 'bottom',
+        font: compact
+          ? { ...SCATTER_COLORBAR_LCOE_TITLE_FONT }
+          : { size: 14, weight: 400, style: 'italic', color: '#1f2933' },
+      }
+    : { text: '' };
   return compact
     ? {
-        title: {
-          text: payload.color_label || '',
-          font: { ...COMPACT_AXIS_TITLE_FONT },
-          side: 'right',
-        },
-        tickfont: { size: 28, color: '#1f2933' },
-        len: 0.55,
+        title,
+        tickfont: { size: 22, color: '#1f2933' },
+        len: 1,
+        lenmode: 'fraction',
+        y: 0.5,
+        yanchor: 'middle',
         thickness: 16,
         outlinewidth: 0,
         x: 1.04,
         xpad: 12,
       }
-    : { title: payload.color_label || '' };
+    : {
+        title,
+        len: 0.95,
+        y: 0.5,
+        yanchor: 'middle',
+      };
 }
 
 export function ScatterSlot({
@@ -200,7 +226,10 @@ export function ScatterSlot({
         colorscale: hasColorScale ? DATAVIS_COLORSCALE_COLD_BLUE_HOT_AMBER : undefined,
         ...(hasColorScale ? scatterColorBounds(payload, color, columnStatMap) : {}),
         showscale: showscale && hasColorScale,
-        colorbar: showscale && hasColorScale ? scatterColorbarConfig(payload, compact) : undefined,
+        colorbar:
+          showscale && hasColorScale
+            ? scatterColorbarConfig(compact, payload.color_label || color)
+            : undefined,
       },
     });
 
@@ -421,7 +450,7 @@ export function ScatterSlot({
     if (!payload) return null;
     const compactTitle = (label) => ({
       text: label,
-      standoff: 24,
+      standoff: 10,
       font: { ...COMPACT_AXIS_TITLE_FONT },
     });
     const compactHasColorbar = compact && Boolean(payload.color?.length);
@@ -433,11 +462,11 @@ export function ScatterSlot({
         : { text: `${payload.y_label} vs ${payload.x_label}`, font: { size: 16 } },
       margin: compact
         ? {
-            l: 208,
-            r: compactHasColorbar ? 148 : 72,
-            t: 72,
-            b: 192,
-            pad: 24,
+            l: 0,
+            r: 40,
+            t: 30,
+            b: 56,
+            pad: 0,
           }
         : { l: 72, r: 28, t: 48, b: 88, pad: 8 },
       dragmode: selectionEnabled ? 'select' : exploreEnabled ? 'pan' : false,
@@ -445,7 +474,7 @@ export function ScatterSlot({
       selectionrevision: selectionEnabled ? `${slotLabel}-sel` : undefined,
       xaxis: {
         title: compact ? compactTitle(payload.x_label) : payload.x_label,
-        tickfont: compact ? { size: 28, color: '#1f2933' } : undefined,
+        tickfont: compact ? { size: 2, color: '#1f2933' } : undefined,
         ...(layoutRanges.xRange
           ? { range: layoutRanges.xRange, autorange: false }
           : { autorange: true }),
@@ -453,7 +482,7 @@ export function ScatterSlot({
       },
       yaxis: {
         title: compact ? compactTitle(payload.y_label) : payload.y_label,
-        tickfont: compact ? { size: 28, color: '#1f2933' } : undefined,
+        tickfont: compact ? { size: 2, color: '#1f2933' } : undefined,
         ...(layoutRanges.yRange
           ? { range: layoutRanges.yRange, autorange: false }
           : { autorange: true }),

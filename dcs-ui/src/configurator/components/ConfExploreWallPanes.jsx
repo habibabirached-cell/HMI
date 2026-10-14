@@ -66,7 +66,7 @@ function ExploreWallLoading({ message }) {
   );
 }
 
-/** Returns [TL, TR, BL] panes for WallBezelShell (spread as children). */
+/** Returns [TL, TR, BL] panes for WallBezelShell (spread as children). BR is parallel coords in layout. */
 export function buildExploreWallPanes({ result, inputs, isGenerating, statusMessage }) {
   if (isGenerating) {
     return [
@@ -117,20 +117,26 @@ export function buildExploreWallPanes({ result, inputs, isGenerating, statusMess
         variant="wall"
       />
     </ExplorePane>,
-    <ExplorePane key="kpi" title={kpiTitle} className="conf-wall-quadrant--kpis">
+    <ExplorePane
+      key="kpi"
+      title={kpiTitle}
+      className="conf-wall-quadrant--kpis dataVis-exploreWall__kpisPane"
+    >
       <ConfKpiStrip result={result} />
       <ConfDesignTargets result={result} inputs={inputs} />
+      <div className="conf-wall-quadrant--supply dataVis-exploreWall__capacityCharts">
+        <ConfCapacityBars
+          mix={result.supplyMix}
+          capacityFactors={result.capacityFactors}
+          variant="wall"
+        />
+      </div>
     </ExplorePane>,
     <ExplorePane
       key="supply"
       title="Optimal Supply Mix · Economics & Environment"
       className="conf-wall-quadrant--supply dataVis-exploreWall__supplyEconomics"
     >
-      <ConfCapacityBars
-        mix={result.supplyMix}
-        capacityFactors={result.capacityFactors}
-        variant="wall"
-      />
       <ConfMetricsPanel result={result} />
       <WallDetailsTable mix={result.supplyMix} />
     </ExplorePane>,
