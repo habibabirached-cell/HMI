@@ -16,8 +16,10 @@ export default function DataVisColumnChipMenu({
   onToggle,
   onSelect,
   isColumnVisible = () => true,
+  formatColumnLabel,
   className = '',
 }) {
+  const labelFor = formatColumnLabel || ((col) => col);
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -101,7 +103,7 @@ export default function DataVisColumnChipMenu({
                   isDisabled(col) ? `Maximum ${maxSelected} selections` : undefined
                 }
               >
-                {col}
+                {labelFor(col)}
               </button>
             ))}
           </div>

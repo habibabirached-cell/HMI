@@ -230,8 +230,7 @@ export default function ConfIdeumInputPanel({
     left: (
       <IdeumCorridorRangeRail
         side="left"
-        label="Load Compliance"
-        labelLines={['Load', 'Compliance']}
+        label="Availability"
         min={97}
         max={100}
         step={0.0001}
@@ -242,7 +241,7 @@ export default function ConfIdeumInputPanel({
         scaleMode="load-compliance-snaps"
         formatValue={formatLoadComplianceDisplay}
         onChange={(lower) => update({ reliabilityTarget: clampReliabilityTarget(lower) })}
-        ariaLabel="Minimum year 1 load compliance target"
+        ariaLabel="Minimum availability target"
       />
     ),
     right: (

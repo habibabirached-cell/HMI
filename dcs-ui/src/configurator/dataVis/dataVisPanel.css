@@ -104,25 +104,44 @@
 }
 
 .dataVis-exploreWall__kpisPane .conf-kpi-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: clamp(6px, 0.6vw, 10px);
+  row-gap: 2px;
   padding: clamp(6px, 0.55vw, 10px) clamp(8px, 0.75vw, 12px);
   border-radius: 8px;
   border-width: 1px;
 }
 
 .dataVis-exploreWall__kpisPane .conf-kpi-card__label {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
   font-size: clamp(11px, 0.95vw, 14px);
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 .dataVis-exploreWall__kpisPane .conf-kpi-card__value {
+  grid-column: 2;
+  grid-row: 1;
+  display: block;
+  justify-self: end;
+  text-align: right;
   font-size: clamp(20px, 1.85vw, 30px);
   font-weight: 800;
   line-height: 1.05;
 }
 
+.dataVis-exploreWall__kpisPane .conf-kpi-card__footnote,
+.dataVis-exploreWall__kpisPane .conf-kpi-card > small {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
 .dataVis-exploreWall__kpisPane .conf-kpi-card__footnote {
-  margin-top: 2px;
+  margin-top: 0;
   gap: 4px;
 }
 

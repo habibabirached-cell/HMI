@@ -13,6 +13,7 @@ import {
   syncBestLcoeOverlay,
 } from '../utils/dataVisParcoordsBestLcoeOverlay';
 import { constraintsFromParcoordsFigure } from '../utils/dataVisParcoordsFilter';
+import { dataVisExploreWallAxisLabel } from '../utils/dataVisColumnDisplayLabel';
 
 const MAX_PARALLEL_DIMS = 8;
 /** Inset parcoords from plot edges (room for axis labels + colorbar). */
@@ -108,6 +109,8 @@ export default function DataVisParallelTab({
   parcoordsRanges = null,
   onClearAll,
   onDimensionsChange,
+  exploreWallAxisLabels = false,
+  lockDimensionsToDefaults = false,
 }) {
   /** Full view filters — parallel shows only matching rows (no gray ghost lines). */
   const queryFilters = filters ?? chartFilters;
@@ -115,6 +118,7 @@ export default function DataVisParallelTab({
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const columnStatMap = useMemo(() => statsByColumn(columnStats), [columnStats]);
   const defaultDims = defaults?.parallel_dimensions || numericCols.slice(0, 6);
+  const defaultDimsKey = defaultDims.join('\u0001');
   const [dimensions, setDimensions] = useState(defaultDims);
   const [payload, setPayload] = useState(null);
   const [error, setError] = useState(null);
@@ -153,6 +157,11 @@ export default function DataVisParallelTab({
     () => `dataVis-pc-${dimensions.join('\u0001')}`,
     [dimensions],
   );
+
+  useEffect(() => {
+    if (!lockDimensionsToDefaults) return;
+    setDimensions(defaultDims);
+  }, [defaultDims, defaultDimsKey, lockDimensionsToDefaults]);
 
   useEffect(() => {
     if (!dimensions?.length) return;
@@ -342,7 +351,7 @@ export default function DataVisParallelTab({
         const constraintrange = constraintrangeFromBand(band);
         const axisRange = parallelAxisRangeFromStats(columnStatMap[key]);
         return {
-          label: key,
+          label: exploreWallAxisLabels ? dataVisExploreWallAxisLabel(key) : key,
           values: payload.values[key],
           ...(axisRange ? { range: axisRange } : {}),
           ...(constraintrange ? { constraintrange } : {}),
@@ -376,7 +385,7 @@ export default function DataVisParallelTab({
       bestLcoeValue,
       bestLcoeOverlay,
     };
-  }, [columnStatMap, compact, parcoordsRanges, payload, uirevision]);
+  }, [columnStatMap, compact, exploreWallAxisLabels, parcoordsRanges, payload, uirevision]);
 
   overlaySpecRef.current = plotBundle.bestLcoeOverlay;
 
@@ -413,6 +422,7 @@ export default function DataVisParallelTab({
           maxSelected={MAX_PARALLEL_DIMS}
           buttonText="Choose dimensions"
           menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
+          formatColumnLabel={exploreWallAxisLabels ? dataVisExploreWallAxisLabel : undefined}
           onToggle={toggleDim}
         />
         {!compact ? (

@@ -70,6 +70,8 @@ export default function DataVisExploreWallQuadLayout({
           defaults={parallelDefaults}
           columnStats={stats}
           compact
+          exploreWallAxisLabels
+          lockDimensionsToDefaults
           onParcoordsRangesChange={onParcoordsRangesChange}
           onDimensionsChange={onParallelDimensionsChange}
           parcoordsActive={parcoordsActive}
