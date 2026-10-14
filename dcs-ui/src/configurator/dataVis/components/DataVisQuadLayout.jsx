@@ -41,7 +41,16 @@ export default function DataVisQuadLayout({
   totalCount,
   binCount,
   onBinCountChange,
+  columnStats,
+  onEraseRow,
+  scatterHoverColumns = null,
+  tableVisibleColumns = null,
+  onTableVisibleColumnsChange = null,
+  tableColumnsCustomized = null,
+  onTableColumnsCustomizedChange = null,
+  sessionUniverseFilters = [],
 }) {
+  const stats = columnStats ?? meta.column_stats;
   const { split, setSplit, resetSplit } = useWallBezelSplit(DATAVIS_QUAD_SPLIT_KEY);
 
   const hasHistRanges = Object.values(ranges || {}).some(
@@ -55,19 +64,21 @@ export default function DataVisQuadLayout({
       resetSplit={resetSplit}
       shellClassName="dataVis-quadShell"
     >
-      <DataVisQuadPane title="2D plots" hint="Drag to select points">
+      <DataVisQuadPane title="2D plots" hint="Filter: box select · Explore: pan & zoom">
         <DataVisQuadScatterGrid
           plotContextFilters={plotContextFilters}
           highlightRowIds={highlightRowIds}
           onScatterRowIdsChange={onScatterRowIdsChange}
-          columnStats={meta.column_stats}
+          columnStats={stats}
           defaults={meta.defaults}
+          scatterActive={scatterActive}
+          hoverColumns={scatterHoverColumns}
         />
       </DataVisQuadPane>
 
       <DataVisQuadPane
         title="Parallel coordinates"
-        hint="Drag axes to filter (multiple axes) · double-click axis to reset"
+        hint="Drag axes to filter · pink thick line = lowest LCOE in view · double-click axis to reset"
         actions={
           <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
             Clear all filters
@@ -75,16 +86,14 @@ export default function DataVisQuadLayout({
         }
       >
         <DataVisParallelTab
-          chartFilters={chartFilters}
           filters={filters}
           defaults={meta.defaults}
-          columnStats={meta.column_stats}
+          columnStats={stats}
           compact
           onParcoordsRangesChange={onParcoordsRangesChange}
           onDimensionsChange={onParallelDimensionsChange}
           parcoordsActive={parcoordsActive}
           parcoordsRanges={parcoordsRanges}
-          highlightRowIds={highlightRowIds}
           onClearAll={onClearAll}
         />
       </DataVisQuadPane>
@@ -109,23 +118,29 @@ export default function DataVisQuadLayout({
         <DataVisQuadHistogramGrid
           gridId="filters"
           filters={filters}
-          columnStats={meta.column_stats}
+          columnStats={stats}
           parcoordsRanges={parcoordsRanges}
           binCount={binCount}
           onBinCountChange={onBinCountChange}
           brushFilter
           ranges={ranges}
           onRangesChange={onRangesChange}
+          sessionUniverseFilters={sessionUniverseFilters}
         />
       </DataVisQuadPane>
 
-      <DataVisQuadPane title="Table">
+      <DataVisQuadPane title="Table" hint="× removes a row from this session (all plots update)">
         <DataVisTableTab
           filters={filters}
-          columnStats={meta.column_stats}
+          columnStats={stats}
           defaults={meta.defaults}
           parallelDimensions={parallelDimensions}
           onSelectRowIds={onSelectRowIds}
+          onEraseRow={onEraseRow}
+          visibleColumns={tableVisibleColumns}
+          onVisibleColumnsChange={onTableVisibleColumnsChange}
+          columnsCustomized={tableColumnsCustomized}
+          onColumnsCustomizedChange={onTableColumnsCustomizedChange}
           compact
         />
       </DataVisQuadPane>

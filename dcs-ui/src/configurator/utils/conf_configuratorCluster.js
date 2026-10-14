@@ -11,6 +11,41 @@ import {
 
 export { isLocalClusterDev };
 
+/** localStorage handoff when dev opens Martin preview in a new tab (sessionStorage is per-tab). */
+export const PENDING_OPTIMIZED_INPUTS_KEY = 'dcs.configurator.pendingOptimizedInputs';
+
+/** ?martinPreview=<tabKey> — new tab runs Preview/wall (tabKey matches localStorage payload) */
+export const MARTIN_PREVIEW_URL_PARAM = 'martinPreview';
+
+export function martinPreviewCrossTabStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch (_) {
+    return null;
+  }
+}
+
+export function martinPreviewDoneStorageKey(tabKey) {
+  return `dcs.configurator.martinPreviewDone.${tabKey}`;
+}
+
+export function martinPreviewRunningStorageKey(tabKey) {
+  return `dcs.configurator.martinPreviewRunning.${tabKey}`;
+}
+
+export function martinPreviewResultStorageKey(tabKey) {
+  return `dcs.configurator.martinPreviewResult.${tabKey}`;
+}
+
+export function martinPreviewPendingStorageKey(tabKey) {
+  return `dcs.configurator.martinPreviewPending.${tabKey}`;
+}
+
+export function martinPreviewStartedStorageKey(tabKey) {
+  return `dcs.configurator.martinPreviewStarted.${tabKey}`;
+}
+
 function normalizePayload(inputs) {
   const cfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
   return {

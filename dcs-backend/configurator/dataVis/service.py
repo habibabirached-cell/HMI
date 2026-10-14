@@ -59,12 +59,22 @@ def get_health() -> dict[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
-def get_meta() -> dict[str, Any]:
-    df = load_waco_dataframe()
+def _column_stats_for_dataframe(df: pd.DataFrame) -> list[dict[str, Any]]:
     stats = [column_stats(df, c["key"]) for c in COLUMNS if c["key"] in df.columns]
     extra_cols = [c for c in df.columns if c not in COLUMN_BY_KEY]
     for col in extra_cols:
         stats.append(column_stats(df, col))
+    return stats
+
+
+def get_column_stats(filters: list[dict] | None = None) -> dict[str, Any]:
+    df = apply_filters(load_waco_dataframe(), filters)
+    return {"row_count": len(df), "column_stats": _column_stats_for_dataframe(df)}
+
+
+def get_meta() -> dict[str, Any]:
+    df = load_waco_dataframe()
+    stats = _column_stats_for_dataframe(df)
 
     return {
         "scenario": SCENARIO_CONTEXT,
@@ -220,19 +230,60 @@ def build_scatter(req: dict) -> dict[str, Any]:
     color = req.get("color")
     size = req.get("size")
     max_points = int(req.get("max_points", 5000))
-    if len(df) > max_points:
-        df = df.sample(n=max_points, random_state=42)
-
+    x_vals = df[x].astype(float)
+    y_vals = df[y].astype(float)
+    x_clean = x_vals.dropna()
+    y_clean = y_vals.dropna()
     payload: dict[str, Any] = {
         "count": len(df),
-        "x": df[x].tolist(),
-        "y": df[y].tolist(),
+        "x": x_vals.tolist(),
+        "y": y_vals.tolist(),
         "x_label": x,
         "y_label": y,
+        "x_range": [float(x_clean.min()), float(x_clean.max())]
+        if len(x_clean)
+        else None,
+        "y_range": [float(y_clean.min()), float(y_clean.max())]
+        if len(y_clean)
+        else None,
         "row_ids": df["dataVis_row_id"].tolist()
         if "dataVis_row_id" in df.columns
         else list(range(len(df))),
     }
+
+    detail_columns = req.get("detail_columns") or []
+    if detail_columns:
+        details: dict[str, list[Any]] = {}
+        for col in detail_columns:
+            if col not in df.columns:
+                continue
+            series = df[col]
+            if pd.api.types.is_numeric_dtype(series):
+                details[col] = series.where(series.notna(), None).tolist()
+            else:
+                details[col] = series.astype(object).where(series.notna(), None).tolist()
+        if details:
+            payload["details"] = details
+
+    if len(df) > max_points:
+        df = df.sample(n=max_points, random_state=42)
+        payload["x"] = df[x].astype(float).tolist()
+        payload["y"] = df[y].astype(float).tolist()
+        payload["row_ids"] = (
+            df["dataVis_row_id"].tolist()
+            if "dataVis_row_id" in df.columns
+            else list(range(len(df)))
+        )
+        if "details" in payload:
+            for col in list(payload["details"].keys()):
+                if col in df.columns:
+                    series = df[col]
+                    if pd.api.types.is_numeric_dtype(series):
+                        payload["details"][col] = series.where(series.notna(), None).tolist()
+                    else:
+                        payload["details"][col] = (
+                            series.astype(object).where(series.notna(), None).tolist()
+                        )
     if color and color in df.columns:
         payload["color"] = df[color].tolist()
         payload["color_label"] = color

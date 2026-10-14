@@ -2,45 +2,47 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { postDataVisRows } from '../api/conf_dataVisApi';
 import DataVisColumnChipMenu from '../components/DataVisColumnChipMenu';
 import { allColumnsFromStats } from '../utils/dataVisFilters';
+import {
+  formatDataVisCell,
+  MAX_TABLE_COLUMNS,
+  resolveInitialTableColumns,
+  ROW_ID_COL,
+  tableDisplayColumns,
+} from '../utils/dataVisTableColumns';
 
-const ROW_ID_COL = 'dataVis_row_id';
-const MAX_TABLE_COLUMNS = 15;
 const PAGE_SIZE = 200;
-
-const FALLBACK_VISIBLE_COLUMNS = [
-  'Solar AC Nameplate (MWac)',
-  'Wind Nameplate (MWac)',
-  'BESS power Nameplate (MW)',
-  '7HA Unit #',
-  'LM2500 Unit #',
-  'Project LCOE ($/MWh)',
-  'Year 1 Load Compliance (%)',
-  'Carbon Free Energy (%)',
-];
-
-function resolveInitialTableColumns(defaults, parallelDimensions) {
-  const dims = parallelDimensions?.length
-    ? parallelDimensions
-    : defaults?.parallel_dimensions;
-  if (Array.isArray(dims) && dims.length) {
-    return dims.filter((c) => c !== ROW_ID_COL).slice(0, MAX_TABLE_COLUMNS);
-  }
-  return FALLBACK_VISIBLE_COLUMNS;
-}
 
 export default function DataVisTableTab({
   filters,
   columnStats,
   onSelectRowIds,
+  onEraseRow,
   compact = false,
   defaults = null,
   parallelDimensions = null,
+  visibleColumns: visibleColumnsProp = null,
+  onVisibleColumnsChange = null,
+  columnsCustomized: columnsCustomizedProp = null,
+  onColumnsCustomizedChange = null,
 }) {
   const allColumns = useMemo(() => allColumnsFromStats(columnStats), [columnStats]);
-  const [visibleColumns, setVisibleColumns] = useState(() =>
+  const [visibleColumnsLocal, setVisibleColumnsLocal] = useState(() =>
     resolveInitialTableColumns(defaults, parallelDimensions),
   );
-  const [columnsCustomized, setColumnsCustomized] = useState(false);
+  const [columnsCustomizedLocal, setColumnsCustomizedLocal] = useState(false);
+  const visibleColumns = visibleColumnsProp ?? visibleColumnsLocal;
+  const columnsCustomized = columnsCustomizedProp ?? columnsCustomizedLocal;
+
+  const setVisibleColumns = (updater) => {
+    const next = typeof updater === 'function' ? updater(visibleColumns) : updater;
+    if (onVisibleColumnsChange) onVisibleColumnsChange(next);
+    else setVisibleColumnsLocal(next);
+  };
+
+  const setColumnsCustomized = (value) => {
+    if (onColumnsCustomizedChange) onColumnsCustomizedChange(value);
+    else setColumnsCustomizedLocal(value);
+  };
 
   useEffect(() => {
     if (columnsCustomized) return;
@@ -54,7 +56,7 @@ export default function DataVisTableTab({
   const [error, setError] = useState(null);
 
   const requestColumns = useMemo(
-    () => [ROW_ID_COL, ...visibleColumns.filter((c) => c !== ROW_ID_COL)],
+    () => tableDisplayColumns(visibleColumns),
     [visibleColumns],
   );
 
@@ -161,6 +163,11 @@ export default function DataVisTableTab({
         <table className="dataVis-table dataVis-table--compact dataVis-table--hug">
           <thead>
             <tr>
+              {onEraseRow ? (
+                <th className="dataVis-table__thErase" scope="col">
+                  Erase
+                </th>
+              ) : null}
               {displayCols.map((c) => {
                 const active = c === sortCol;
                 const label = c === ROW_ID_COL ? 'Row' : c;
@@ -198,6 +205,18 @@ export default function DataVisTableTab({
           <tbody>
             {data.rows.map((row) => (
               <tr key={row.dataVis_row_id}>
+                {onEraseRow ? (
+                  <td className="dataVis-table__cellErase">
+                    <button
+                      type="button"
+                      className="dataVis-rowErase"
+                      aria-label={`Erase row ${row.dataVis_row_id}`}
+                      onClick={() => onEraseRow(row.dataVis_row_id)}
+                    >
+                      ×
+                    </button>
+                  </td>
+                ) : null}
                 {displayCols.map((c) => (
                   <td key={c} className={c === ROW_ID_COL ? 'dataVis-table__cell--id' : 'dataVis-table__cell--num'}>
                     {fmtCell(row[c], c)}
@@ -213,15 +232,5 @@ export default function DataVisTableTab({
 }
 
 function fmtCell(v, column) {
-  if (v == null) return '—';
-  if (typeof v === 'number') {
-    const isPercent = column?.includes('(%)') || column?.includes('Compliance');
-    const isUnitCount = column?.includes('Unit #');
-    const maxFrac = isUnitCount ? 0 : isPercent ? 4 : 2;
-    return Number(v).toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: maxFrac,
-    });
-  }
-  return String(v);
+  return formatDataVisCell(v, column);
 }

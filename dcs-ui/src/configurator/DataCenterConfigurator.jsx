@@ -22,6 +22,13 @@ import {
   resolveMaingearBackendUrl,
   sessionToWallState,
   submitConfiguratorMartinToMaingear,
+  PENDING_OPTIMIZED_INPUTS_KEY,
+  MARTIN_PREVIEW_URL_PARAM,
+  martinPreviewDoneStorageKey,
+  martinPreviewResultStorageKey,
+  martinPreviewPendingStorageKey,
+  martinPreviewStartedStorageKey,
+  martinPreviewCrossTabStorage,
 } from './utils/conf_configuratorCluster';
 import { inputsEqual } from './utils/conf_configuratorEngine';
 import { validateConfiguratorInputs } from './utils/conf_validateInputs';
@@ -60,12 +67,18 @@ const MODE_META = {
       'Recommended architecture and metrics driven by the Ideum touch table (Maingear 4-screen wall).',
     badge: 'Wall Output · Cluster',
   },
+  'martin-dev-tab': {
+    title: 'Optimized Configuration',
+    subtitle: '',
+    badge: '',
+  },
 };
 
 function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const { enable3d } = useConf3d();
   const meta = MODE_META[mode] || MODE_META.full;
   const isIdeumMode = mode === 'ideum';
+  const isMartinDevTabMode = mode === 'martin-dev-tab';
   const isWallMode = mode === 'wall';
   /** Back arrow — defaults to onClose for legacy full-app overlay usage. */
   const handleBack = onBack ?? onClose;
@@ -88,6 +101,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const [wallListeningSince] = useState(() => new Date().toISOString());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [ideumTab, setIdeumTab] = useState('configure');
+  const [devAutoMartinPreviewBoot, setDevAutoMartinPreviewBoot] = useState(false);
 
   const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
 
@@ -97,6 +111,179 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     && ideumMartinPreviewOpen
     && ideumTab === 'configure'
     && result?.ok;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (!isMartinDevTabMode && !isIdeumMode) return undefined;
+
+    const params = new URLSearchParams(window.location.search);
+    const tabKey = params.get(MARTIN_PREVIEW_URL_PARAM);
+    if (!tabKey) return undefined;
+    if (isIdeumMode && !isMartinDevTabMode && !tabKey) return undefined;
+
+    const crossTabStore = martinPreviewCrossTabStorage();
+
+    const readPendingHandoff = () => {
+      if (!crossTabStore) return null;
+      try {
+        const dedicated = crossTabStore.getItem(martinPreviewPendingStorageKey(tabKey));
+        if (dedicated) return JSON.parse(dedicated);
+        const legacy = crossTabStore.getItem(PENDING_OPTIMIZED_INPUTS_KEY);
+        if (!legacy) return null;
+        const parsed = JSON.parse(legacy);
+        if (parsed?.tabKey !== tabKey) return null;
+        return parsed;
+      } catch (_) {
+        return null;
+      }
+    };
+
+    const hydrateMartinPreviewFromCache = () => {
+      if (!crossTabStore) return false;
+      try {
+        const cachedRaw = crossTabStore.getItem(martinPreviewResultStorageKey(tabKey));
+        if (!cachedRaw) return false;
+        const cached = JSON.parse(cachedRaw);
+        if (cached.inputs) setInputs((prev) => ({ ...prev, ...cached.inputs }));
+        if (cached.result) setResult(cached.result);
+        setResultsView('architecture');
+        setIdeumMartinPreviewOpen(true);
+        setDevAutoMartinPreviewBoot(false);
+        params.delete(MARTIN_PREVIEW_URL_PARAM);
+        const qs = params.toString();
+        const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
+        window.history.replaceState(null, '', nextUrl);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+
+    const clearMartinPreviewStarted = () => {
+      if (!crossTabStore) return;
+      try {
+        crossTabStore.removeItem(martinPreviewStartedStorageKey(tabKey));
+      } catch (_) {
+        /* ignore */
+      }
+    };
+
+    const runMartinPreviewForHandoff = (parsed) => {
+      if (!crossTabStore) return false;
+      try {
+        if (crossTabStore.getItem(martinPreviewStartedStorageKey(tabKey))) {
+          return false;
+        }
+        crossTabStore.setItem(martinPreviewStartedStorageKey(tabKey), '1');
+      } catch (_) {
+        /* continue without lock */
+      }
+      setDevAutoMartinPreviewBoot(true);
+      if (parsed.inputs) {
+        setInputs((prev) => ({ ...prev, ...parsed.inputs }));
+      }
+      if (parsed.uiMode) {
+        setUiMode(parsed.uiMode);
+      }
+
+      (async () => {
+        const payload = {
+          ...CONFIGURATOR_DEFAULT_INPUTS,
+          ...(parsed.inputs || {}),
+          uiMode: parsed.uiMode ?? UI_MODES.BASIC,
+        };
+        const validation = validateConfiguratorInputs(payload);
+        if (!validation.ok) {
+          setDevAutoMartinPreviewBoot(false);
+          setError(validation.error);
+          setErrorDetails(validation.details || []);
+          clearMartinPreviewStarted();
+          return;
+        }
+
+        setIsLocalMartinRunning(true);
+        setStatusMessage('Running Martin Waco study…');
+        try {
+          const next = await generateMartinConfiguratorResult(payload, { preferBackend: true });
+          if (!next.ok) {
+            setError(next.error || 'Martin configuration could not be generated.');
+            setErrorDetails(next.details || []);
+            setIdeumMartinPreviewOpen(false);
+            setDevAutoMartinPreviewBoot(false);
+            clearMartinPreviewStarted();
+            return;
+          }
+          setResult(next);
+          setLastRunInputs({
+            ...payload,
+            technologies: [...(payload.technologies || [])],
+          });
+          setResultsView('architecture');
+          setIdeumMartinPreviewOpen(true);
+          setDevAutoMartinPreviewBoot(false);
+
+          params.delete(MARTIN_PREVIEW_URL_PARAM);
+          const qs = params.toString();
+          const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
+          window.history.replaceState(null, '', nextUrl);
+
+          try {
+            crossTabStore?.setItem(
+              martinPreviewResultStorageKey(tabKey),
+              JSON.stringify({ result: next, inputs: payload }),
+            );
+            crossTabStore?.setItem(martinPreviewDoneStorageKey(tabKey), '1');
+            crossTabStore?.removeItem(martinPreviewPendingStorageKey(tabKey));
+            crossTabStore?.removeItem(PENDING_OPTIMIZED_INPUTS_KEY);
+            crossTabStore?.removeItem(martinPreviewStartedStorageKey(tabKey));
+          } catch (_) {
+            /* ignore */
+          }
+        } catch (e) {
+          setError(e.message || 'Martin configuration failed.');
+          setDevAutoMartinPreviewBoot(false);
+          clearMartinPreviewStarted();
+        } finally {
+          setIsLocalMartinRunning(false);
+          setStatusMessage('');
+        }
+      })();
+
+      return true;
+    };
+
+    const attempt = () => {
+      try {
+        if (crossTabStore?.getItem(martinPreviewDoneStorageKey(tabKey))) {
+          return hydrateMartinPreviewFromCache();
+        }
+      } catch (_) {
+        /* ignore */
+      }
+      const parsed = readPendingHandoff();
+      if (!parsed?.runMartinWallPreview && !parsed?.inputs) return false;
+      return runMartinPreviewForHandoff(parsed);
+    };
+
+    if (attempt()) return undefined;
+
+    const startedAt = Date.now();
+    const retryId = window.setInterval(() => {
+      if (attempt()) {
+        window.clearInterval(retryId);
+        return;
+      }
+      if (Date.now() - startedAt > 20000) {
+        window.clearInterval(retryId);
+        setDevAutoMartinPreviewBoot(false);
+        setError(
+          'Could not start optimized configuration in this tab. Close the tab and press Optimized Configuration again.',
+        );
+      }
+    }, 200);
+
+    return () => window.clearInterval(retryId);
+  }, [isIdeumMode, isMartinDevTabMode]);
 
   useEffect(() => {
     const syncFullscreen = () => {
@@ -172,7 +359,43 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     };
   }, [isWallMode, applyWallSession]);
 
-  /** Footer CONFIGURE — Ideum → Maingear wall (Martin Waco study only). */
+  /** Preview + Maingear optimized — Martin study, wall layout on this screen. */
+  const runMartinWallPreview = useCallback(async () => {
+    setError(null);
+    setErrorDetails([]);
+
+    const validation = validateConfiguratorInputs({ ...inputs, uiMode });
+    if (!validation.ok) {
+      setError(validation.error);
+      setErrorDetails(validation.details || []);
+      return;
+    }
+
+    const payload = { ...inputs, uiMode };
+    setIsLocalMartinRunning(true);
+    setStatusMessage('Running Martin Waco study…');
+    try {
+      const next = await generateMartinConfiguratorResult(payload, { preferBackend: true });
+      if (!next.ok) {
+        setError(next.error || 'Martin configuration could not be generated.');
+        setErrorDetails(next.details || []);
+        setResult(null);
+        setIdeumMartinPreviewOpen(false);
+        return;
+      }
+      setResult(next);
+      setLastRunInputs({ ...payload, technologies: [...(payload.technologies || [])] });
+      setResultsView('architecture');
+      setIdeumMartinPreviewOpen(true);
+    } catch (e) {
+      setError(e.message || 'Martin configuration failed.');
+    } finally {
+      setIsLocalMartinRunning(false);
+      setStatusMessage('');
+    }
+  }, [inputs, uiMode]);
+
+  /** Ideum → Maingear wall (Martin cluster — same payload as Preview). */
   const submitIdeumMartinToMaingearWall = useCallback(async () => {
     setError(null);
     setErrorDetails([]);
@@ -197,7 +420,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       if (!isLocalClusterDev()) {
         if (role?.isMaingear) {
           setError(
-            'You are on the Maingear. Use the footer CONFIGURE on the Ideum touch table to drive this wall.',
+            'You are on the Maingear. Use Optimized Configuration on the Ideum touch table to drive this wall.',
           );
           return;
         }
@@ -234,10 +457,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
   }, [inputs, uiMode]);
 
-  /** Top Configure — Martin on this machine (preview overlay, any role). */
-  const handleMartinLocalConfigure = useCallback(async () => {
-    if (!isIdeumMode) return;
-
+  const handleOptimizedConfiguration = useCallback(async () => {
     setError(null);
     setErrorDetails([]);
 
@@ -248,29 +468,64 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       return;
     }
 
-    const payload = { ...inputs, uiMode };
-    setIsLocalMartinRunning(true);
-    setStatusMessage('Running Martin Waco study…');
+    let role = null;
     try {
-      const next = await generateMartinConfiguratorResult(payload, { preferBackend: true });
-      if (!next.ok) {
-        setError(next.error || 'Martin configuration could not be generated.');
-        setErrorDetails(next.details || []);
-        setResult(null);
-        setIdeumMartinPreviewOpen(false);
+      role = await fetchMachineRole();
+    } catch (_) {
+      /* optional on dev */
+    }
+
+    if (role?.isIdeum) {
+      void submitIdeumMartinToMaingearWall();
+      return;
+    }
+
+    if (role?.isMaingear) {
+      if (!isIdeumMode) {
+        setError('Open the Ideum configurator inputs screen to run Optimized Configuration.');
         return;
       }
-      setResult(next);
-      setLastRunInputs({ ...payload, technologies: [...(payload.technologies || [])] });
-      setResultsView('architecture');
-      setIdeumMartinPreviewOpen(true);
-    } catch (e) {
-      setError(e.message || 'Martin configuration failed.');
-    } finally {
-      setIsLocalMartinRunning(false);
-      setStatusMessage('');
+      void runMartinWallPreview();
+      return;
     }
-  }, [inputs, uiMode, isIdeumMode]);
+
+    const openDevTab =
+      role?.isDev
+      || (isLocalClusterDev() && !role?.isMaingear && !role?.isIdeum);
+    if (openDevTab) {
+      const tabKey = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const handoff = {
+        inputs: { ...inputs },
+        uiMode,
+        runMartinWallPreview: true,
+        tabKey,
+      };
+      try {
+        const store = martinPreviewCrossTabStorage();
+        store?.setItem(martinPreviewPendingStorageKey(tabKey), JSON.stringify(handoff));
+        store?.setItem(PENDING_OPTIMIZED_INPUTS_KEY, JSON.stringify(handoff));
+      } catch (_) {
+        /* storage may be unavailable */
+      }
+      const url = new URL(`${window.location.origin}${window.location.pathname}`);
+      url.searchParams.set('view', 'configurator-martin-preview');
+      url.searchParams.set(MARTIN_PREVIEW_URL_PARAM, tabKey);
+      window.open(url.toString(), '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    setError(`Unknown machine role (${role?.role || 'unknown'}). Check cluster.local.json on this PC.`);
+  }, [inputs, uiMode, isIdeumMode, runMartinWallPreview, submitIdeumMartinToMaingearWall]);
+
+  const handleExploreData = useCallback(() => {
+    /* wired later */
+  }, []);
+
+  /** Header Preview — Martin on this machine (same as Maingear optimized). */
+  const handleMartinLocalConfigure = useCallback(async () => {
+    if (!isIdeumMode) return;
+    await runMartinWallPreview();
+  }, [isIdeumMode, runMartinWallPreview]);
 
   const handleGenerate = useCallback(async () => {
     setError(null);
@@ -280,11 +535,6 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     if (!validation.ok) {
       setError(validation.error);
       setErrorDetails(validation.details || []);
-      return;
-    }
-
-    if (isIdeumMode) {
-      void submitIdeumMartinToMaingearWall();
       return;
     }
 
@@ -316,7 +566,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       setIsGenerating(false);
       setStatusMessage('');
     }
-  }, [inputs, uiMode, isIdeumMode]);
+  }, [inputs, uiMode]);
 
   const handleReset = () => {
     if (isWallMode) return;
@@ -349,6 +599,42 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const wall = sessionToWallState(wallSession, { onlyAfter: wallListeningSince });
   const wallGenerating = isWallMode && wall.isGenerating;
   const wallStatusMessage = wallGenerating ? 'Generating architecture on Maingear…' : statusMessage;
+
+  const devMartinPreviewTabKey =
+    (isIdeumMode || isMartinDevTabMode) && typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get(MARTIN_PREVIEW_URL_PARAM)
+      : null;
+  const devMartinPreviewScreen =
+    !isMartinDevTabMode
+    && Boolean(devMartinPreviewTabKey)
+    && !showIdeumLocalMartinWall;
+
+  if (isMartinDevTabMode) {
+    return (
+      <div className="conf-page conf-page--wall conf-page--martin-dev-tab">
+        {error && (
+          <div className="conf-error-banner" role="alert">
+            <strong>{error}</strong>
+          </div>
+        )}
+        {!result?.ok ? (
+          <p className="conf-ideum-status-line conf-ideum-status-line--boot" role="status" aria-live="polite">
+            {statusMessage || (isLocalMartinRunning ? 'Running Martin Waco study…' : 'Opening optimized configuration…')}
+          </p>
+        ) : (
+          <div className="conf-layout conf-layout--wall">
+            <ConfWallQuadrantDisplay
+              result={result}
+              inputs={inputs}
+              isGenerating={isLocalMartinRunning}
+              statusMessage={statusMessage}
+              wallSessionStatus="ready"
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`conf-page conf-page--${mode}${enable3d ? '' : ' conf-page--no3d'}`}>
@@ -425,6 +711,11 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
         ) : (
           <>
             <div className="conf-page-header__titles">
+              {onBack ? (
+                <div className="conf-page-header__optimized-back">
+                  <Ideum05BackButton onBack={onBack} className="conf-ideum-header-back-btn" />
+                </div>
+              ) : null}
               <span className="conf-page-eyebrow">Energy System Configuration</span>
               <h1>{meta.title}</h1>
               {meta.subtitle && <p>{meta.subtitle}</p>}
@@ -483,19 +774,24 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       )}
 
       <div className={`conf-layout conf-layout--${mode}${isIdeumMode && ideumTab !== 'configure' ? ' conf-layout--ideum-trade' : ''}`}>
-        {!isWallMode && isIdeumMode && ideumTab === 'configure' && (
+        {!isWallMode && isIdeumMode && ideumTab === 'configure' && !devMartinPreviewScreen && (
           <ConfIdeumInputPanel
             inputs={inputs}
             onChange={setInputs}
-            onGenerate={handleGenerate}
+            onExploreData={handleExploreData}
+            onOptimizedConfiguration={handleOptimizedConfiguration}
             onReset={handleReset}
             onLoadPreset={handleLoadPreset}
-            isGenerating={isWallSubmitting}
-            generateLabel="CONFIGURE"
+            isOptimizedBusy={isWallSubmitting || isLocalMartinRunning}
             previewSlot={
               !showIdeumLocalMartinWall ? <ConfIdeumPreviewSummary result={result} /> : null
             }
           />
+        )}
+        {devMartinPreviewScreen && (
+          <p className="conf-ideum-status-line conf-ideum-status-line--boot" role="status" aria-live="polite">
+            {statusMessage || (isLocalMartinRunning ? 'Running Martin Waco study…' : 'Opening optimized configuration…')}
+          </p>
         )}
         {showIdeumLocalMartinWall
           && typeof document !== 'undefined'

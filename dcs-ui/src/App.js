@@ -310,6 +310,7 @@ function resolveConfiguratorFromUrl() {
   if (typeof window === 'undefined') return { open: false, mode: 'full' };
   const view = new URLSearchParams(window.location.search).get('view');
   if (view === 'configurator-ideum') return { open: true, mode: 'ideum' };
+  if (view === 'configurator-martin-preview') return { open: true, mode: 'martin-dev-tab' };
   if (view === 'configurator-wall') return { open: true, mode: 'wall' };
   if (view === 'configurator') return { open: true, mode: 'full' };
   return { open: false, mode: 'full' };
@@ -320,7 +321,12 @@ function clearConfiguratorViewFromUrl() {
   if (typeof window === 'undefined') return;
   const params = new URLSearchParams(window.location.search);
   const view = params.get('view');
-  if (view !== 'configurator-wall' && view !== 'configurator-ideum' && view !== 'configurator') {
+  if (
+    view !== 'configurator-wall'
+    && view !== 'configurator-ideum'
+    && view !== 'configurator-martin-preview'
+    && view !== 'configurator'
+  ) {
     return;
   }
   params.delete('view');
@@ -1295,7 +1301,8 @@ function App() {
 
   const isConfiguratorIdeum = showConfigurator && effectiveConfiguratorMode === 'ideum';
   const isConfiguratorWall = showConfigurator && effectiveConfiguratorMode === 'wall';
-  const hideAppHeader = isConfiguratorIdeum || isConfiguratorWall;
+  const isConfiguratorMartinDevTab = showConfigurator && effectiveConfiguratorMode === 'martin-dev-tab';
+  const hideAppHeader = isConfiguratorIdeum || isConfiguratorWall || isConfiguratorMartinDevTab;
 
   const maltaView = getMaltaViewFromUrl();
 
@@ -8728,6 +8735,10 @@ function App() {
   });
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const view = new URLSearchParams(window.location.search).get('view');
+      if (view === 'configurator-martin-preview') return undefined;
+    }
     const mv = getMaltaViewFromUrl();
     if (machineRole?.isMalta) {
       if (mv !== 'wall') return undefined;
@@ -8838,6 +8849,8 @@ function App() {
   // React Strict Mode runs mount → cleanup → mount again; we must reset deepLinkBootstrapStartedRef in cleanup or the remount exits early and never fetches.
   useEffect(() => {
     if (deepLinkBootstrapStartedRef.current) return;
+    const bootstrapView = new URLSearchParams(window.location.search).get('view');
+    if (bootstrapView === 'configurator-martin-preview') return;
     const simParsed = parseSimulationDeepLink(window.location.search);
     const designOnlyParsed = simParsed ? null : parseDesignOnlyDeepLink(window.location.search);
     const catalogDesign = simParsed?.design ?? designOnlyParsed?.design;
@@ -9714,7 +9727,6 @@ function App() {
       {showConfigurator && effectiveConfiguratorMode !== 'wall' ? (
         <div className="app-main app-main--configurator">
           <DataCenterConfigurator
-            key={effectiveConfiguratorMode}
             mode={effectiveConfiguratorMode}
             onClose={() => {
               setConfiguratorOpen(false);

@@ -19,6 +19,7 @@ export default function DataVisQuadHistogramGrid({
   brushFilter = false,
   ranges = {},
   onRangesChange,
+  sessionUniverseFilters = [],
 }) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const [columns, setColumns] = useState(QUAD_HISTOGRAM_DEFAULTS);
@@ -83,6 +84,7 @@ export default function DataVisQuadHistogramGrid({
           brushFilter={brushFilter}
           band={brushFilter ? ranges[col] || {} : undefined}
           onBandChange={brushFilter ? setBand(col) : undefined}
+          sessionUniverseFilters={sessionUniverseFilters}
         />
       ))}
     </div>

@@ -1,5 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { fetchDataVisMeta, postDataVisOverview, postDataVisRowIds } from './api/conf_dataVisApi';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  fetchDataVisMeta,
+  postDataVisColumnStats,
+  postDataVisOverview,
+  postDataVisRowIds,
+} from './api/conf_dataVisApi';
 import DataVisFilterBar from './components/DataVisFilterBar';
 import DataVisQuadLayout from './components/DataVisQuadLayout';
 import './dataVisPanel.css';
@@ -15,9 +20,15 @@ import DataVisQualityTab from './tabs/DataVisQualityTab';
 import DataVisTableTab from './tabs/DataVisTableTab';
 import {
   buildDataVisFilters,
+  buildExcludedRowFilters,
   buildRangeFilters,
+  buildSessionUniverseFilters,
   hasActiveViewFilters,
 } from './utils/dataVisFilters';
+import {
+  resolveInitialTableColumns,
+  tableDisplayColumns,
+} from './utils/dataVisTableColumns';
 import {
   clampFilterBinCount,
   FILTER_BINS_STORAGE_KEY,
@@ -61,6 +72,12 @@ export default function DataVisPanel() {
   const [parallelDimensions, setParallelDimensions] = useState(null);
   const [scatterRowIds, setScatterRowIds] = useState(null);
   const [highlightRowIds, setHighlightRowIds] = useState(null);
+  /** Session-only row erasures (not persisted to workbook). */
+  const [excludedRowIds, setExcludedRowIds] = useState([]);
+  const [sessionColumnStats, setSessionColumnStats] = useState(null);
+  const [sessionRowCount, setSessionRowCount] = useState(null);
+  const [tableVisibleColumns, setTableVisibleColumns] = useState([]);
+  const [tableColumnsCustomized, setTableColumnsCustomized] = useState(false);
   const [binCount, setBinCountState] = useState(readStoredFilterBinCount);
 
   const setBinCount = (next) => {
@@ -91,6 +108,16 @@ export default function DataVisPanel() {
   }, [meta?.defaults?.parallel_dimensions]);
 
   useEffect(() => {
+    if (!meta || tableColumnsCustomized) return;
+    setTableVisibleColumns(resolveInitialTableColumns(meta.defaults, parallelDimensions));
+  }, [meta, parallelDimensions, tableColumnsCustomized]);
+
+  const scatterHoverColumns = useMemo(
+    () => tableDisplayColumns(tableVisibleColumns),
+    [tableVisibleColumns],
+  );
+
+  useEffect(() => {
     let cancelled = false;
     fetchDataVisMeta()
       .then((res) => {
@@ -105,15 +132,55 @@ export default function DataVisPanel() {
   }, []);
 
   const rangeFilters = useMemo(() => buildRangeFilters(ranges), [ranges]);
-  /** Chart data: histogram + scatter filters only (not parallel brushes — avoids refetch wiping multi-axis brushes). */
+  const sessionUniverseFilters = useMemo(
+    () => buildSessionUniverseFilters(excludedRowIds),
+    [excludedRowIds],
+  );
+  /** Scatter data + box select pool: histogram + parcoords (never scatter row ids — those refine via highlight). */
   const plotContextFilters = useMemo(
-    () => buildDataVisFilters(ranges, {}, scatterRowIds),
-    [ranges, scatterRowIds],
+    () => buildDataVisFilters(ranges, parcoordsRanges, null, excludedRowIds),
+    [excludedRowIds, ranges, parcoordsRanges],
   );
   const filters = useMemo(
-    () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds),
-    [ranges, parcoordsRanges, scatterRowIds],
+    () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds, excludedRowIds),
+    [excludedRowIds, ranges, parcoordsRanges, scatterRowIds],
   );
+
+  const columnStatsForViews = sessionColumnStats ?? meta?.column_stats;
+  const datasetRowCount = sessionRowCount ?? meta?.row_count;
+
+  useEffect(() => {
+    if (!meta) return undefined;
+    if (!excludedRowIds.length) {
+      setSessionColumnStats(null);
+      setSessionRowCount(null);
+      return undefined;
+    }
+    let cancelled = false;
+    postDataVisColumnStats(buildExcludedRowFilters(excludedRowIds))
+      .then((res) => {
+        if (!cancelled) {
+          setSessionColumnStats(res.column_stats);
+          setSessionRowCount(res.row_count);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [excludedRowIds, meta]);
+
+  const eraseRow = useCallback((rowId) => {
+    const id = Number(rowId);
+    if (!Number.isFinite(id)) return;
+    setExcludedRowIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setScatterRowIds((prev) => {
+      if (prev == null) return null;
+      const next = prev.filter((r) => r !== id);
+      return next.length ? next : null;
+    });
+    setCompareIds((prev) => prev.filter((r) => r !== id));
+  }, []);
 
   const parcoordsActive = Object.keys(parcoordsRanges).length > 0;
   const scatterActive = scatterRowIds != null;
@@ -196,7 +263,8 @@ export default function DataVisPanel() {
               ·
             </span>
             <span className="dataVis-headerLine__meta">
-              {meta.scenario?.location} · {meta.row_count} scenarios · Plotly views
+              {meta.scenario?.location} · {datasetRowCount ?? meta.row_count} scenarios
+              {excludedRowIds.length ? ` · ${excludedRowIds.length} erased` : ''} · Plotly views
             </span>
           </div>
           <div className="dataVis-layoutToggle" role="group" aria-label="Layout mode">
@@ -236,16 +304,17 @@ export default function DataVisPanel() {
 
       {layoutMode !== 'quad' && (
         <DataVisFilterBar
-          columnStats={meta.column_stats}
+          columnStats={columnStatsForViews}
           ranges={ranges}
           onChange={setRanges}
           onClearAll={clearAllFilters}
           parcoordsActive={parcoordsActive}
           parcoordsRanges={parcoordsRanges}
-          filteredCount={filteredCount ?? meta.row_count}
-          totalCount={meta.row_count}
+          filteredCount={filteredCount ?? datasetRowCount ?? meta.row_count}
+          totalCount={datasetRowCount ?? meta.row_count}
           binCount={binCount}
           onBinCountChange={setBinCount}
+          excludedRowIds={excludedRowIds}
         />
       )}
 
@@ -268,8 +337,16 @@ export default function DataVisPanel() {
             plotContextFilters={plotContextFilters}
             highlightRowIds={highlightRowIds}
             onScatterRowIdsChange={setScatterRowIds}
-            filteredCount={filteredCount ?? meta.row_count}
-            totalCount={meta.row_count}
+            filteredCount={filteredCount ?? datasetRowCount ?? meta.row_count}
+            totalCount={datasetRowCount ?? meta.row_count}
+            columnStats={columnStatsForViews}
+            onEraseRow={eraseRow}
+            scatterHoverColumns={scatterHoverColumns}
+            tableVisibleColumns={tableVisibleColumns}
+            onTableVisibleColumnsChange={setTableVisibleColumns}
+            tableColumnsCustomized={tableColumnsCustomized}
+            onTableColumnsCustomizedChange={setTableColumnsCustomized}
+            sessionUniverseFilters={sessionUniverseFilters}
             binCount={binCount}
             onBinCountChange={setBinCount}
           />
@@ -290,23 +367,22 @@ export default function DataVisPanel() {
                 highlightRowIds={highlightRowIds}
                 onScatterRowIdsChange={setScatterRowIds}
                 defaults={meta.defaults}
-                columnStats={meta.column_stats}
+                columnStats={columnStatsForViews}
+                hoverColumns={scatterHoverColumns}
               />
             )}
             {tab === 'heatmap' && (
               <DataVisHeatmapTab
                 filters={filters}
                 defaults={meta.defaults}
-                columnStats={meta.column_stats}
+                columnStats={columnStatsForViews}
               />
             )}
             {tab === 'parallel' && (
               <DataVisParallelTab
-                chartFilters={plotContextFilters}
                 filters={filters}
-                highlightRowIds={highlightRowIds}
                 defaults={meta.defaults}
-                columnStats={meta.column_stats}
+                columnStats={columnStatsForViews}
                 onParcoordsRangesChange={setParcoordsRanges}
                 onDimensionsChange={setParallelDimensions}
                 parcoordsActive={parcoordsActive}
@@ -318,19 +394,25 @@ export default function DataVisPanel() {
               <DataVisHistogramTab
                 filters={filters}
                 ranges={ranges}
-                columnStats={meta.column_stats}
+                columnStats={columnStatsForViews}
                 parcoordsRanges={parcoordsRanges}
                 binCount={binCount}
                 onBinCountChange={setBinCount}
+                sessionUniverseFilters={sessionUniverseFilters}
               />
             )}
             {tab === 'table' && (
               <DataVisTableTab
                 filters={filters}
-                columnStats={meta.column_stats}
+                columnStats={columnStatsForViews}
                 defaults={meta.defaults}
                 parallelDimensions={parallelDimensions}
                 onSelectRowIds={handleSelectRow}
+                onEraseRow={eraseRow}
+                visibleColumns={tableVisibleColumns}
+                onVisibleColumnsChange={setTableVisibleColumns}
+                columnsCustomized={tableColumnsCustomized}
+                onColumnsCustomizedChange={setTableColumnsCustomized}
               />
             )}
             {tab === 'compare' && (

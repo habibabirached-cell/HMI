@@ -175,12 +175,61 @@
   margin: 0;
 }
 
+.dataVis-quadScatterWrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 4px;
+}
+
+.dataVis-scatterModeBar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  padding: 0.15rem 0.25rem 0.05rem;
+}
+
+.dataVis-scatterModeBar__hint {
+  font-size: clamp(10px, 0.85vw, 12px);
+  color: var(--conf-text-dim, #5f6b7a);
+}
+
+.dataVis-segmented {
+  display: inline-flex;
+  border: 1px solid rgba(31, 41, 51, 0.22);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dataVis-segmented__btn {
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  font-size: clamp(10px, 0.85vw, 12px);
+  font-weight: 600;
+  border: none;
+  background: #f8fafc;
+  color: #1f2933;
+  cursor: pointer;
+}
+
+.dataVis-segmented__btn + .dataVis-segmented__btn {
+  border-left: 1px solid rgba(31, 41, 51, 0.22);
+}
+
+.dataVis-segmented__btn--active {
+  background: #1f2933;
+  color: #f8fafc;
+}
+
 .dataVis-quadScatterGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 4px;
-  height: 100%;
+  flex: 1 1 0;
   min-height: 0;
 }
 
@@ -235,13 +284,31 @@
 }
 
 .dataVis-quadScatterGrid .dataVis-chartBlock--scatter {
-  flex: 1;
-  min-height: 80px;
-  padding: 0.15rem;
+  flex: 1 1 0;
+  min-height: 120px;
+  padding: 1.4rem 1.8rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.dataVis-quadScatterGrid .dataVis-chartBlock--scatter .js-plotly-plot {
+.dataVis-quadScatterGrid .g-xtitle text,
+.dataVis-quadScatterGrid .g-ytitle text,
+.dataVis-quadScatterGrid .cbtitle text,
+.dataVis-quadScatterGrid .cbtitleunshift text {
+  font-weight: 700 !important;
+  fill: #1f2933 !important;
+}
+
+.dataVis-quadScatterGrid .dataVis-chartBlock--scatter .dataVis-plotFill,
+.dataVis-quadScatterGrid .dataVis-chartBlock--scatter .dataVis-plotFill .js-plotly-plot,
+.dataVis-quadScatterGrid .dataVis-chartBlock--scatter .dataVis-plotFill .plot-container,
+.dataVis-quadScatterGrid .dataVis-chartBlock--scatter .dataVis-plotFill .svg-container {
+  position: absolute;
+  inset: 0;
   width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-width: 100%;
 }
 
 .dataVis-tabPanel--compact {
@@ -255,7 +322,10 @@
 
 .dataVis-quadSlot__body > .dataVis-tabPanel--parcoordsQuad {
   height: 100%;
-  overflow: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dataVis-tabPanel--parcoordsQuad .dataVis-tabPanel__toolbar {
@@ -263,11 +333,29 @@
 }
 
 .dataVis-tabPanel--parcoordsQuad .dataVis-chartBlock--parcoords {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 200px;
   width: 100%;
-  padding: 0.25rem 0.35rem 0.35rem;
+  padding: 0.5rem 0.65rem 0.65rem;
   overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataVis-tabPanel--parcoordsQuad .dataVis-chartBlock--parcoords .js-plotly-plot {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100% !important;
+  position: relative;
+}
+
+.dataVis-chartBlock--parcoords .plot-container {
+  overflow: visible;
+}
+
+.dataVis-chartBlock--parcoords .plot-container {
+  position: relative;
 }
 
 .dataVis-tabPanel--parcoordsQuad .dataVis-chartBlock--parcoords .js-plotly-plot,
@@ -275,6 +363,61 @@
 .dataVis-tabPanel--parcoordsQuad .dataVis-chartBlock--parcoords .svg-container {
   width: 100% !important;
   max-width: 100%;
+}
+
+.dataVis-chartBlock--parcoords .parcoords .axis .label-group text,
+.dataVis-chartBlock--parcoords .parcoords .axis .label-group tspan {
+  font-weight: 700 !important;
+  fill: #1f2933 !important;
+}
+
+.dataVis-chartBlock--parcoords .axis-extent-text,
+.dataVis-chartBlock--parcoords .axis-extent-top-text,
+.dataVis-chartBlock--parcoords .axis-extent-bottom-text {
+  font-weight: 600 !important;
+  fill: #1f2933 !important;
+}
+
+/* Hide min/max labels at axis ends (keep in DOM for pink-line overlay math). */
+.dataVis-chartBlock--parcoords .axis-extent-top-text,
+.dataVis-chartBlock--parcoords .axis-extent-bottom-text {
+  visibility: hidden !important;
+}
+
+.dataVis-chartBlock--parcoords .axis-extent-text {
+  font-size: 24px !important;
+}
+
+.dataVis-tabPanel--parcoordsQuad .axis-extent-text {
+  font-size: 22px !important;
+}
+
+/* Parcoords control-view: 500/1000/… labels (d3 axis ticks; Plotly tickSize is fixed at 4px). */
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis .tick text {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  fill: #1f2933 !important;
+}
+
+.dataVis-tabPanel--parcoordsQuad .parcoords-control-view .y-axis .tick text {
+  font-size: 22px !important;
+}
+
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis path.domain,
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis line.domain {
+  stroke: #000 !important;
+  stroke-opacity: 1 !important;
+}
+
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis .tick line {
+  transform: scale(2, 1);
+  transform-origin: 100% 50%;
+}
+
+/* Outermost along-axis tick at top and bottom of each dimension. */
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis .tick:first-child,
+.dataVis-chartBlock--parcoords .parcoords-control-view .y-axis .tick:last-child {
+  display: none;
 }
 
 .dataVis-histogramGrid--compact {
@@ -525,6 +668,23 @@
 
 .dataVis-parcoordsHint {
   font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.dataVis-parcoordsBestLcoe {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: clamp(11px, 0.95vw, 13px);
+  font-weight: 600;
+  color: #1f2933;
+}
+
+.dataVis-parcoordsBestLcoe__swatch {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ff1493;
+  box-shadow: 0 0 0 1px rgba(31, 41, 51, 0.12);
 }
 
 .dataVis-toolbar--tableHead {
@@ -998,6 +1158,43 @@
 
 .dataVis-colRemove:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.dataVis-table__thErase,
+.dataVis-table__cellErase {
+  width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.2rem 0.35rem;
+}
+
+.dataVis-table__thErase {
+  font-size: clamp(10px, 0.85vw, 12px);
+  font-weight: 700;
+}
+
+.dataVis-rowErase {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(31, 41, 51, 0.25);
+  border-radius: 6px;
+  background: #fff;
+  color: #b42318;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dataVis-rowErase:hover {
+  background: #fef2f2;
+  border-color: #b42318;
 }
 
 .dataVis-chip {

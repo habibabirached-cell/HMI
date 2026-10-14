@@ -93,7 +93,7 @@ def resolve_machine_role() -> dict[str, Any]:
             role = "ideum"
         else:
             env_role = (os.environ.get("CLUSTER_ROLE") or "").strip().lower()
-            if env_role in ("maingear", "ideum"):
+            if env_role in ("maingear", "ideum", "dev"):
                 role = env_role
             elif not cfg:
                 role = "unknown"
@@ -102,19 +102,29 @@ def resolve_machine_role() -> dict[str, Any]:
 
     peer_ip = (cfg.get("peerEthernetIp") or "").strip()
     if not peer_ip:
-        peer_ip = IDEUM_ETHERNET_IP if role == "maingear" else MAINGEAR_ETHERNET_IP
+        if role == "maingear":
+            peer_ip = IDEUM_ETHERNET_IP
+        elif role == "ideum":
+            peer_ip = MAINGEAR_ETHERNET_IP
+        else:
+            peer_ip = ""
 
     peer_backend = (cfg.get("peerBackendUrl") or os.environ.get("CLUSTER_PEER_BACKEND_URL") or "").strip()
     if not peer_backend:
-        peer_backend = f"http://{MAINGEAR_ETHERNET_IP}:5000"
+        if role == "dev":
+            peer_backend = "http://127.0.0.1:5000"
+        else:
+            peer_backend = f"http://{MAINGEAR_ETHERNET_IP}:5000"
 
     is_malta = role == "malta"
+    is_dev = role == "dev"
     return {
         "role": role,
         "ethernetIp": ip or None,
-        "peerEthernetIp": peer_ip,
+        "peerEthernetIp": peer_ip or None,
         "peerBackendUrl": peer_backend,
         "isMalta": is_malta,
+        "isDev": is_dev,
         "isMaingear": role == "maingear" or is_malta,
         "isIdeum": role == "ideum" or is_malta,
         "combinedWallAndTouch": bool(cfg.get("combinedWallAndTouch")) or is_malta,

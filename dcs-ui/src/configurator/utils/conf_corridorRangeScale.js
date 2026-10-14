@@ -1,48 +1,51 @@
-/** Vertical track mapping for corridor range rails (linear + availability “nines”). */
+/** Vertical track mapping for corridor range rails. */
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-/** ratio (0=bottom) → availability % on 99–100 axis. */
-const AVAILABILITY_ANCHORS = [
-  { r: 0, v: 99 },
-  { r: 0.5, v: 99.99 },
-  { r: 0.75, v: 99.999 },
-  { r: 0.95, v: 99.9999 },
-  { r: 1, v: 100 },
+export const LOAD_COMPLIANCE_SNAPS = [
+  97,
+  98,
+  99,
+  99.9,
+  99.99,
+  99.999,
+  99.9999,
+  100,
 ];
 
-function piecewiseFromRatio(ratio, anchors) {
-  const r = clamp(ratio, 0, 1);
-  if (r >= anchors[anchors.length - 1].r - 1e-12) {
-    return anchors[anchors.length - 1].v;
-  }
-  for (let i = 0; i < anchors.length - 1; i += 1) {
-    const a = anchors[i];
-    const b = anchors[i + 1];
-    if (r >= a.r && r <= b.r) {
-      const t = b.r === a.r ? 1 : (r - a.r) / (b.r - a.r);
-      return a.v + t * (b.v - a.v);
+export function snapToLoadCompliance(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 99.99;
+  const clamped = clamp(n, LOAD_COMPLIANCE_SNAPS[0], LOAD_COMPLIANCE_SNAPS[LOAD_COMPLIANCE_SNAPS.length - 1]);
+  let best = LOAD_COMPLIANCE_SNAPS[0];
+  let bestDist = Infinity;
+  LOAD_COMPLIANCE_SNAPS.forEach((snap) => {
+    const d = Math.abs(clamped - snap);
+    if (d < bestDist) {
+      bestDist = d;
+      best = snap;
     }
-  }
-  return anchors[0].v;
+  });
+  return best;
 }
 
-function piecewiseToRatio(value, anchors) {
-  const v = clamp(value, anchors[0].v, anchors[anchors.length - 1].v);
-  if (v >= anchors[anchors.length - 1].v - 1e-9) {
-    return anchors[anchors.length - 1].r;
-  }
-  for (let i = 0; i < anchors.length - 1; i += 1) {
-    const a = anchors[i];
-    const b = anchors[i + 1];
-    if (v >= a.v && v <= b.v) {
-      const t = b.v === a.v ? 1 : (v - a.v) / (b.v - a.v);
-      return a.r + t * (b.r - a.r);
-    }
-  }
-  return 0;
+function snapValueFromRatio(ratio, snaps) {
+  const n = snaps.length;
+  if (n <= 1) return snaps[0];
+  const r = clamp(ratio, 0, 1);
+  const idx = Math.round(r * (n - 1));
+  return snaps[clamp(idx, 0, n - 1)];
+}
+
+function snapRatioFromValue(value, snaps) {
+  const n = snaps.length;
+  if (n <= 1) return 0;
+  const snapped = snapToLoadCompliance(value);
+  const idx = snaps.findIndex((s) => Math.abs(s - snapped) < 1e-6);
+  const safeIdx = idx >= 0 ? idx : 0;
+  return safeIdx / (n - 1);
 }
 
 export function linearValueFromRatio(ratio, min, max) {
@@ -54,47 +57,23 @@ export function linearRatioFromValue(value, min, max) {
   return clamp((value - min) / span, 0, 1);
 }
 
-export function availabilityValueFromRatio(ratio, min, max) {
-  if (min === 99 && max === 100) {
-    return piecewiseFromRatio(ratio, AVAILABILITY_ANCHORS);
-  }
-  const r = clamp(ratio, 0, 1);
-  const span = max - min;
-  const k = Math.log(0.01) / Math.log(0.5);
-  return max - span * (1 - r) ** k;
+export function loadComplianceValueFromRatio(ratio) {
+  return snapValueFromRatio(ratio, LOAD_COMPLIANCE_SNAPS);
 }
 
-export function availabilityRatioFromValue(value, min, max) {
-  if (min === 99 && max === 100) {
-    return piecewiseToRatio(value, AVAILABILITY_ANCHORS);
-  }
-  const v = clamp(value, min, max);
-  if (v >= max - 1e-9) return 1;
-  const span = max - min || 1;
-  const k = Math.log(0.01) / Math.log(0.5);
-  const deficitNorm = (max - v) / span;
-  return clamp(1 - deficitNorm ** (1 / k), 0, 1);
+export function loadComplianceRatioFromValue(value) {
+  return snapRatioFromValue(value, LOAD_COMPLIANCE_SNAPS);
 }
 
 export function corridorScaleFns(scaleMode) {
-  if (scaleMode === 'availability-nines') {
+  if (scaleMode === 'load-compliance-snaps') {
     return {
-      valueFromRatio: availabilityValueFromRatio,
-      ratioFromValue: availabilityRatioFromValue,
+      valueFromRatio: (ratio) => loadComplianceValueFromRatio(ratio),
+      ratioFromValue: (value) => loadComplianceRatioFromValue(value),
     };
   }
   return {
     valueFromRatio: linearValueFromRatio,
     ratioFromValue: linearRatioFromValue,
   };
-}
-
-/** Top of track (last ~5%) maps 99.9999 → 100%; snap when pointer is in that crest. */
-export function availabilityApplyStep(raw, ratio, step) {
-  if (ratio >= 0.985) return 100;
-  if (step == null || step <= 0) return raw;
-  if (ratio >= 0.95) {
-    return Math.round(raw / step) * step;
-  }
-  return Math.round(raw / step) * step;
 }

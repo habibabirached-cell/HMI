@@ -4,6 +4,7 @@ import {
   buildRangeFiltersExcluding,
   numericColumnsFromStats,
   statsByColumn,
+  withSessionUniverseFilters,
 } from '../utils/dataVisFilters';
 import DataVisColumnChipMenu from './DataVisColumnChipMenu';
 import DataVisFilterMiniHistogram from './DataVisFilterMiniHistogram';
@@ -27,6 +28,7 @@ export default function DataVisFilterBar({
   totalCount,
   binCount,
   onBinCountChange,
+  excludedRowIds = [],
 }) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const statMap = useMemo(() => statsByColumn(columnStats), [columnStats]);
@@ -50,18 +52,24 @@ export default function DataVisFilterBar({
   const filtersByColumn = useMemo(() => {
     const map = {};
     displayColumns.forEach((col) => {
-      map[col] = buildRangeFiltersExcluding(ranges, col);
+      map[col] = withSessionUniverseFilters(
+        buildRangeFiltersExcluding(ranges, col),
+        excludedRowIds,
+      );
     });
     return map;
-  }, [displayColumns, ranges]);
+  }, [displayColumns, excludedRowIds, ranges]);
 
   const overlayFiltersByColumn = useMemo(() => {
     const map = {};
     displayColumns.forEach((col) => {
-      map[col] = buildOverlayFilters(ranges, parcoordsRanges, col);
+      map[col] = withSessionUniverseFilters(
+        buildOverlayFilters(ranges, parcoordsRanges, col),
+        excludedRowIds,
+      );
     });
     return map;
-  }, [displayColumns, parcoordsRanges, ranges]);
+  }, [displayColumns, excludedRowIds, parcoordsRanges, ranges]);
 
   const filterKeysByColumn = useMemo(() => {
     const map = {};

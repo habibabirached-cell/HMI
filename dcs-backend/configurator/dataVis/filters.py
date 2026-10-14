@@ -30,6 +30,10 @@ def apply_filters(df: pd.DataFrame, filters: list[FilterSpec] | None) -> pd.Data
             values = f.get("values") or []
             if values:
                 out = out[series.isin(values)]
+        elif op == "nin":
+            values = f.get("values") or []
+            if values:
+                out = out[~series.isin(values)]
         elif op == "gte":
             out = out[series >= f.get("value")]
         elif op == "lte":

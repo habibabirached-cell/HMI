@@ -11,7 +11,7 @@ class ConfiguratorInputs(BaseModel):
     loadMW: float = Field(ge=200, le=1800)
     stateId: str = "texas"
     cityId: str = "dallas_tx"
-    reliabilityTarget: float = Field(ge=99, le=100)
+    reliabilityTarget: float = Field(ge=97, le=100)
     minCfePercent: float = Field(default=0, ge=0, le=100)
     maxCfePercent: float = Field(default=100, ge=0, le=100)
     minSolarMW: float = Field(default=0, ge=0, le=10000)

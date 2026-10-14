@@ -46,6 +46,7 @@ export function HistogramSlot({
   brushFilter = false,
   band,
   onBandChange,
+  sessionUniverseFilters = [],
 }) {
   const [plotKey, setPlotKey] = useState(0);
   const hadBandRef = useRef(false);
@@ -63,11 +64,11 @@ export function HistogramSlot({
 
   const baselineFilters = useMemo(() => {
     if (brushFilter) {
-      // Quad filter histograms: gray = full dataset on fixed axis; green = current view selection.
-      return [];
+      // Gray = session dataset (erased rows omitted); green = active view filters only.
+      return sessionUniverseFilters;
     }
-    return buildHistogramBaselineFilters(ranges, column);
-  }, [brushFilter, column, ranges]);
+    return [...buildHistogramBaselineFilters(ranges, column), ...sessionUniverseFilters];
+  }, [brushFilter, column, ranges, sessionUniverseFilters]);
   const selectionFilters = filters ?? [];
   const baselineKey = JSON.stringify(baselineFilters);
   const selectionKey = JSON.stringify(selectionFilters);
@@ -396,6 +397,7 @@ export default function DataVisHistogramTab({
   binCount,
   onBinCountChange,
   compact = false,
+  sessionUniverseFilters = [],
 }) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const [columnA, setColumnA] = useState('Project LCOE ($/MWh)');
@@ -425,6 +427,7 @@ export default function DataVisHistogramTab({
           binCount={binCount}
           onBinCountChange={onBinCountChange}
           compact={compact}
+          sessionUniverseFilters={sessionUniverseFilters}
         />
         {!compact && (
           <HistogramSlot
@@ -439,6 +442,7 @@ export default function DataVisHistogramTab({
             binCount={binCount}
             onBinCountChange={onBinCountChange}
             compact={compact}
+            sessionUniverseFilters={sessionUniverseFilters}
           />
         )}
       </div>

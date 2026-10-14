@@ -12,26 +12,18 @@ import {
   normalizeTechnologyCapex,
 } from '../utils/conf_technologyCapex';
 import { formatPercent } from '../utils/conf_formatters';
-
-const RELIABILITY_SLIDER_SCALE = 10000;
+import { snapToLoadCompliance } from '../utils/conf_corridorRangeScale';
 
 function clampReliabilityTarget(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 99.99;
-  return Math.min(100, Math.max(99, Math.round(n * RELIABILITY_SLIDER_SCALE) / RELIABILITY_SLIDER_SCALE));
+  return snapToLoadCompliance(value);
 }
 
-function formatReliabilityDisplay(value) {
-  const clamped = clampReliabilityTarget(value);
-  if (clamped >= 100 - 1e-9) return '100%';
-  return formatPercent(clamped, 4);
-}
-
-function formatAvailabilityEndpoint(value) {
-  const clamped = clampReliabilityTarget(value);
-  if (clamped >= 100 - 1e-9) return '100%';
-  if (clamped <= 99.00005) return '99%';
-  return formatPercent(clamped, 4);
+function formatLoadComplianceDisplay(value) {
+  const v = snapToLoadCompliance(value);
+  if (v >= 100 - 1e-9) return '100%';
+  if (Number.isInteger(v)) return `${v}%`;
+  const decimals = String(v).split('.')[1]?.length ?? 0;
+  return `${v.toFixed(decimals)}%`;
 }
 
 const IDEUM_LOCATION_OPTIONS = [
@@ -161,11 +153,11 @@ function IdeumLoadEditor({ loadMW, onChange }) {
 export default function ConfIdeumInputPanel({
   inputs,
   onChange,
-  onGenerate,
+  onExploreData,
+  onOptimizedConfiguration,
   onReset,
   onLoadPreset,
-  isGenerating,
-  generateLabel = 'CONFIGURE',
+  isOptimizedBusy = false,
   previewSlot = null,
 }) {
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
@@ -238,19 +230,19 @@ export default function ConfIdeumInputPanel({
     left: (
       <IdeumCorridorRangeRail
         side="left"
-        label="Availability"
-        min={99}
+        label="Load Compliance"
+        labelLines={['Load', 'Compliance']}
+        min={97}
         max={100}
         step={0.0001}
         minBandSpan={0}
         fixedUpper={100}
-        gutterTicks={[99, 100]}
         lowerValue={reliabilityTarget}
         upperValue={100}
-        scaleMode="availability-nines"
-        formatValue={formatAvailabilityEndpoint}
+        scaleMode="load-compliance-snaps"
+        formatValue={formatLoadComplianceDisplay}
         onChange={(lower) => update({ reliabilityTarget: clampReliabilityTarget(lower) })}
-        ariaLabel="Minimum availability target"
+        ariaLabel="Minimum year 1 load compliance target"
       />
     ),
     right: (
@@ -316,14 +308,23 @@ export default function ConfIdeumInputPanel({
               <option key={p.id} value={p.id}>{p.label}</option>
             ))}
           </select>
-          <button
-            type="button"
-            className="conf-ideum-configure-btn"
-            onClick={onGenerate}
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Sending…' : generateLabel}
-          </button>
+          <div className="conf-ideum-footer-primary-actions">
+            <button
+              type="button"
+              className="conf-ideum-explore-data-btn"
+              onClick={onExploreData}
+            >
+              Explore Data
+            </button>
+            <button
+              type="button"
+              className="conf-ideum-configure-btn conf-ideum-configure-btn--optimized"
+              onClick={onOptimizedConfiguration}
+              disabled={isOptimizedBusy}
+            >
+              {isOptimizedBusy ? 'Sending…' : 'Optimized Configuration'}
+            </button>
+          </div>
           <Conf3dToggleButton variant="footer" className="conf-3d-toggle--ideum-footer" />
           <button type="button" className="conf-ideum-reset-btn" onClick={onReset}>
             Reset

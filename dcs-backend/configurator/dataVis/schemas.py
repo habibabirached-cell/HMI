@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 class FilterSpec(BaseModel):
     column: str
-    op: Literal["range", "in", "gte", "lte", "eq"] = "range"
+    op: Literal["range", "in", "nin", "gte", "lte", "eq"] = "range"
     min: float | None = None
     max: float | None = None
     value: float | None = None
@@ -34,6 +34,7 @@ class ScatterRequest(FilterRequest):
     color: str | None = None
     size: str | None = None
     max_points: int = 5000
+    detail_columns: list[str] | None = None
 
 
 class HeatmapRequest(FilterRequest):
