@@ -28,6 +28,15 @@
   gap: 0.5rem 1rem;
 }
 
+.dataVis-header__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.dataVis-qualityToggle,
 .dataVis-layoutToggle {
   display: inline-flex;
   border: 1px solid var(--conf-border, #d8dee6);
@@ -37,6 +46,7 @@
   flex-shrink: 0;
 }
 
+.dataVis-qualityToggle__btn,
 .dataVis-layoutToggle__btn {
   border: none;
   background: transparent;
@@ -47,6 +57,7 @@
   cursor: pointer;
 }
 
+.dataVis-qualityToggle__btn--active,
 .dataVis-layoutToggle__btn--active {
   background: var(--conf-evergreen, #00695c);
   color: #fff;
@@ -54,6 +65,35 @@
 
 .dataVis-root--quad {
   gap: 0.5rem;
+}
+
+.dataVis-root--exploreWall .dataVis-header {
+  flex-shrink: 0;
+}
+
+.dataVis-exploreWall .conf-wall-quadrant {
+  min-height: 0;
+  height: 100%;
+}
+
+.dataVis-exploreWall .conf-wall-quadrant__body {
+  overflow: auto;
+}
+
+.dataVis-exploreWall__supplyEconomics .conf-wall-quadrant__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dataVis-exploreWall__loading {
+  min-height: 8rem;
+  justify-content: center;
+}
+
+.dataVis-quadSlot--parallel .dataVis-tabPanel--parcoordsQuad {
+  height: 100%;
+  min-height: 0;
 }
 
 .dataVis-main--quad {

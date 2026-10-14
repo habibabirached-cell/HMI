@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchDataVisMeta,
   postDataVisColumnStats,
@@ -18,13 +18,25 @@ import DataVisOverviewTab from './tabs/DataVisOverviewTab';
 import DataVisParallelTab from './tabs/DataVisParallelTab';
 import DataVisQualityTab from './tabs/DataVisQualityTab';
 import DataVisTableTab from './tabs/DataVisTableTab';
+import DataVisExploreWallQuadLayout from './components/DataVisExploreWallQuadLayout';
+import DataVisQualityToggle from './components/DataVisQualityToggle';
+import { generateMartinConfiguratorResult } from '../utils/conf_configuratorApi';
+import { UI_MODES } from '../../configuratorData/conf_constants';
 import {
   buildDataVisFilters,
-  buildExcludedRowFilters,
   buildRangeFilters,
   buildSessionUniverseFilters,
+  DATA_QUALITY_CLEAN,
   hasActiveViewFilters,
 } from './utils/dataVisFilters';
+import { connectClusterWebSocket, fetchMachineRole } from '../../utils/clusterPeer';
+import {
+  applyDataVisDatasetMode,
+  persistDataQualityMode,
+  readPersistedDataQualityMode,
+  subscribeDataQualityMode,
+  uiModeFromApiMode,
+} from './utils/dataVisQualityMode';
 import {
   resolveInitialTableColumns,
   tableDisplayColumns,
@@ -34,6 +46,14 @@ import {
   FILTER_BINS_STORAGE_KEY,
   readStoredFilterBinCount,
 } from './utils/dataVisHistogramBins';
+import {
+  readPersistedConfiguratorInputs,
+  readPersistedConfiguratorRanges,
+  shouldSyncConfiguratorToDataVis,
+  subscribeConfiguratorExploreSync,
+  subscribeConfiguratorFiltersToDataVis,
+} from './utils/dataVisConfiguratorSync';
+import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -60,11 +80,17 @@ function readLayoutMode() {
   return 'single';
 }
 
-export default function DataVisPanel() {
+export default function DataVisPanel({ showQualityToggle = true, variant = 'default' }) {
+  const isExploreWall = variant === 'exploreWall';
   const [meta, setMeta] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
-  const [layoutMode, setLayoutMode] = useState(readLayoutMode);
+  const [layoutMode, setLayoutMode] = useState(() => (isExploreWall ? 'quad' : readLayoutMode()));
+  const [wallResult, setWallResult] = useState(null);
+  const [wallInputs, setWallInputs] = useState(null);
+  const [wallGenerating, setWallGenerating] = useState(false);
+  const [wallStatusMessage, setWallStatusMessage] = useState('');
+  const wallMartinSeqRef = useRef(0);
   const [ranges, setRanges] = useState({});
   const [filteredCount, setFilteredCount] = useState(null);
   const [compareIds, setCompareIds] = useState([]);
@@ -72,13 +98,17 @@ export default function DataVisPanel() {
   const [parallelDimensions, setParallelDimensions] = useState(null);
   const [scatterRowIds, setScatterRowIds] = useState(null);
   const [highlightRowIds, setHighlightRowIds] = useState(null);
+  const highlightFetchSeqRef = useRef(0);
   /** Session-only row erasures (not persisted to workbook). */
   const [excludedRowIds, setExcludedRowIds] = useState([]);
   const [sessionColumnStats, setSessionColumnStats] = useState(null);
   const [sessionRowCount, setSessionRowCount] = useState(null);
   const [tableVisibleColumns, setTableVisibleColumns] = useState([]);
   const [tableColumnsCustomized, setTableColumnsCustomized] = useState(false);
+  const [configuratorSyncActive, setConfiguratorSyncActive] = useState(false);
   const [binCount, setBinCountState] = useState(readStoredFilterBinCount);
+  const [dataQualityMode, setDataQualityMode] = useState(() => readPersistedDataQualityMode());
+  const [datasetModeBusy, setDatasetModeBusy] = useState(false);
 
   const setBinCount = (next) => {
     setBinCountState((prev) => {
@@ -102,10 +132,13 @@ export default function DataVisPanel() {
   }, [layoutMode]);
 
   useEffect(() => {
-    if (meta?.defaults?.parallel_dimensions?.length) {
-      setParallelDimensions(meta.defaults.parallel_dimensions);
-    }
-  }, [meta?.defaults?.parallel_dimensions]);
+    if (!meta?.defaults?.parallel_dimensions?.length) return;
+    setParallelDimensions(
+      isExploreWall
+        ? parallelDimensionsForExploreWall(meta.defaults)
+        : meta.defaults.parallel_dimensions,
+    );
+  }, [isExploreWall, meta?.defaults?.parallel_dimensions]);
 
   useEffect(() => {
     if (!meta || tableColumnsCustomized) return;
@@ -117,11 +150,40 @@ export default function DataVisPanel() {
     [tableVisibleColumns],
   );
 
+  const resetExplorationClientState = useCallback(() => {
+    setRanges({});
+    setParcoordsRanges({});
+    setScatterRowIds(null);
+    setHighlightRowIds(null);
+    setExcludedRowIds([]);
+    setCompareIds([]);
+    setSessionColumnStats(null);
+    setSessionRowCount(null);
+  }, []);
+
+  const syncAfterDatasetModeChange = useCallback(
+    (uiMode) => {
+      setDataQualityMode(uiMode);
+      persistDataQualityMode(uiMode);
+      resetExplorationClientState();
+      fetchDataVisMeta()
+        .then((res) => setMeta(res))
+        .catch(() => {});
+    },
+    [resetExplorationClientState],
+  );
+
   useEffect(() => {
     let cancelled = false;
     fetchDataVisMeta()
       .then((res) => {
-        if (!cancelled) setMeta(res);
+        if (cancelled) return;
+        setMeta(res);
+        if (res?.dataset_mode) {
+          const ui = uiModeFromApiMode(res.dataset_mode);
+          persistDataQualityMode(ui);
+          setDataQualityMode(ui);
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message);
@@ -133,31 +195,34 @@ export default function DataVisPanel() {
 
   const rangeFilters = useMemo(() => buildRangeFilters(ranges), [ranges]);
   const sessionUniverseFilters = useMemo(
-    () => buildSessionUniverseFilters(excludedRowIds),
-    [excludedRowIds],
+    () => buildSessionUniverseFilters(excludedRowIds, dataQualityMode),
+    [dataQualityMode, excludedRowIds],
   );
   /** Scatter data + box select pool: histogram + parcoords (never scatter row ids — those refine via highlight). */
   const plotContextFilters = useMemo(
-    () => buildDataVisFilters(ranges, parcoordsRanges, null, excludedRowIds),
-    [excludedRowIds, ranges, parcoordsRanges],
+    () => buildDataVisFilters(ranges, parcoordsRanges, null, excludedRowIds, dataQualityMode),
+    [dataQualityMode, excludedRowIds, ranges, parcoordsRanges],
   );
   const filters = useMemo(
-    () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds, excludedRowIds),
-    [excludedRowIds, ranges, parcoordsRanges, scatterRowIds],
+    () => buildDataVisFilters(ranges, parcoordsRanges, scatterRowIds, excludedRowIds, dataQualityMode),
+    [dataQualityMode, excludedRowIds, ranges, parcoordsRanges, scatterRowIds],
   );
 
   const columnStatsForViews = sessionColumnStats ?? meta?.column_stats;
   const datasetRowCount = sessionRowCount ?? meta?.row_count;
 
+  const needsSessionColumnStats =
+    dataQualityMode === DATA_QUALITY_CLEAN && excludedRowIds.length > 0;
+
   useEffect(() => {
     if (!meta) return undefined;
-    if (!excludedRowIds.length) {
+    if (!needsSessionColumnStats) {
       setSessionColumnStats(null);
       setSessionRowCount(null);
       return undefined;
     }
     let cancelled = false;
-    postDataVisColumnStats(buildExcludedRowFilters(excludedRowIds))
+    postDataVisColumnStats(buildSessionUniverseFilters(excludedRowIds, dataQualityMode))
       .then((res) => {
         if (!cancelled) {
           setSessionColumnStats(res.column_stats);
@@ -168,7 +233,35 @@ export default function DataVisPanel() {
     return () => {
       cancelled = true;
     };
-  }, [excludedRowIds, meta]);
+  }, [dataQualityMode, excludedRowIds, meta, needsSessionColumnStats]);
+
+  useEffect(() => subscribeDataQualityMode(syncAfterDatasetModeChange), [syncAfterDatasetModeChange]);
+
+  useEffect(
+    () =>
+      connectClusterWebSocket((msg) => {
+        if (msg?.type !== 'datavis_dataset_mode' || !msg.mode) return;
+        syncAfterDatasetModeChange(uiModeFromApiMode(msg.mode));
+      }),
+    [syncAfterDatasetModeChange],
+  );
+
+  const handleDataQualityModeChange = useCallback(
+    async (mode) => {
+      if (datasetModeBusy || mode === dataQualityMode) return;
+      setDatasetModeBusy(true);
+      try {
+        const role = await fetchMachineRole().catch(() => null);
+        const next = await applyDataVisDatasetMode(mode, role);
+        syncAfterDatasetModeChange(next);
+      } catch (err) {
+        setError(err?.message || 'Failed to change dataset mode');
+      } finally {
+        setDatasetModeBusy(false);
+      }
+    },
+    [dataQualityMode, datasetModeBusy, syncAfterDatasetModeChange],
+  );
 
   const eraseRow = useCallback((rowId) => {
     const id = Number(rowId);
@@ -189,11 +282,103 @@ export default function DataVisPanel() {
     [ranges, parcoordsRanges, scatterRowIds],
   );
 
+  const runMartinFromInputs = useCallback(async (inputs, uiMode) => {
+    if (!inputs) return;
+    const seq = ++wallMartinSeqRef.current;
+    setWallGenerating(true);
+    setWallStatusMessage('Updating optimized configuration…');
+    try {
+      const next = await generateMartinConfiguratorResult({ ...inputs, uiMode: uiMode || UI_MODES.BASIC });
+      if (seq !== wallMartinSeqRef.current) return;
+      setWallResult(next);
+      setWallInputs(inputs);
+    } finally {
+      if (seq === wallMartinSeqRef.current) {
+        setWallGenerating(false);
+        setWallStatusMessage('');
+      }
+    }
+  }, []);
+
+  const applyConfiguratorExploreSync = useCallback(
+    (payload) => {
+      if (payload?.ranges) {
+        setRanges(payload.ranges);
+        setScatterRowIds(null);
+        setParcoordsRanges({});
+      }
+      if (payload?.inputs && isExploreWall) {
+        void runMartinFromInputs(payload.inputs, payload.uiMode);
+      }
+    },
+    [isExploreWall, runMartinFromInputs],
+  );
+
   const clearAllFilters = () => {
+    if (isExploreWall) {
+      setParcoordsRanges({});
+      setScatterRowIds(null);
+      return;
+    }
     setRanges({});
     setParcoordsRanges({});
     setScatterRowIds(null);
   };
+
+  const handleScatterRowIdsChange = useCallback((ids) => {
+    const next = ids?.length ? ids : null;
+    setScatterRowIds(next);
+    if (next?.length) {
+      setHighlightRowIds(next);
+    }
+  }, []);
+
+  const applyConfiguratorSyncRanges = useCallback((syncRanges) => {
+    setRanges(syncRanges || {});
+    setScatterRowIds(null);
+    setParcoordsRanges({});
+  }, []);
+
+  useEffect(() => {
+    if (isExploreWall) return undefined;
+    let cancelled = false;
+    let unsubscribe = () => {};
+    shouldSyncConfiguratorToDataVis().then((enabled) => {
+      if (cancelled || !enabled) return;
+      setConfiguratorSyncActive(true);
+      const stored = readPersistedConfiguratorRanges();
+      if (stored) applyConfiguratorSyncRanges(stored);
+      unsubscribe = subscribeConfiguratorFiltersToDataVis(applyConfiguratorSyncRanges);
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [applyConfiguratorSyncRanges, isExploreWall]);
+
+  useEffect(() => {
+    if (!isExploreWall) return undefined;
+    setConfiguratorSyncActive(true);
+    const storedRanges = readPersistedConfiguratorRanges();
+    if (storedRanges) applyConfiguratorSyncRanges(storedRanges);
+    const storedInputs = readPersistedConfiguratorInputs();
+    if (storedInputs?.inputs) {
+      void runMartinFromInputs(storedInputs.inputs, storedInputs.uiMode);
+    }
+    const unsubscribeChannel = subscribeConfiguratorExploreSync(applyConfiguratorExploreSync);
+    const unsubscribeCluster = connectClusterWebSocket((msg) => {
+      if (msg?.type !== 'explore_data_sync') return;
+      applyConfiguratorExploreSync({
+        ranges: msg.ranges,
+        inputs: msg.inputs,
+        uiMode: msg.uiMode,
+      });
+    });
+    return () => {
+      unsubscribeChannel();
+      unsubscribeCluster();
+    };
+  }, [applyConfiguratorExploreSync, applyConfiguratorSyncRanges, isExploreWall, runMartinFromInputs]);
 
   useEffect(() => {
     if (!meta) return undefined;
@@ -201,17 +386,18 @@ export default function DataVisPanel() {
       setHighlightRowIds(null);
       return undefined;
     }
-    let cancelled = false;
+    const seq = ++highlightFetchSeqRef.current;
     postDataVisRowIds(filters)
       .then((res) => {
-        if (!cancelled) setHighlightRowIds(res.row_ids || []);
+        if (seq !== highlightFetchSeqRef.current) return;
+        setHighlightRowIds(res.row_ids ?? []);
       })
       .catch(() => {
-        if (!cancelled) setHighlightRowIds([]);
+        if (seq !== highlightFetchSeqRef.current) return;
+        /* null = no selection restriction; [] only when API confirms zero rows */
+        setHighlightRowIds(null);
       });
-    return () => {
-      cancelled = true;
-    };
+    return undefined;
   }, [filters, meta, viewSelectionActive]);
 
   useEffect(() => {
@@ -251,22 +437,35 @@ export default function DataVisPanel() {
 
   return (
     <div
-      className={`conf-results-panel conf-results-panel--filled dataVis-root${layoutMode === 'quad' ? ' dataVis-root--quad' : ''}`}
-      data-screen-region="data-exploration"
-      aria-label="Data exploration"
+      className={`conf-results-panel conf-results-panel--filled dataVis-root${layoutMode === 'quad' || isExploreWall ? ' dataVis-root--quad' : ''}${isExploreWall ? ' dataVis-root--exploreWall' : ''}`}
+      data-screen-region={isExploreWall ? 'explore-data' : 'data-exploration'}
+      aria-label={isExploreWall ? 'Explore Data' : 'Data exploration'}
     >
       <header className="dataVis-header">
         <div className="dataVis-header__row">
           <div className="dataVis-headerLine">
-            <h2 className="dataVis-headerLine__title">Data Exploration</h2>
+            <h2 className="dataVis-headerLine__title">{isExploreWall ? 'Explore Data' : 'Data Exploration'}</h2>
             <span className="dataVis-headerLine__sep" aria-hidden>
               ·
             </span>
             <span className="dataVis-headerLine__meta">
               {meta.scenario?.location} · {datasetRowCount ?? meta.row_count} scenarios
-              {excludedRowIds.length ? ` · ${excludedRowIds.length} erased` : ''} · Plotly views
+              {dataQualityMode === DATA_QUALITY_CLEAN ? ' · Clean (≥97% load compliance)' : ''}
+              {excludedRowIds.length ? ` · ${excludedRowIds.length} erased` : ''}
+              {configuratorSyncActive ? ' · Linked to configurator Inputs' : ''}
+              {isExploreWall ? '' : ' · Plotly views'}
             </span>
           </div>
+          <div className="dataVis-header__actions">
+          {!isExploreWall && (
+          <>
+          {showQualityToggle && (
+            <DataVisQualityToggle
+              mode={dataQualityMode}
+              onChange={handleDataQualityModeChange}
+              disabled={datasetModeBusy}
+            />
+          )}
           <div className="dataVis-layoutToggle" role="group" aria-label="Layout mode">
             <button
               type="button"
@@ -285,8 +484,11 @@ export default function DataVisPanel() {
               4-up
             </button>
           </div>
+          </>
+          )}
+          </div>
         </div>
-        {layoutMode === 'single' && (
+        {!isExploreWall && layoutMode === 'single' && (
           <nav className="dataVis-tabs" aria-label="Exploration sections">
             {TABS.map((t) => (
               <button
@@ -302,7 +504,7 @@ export default function DataVisPanel() {
         )}
       </header>
 
-      {layoutMode !== 'quad' && (
+      {!isExploreWall && layoutMode !== 'quad' && (
         <DataVisFilterBar
           columnStats={columnStatsForViews}
           ranges={ranges}
@@ -315,11 +517,27 @@ export default function DataVisPanel() {
           binCount={binCount}
           onBinCountChange={setBinCount}
           excludedRowIds={excludedRowIds}
+          dataQualityMode={dataQualityMode}
         />
       )}
 
-      <main className={`dataVis-main${layoutMode === 'quad' ? ' dataVis-main--quad' : ''}`}>
-        {layoutMode === 'quad' ? (
+      <main className={`dataVis-main${layoutMode === 'quad' || isExploreWall ? ' dataVis-main--quad' : ''}`}>
+        {isExploreWall ? (
+          <DataVisExploreWallQuadLayout
+            filters={filters}
+            meta={meta}
+            columnStats={columnStatsForViews}
+            onClearAll={clearAllFilters}
+            parcoordsRanges={parcoordsRanges}
+            onParcoordsRangesChange={setParcoordsRanges}
+            onParallelDimensionsChange={setParallelDimensions}
+            parcoordsActive={parcoordsActive}
+            wallResult={wallResult}
+            wallInputs={wallInputs}
+            wallGenerating={wallGenerating}
+            wallStatusMessage={wallStatusMessage}
+          />
+        ) : layoutMode === 'quad' ? (
           <DataVisQuadLayout
             filters={filters}
             chartFilters={plotContextFilters}
@@ -336,7 +554,7 @@ export default function DataVisPanel() {
             scatterActive={scatterActive}
             plotContextFilters={plotContextFilters}
             highlightRowIds={highlightRowIds}
-            onScatterRowIdsChange={setScatterRowIds}
+            onScatterRowIdsChange={handleScatterRowIdsChange}
             filteredCount={filteredCount ?? datasetRowCount ?? meta.row_count}
             totalCount={datasetRowCount ?? meta.row_count}
             columnStats={columnStatsForViews}
@@ -365,7 +583,7 @@ export default function DataVisPanel() {
               <DataVisChartLabTab
                 plotContextFilters={plotContextFilters}
                 highlightRowIds={highlightRowIds}
-                onScatterRowIdsChange={setScatterRowIds}
+                onScatterRowIdsChange={handleScatterRowIdsChange}
                 defaults={meta.defaults}
                 columnStats={columnStatsForViews}
                 hoverColumns={scatterHoverColumns}

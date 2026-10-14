@@ -3,6 +3,8 @@
 const ROW_ID_COL = 'dataVis_row_id';
 const EMPTY_FILTER_LIST = [];
 
+export { DATA_QUALITY_CLEAN, DATA_QUALITY_ORIGINAL } from './dataVisQualityMode';
+
 export function buildRangeFilters(rangeMap) {
   if (!rangeMap) return [];
   return Object.entries(rangeMap)
@@ -20,27 +22,37 @@ export function buildExcludedRowFilters(excludedRowIds) {
   return [{ column: ROW_ID_COL, op: 'nin', values: excludedRowIds }];
 }
 
-/** Session dataset = workbook minus erased rows (not histogram/parcoords/scatter filters). */
-export function buildSessionUniverseFilters(excludedRowIds) {
+/** Session row erasures (clean mode only); not histogram/parcoords/scatter filters. */
+export function buildSessionUniverseFilters(excludedRowIds, dataQualityMode = 'original') {
+  if (dataQualityMode !== 'clean') return EMPTY_FILTER_LIST;
   return buildExcludedRowFilters(excludedRowIds);
 }
 
-export function withSessionUniverseFilters(filters, excludedRowIds) {
-  const extra = buildExcludedRowFilters(excludedRowIds);
+export function withSessionUniverseFilters(
+  filters,
+  excludedRowIds,
+  dataQualityMode = 'original',
+) {
+  const extra = buildSessionUniverseFilters(excludedRowIds, dataQualityMode);
   if (!extra.length) return filters || [];
   return [...(filters || []), ...extra];
 }
 
-/** Full view filters: histogram + parcoords + scatter + session row erasures. */
+/** Full view filters: histogram + parcoords + scatter + session row erasures (clean only). */
 export function buildDataVisFilters(
   rangeMap,
   parcoordsRangeMap = null,
   scatterRowIds = null,
   excludedRowIds = null,
+  dataQualityMode = 'original',
 ) {
   const base = buildRangeFilters(rangeMap);
   const extra = buildRangeFilters(parcoordsRangeMap);
-  let combined = [...base, ...extra, ...buildExcludedRowFilters(excludedRowIds)];
+  let combined = [
+    ...base,
+    ...extra,
+    ...buildSessionUniverseFilters(excludedRowIds, dataQualityMode),
+  ];
   if (scatterRowIds == null) return combined;
   if (!scatterRowIds.length) {
     return [...combined, { column: ROW_ID_COL, op: 'in', values: [-1] }];

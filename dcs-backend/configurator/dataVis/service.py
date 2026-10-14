@@ -20,7 +20,8 @@ from configurator.dataVis.column_metadata import (
     PARALLEL_DEFAULT_DIMS,
 )
 from configurator.dataVis.filters import apply_filters
-from configurator.dataVis.loader import column_stats, load_waco_dataframe
+from configurator.dataVis.dataset_mode import get_datavis_dataframe, get_dataset_mode, set_dataset_mode
+from configurator.dataVis.loader import column_stats
 from configurator.dataVis.paths import DATAVIS_WACO_SHEET, DATAVIS_WACO_XLSX, SCENARIO_CONTEXT
 from configurator.dataVis.quality import run_quality_checks
 
@@ -48,10 +49,11 @@ def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 def get_health() -> dict[str, Any]:
     try:
-        df = load_waco_dataframe()
+        df = get_datavis_dataframe()
         return {
             "ok": True,
             "rows": len(df),
+            "dataset_mode": get_dataset_mode(),
             "workbook": str(DATAVIS_WACO_XLSX.name),
             "sheet": DATAVIS_WACO_SHEET,
         }
@@ -68,16 +70,21 @@ def _column_stats_for_dataframe(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def get_column_stats(filters: list[dict] | None = None) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), filters)
+    df = apply_filters(get_datavis_dataframe(), filters)
     return {"row_count": len(df), "column_stats": _column_stats_for_dataframe(df)}
 
 
+def apply_dataset_mode(mode: str) -> dict[str, Any]:
+    return set_dataset_mode(mode)
+
+
 def get_meta() -> dict[str, Any]:
-    df = load_waco_dataframe()
+    df = get_datavis_dataframe()
     stats = _column_stats_for_dataframe(df)
 
     return {
         "scenario": SCENARIO_CONTEXT,
+        "dataset_mode": get_dataset_mode(),
         "row_count": len(df),
         "column_count": len(df.columns),
         "columns": COLUMNS,
@@ -101,7 +108,7 @@ def get_meta() -> dict[str, Any]:
 
 
 def get_filtered_row_ids(filters: list[dict] | None = None) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), filters)
+    df = apply_filters(get_datavis_dataframe(), filters)
     if "dataVis_row_id" in df.columns:
         ids = df["dataVis_row_id"].astype(int).tolist()
     else:
@@ -110,7 +117,7 @@ def get_filtered_row_ids(filters: list[dict] | None = None) -> dict[str, Any]:
 
 
 def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), filters)
+    df = apply_filters(get_datavis_dataframe(), filters)
     n = len(df)
     if n == 0:
         return {"filtered_count": 0, "kpis": {}}
@@ -179,7 +186,7 @@ def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
 
 
 def get_doe_summary(filters: list[dict] | None = None) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), filters)
+    df = apply_filters(get_datavis_dataframe(), filters)
     input_cols = [
         c["key"]
         for c in COLUMNS
@@ -204,7 +211,7 @@ def get_doe_summary(filters: list[dict] | None = None) -> dict[str, Any]:
 
 
 def get_rows(req: dict) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    df = apply_filters(get_datavis_dataframe(), req.get("filters"))
     total = len(df)
     sort_col = req.get("sort_column")
     if sort_col and sort_col in df.columns:
@@ -222,7 +229,7 @@ def get_rows(req: dict) -> dict[str, Any]:
 
 
 def build_scatter(req: dict) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    df = apply_filters(get_datavis_dataframe(), req.get("filters"))
     x, y = req["x"], req["y"]
     for col in (x, y):
         if col not in df.columns:
@@ -294,7 +301,7 @@ def build_scatter(req: dict) -> dict[str, Any]:
 
 
 def build_heatmap(req: dict) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    df = apply_filters(get_datavis_dataframe(), req.get("filters"))
     x, y, z = req["x"], req["y"], req["z"]
     for col in (x, y, z):
         if col not in df.columns:
@@ -343,7 +350,7 @@ def build_heatmap(req: dict) -> dict[str, Any]:
 
 
 def build_histogram(req: dict) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    df = apply_filters(get_datavis_dataframe(), req.get("filters"))
     col = req["column"]
     if col not in df.columns:
         raise ValueError(f"Unknown column: {col}")
@@ -358,7 +365,7 @@ def build_histogram(req: dict) -> dict[str, Any]:
 
 
 def build_parallel(req: dict) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), req.get("filters"))
+    df = apply_filters(get_datavis_dataframe(), req.get("filters"))
     dims = [d for d in req.get("dimensions", []) if d in df.columns]
     if not dims:
         raise ValueError("No valid parallel dimensions")
@@ -380,12 +387,12 @@ def build_parallel(req: dict) -> dict[str, Any]:
 
 
 def get_quality(filters: list[dict] | None = None) -> dict[str, Any]:
-    df = apply_filters(load_waco_dataframe(), filters)
+    df = apply_filters(get_datavis_dataframe(), filters)
     return {"filtered_count": len(df), "checks": run_quality_checks(df)}
 
 
 def compare_rows(row_ids: list[int]) -> dict[str, Any]:
-    df = load_waco_dataframe()
+    df = get_datavis_dataframe()
     if "dataVis_row_id" not in df.columns:
         raise ValueError("Row ids not available")
     sub = df[df["dataVis_row_id"].isin(row_ids)]

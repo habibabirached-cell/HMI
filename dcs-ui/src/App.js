@@ -330,6 +330,7 @@ function clearConfiguratorViewFromUrl() {
     return;
   }
   params.delete('view');
+  params.delete('ideumTab');
   const qs = params.toString();
   const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
   window.history.replaceState(null, '', next);
@@ -5164,6 +5165,44 @@ function App() {
         })
       ) {
         await applyHdAeroDefaultState();
+      }
+      return;
+    }
+    if (command === 'openDataExploration') {
+      fireKioskFocusFast('showDcs');
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.setItem('dcs.configurator.pendingIdeumTab', 'data-exploration');
+        } catch (_) {
+          /* ignore */
+        }
+        handleOpenConfiguratorRef.current('ideum');
+        window.dispatchEvent(
+          new CustomEvent('dcs:configurator-ideum-tab', {
+            detail: { tab: 'data-exploration' },
+          }),
+        );
+      } else {
+        handleOpenConfiguratorRef.current('ideum');
+      }
+      return;
+    }
+    if (command === 'openExploreData') {
+      fireKioskFocusFast('showDcs');
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.setItem('dcs.configurator.pendingIdeumTab', 'explore-data');
+        } catch (_) {
+          /* ignore */
+        }
+        handleOpenConfiguratorRef.current('ideum');
+        window.dispatchEvent(
+          new CustomEvent('dcs:configurator-ideum-tab', {
+            detail: { tab: 'explore-data' },
+          }),
+        );
+      } else {
+        handleOpenConfiguratorRef.current('ideum');
       }
       return;
     }

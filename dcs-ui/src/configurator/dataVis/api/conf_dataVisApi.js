@@ -31,6 +31,16 @@ export async function fetchDataVisMeta() {
   return parseJson(res);
 }
 
+/** Server swaps in-memory Waco df: raw (reload Excel) vs clean (≥97% load compliance). */
+export async function postDataVisDatasetMode(mode) {
+  const res = await fetch(`${DATAVIS_BASE}/dataset-mode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
+  return parseJson(res);
+}
+
 export async function postDataVisOverview(filters = []) {
   const res = await fetch(`${DATAVIS_BASE}/overview`, {
     method: 'POST',

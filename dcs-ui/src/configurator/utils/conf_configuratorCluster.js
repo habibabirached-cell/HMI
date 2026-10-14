@@ -137,6 +137,25 @@ export function connectConfiguratorClusterUpdates(onSession) {
   });
 }
 
+/** Ideum Inputs → Maingear Explore Data (WebSocket explore_data_sync). */
+export async function postConfiguratorExploreSync(_maingearBackendUrl, inputs, uiMode) {
+  const res = await fetch(`${API_BASE_URL}/api/configurator/cluster/explore-sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      inputs,
+      uiMode,
+      source: 'ideum',
+      at: Date.now(),
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || `Explore sync failed (${res.status})`);
+  }
+  return data;
+}
+
 /**
  * Map backend session → wall UI state.
  * @param {object} [options.onlyAfter] ISO timestamp — ignore stale results from before wall opened

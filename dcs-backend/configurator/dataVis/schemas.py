@@ -58,3 +58,7 @@ class HistogramRequest(FilterRequest):
 
 class CompareRequest(BaseModel):
     row_ids: list[int] = Field(..., min_length=1, max_length=8)
+
+
+class DatasetModeRequest(BaseModel):
+    mode: Literal["raw", "clean"]

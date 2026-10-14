@@ -43,6 +43,8 @@ VALID_REMOTE_COMMANDS = frozenset({
     "toggleInteractiveBreaker",
     "showVernova",
     "showDcs",
+    "openDataExploration",
+    "openExploreData",
 })
 
 

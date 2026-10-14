@@ -5394,6 +5394,11 @@ body.conf-wall-bezel-dragging-both {
   cursor: not-allowed;
 }
 
+.conf-ideum-page-tabs__quality {
+  align-self: center;
+  margin-left: 2px;
+}
+
 .conf-layout--ideum-trade {
   grid-template-columns: minmax(0, 1fr);
   padding: 8px 12px 12px;

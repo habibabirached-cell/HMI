@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ConfInputPanel from './components/conf_InputPanel';
 import ConfIdeumInputPanel from './components/conf_IdeumInputPanel';
@@ -40,6 +40,26 @@ import {
 import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { API_BASE_URL } from '../apiConfig';
 import { fetchMachineRole } from '../utils/clusterPeer';
+import { publishConfiguratorExploreSync } from './dataVis/utils/dataVisConfiguratorSync';
+import { postConfiguratorExploreSync } from './utils/conf_configuratorCluster';
+import {
+  applyDataVisDatasetMode,
+  readPersistedDataQualityMode,
+  subscribeDataQualityMode,
+} from './dataVis/utils/dataVisQualityMode';
+import {
+  IDEUM_TAB_URL_PARAM,
+  IDEUM_EXPLORE_DATA_TAB_ID,
+  openDataExplorationDevNewTab,
+  openExploreDataDevNewTab,
+  consumePendingIdeumTab,
+  readIdeumTabFromUrl,
+  requestDataExplorationOnMaingear,
+  requestExploreDataOnMaingear,
+  resolveDataExplorationNavigationAction,
+  resolveExploreDataNavigationAction,
+  startIdeumDataExplorationMaingearTunnel,
+} from './utils/conf_dataExplorationNavigation';
 import Ideum05BackButton from '../components/IdeumKiosk/Ideum05BackButton';
 import Conf3dToggleButton from './components/Conf3dToggleButton';
 import { Conf3dProvider, useConf3d } from './utils/conf_3dContext';
@@ -100,8 +120,15 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const [wallSession, setWallSession] = useState(null);
   const [wallListeningSince] = useState(() => new Date().toISOString());
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [ideumTab, setIdeumTab] = useState('configure');
+  const [ideumTab, setIdeumTab] = useState(() => {
+    if (typeof window === 'undefined' || mode !== 'ideum') return 'configure';
+    const fromUrl = readIdeumTabFromUrl();
+    return fromUrl || 'configure';
+  });
+  const dataExplorationTunnelRef = useRef(null);
   const [devAutoMartinPreviewBoot, setDevAutoMartinPreviewBoot] = useState(false);
+  const [devConfiguratorDataVisSync, setDevConfiguratorDataVisSync] = useState(false);
+  const [dataQualityMode, setDataQualityMode] = useState(() => readPersistedDataQualityMode());
 
   const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
 
@@ -111,6 +138,81 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     && ideumMartinPreviewOpen
     && ideumTab === 'configure'
     && result?.ok;
+
+  useEffect(() => {
+    if (!isIdeumMode || typeof window === 'undefined') return undefined;
+    const pending = consumePendingIdeumTab();
+    if (pending) setIdeumTab(pending);
+    const onIdeumTabEvent = (event) => {
+      const tab = event?.detail?.tab;
+      if (tab) setIdeumTab(tab);
+    };
+    window.addEventListener('dcs:configurator-ideum-tab', onIdeumTabEvent);
+    return () => window.removeEventListener('dcs:configurator-ideum-tab', onIdeumTabEvent);
+  }, [isIdeumMode]);
+
+  useEffect(() => {
+    if (!isIdeumMode || typeof window === 'undefined') return undefined;
+    const fromUrl = readIdeumTabFromUrl();
+    if (!fromUrl) return undefined;
+    setIdeumTab(fromUrl);
+    const params = new URLSearchParams(window.location.search);
+    params.delete(IDEUM_TAB_URL_PARAM);
+    const qs = params.toString();
+    const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
+    window.history.replaceState(null, '', nextUrl);
+    return undefined;
+  }, [isIdeumMode]);
+
+  useEffect(
+    () => () => {
+      dataExplorationTunnelRef.current?.();
+      dataExplorationTunnelRef.current = null;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!isIdeumMode) return undefined;
+    let cancelled = false;
+    fetchMachineRole()
+      .then((role) => {
+        if (!cancelled) {
+          setDevConfiguratorDataVisSync(Boolean(role?.isDev) || isLocalClusterDev());
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDevConfiguratorDataVisSync(isLocalClusterDev());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isIdeumMode]);
+
+  /** Inputs corridor bands + Martin inputs → Explore Data / Data Exploration (real-time). */
+  useEffect(() => {
+    if (!isIdeumMode || ideumTab !== 'configure') return undefined;
+    publishConfiguratorExploreSync(inputs, uiMode);
+    const timer = window.setTimeout(() => {
+      postConfiguratorExploreSync(null, inputs, uiMode).catch(() => {});
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [ideumTab, inputs, isIdeumMode, uiMode]);
+
+  useEffect(() => {
+    if (!isIdeumMode) return undefined;
+    return subscribeDataQualityMode(setDataQualityMode);
+  }, [isIdeumMode]);
+
+  const handleDataQualityModeChange = useCallback(async (mode) => {
+    try {
+      const role = await fetchMachineRole().catch(() => null);
+      const next = await applyDataVisDatasetMode(mode, role);
+      setDataQualityMode(next);
+    } catch (err) {
+      console.error('[dataVis] dataset mode change failed', err);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -517,8 +619,67 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     setError(`Unknown machine role (${role?.role || 'unknown'}). Check cluster.local.json on this PC.`);
   }, [inputs, uiMode, isIdeumMode, runMartinWallPreview, submitIdeumMartinToMaingearWall]);
 
-  const handleExploreData = useCallback(() => {
-    /* wired later */
+  const handleIdeumTabSelect = useCallback(async (tabId) => {
+    if (tabId !== IDEUM_DATA_EXPLORATION_TAB_ID && tabId !== IDEUM_EXPLORE_DATA_TAB_ID) {
+      dataExplorationTunnelRef.current?.();
+      dataExplorationTunnelRef.current = null;
+      setIdeumTab(tabId);
+      return;
+    }
+
+    let role = null;
+    try {
+      role = await fetchMachineRole();
+    } catch {
+      /* dev fallback below */
+    }
+
+    const action = await resolveDataExplorationNavigationAction(role);
+    if (action === 'new-tab') {
+      openDataExplorationDevNewTab();
+      return;
+    }
+    if (action === 'maingear-remote') {
+      try {
+        dataExplorationTunnelRef.current?.();
+        await requestDataExplorationOnMaingear(role);
+        dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
+        setStatusMessage('Data Exploration opened on Maingear (touch table stays on current view).');
+        setError(null);
+      } catch (e) {
+        setError(e.message || 'Could not open Data Exploration on Maingear.');
+      }
+      return;
+    }
+
+    setIdeumTab(IDEUM_DATA_EXPLORATION_TAB_ID);
+  }, []);
+
+  const handleExploreData = useCallback(async () => {
+    let role = null;
+    try {
+      role = await fetchMachineRole();
+    } catch {
+      /* dev fallback */
+    }
+    const action = await resolveExploreDataNavigationAction(role);
+    if (action === 'new-tab') {
+      openExploreDataDevNewTab();
+      return;
+    }
+    if (action === 'maingear-remote') {
+      try {
+        dataExplorationTunnelRef.current?.();
+        await requestExploreDataOnMaingear(role);
+        dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
+        setStatusMessage('Explore Data opened on Maingear (touch table stays on Inputs).');
+        setError(null);
+      } catch (e) {
+        setError(e.message || 'Could not open Explore Data on Maingear.');
+      }
+      return;
+    }
+    setIdeumTab(IDEUM_EXPLORE_DATA_TAB_ID);
   }, []);
 
   /** Header Preview — Martin on this machine (same as Maingear optimized). */
@@ -670,11 +831,13 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
               )}
               <ConfIdeumPageTabs
                 activeTab={ideumTab}
-                onSelectTab={setIdeumTab}
+                onSelectTab={handleIdeumTabSelect}
                 onLocalMartinConfigure={
                   ideumTab === 'configure' ? handleMartinLocalConfigure : undefined
                 }
                 localMartinBusy={isLocalMartinRunning}
+                dataQualityMode={dataQualityMode}
+                onDataQualityModeChange={handleDataQualityModeChange}
               />
             </div>
             <div className="conf-page-header__titles conf-page-header__titles--center">
@@ -818,11 +981,18 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             </div>,
             document.body,
           )}
-        {!isWallMode && isIdeumMode && ideumTab !== 'configure' && ideumTab !== IDEUM_DATA_EXPLORATION_TAB_ID && (
+        {!isWallMode
+          && isIdeumMode
+          && ideumTab !== 'configure'
+          && ideumTab !== IDEUM_DATA_EXPLORATION_TAB_ID
+          && ideumTab !== IDEUM_EXPLORE_DATA_TAB_ID && (
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_DATA_EXPLORATION_TAB_ID && (
-          <DataVisPanel />
+          <DataVisPanel showQualityToggle={false} />
+        )}
+        {!isWallMode && isIdeumMode && ideumTab === IDEUM_EXPLORE_DATA_TAB_ID && (
+          <DataVisPanel variant="exploreWall" showQualityToggle={false} />
         )}
         {!isIdeumMode && !isWallMode && (
           <ConfInputPanel

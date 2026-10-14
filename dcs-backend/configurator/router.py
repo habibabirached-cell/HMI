@@ -190,3 +190,87 @@ async def configurator_cluster_close(body: dict | None = None):
         status_code=403,
         detail="Configurator cluster close requires Maingear or a configured peerBackendUrl.",
     )
+
+
+async def _forward_cluster_explore_sync_to_peer(peer_base: str, body: dict) -> dict:
+    url = f"{peer_base.rstrip('/')}/api/configurator/cluster/explore-sync"
+
+    def _post() -> tuple[dict, int]:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return json.loads(resp.read().decode("utf-8")), resp.status
+        except urllib.error.HTTPError as exc:
+            raw = exc.read().decode("utf-8", errors="replace")
+            try:
+                parsed = json.loads(raw)
+                detail = parsed.get("detail", raw)
+            except json.JSONDecodeError:
+                detail = raw or exc.reason
+            return {"detail": detail}, exc.code
+        except urllib.error.URLError as exc:
+            return {"detail": f"Could not reach Maingear at {peer_base}: {exc.reason}"}, 502
+
+    payload, status = await asyncio.to_thread(_post)
+    if status >= 400:
+        raise HTTPException(
+            status_code=status,
+            detail=payload.get("detail", f"Maingear explore-sync failed ({status})"),
+        )
+    return payload
+
+
+@router.post("/cluster/explore-sync")
+async def configurator_cluster_explore_sync(body: dict):
+    """
+    Ideum Inputs sliders → Maingear Explore Data 4-up (parallel + wall panes).
+    Broadcasts explore_data_sync on /ws/cluster; does not run the full wall submit pipeline.
+    """
+    inputs = body.get("inputs") if isinstance(body.get("inputs"), dict) else body
+    ui_mode = body.get("uiMode") or (inputs.get("uiMode") if isinstance(inputs, dict) else None) or "basic"
+    ranges = body.get("ranges")
+    if ranges is None and isinstance(inputs, dict):
+        min_cfe = float(inputs.get("minCfePercent") or inputs.get("cfeTarget") or 0)
+        max_cfe = float(inputs.get("maxCfePercent") or 100)
+        rel = float(inputs.get("reliabilityTarget") or 99.99)
+        min_solar = float(inputs.get("minSolarMW") or 0)
+        max_solar = float(inputs.get("maxSolarMW") or 4000)
+        min_wind = float(inputs.get("minWindMW") or 0)
+        max_wind = float(inputs.get("maxWindMW") or 3000)
+        cfe_lo = min(min_cfe, max_cfe) / 100.0
+        cfe_hi = max(min_cfe, max_cfe) / 100.0
+        ranges = {
+            "Carbon Free Energy (%)": {"min": cfe_lo, "max": cfe_hi},
+            "Year 1 Load Compliance (%)": {"min": rel, "max": 100},
+            "Solar AC Nameplate (MWac)": {"min": min(min_solar, max_solar), "max": max(min_solar, max_solar)},
+            "Wind Nameplate (MWac)": {"min": min(min_wind, max_wind), "max": max(min_wind, max_wind)},
+        }
+
+    message = {
+        "type": "explore_data_sync",
+        "inputs": inputs,
+        "uiMode": ui_mode,
+        "ranges": ranges,
+        "source": (body.get("source") or "ideum").strip(),
+        "at": body.get("at"),
+    }
+
+    role = resolve_machine_role()
+    if role.get("isMaingear"):
+        delivered = await cluster_manager.broadcast(message)
+        return {"ok": True, "deliveredToClients": delivered}
+
+    peer_url = (role.get("peerBackendUrl") or "").strip()
+    if peer_url:
+        return await _forward_cluster_explore_sync_to_peer(
+            peer_url,
+            {"inputs": inputs, "uiMode": ui_mode, "ranges": ranges, "source": message["source"]},
+        )
+
+    delivered = await cluster_manager.broadcast(message)
+    return {"ok": True, "deliveredToClients": delivered, "localOnly": True}

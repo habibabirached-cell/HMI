@@ -29,6 +29,7 @@ export default function DataVisFilterBar({
   binCount,
   onBinCountChange,
   excludedRowIds = [],
+  dataQualityMode = 'original',
 }) {
   const numericCols = useMemo(() => numericColumnsFromStats(columnStats), [columnStats]);
   const statMap = useMemo(() => statsByColumn(columnStats), [columnStats]);
@@ -55,10 +56,11 @@ export default function DataVisFilterBar({
       map[col] = withSessionUniverseFilters(
         buildRangeFiltersExcluding(ranges, col),
         excludedRowIds,
+        dataQualityMode,
       );
     });
     return map;
-  }, [displayColumns, excludedRowIds, ranges]);
+  }, [dataQualityMode, displayColumns, excludedRowIds, ranges]);
 
   const overlayFiltersByColumn = useMemo(() => {
     const map = {};
@@ -66,10 +68,11 @@ export default function DataVisFilterBar({
       map[col] = withSessionUniverseFilters(
         buildOverlayFilters(ranges, parcoordsRanges, col),
         excludedRowIds,
+        dataQualityMode,
       );
     });
     return map;
-  }, [displayColumns, excludedRowIds, parcoordsRanges, ranges]);
+  }, [dataQualityMode, displayColumns, excludedRowIds, parcoordsRanges, ranges]);
 
   const filterKeysByColumn = useMemo(() => {
     const map = {};

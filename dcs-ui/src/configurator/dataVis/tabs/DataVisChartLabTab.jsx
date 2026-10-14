@@ -303,12 +303,12 @@ export function ScatterSlot({
       if (!onScatterRowIdsChange) return;
       const pl = payloadRef.current;
       if (!pl) return;
-      const ids = rowIdsFromScatterSelect(
-        event,
-        pl,
-        graphDivRef.current,
-        highlightSetRef.current,
-      );
+      const gd = graphDivRef.current;
+      const eligible = highlightSetRef.current;
+      let ids = rowIdsFromScatterSelect(event, pl, gd, eligible);
+      if (!ids.length && gd) {
+        ids = rowIdsFromScatterSelect(null, pl, gd, eligible);
+      }
       if (!ids.length) return;
       onScatterRowIdsChange(ids);
     },
@@ -365,14 +365,16 @@ export function ScatterSlot({
         eventData?.['selections[0].x0'] != null ||
         (Array.isArray(eventData?.selections) && eventData.selections.length > 0);
       if (!hasBox) return;
-      requestAnimationFrame(() => applyScatterSelection(eventData));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => applyScatterSelection(eventData));
+      });
     };
     selectedHandlerRef.current = onSelected;
     relayoutHandlerRef.current = onRelayout;
     graphDiv.on('plotly_selected', onSelected);
     graphDiv.on('plotly_relayout', onRelayout);
     return detach;
-  }, [applyScatterSelection, onScatterRowIdsChange, payload, selectionEnabled]);
+  }, [applyScatterSelection, onScatterRowIdsChange, plotReady, selectionEnabled]);
 
   const handlePurge = useCallback((_figure, graphDiv) => {
     if (graphDiv?.removeListener) {
