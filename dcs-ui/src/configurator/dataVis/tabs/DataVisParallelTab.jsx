@@ -13,15 +13,34 @@ import {
   syncBestLcoeOverlay,
 } from '../utils/dataVisParcoordsBestLcoeOverlay';
 import { constraintsFromParcoordsFigure } from '../utils/dataVisParcoordsFilter';
-import { dataVisExploreWallAxisLabel } from '../utils/dataVisColumnDisplayLabel';
+import {
+  dataVisParallelAxisLabel,
+  dataVisParallelAxisLabelMenu,
+} from '../utils/dataVisColumnDisplayLabel';
+import {
+  applyParcoordsColorbarTickLabels,
+  applyParcoordsColorbarTitleLayout,
+  applyParcoordsHorizontalAxisLabels,
+  applyParcoordsIntegerUnitTicks,
+  colorbarTickvalsEndingZeroOrFive,
+  DATAVIS_PARCOORDS_LCOE_COLORBAR_TITLE,
+  formatColorbarTickZeroOrFive,
+  parallelDimensionLayout,
+  removeParcoordsColorbarTitleOverlay,
+} from '../utils/dataVisParcoordsAxisLayout';
 
 const MAX_PARALLEL_DIMS = 8;
 /** Inset parcoords from plot edges (room for axis labels + colorbar). */
 const PARCOORDS_DOMAIN_Y_COMPACT = [0.14, 0.8];
 const PARCOORDS_DOMAIN_Y = [0.12, 0.82];
-const PARCOORDS_LABEL_ANGLE = -45;
+const PARCOORDS_LABEL_FONT_HORIZONTAL_COMPACT = {
+  size: 20,
+  color: '#1f2933',
+  family: 'system-ui, sans-serif',
+  weight: 700,
+};
 const PARCOORDS_LABEL_FONT_COMPACT = {
-  size: 25,
+  size: 20,
   color: '#1f2933',
   family: 'system-ui, sans-serif',
   weight: 700,
@@ -32,13 +51,8 @@ const PARCOORDS_AXIS_RANGE_FONT = { size: 24, color: '#1f2933' };
 /** Along-axis tick labels + mark size (Plotly default tickfont size is 12). */
 const PARCOORDS_AXIS_TICK_FONT_COMPACT = { size: 24, color: '#1f2933' };
 const PARCOORDS_AXIS_TICK_FONT = { size: 24, color: '#1f2933' };
-const PARCOORDS_LABEL_FONT = {
-  size: 30,
-  color: '#1f2933',
-  family: 'system-ui, sans-serif',
-  weight: 700,
-};
-const PARCOORDS_DOMAIN_X = [0.09, 0.86];
+const PARCOORDS_DOMAIN_X = [0.08, 0.92];
+const PARCOORDS_DOMAIN_X_COMPACT = [0.05, 0.905];
 const PARCOORDS_DOMAIN_X_NO_SCALE = [0.09, 0.94];
 /** Index of the lowest LCOE among eligible rows (ties → first). */
 function indexOfMinLcoeRow(lcoeValues, eligibleIndices) {
@@ -66,27 +80,38 @@ function lcoeValuesForHighlight(payload, colorLabel, lcoeDim) {
   return payload.color || [];
 }
 
-function lcoeColorbarConfig(dataLo, dataHi, compact) {
-  const span = Math.max(dataHi - dataLo, 1e-9);
-  const roughStep = span / 5;
-  const magnitude = 10 ** Math.floor(Math.log10(Math.max(roughStep, 1e-9)));
-  const step = Math.max(magnitude, Math.ceil(roughStep / magnitude) * magnitude);
-  const ticks = [];
-  for (let t = Math.floor(dataLo / step) * step; t <= dataHi + step * 0.001; t += step) {
-    if (t >= dataLo - step * 0.001 && t <= dataHi + step * 0.001) ticks.push(t);
-  }
-  if (!ticks.length || ticks[0] > dataLo) ticks.unshift(dataLo);
-  if (ticks[ticks.length - 1] < dataHi) ticks.push(dataHi);
-  const uniq = [...new Set(ticks.map((t) => Math.round(t * 100) / 100))];
+function lcoeColorbarConfig(dataLo, dataHi, compact, domainY) {
+  const yLo = domainY?.[0] ?? (compact ? 0.14 : 0.06);
+  const yHi = domainY?.[1] ?? (compact ? 0.88 : 0.94);
+  const domainSpan = Math.max(0.05, yHi - yLo);
+  const domainMid = (yLo + yHi) / 2;
+  const tickvals = colorbarTickvalsEndingZeroOrFive(dataLo, dataHi, 6);
+  const tickFont = compact ? PARCOORDS_AXIS_TICK_FONT_COMPACT : PARCOORDS_AXIS_TICK_FONT;
   return {
-    tickvals: uniq,
-    ticktext: uniq.map((t) =>
-      t.toLocaleString(undefined, { maximumFractionDigits: t < 100 ? 2 : 1 }),
-    ),
-    title: { text: '$/MWh', side: 'right', font: { size: compact ? 9 : 11 } },
-    ...(compact
-      ? { thickness: 10, len: 0.68, outlinewidth: 0, tickfont: { size: 9 } }
-      : { thickness: 14, len: 0.75, tickfont: { size: 11 } }),
+    tickmode: 'array',
+    tickvals,
+    ticktext: tickvals.map(formatColorbarTickZeroOrFive),
+    title: {
+      text: DATAVIS_PARCOORDS_LCOE_COLORBAR_TITLE,
+      side: 'right',
+      font: {
+        size: compact ? 20 : 22,
+        family: 'system-ui, sans-serif',
+      },
+    },
+    len: domainSpan,
+    lenmode: 'fraction',
+    y: domainMid,
+    yanchor: 'middle',
+    thickness: compact ? 22 : 24,
+    thicknessmode: 'pixels',
+    outlinewidth: 0,
+    x: compact ? 1.0 : 1.002,
+    xpad: compact ? 0 : 3,
+    tickfont: {
+      ...tickFont,
+      family: 'system-ui, sans-serif',
+    },
   };
 }
 
@@ -109,7 +134,6 @@ export default function DataVisParallelTab({
   parcoordsRanges = null,
   onClearAll,
   onDimensionsChange,
-  exploreWallAxisLabels = false,
   lockDimensionsToDefaults = false,
 }) {
   /** Full view filters — parallel shows only matching rows (no gray ghost lines). */
@@ -130,20 +154,19 @@ export default function DataVisParallelTab({
   const chartWrapRef = useRef(null);
   const overlaySpecRef = useRef(null);
   const overlayTimerRef = useRef(null);
-  const [quadPlotSize, setQuadPlotSize] = useState(() => ({
+  const [plotWrapSize, setPlotWrapSize] = useState(() => ({
     width: 520,
-    height: Math.max(240, Math.round(window.innerHeight * 0.38)),
+    height: Math.max(280, Math.round(window.innerHeight * 0.55)),
   }));
   payloadRef.current = payload;
 
   useEffect(() => {
-    if (!compact) return undefined;
     const el = chartWrapRef.current;
     if (!el) return undefined;
     const measure = () => {
       const width = Math.max(200, Math.floor(el.clientWidth));
-      const height = Math.max(200, Math.floor(el.clientHeight));
-      setQuadPlotSize((prev) =>
+      const height = Math.max(compact ? 200 : 280, Math.floor(el.clientHeight));
+      setPlotWrapSize((prev) =>
         prev.width === width && prev.height === height ? prev : { width, height },
       );
     };
@@ -215,17 +238,29 @@ export default function DataVisParallelTab({
     publishConstraints(merged);
   }, [publishConstraints]);
 
-  const scheduleBestLcoeOverlay = useCallback(() => {
+  const runParcoordsChrome = useCallback(() => {
+    const gd = graphDivRef.current;
+    if (gd) {
+      applyParcoordsHorizontalAxisLabels(gd, dimensions);
+      applyParcoordsIntegerUnitTicks(gd, dimensions);
+      applyParcoordsColorbarTickLabels(gd);
+      applyParcoordsColorbarTitleLayout(gd, { compact });
+    }
+    syncBestLcoeOverlay(
+      chartWrapRef.current,
+      graphDivRef.current,
+      overlaySpecRef.current,
+    );
+  }, [compact, dimensions]);
+
+  const scheduleParcoordsChrome = useCallback(() => {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
     overlayTimerRef.current = setTimeout(() => {
       overlayTimerRef.current = null;
-      syncBestLcoeOverlay(
-        chartWrapRef.current,
-        graphDivRef.current,
-        overlaySpecRef.current,
-      );
-    }, 80);
-  }, []);
+      runParcoordsChrome();
+      requestAnimationFrame(() => runParcoordsChrome());
+    }, 120);
+  }, [runParcoordsChrome]);
 
   const handleInitialized = useCallback(
     (_figure, graphDiv) => {
@@ -245,16 +280,16 @@ export default function DataVisParallelTab({
       }
       const handler = () => {
         syncConstraintsFromGraph();
-        scheduleBestLcoeOverlay();
+        scheduleParcoordsChrome();
       };
       syncHandlerRef.current = handler;
       graphDiv.on('plotly_restyle', handler);
       graphDiv.on('plotly_relayout', handler);
-      afterPlotHandlerRef.current = () => scheduleBestLcoeOverlay();
+      afterPlotHandlerRef.current = () => scheduleParcoordsChrome();
       graphDiv.on('plotly_afterplot', afterPlotHandlerRef.current);
-      scheduleBestLcoeOverlay();
+      scheduleParcoordsChrome();
     },
-    [scheduleBestLcoeOverlay, syncConstraintsFromGraph],
+    [scheduleParcoordsChrome, syncConstraintsFromGraph],
   );
 
   const handlePurge = useCallback((_figure, graphDiv) => {
@@ -275,6 +310,7 @@ export default function DataVisParallelTab({
     afterPlotHandlerRef.current = null;
     graphDivRef.current = null;
     removeBestLcoeOverlay(chartWrapRef.current, graphDiv);
+    removeParcoordsColorbarTitleOverlay(chartWrapRef.current);
   }, []);
 
   const plotBundle = useMemo(() => {
@@ -312,21 +348,26 @@ export default function DataVisParallelTab({
           : 1;
     const highlightBest = bestLcoeIdx >= 0;
     const showColorScale = Boolean(payload?.color);
-    const domainX = showColorScale ? PARCOORDS_DOMAIN_X : PARCOORDS_DOMAIN_X_NO_SCALE;
-    const domainY = compact ? PARCOORDS_DOMAIN_Y_COMPACT : PARCOORDS_DOMAIN_Y;
+    const domainX = showColorScale
+      ? compact
+        ? PARCOORDS_DOMAIN_X_COMPACT
+        : PARCOORDS_DOMAIN_X
+      : PARCOORDS_DOMAIN_X_NO_SCALE;
+    const domainY = compact ? [0.14, 0.88] : [0.06, 0.94];
     const line = {
       type: 'parcoords',
       uirevision,
       domain: { x: domainX, y: domainY },
-      labelangle: PARCOORDS_LABEL_ANGLE,
+      labelangle: 0,
+      labelside: 'top',
       ...(compact
         ? {
-            labelfont: { ...PARCOORDS_LABEL_FONT_COMPACT },
+            labelfont: { ...PARCOORDS_LABEL_FONT_HORIZONTAL_COMPACT },
             tickfont: { ...PARCOORDS_AXIS_TICK_FONT_COMPACT },
             rangefont: { ...PARCOORDS_AXIS_RANGE_FONT_COMPACT },
           }
         : {
-            labelfont: { ...PARCOORDS_LABEL_FONT },
+            labelfont: { ...PARCOORDS_LABEL_FONT_HORIZONTAL_COMPACT, size: 22 },
             tickfont: { ...PARCOORDS_AXIS_TICK_FONT },
             rangefont: { ...PARCOORDS_AXIS_RANGE_FONT },
           }),
@@ -340,7 +381,7 @@ export default function DataVisParallelTab({
         colorscale: DATAVIS_COLORSCALE_COLD_BLUE_HOT_AMBER,
         showscale: showColorScale,
         colorbar: showColorScale
-          ? lcoeColorbarConfig(dataLo, dataHi, compact)
+          ? lcoeColorbarConfig(dataLo, dataHi, compact, domainY)
           : undefined,
         cmin: dataLo,
         cmax: dataHi,
@@ -350,10 +391,11 @@ export default function DataVisParallelTab({
           constraintsRef.current?.[key] ?? parcoordsRanges?.[key] ?? null;
         const constraintrange = constraintrangeFromBand(band);
         const axisRange = parallelAxisRangeFromStats(columnStatMap[key]);
+        const layout = parallelDimensionLayout(key, axisRange);
         return {
-          label: exploreWallAxisLabels ? dataVisExploreWallAxisLabel(key) : key,
+          label: dataVisParallelAxisLabel(key),
           values: payload.values[key],
-          ...(axisRange ? { range: axisRange } : {}),
+          ...layout,
           ...(constraintrange ? { constraintrange } : {}),
         };
       }),
@@ -365,7 +407,9 @@ export default function DataVisParallelTab({
     const axisRanges = {};
     dims.forEach((key) => {
       const r = parallelAxisRangeFromStats(columnStatMap[key]);
-      if (r) axisRanges[key] = r;
+      const layout = parallelDimensionLayout(key, r);
+      if (layout.range) axisRanges[key] = layout.range;
+      else if (r) axisRanges[key] = r;
     });
     const bestLcoeOverlay = highlightBest
       ? {
@@ -385,13 +429,13 @@ export default function DataVisParallelTab({
       bestLcoeValue,
       bestLcoeOverlay,
     };
-  }, [columnStatMap, compact, exploreWallAxisLabels, parcoordsRanges, payload, uirevision]);
+  }, [columnStatMap, compact, parcoordsRanges, payload, uirevision]);
 
   overlaySpecRef.current = plotBundle.bestLcoeOverlay;
 
   useEffect(() => {
-    scheduleBestLcoeOverlay();
-  }, [plotBundle.bestLcoeOverlay, plotBundle.plotData, scheduleBestLcoeOverlay, quadPlotSize]);
+    scheduleParcoordsChrome();
+  }, [plotBundle.bestLcoeOverlay, plotBundle.plotData, scheduleParcoordsChrome, plotWrapSize]);
 
   /** Drop stale SVG overlays before refetch/replot (avoids a second misaligned line while filtering). */
   useEffect(() => {
@@ -412,7 +456,11 @@ export default function DataVisParallelTab({
 
   return (
     <div
-      className={`dataVis-tabPanel${compact ? ' dataVis-tabPanel--compact dataVis-tabPanel--parcoordsQuad' : ''}`}
+      className={`dataVis-tabPanel${
+        compact
+          ? ' dataVis-tabPanel--compact dataVis-tabPanel--parcoordsQuad'
+          : ' dataVis-tabPanel--parcoordsFull'
+      }`}
     >
       <div className="dataVis-tabPanel__toolbar">
         <DataVisColumnChipMenu
@@ -422,7 +470,7 @@ export default function DataVisParallelTab({
           maxSelected={MAX_PARALLEL_DIMS}
           buttonText="Choose dimensions"
           menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
-          formatColumnLabel={exploreWallAxisLabels ? dataVisExploreWallAxisLabel : undefined}
+          formatColumnLabel={dataVisParallelAxisLabelMenu}
           onToggle={toggleDim}
         />
         {!compact ? (
@@ -456,43 +504,39 @@ export default function DataVisParallelTab({
               uirevision,
               title: compact ? undefined : { text: 'Parallel coordinates', font: { size: 16 } },
               autosize: true,
-              width: compact ? quadPlotSize.width : undefined,
-              height: compact ? quadPlotSize.height : Math.max(520, Math.round(window.innerHeight * 0.62)),
+              width: plotWrapSize.width,
+              height: plotWrapSize.height,
               margin: compact
                 ? {
                     l: 96,
-                    r: showColorScale ? 52 : 28,
-                    t: 112,
-                    b: 118,
+                    r: showColorScale ? 228 : 28,
+                    t: 132,
+                    b: 96,
                     pad: 4,
                   }
                 : {
                     l: 96,
-                    r: showColorScale ? 64 : 36,
-                    t: 88,
-                    b: 132,
-                    pad: 6,
+                    r: showColorScale ? 172 : 36,
+                    t: 118,
+                    b: 72,
+                    pad: 4,
                   },
             }}
-            style={
-              compact
-                ? {
-                    minHeight: 0,
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: '100%',
-                  }
-                : undefined
-            }
+            style={{
+              minHeight: 0,
+              width: '100%',
+              height: '100%',
+              maxWidth: '100%',
+            }}
             config={
               compact
                 ? { displayModeBar: false, responsive: true, displaylogo: false }
-                : undefined
+                : { displayModeBar: true, responsive: true, displaylogo: false }
             }
             useResizeHandler
             onInitialized={handleInitialized}
             onPurge={handlePurge}
-            onUpdate={() => scheduleBestLcoeOverlay()}
+            onUpdate={() => scheduleParcoordsChrome()}
             onRestyle={() => {
               requestAnimationFrame(() => syncConstraintsFromGraph());
             }}
