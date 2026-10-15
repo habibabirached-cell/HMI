@@ -52,10 +52,23 @@ export function isMvupsFlatSchematicComponentId(id) {
   return typeof id === 'string' && id.startsWith(MVUPS_FLAT_SCHEMATIC_ID_PREFIX);
 }
 
+export function isMvupsFlatCollapseOwnerId(id) {
+  return typeof id === 'string' && id.startsWith('comp-mvups-flat-');
+}
+
+export function isMvupsFlatCollapseOwner(component) {
+  if (!component) return false;
+  return (
+    isMvupsFlatCollapseOwnerId(component.id) ||
+    component.properties?.mvupsFlatCollapseOwner === true
+  );
+}
+
 export function isMvupsFlatSchematicComponent(component) {
   if (!component) return false;
   return (
     isMvupsFlatSchematicComponentId(component.id) ||
+    isMvupsFlatCollapseOwner(component) ||
     component.properties?.mvupsFlatSchematic === true
   );
 }
@@ -111,7 +124,8 @@ export function buildDesignSectionMemberIdSets(components) {
   for (const c of components) {
     if (!isGasTurbineBank(c)) continue;
     const ids = collectGasTurbineBankMemberIds(c);
-    const target = isLowerGasTurbineBank(c) ? lower : upper;
+    const target =
+      isLowerGasTurbineBank(c) || isMvupsFlatCollapseOwner(c) ? lower : upper;
     for (const id of ids) {
       target.add(id);
       assigned.add(id);
@@ -159,11 +173,15 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
   if (v.showMvupsFlatSchematic) {
     const { lower } = buildDesignSectionMemberIdSets(components);
     for (const id of lower) {
-      if (!isMvupsFlatSchematicComponentId(id)) hidden.add(id);
+      if (!isMvupsFlatSchematicComponentId(id) && !isMvupsFlatCollapseOwnerId(id)) {
+        hidden.add(id);
+      }
     }
   } else {
     for (const c of components || []) {
-      if (isMvupsFlatSchematicComponentId(c.id)) hidden.add(c.id);
+      if (isMvupsFlatSchematicComponentId(c.id) || isMvupsFlatCollapseOwnerId(c.id)) {
+        hidden.add(c.id);
+      }
     }
   }
 

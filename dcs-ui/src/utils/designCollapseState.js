@@ -5,6 +5,7 @@
 import {
   DESIGN_SECTION_Y_THRESHOLD,
   isLowerGasTurbineBank,
+  isMvupsFlatCollapseOwner,
   normalizeDesignSectionVisibility,
 } from './designSectionVisibility';
 import { isGasTurbineBank } from './gasTurbineBank';
@@ -16,6 +17,8 @@ export const QUICK_SCENARIO_COLLAPSE_PRESETS = new Set([
   'withBessandStatCom',
   'withBessAlone',
   'withStatcomAlone',
+  'mvups_undamped',
+  'mvups_damped',
 ]);
 
 export const DEFAULT_QUICK_SCENARIO_BRANCH_COLLAPSED = {
@@ -23,6 +26,8 @@ export const DEFAULT_QUICK_SCENARIO_BRANCH_COLLAPSED = {
   withBessandStatCom: true,
   withBessAlone: true,
   withStatcomAlone: true,
+  mvups_undamped: false,
+  mvups_damped: false,
 };
 
 /** Which stacked design section each collapse switch affects. */
@@ -31,6 +36,8 @@ export const QUICK_SCENARIO_COLLAPSE_SECTION = {
   withBessandStatCom: 'lower',
   withBessAlone: 'lower',
   withStatcomAlone: 'lower',
+  mvups_undamped: 'lower',
+  mvups_damped: 'lower',
 };
 
 export function resolveQuickScenarioCollapseSection(presetName) {
@@ -60,7 +67,21 @@ export function getVisibleCollapseOwnerIds(components, visibility, collapseSecti
   const ownerIds = new Set();
   if (!components?.length) return ownerIds;
 
+  if (v.showMvupsFlatSchematic) {
+    for (const c of components) {
+      if (!isMvupsFlatCollapseOwner(c)) continue;
+      if (isGasTurbineBank(c) && c.properties?.gasTurbineGroup?.memberIds?.length) {
+        ownerIds.add(c.id);
+      }
+      if (isTieBreakerNetwork(c) && c.properties?.tieGroup?.memberIds?.length) {
+        ownerIds.add(c.id);
+      }
+    }
+    return ownerIds;
+  }
+
   for (const c of components) {
+    if (isMvupsFlatCollapseOwner(c)) continue;
     if (isGasTurbineBank(c)) {
       const inLower = isLowerGasTurbineBank(c);
       if (collapseSection === 'upper' && inLower) continue;

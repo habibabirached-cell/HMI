@@ -12837,13 +12837,375 @@
       "canvasPane": "lower"
     },
     {
+      "id": "comp-mvups-flat-gen-3d-preview-top",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (MVUPS flat collapsed \u2014 upper set)",
+      "position": {
+        "x": -325,
+        "y": 1862.5
+      },
+      "status": "online",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-3d-preview-bottom",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (MVUPS flat collapsed \u2014 lower set)",
+      "position": {
+        "x": -325,
+        "y": 2712.5
+      },
+      "status": "online",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads ",
+      "fullName": "Auxiliary Loads (MVUPS flat collapsed)",
+      "position": {
+        "x": 2475,
+        "y": 3112.5
+      },
+      "status": "online",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-mvups-preview",
+      "type": "bess-50mw",
+      "name": "MVUPS",
+      "fullName": "MVUPS (3D placeholder \u2014 BESS model)",
+      "position": {
+        "x": 2575,
+        "y": 2262.5
+      },
+      "status": "online",
+      "properties": {
+        "rating": 25,
+        "voltage": 34.5,
+        "unit": "MVA",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-bank-top",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Gen Bank Top",
+      "fullName": "MVUPS flat \u2014 upper 4\u00d7 LM2500",
+      "position": {
+        "x": 27,
+        "y": 1876
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 1800,
+            "maxY": 2400
+          },
+          "previewMemberId": "comp-mvups-flat-gen-3d-preview-top",
+          "collapseColumnLeft": -337.5,
+          "memberIds": [
+            "p2r-mvups-flat-paste-1779985373163-144-xorkf",
+            "p2r-mvups-flat-paste-1779985373163-146-f5wpn",
+            "p2r-mvups-flat-paste-1779985373163-148-gnsiz",
+            "p2r-mvups-flat-paste-1779985373163-152-162m6",
+            "p2r-mvups-flat-paste-1779985373163-154-2vgc9",
+            "p2r-mvups-flat-paste-1779985373163-156-42w00",
+            "p2r-mvups-flat-paste-1779985373163-160-69055",
+            "p2r-mvups-flat-paste-1779985373163-162-pz064",
+            "p2r-mvups-flat-paste-1779985373163-164-mqscu",
+            "p2r-mvups-flat-paste-1779985373163-168-cdooe",
+            "p2r-mvups-flat-paste-1779985373163-170-6ivor",
+            "p2r-mvups-flat-paste-1779985373163-172-ukutj"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [],
+            "busMemberId": "p2r-mvups-flat-paste-1779985373163-0-q5ccd"
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-bank-bottom",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Gen Bank Bottom",
+      "fullName": "MVUPS flat \u2014 lower 4\u00d7 LM2500",
+      "position": {
+        "x": 27,
+        "y": 2726
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 2600,
+            "maxY": 3200
+          },
+          "previewMemberId": "comp-mvups-flat-gen-3d-preview-bottom",
+          "collapseColumnLeft": -337.5,
+          "memberIds": [
+            "p2r-mvups-flat-paste-1779985373163-145-su0ea",
+            "p2r-mvups-flat-paste-1779985373163-147-5cusz",
+            "p2r-mvups-flat-paste-1779985373163-149-bcfxt",
+            "p2r-mvups-flat-paste-1779985373163-153-ewigc",
+            "p2r-mvups-flat-paste-1779985373163-155-pynp4",
+            "p2r-mvups-flat-paste-1779985373163-157-xa4em",
+            "p2r-mvups-flat-paste-1779985373163-161-wje3n",
+            "p2r-mvups-flat-paste-1779985373163-163-oqoxk",
+            "p2r-mvups-flat-paste-1779985373163-165-f4owv",
+            "p2r-mvups-flat-paste-1779985373163-169-w60x7",
+            "p2r-mvups-flat-paste-1779985373163-171-0kxwc",
+            "p2r-mvups-flat-paste-1779985373163-173-wmgqy"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [],
+            "busMemberId": "p2r-mvups-flat-paste-1779985373163-0-q5ccd"
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-load-bank",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Load Bank",
+      "fullName": "MVUPS flat \u2014 load + MVUPS flank",
+      "position": {
+        "x": 2789,
+        "y": 1876
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 1800,
+            "maxY": 4400
+          },
+          "previewMemberId": "comp-mvups-flat-mvups-preview",
+          "collapseColumnLeft": 2487.5,
+          "collapseCompanionMemberId": "comp-mvups-flat-aux-preview",
+          "memberIds": [
+            "p2r-mvups-flat-paste-1779985373163-221-slybl",
+            "p2r-mvups-flat-paste-1779985373163-222-31s1a",
+            "p2r-mvups-flat-paste-1779985373163-223-o4uxy",
+            "p2r-mvups-flat-paste-1779985373163-224-7909a",
+            "p2r-mvups-flat-paste-1779985373163-227-49qqg",
+            "p2r-mvups-flat-mvups-sld-1"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [
+              "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+              "p2r-mvups-flat-paste-1779985373163-119-zpe0e"
+            ],
+            "busMemberId": "p2r-mvups-flat-paste-1779985373163-1-43w91"
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-tie-network",
+      "type": "tie-breaker-network",
+      "name": "Tie Breaker Network",
+      "fullName": "MVUPS flat tie (collapse / expand)",
+      "position": {
+        "x": 691,
+        "y": 1800
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "tieGroup": {
+          "collapsed": true,
+          "memberIds": [
+            "p2r-mvups-flat-paste-1779985373163-0-q5ccd",
+            "p2r-mvups-flat-paste-1779985373163-1-43w91",
+            "p2r-mvups-flat-paste-1779985373163-150-dyx80",
+            "p2r-mvups-flat-paste-1779985373163-158-f6q3z",
+            "p2r-mvups-flat-paste-1779985373163-166-ncflg",
+            "p2r-mvups-flat-paste-1779985373163-174-1qe8l",
+            "p2r-mvups-flat-paste-1779985373163-151-3jvb0",
+            "p2r-mvups-flat-paste-1779985373163-159-44708",
+            "p2r-mvups-flat-paste-1779985373163-167-vcwn2",
+            "p2r-mvups-flat-paste-1779985373163-175-i0lpl",
+            "p2r-mvups-flat-paste-1779985373163-107-6lli1",
+            "p2r-mvups-flat-paste-1779985373163-108-pb0kp",
+            "p2r-mvups-flat-paste-1779985373163-109-4ik97",
+            "p2r-mvups-flat-paste-1779985373163-110-684ny",
+            "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+            "p2r-mvups-flat-paste-1779985373163-112-afcdn",
+            "p2r-mvups-flat-paste-1779985373163-113-bzdat",
+            "p2r-mvups-flat-paste-1779985373163-114-xqb03",
+            "p2r-mvups-flat-paste-1779985373163-115-lqtx3",
+            "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
+            "p2r-mvups-flat-paste-1779985373163-119-zpe0e",
+            "p2r-mvups-flat-paste-1779985373163-120-ou8v3",
+            "p2r-mvups-flat-paste-1779985373163-121-hg6zl",
+            "p2r-mvups-flat-paste-1779985373163-122-3vejh",
+            "p2r-mvups-flat-paste-1779985373163-9-7hdwy",
+            "p2r-mvups-flat-paste-1779985373163-219-e82rw"
+          ],
+          "stubLinks": {
+            "gapPx": 50,
+            "fillAisleWidth": true,
+            "leftAnchorIds": [
+              "p2r-mvups-flat-paste-1779985373163-150-dyx80",
+              "p2r-mvups-flat-paste-1779985373163-158-f6q3z",
+              "p2r-mvups-flat-paste-1779985373163-166-ncflg",
+              "p2r-mvups-flat-paste-1779985373163-174-1qe8l"
+            ],
+            "rightAnchorIds": [
+              "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+              "p2r-mvups-flat-paste-1779985373163-119-zpe0e",
+              "p2r-mvups-flat-paste-1779985373163-120-ou8v3",
+              "p2r-mvups-flat-paste-1779985373163-121-hg6zl"
+            ]
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "visualOverrides": {
+        "width": 218,
+        "height": 1500
+      },
+      "canvasPane": "lower"
+    },
+    {
       "id": "p2r-mvups-flat-paste-1779985373163-0-q5ccd",
       "type": "bus-hv-vertical",
       "name": "34.5kV Bus",
       "fullName": "Main Distribution Bus 34.5kV (Left)",
       "position": {
-        "x": 487.5,
-        "y": 2050
+        "x": -162.5,
+        "y": 1735
       },
       "status": "online",
       "properties": {
@@ -12871,8 +13233,8 @@
       "name": "",
       "fullName": "Main Distribution Bus 34.5kV (Right)",
       "position": {
-        "x": 3937.5,
-        "y": 2530
+        "x": 3287.5,
+        "y": 2230
       },
       "status": "online",
       "properties": {
@@ -12901,8 +13263,8 @@
       "name": "LM2500 #1",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 2100
+        "x": -825,
+        "y": 1800
       },
       "status": "online",
       "properties": {
@@ -12926,8 +13288,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 2106
+        "x": -575,
+        "y": 1806
       },
       "status": "online",
       "properties": {
@@ -12951,8 +13313,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 2100
+        "x": -450,
+        "y": 1800
       },
       "status": "online",
       "properties": {
@@ -12978,8 +13340,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 2100
+        "x": -275,
+        "y": 1800
       },
       "status": "online",
       "properties": {
@@ -13003,8 +13365,8 @@
       "name": "LM2500 #2",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 2255
+        "x": -825,
+        "y": 1950
       },
       "status": "online",
       "properties": {
@@ -13028,8 +13390,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 2261
+        "x": -575,
+        "y": 1956
       },
       "status": "online",
       "properties": {
@@ -13053,8 +13415,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 2255
+        "x": -450,
+        "y": 1950
       },
       "status": "online",
       "properties": {
@@ -13080,8 +13442,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 2255
+        "x": -275,
+        "y": 1950
       },
       "status": "online",
       "properties": {
@@ -13105,8 +13467,8 @@
       "name": "LM2500 #3",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 2410
+        "x": -825,
+        "y": 2100
       },
       "status": "online",
       "properties": {
@@ -13130,8 +13492,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 2416
+        "x": -575,
+        "y": 2106
       },
       "status": "online",
       "properties": {
@@ -13155,8 +13517,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 2410
+        "x": -450,
+        "y": 2100
       },
       "status": "online",
       "properties": {
@@ -13182,8 +13544,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 2410
+        "x": -275,
+        "y": 2100
       },
       "status": "online",
       "properties": {
@@ -13207,8 +13569,8 @@
       "name": "LM2500 #4",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 2565
+        "x": -825,
+        "y": 2250
       },
       "status": "online",
       "properties": {
@@ -13232,8 +13594,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 2571
+        "x": -575,
+        "y": 2256
       },
       "status": "online",
       "properties": {
@@ -13257,8 +13619,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 2565
+        "x": -450,
+        "y": 2250
       },
       "status": "online",
       "properties": {
@@ -13284,8 +13646,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 2565
+        "x": -275,
+        "y": 2250
       },
       "status": "online",
       "properties": {
@@ -13309,8 +13671,8 @@
       "name": "LM2500 #5",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 2965
+        "x": -825,
+        "y": 2650
       },
       "status": "online",
       "properties": {
@@ -13335,8 +13697,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 2971
+        "x": -575,
+        "y": 2656
       },
       "status": "online",
       "properties": {
@@ -13361,8 +13723,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 2965
+        "x": -450,
+        "y": 2650
       },
       "status": "online",
       "properties": {
@@ -13388,8 +13750,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 2965
+        "x": -275,
+        "y": 2650
       },
       "status": "online",
       "properties": {
@@ -13413,8 +13775,8 @@
       "name": "LM2500 #6",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 3120
+        "x": -825,
+        "y": 2800
       },
       "status": "online",
       "properties": {
@@ -13439,8 +13801,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 3126
+        "x": -575,
+        "y": 2806
       },
       "status": "online",
       "properties": {
@@ -13465,8 +13827,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 3120
+        "x": -450,
+        "y": 2800
       },
       "status": "online",
       "properties": {
@@ -13492,8 +13854,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 3120
+        "x": -275,
+        "y": 2800
       },
       "status": "online",
       "properties": {
@@ -13517,8 +13879,8 @@
       "name": "LM2500 #7",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": -175,
-        "y": 3275
+        "x": -825,
+        "y": 2950
       },
       "status": "online",
       "properties": {
@@ -13543,8 +13905,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 75,
-        "y": 3281
+        "x": -575,
+        "y": 2956
       },
       "status": "online",
       "properties": {
@@ -13569,8 +13931,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 200,
-        "y": 3275
+        "x": -450,
+        "y": 2950
       },
       "status": "online",
       "properties": {
@@ -13596,8 +13958,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 375,
-        "y": 3275
+        "x": -275,
+        "y": 2950
       },
       "status": "online",
       "properties": {
@@ -13621,8 +13983,8 @@
       "name": "LM2500 #8",
       "fullName": "LM2500 Andritz A03 33.3 MW",
       "position": {
-        "x": 575,
-        "y": 3400
+        "x": -825,
+        "y": 3100
       },
       "status": "online",
       "properties": {
@@ -13647,8 +14009,8 @@
       "name": "Gen CB",
       "fullName": "Generator CB 13.8 kV",
       "position": {
-        "x": 825,
-        "y": 3406
+        "x": -575,
+        "y": 3106
       },
       "status": "online",
       "properties": {
@@ -13673,8 +14035,8 @@
       "name": "GSU",
       "fullName": "Generator Step-Up Transformer",
       "position": {
-        "x": 950,
-        "y": 3400
+        "x": -450,
+        "y": 3100
       },
       "status": "online",
       "properties": {
@@ -13700,8 +14062,8 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": 1125,
-        "y": 3400
+        "x": -275,
+        "y": 3100
       },
       "status": "online",
       "properties": {
@@ -13720,38 +14082,13 @@
       "canvasPane": "lower"
     },
     {
-      "id": "p2r-mvups-flat-paste-1779985373163-106-ki0ei",
-      "type": "manual-line-switch",
-      "name": "",
-      "fullName": "Manual line disconnect 34.5kV",
-      "position": {
-        "x": 2325,
-        "y": 2775
-      },
-      "status": "online",
-      "properties": {
-        "rating": 3500,
-        "voltage": 34.5,
-        "unit": "A",
-        "mvupsFlatSchematic": true
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "canvasPane": "lower"
-    },
-    {
       "id": "p2r-mvups-flat-paste-1779985373163-107-6lli1",
       "type": "ct",
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2425,
-        "y": 2750
+        "x": 2075,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -13775,8 +14112,8 @@
       "name": "Bay CB",
       "fullName": "Bay / Bus Tie CB 34.5kV 3500A",
       "position": {
-        "x": 2275,
-        "y": 2775
+        "x": 1675,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -13800,8 +14137,8 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2725,
-        "y": 2750
+        "x": 1825,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -13825,8 +14162,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 2625,
-        "y": 2625
+        "x": 1625.49,
+        "y": 2325.49
       },
       "status": "online",
       "properties": {
@@ -13850,8 +14187,8 @@
       "name": "",
       "fullName": "Tie / bypass junction",
       "position": {
-        "x": 3125,
-        "y": 2775
+        "x": 2475,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -13875,8 +14212,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 3425,
-        "y": 2625
+        "x": 2775.49,
+        "y": 2325.49
       },
       "status": "online",
       "properties": {
@@ -13900,8 +14237,8 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2925,
-        "y": 2750
+        "x": 2275,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -13925,8 +14262,8 @@
       "name": "Tie CB",
       "fullName": "Center bus-tie CB 34.5kV 3500A",
       "position": {
-        "x": 2025,
-        "y": 2775
+        "x": 1325,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -13951,40 +14288,14 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2125,
-        "y": 2750
+        "x": 1475,
+        "y": 2450
       },
       "status": "online",
       "properties": {
         "rating": 0,
         "voltage": 0,
         "unit": "",
-        "mvupsFlatSchematic": true
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "initialSimStatus": null,
-      "canvasPane": "lower"
-    },
-    {
-      "id": "p2r-mvups-flat-paste-1779985373163-116-ve2vh",
-      "type": "manual-line-switch",
-      "name": "",
-      "fullName": "Manual line disconnect 34.5kV",
-      "position": {
-        "x": 2175,
-        "y": 2775
-      },
-      "status": "online",
-      "properties": {
-        "rating": 3500,
-        "voltage": 34.5,
-        "unit": "A",
         "mvupsFlatSchematic": true
       },
       "state": {
@@ -14003,8 +14314,8 @@
       "name": "",
       "fullName": "Tie / bypass junction",
       "position": {
-        "x": 2525,
-        "y": 2775
+        "x": 1975,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -14024,39 +14335,13 @@
       "canvasPane": "lower"
     },
     {
-      "id": "p2r-mvups-flat-paste-1779985373163-118-lnrga",
-      "type": "manual-line-switch",
-      "name": "",
-      "fullName": "Manual line disconnect 34.5kV",
-      "position": {
-        "x": 2375,
-        "y": 2775
-      },
-      "status": "online",
-      "properties": {
-        "rating": 3500,
-        "voltage": 34.5,
-        "unit": "A",
-        "mvupsFlatSchematic": true
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "initialSimStatus": null,
-      "canvasPane": "lower"
-    },
-    {
       "id": "p2r-mvups-flat-paste-1779985373163-119-zpe0e",
       "type": "ct",
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 3425,
-        "y": 2750
+        "x": 2675,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -14081,8 +14366,8 @@
       "name": "Bay CB",
       "fullName": "Bay / Bus Tie CB 34.5kV 3500A",
       "position": {
-        "x": 3625,
-        "y": 2775
+        "x": 2875,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -14107,8 +14392,8 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 3775,
-        "y": 2750
+        "x": 3025,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -14133,8 +14418,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 4075,
-        "y": 2775
+        "x": 3425.49,
+        "y": 2475.49
       },
       "status": "online",
       "properties": {
@@ -14159,8 +14444,8 @@
       "name": "CB",
       "fullName": "Bus section / riser CB 34.5kV (graphic)",
       "position": {
-        "x": 2825,
-        "y": 2775
+        "x": 2175,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -14185,8 +14470,8 @@
       "name": "CT",
       "fullName": "Current Transformer 1500:1",
       "position": {
-        "x": 4025,
-        "y": 2750
+        "x": 3375,
+        "y": 2450
       },
       "status": "online",
       "properties": {
@@ -14210,8 +14495,8 @@
       "name": "",
       "fullName": "Connection Point",
       "position": {
-        "x": 4725,
-        "y": 2775
+        "x": 4025,
+        "y": 2475
       },
       "status": "online",
       "properties": {
@@ -14236,8 +14521,8 @@
       "name": "Aux Loads #4",
       "fullName": "Auxiliary Loads",
       "position": {
-        "x": 4775,
-        "y": 2400
+        "x": 4125,
+        "y": 2100
       },
       "status": "online",
       "properties": {
@@ -14262,8 +14547,8 @@
       "name": "Aux CB",
       "fullName": "Auxiliary feeder circuit breaker",
       "position": {
-        "x": 4825,
-        "y": 2775
+        "x": 4175,
+        "y": 2475
       },
       "status": "open",
       "properties": {
@@ -14288,8 +14573,8 @@
       "name": "DC CB 480V",
       "fullName": "DC Circuit Breaker 480V",
       "position": {
-        "x": 5025,
-        "y": 2756
+        "x": 4375,
+        "y": 2456
       },
       "status": "online",
       "properties": {
@@ -14314,8 +14599,8 @@
       "name": "IT Rack rb",
       "fullName": "IT Rack Load",
       "position": {
-        "x": 5250,
-        "y": 2750
+        "x": 4100,
+        "y": 2700
       },
       "status": "online",
       "properties": {
@@ -14340,8 +14625,8 @@
       "name": "MVUPS",
       "fullName": "To Data Center Building MVUPS 34.5kV:480V",
       "position": {
-        "x": 4170,
-        "y": 2745
+        "x": 3520,
+        "y": 2445
       },
       "status": "online",
       "properties": {
@@ -19843,20 +20128,6 @@
       }
     },
     {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-110",
-      "from": "p2r-mvups-flat-paste-1779985373163-0-q5ccd",
-      "to": "p2r-mvups-flat-paste-1779985373163-106-ki0ei",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-111",
-      "from": "p2r-mvups-flat-paste-1779985373163-106-ki0ei",
-      "to": "p2r-mvups-flat-paste-1779985373163-107-6lli1",
-      "type": "power",
-      "status": "idle"
-    },
-    {
       "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-112",
       "from": "p2r-mvups-flat-paste-1779985373163-107-6lli1",
       "to": "p2r-mvups-flat-paste-1779985373163-108-pb0kp",
@@ -19867,41 +20138,6 @@
       "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-113",
       "from": "p2r-mvups-flat-paste-1779985373163-108-pb0kp",
       "to": "p2r-mvups-flat-paste-1779985373163-109-4ik97",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-114",
-      "from": "p2r-mvups-flat-paste-1779985373163-109-4ik97",
-      "to": "p2r-mvups-flat-paste-1779985373163-110-684ny",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-120",
-      "from": "p2r-mvups-flat-paste-1779985373163-115-lqtx3",
-      "to": "p2r-mvups-flat-paste-1779985373163-116-ve2vh",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-121",
-      "from": "p2r-mvups-flat-paste-1779985373163-116-ve2vh",
-      "to": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-122",
-      "from": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
-      "to": "p2r-mvups-flat-paste-1779985373163-118-lnrga",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-123",
-      "from": "p2r-mvups-flat-paste-1779985373163-118-lnrga",
-      "to": "p2r-mvups-flat-paste-1779985373163-119-zpe0e",
       "type": "power",
       "status": "idle"
     },
@@ -20747,11 +20983,18 @@
       "to": "p2r-mvups-flat-paste-1779985373163-1-43w91",
       "type": "power",
       "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-111-119",
+      "from": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+      "to": "p2r-mvups-flat-paste-1779985373163-119-zpe0e",
+      "type": "power",
+      "status": "idle"
     }
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.6855185586449621,
+    "zoom": 0.38106072036746425,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
@@ -20761,10 +21004,10 @@
       "y": 296.87632161365804
     },
     "panBottom": {
-      "x": 160.76785553083496,
-      "y": -721.6282481060713
+      "x": 217.30776158374553,
+      "y": 613.3627185379138
     },
-    "quadBottomRowShare": 75,
+    "quadBottomRowShare": 51.5,
     "mode": "design",
     "uiFontPxShift": 5,
     "canvasFontPxShift": 20,
@@ -20783,13 +21026,15 @@
     "workspaceLayoutPreset": "conf3"
   },
   "variableDrivenPresence": [],
-  "canvasBlockTypeScale": {},
+  "canvasBlockTypeScale": {
+    "manual-line-switch": 0.9804
+  },
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1792095717801-0": 1,
-    "sim-chart-1792095717801-1": 1,
-    "sim-chart-1792095717801-2": 1,
-    "sim-chart-1792095717801-3": 1
+    "sim-chart-1792097960901-0": 1,
+    "sim-chart-1792097960901-1": 1,
+    "sim-chart-1792097960901-2": 1,
+    "sim-chart-1792097960901-3": 1
   },
   "playbackTimeRange": {
     "t1": 20.0,
@@ -20807,7 +21052,9 @@
       "noBessNoStatcom": true,
       "withBessandStatCom": true,
       "withBessAlone": true,
-      "withStatcomAlone": true
+      "withStatcomAlone": true,
+      "mvups_undamped": false,
+      "mvups_damped": false
     },
     "hiddenChartPanelNamedConfigs": [
       "Reset",
