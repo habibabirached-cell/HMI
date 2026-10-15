@@ -540,21 +540,23 @@ export default function ConfIdeumTechnologyHub({
       {corridor?.top && (
         <div className="conf-ideum-corridor conf-ideum-corridor--top">{corridor.top}</div>
       )}
-      {corridor?.left && (
-        <div className="conf-ideum-corridor conf-ideum-corridor--left">{corridor.left}</div>
-      )}
-      {corridor?.right && (
-        <div className="conf-ideum-corridor conf-ideum-corridor--right">{corridor.right}</div>
-      )}
       {corridor?.bottom && (
         <div className="conf-ideum-corridor conf-ideum-corridor--bottom">{corridor.bottom}</div>
       )}
 
-      <HubCenter
-        loadEditor={loadEditor}
-        gridEditor={gridEditor}
-        centerStageRef={centerStageRef}
-      />
+      <div className="conf-ideum-input-band" aria-label="Input region">
+        {corridor?.left && (
+          <div className="conf-ideum-corridor conf-ideum-corridor--left">{corridor.left}</div>
+        )}
+        <HubCenter
+          loadEditor={loadEditor}
+          gridEditor={gridEditor}
+          centerStageRef={centerStageRef}
+        />
+        {corridor?.right && (
+          <div className="conf-ideum-corridor conf-ideum-corridor--right">{corridor.right}</div>
+        )}
+      </div>
     </div>
   );
 }

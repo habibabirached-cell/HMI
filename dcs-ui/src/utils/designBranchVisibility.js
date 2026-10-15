@@ -4,7 +4,6 @@
  */
 
 import { BESS_COLLAPSE_3D_TYPES } from './bess3dLayout';
-
 export const DESIGN_BRANCH_KIND = {
   BESS: 'bess',
   STATCOM: 'statcom',

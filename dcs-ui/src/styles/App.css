@@ -399,10 +399,10 @@ body {
   max-width: 40vw;
 }
 
-/* conf2/conf3 — fixed vertical strip on the left, bottom half of the viewport. */
+/* conf2/conf3/conf4 — fixed strip on the left, from below toolbar to bottom of viewport. */
 .app-right-rail--dock-left-bottom {
   position: fixed;
-  top: 50%;
+  top: var(--controls-rail-top, 72px);
   bottom: 0;
   height: auto;
   border-right: 2px solid var(--vernova-border);

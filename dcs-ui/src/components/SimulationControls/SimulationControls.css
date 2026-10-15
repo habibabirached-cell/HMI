@@ -590,18 +590,68 @@
   margin-bottom: 12px;
 }
 
-/* Quick scenario buttons are slightly smaller than component buttons */
+.mvups-damping-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 94%;
+  margin: 0 auto 14px;
+  padding: 2px;
+  border: 1px solid #ff9800;
+  border-radius: 4px;
+  background: #1a1a1a;
+}
+
+.mvups-damping-toggle__option {
+  width: 100%;
+  margin: 0;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #bbb;
+  font-size: calc(10px + var(--ui-font-px-shift, 0px));
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mvups-damping-toggle__option:hover {
+  color: #fff;
+}
+
+.mvups-damping-toggle__option--active {
+  background: #ff9800;
+  color: #1a1a1a;
+}
+
+.mvups-damping-toggle__option--active:hover {
+  color: #1a1a1a;
+}
+
+/* Quick scenario buttons — slightly narrower / thinner than component buttons */
+.quick-scenarios-section .control-buttons {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 .quick-scenarios-section .control-btn {
-  font-size: calc(12px + var(--ui-font-px-shift, 0px));
-  padding: 10px 14px;
+  font-size: calc(11px + var(--ui-font-px-shift, 0px));
+  padding: 7px 10px;
+  letter-spacing: 0.35px;
 }
 
 .quick-scenario-row {
   display: flex;
   align-items: stretch;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   min-width: 0;
+  max-width: 94%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .quick-scenario-row .control-btn {

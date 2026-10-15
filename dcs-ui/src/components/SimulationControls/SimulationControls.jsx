@@ -3,7 +3,13 @@ import './SimulationControls.css';
 import EnsembleEditorDialog from '../EnsembleEditorDialog/EnsembleEditorDialog';
 import QuickScenarioContextMenu from './QuickScenarioContextMenu';
 import { isPerfDebugEnabled, logPerfLayout, logPerfAfterPaint } from '../../utils/perfDebug';
-import { DEFAULT_QUICK_SCENARIOS, isQuickScenarioControlsShortcut, isQuickScenarioResetPreset } from '../../data/quickScenarioUi';
+import {
+  DEFAULT_QUICK_SCENARIOS,
+  isMvupsQuickScenarioShortcut,
+  isQuickScenarioControlsShortcut,
+  isQuickScenarioResetPreset,
+  resolveMvupsPresetForMode,
+} from '../../data/quickScenarioUi';
 import { LIVE_RTDS_PRESET } from '../../utils/liveRtdsCharts';
 import { SIMULATION_SPEED_OPTIONS } from '../../utils/simulationSpeed';
 
@@ -186,6 +192,10 @@ const SimulationControls = ({
   onSaveQuickScenarioPreset,
   onDeleteQuickScenarioButton,
   onHideDefaultQuickScenario,
+  mvupsDampingMode = 'undamped',
+  onMvupsDampingModeChange,
+  showMvupsDampingToggle = false,
+  namedSimulationConfigs = [],
   canSaveScenarioAs = false,
   onSaveScenarioAsReplace,
   rightRailGridPeek = false,
@@ -234,9 +244,22 @@ const SimulationControls = ({
     if (activeQuickScenarioPlaying) return activeQuickScenarioPlaying;
     if (!activeNamedSimulationConfig) return null;
     return (
-      quickScenarioButtons.find((b) => b.presetName === activeNamedSimulationConfig) ?? null
+      quickScenarioButtons.find((b) => {
+        if (b.presetName === activeNamedSimulationConfig) return true;
+        if (isMvupsQuickScenarioShortcut(b)) {
+          const resolved = resolveMvupsPresetForMode(mvupsDampingMode, namedSimulationConfigs);
+          return activeNamedSimulationConfig === resolved;
+        }
+        return false;
+      }) ?? null
     );
-  }, [activeQuickScenarioPlaying, activeNamedSimulationConfig, quickScenarioButtons]);
+  }, [
+    activeQuickScenarioPlaying,
+    activeNamedSimulationConfig,
+    quickScenarioButtons,
+    mvupsDampingMode,
+    namedSimulationConfigs,
+  ]);
 
   const quickScenarioShortcuts = React.useMemo(
     () => quickScenarioButtons.filter((s) => !isQuickScenarioControlsShortcut(s)),
@@ -623,6 +646,33 @@ const SimulationControls = ({
         )}
 
         <div className="quick-scenarios-section quick-scenarios-section--top">
+          {showMvupsDampingToggle && onMvupsDampingModeChange && (
+            <div
+              className="mvups-damping-toggle"
+              role="group"
+              aria-label="MVUPS damping mode"
+            >
+              <button
+                type="button"
+                className={`mvups-damping-toggle__option${
+                  mvupsDampingMode === 'damped' ? ' mvups-damping-toggle__option--active' : ''
+                }`}
+                onClick={() => onMvupsDampingModeChange('damped')}
+              >
+                Damped
+              </button>
+              <button
+                type="button"
+                className={`mvups-damping-toggle__option${
+                  mvupsDampingMode === 'undamped' ? ' mvups-damping-toggle__option--active' : ''
+                }`}
+                onClick={() => onMvupsDampingModeChange('undamped')}
+              >
+                Undamped
+              </button>
+            </div>
+          )}
+
           <h4 className="scenarios-title">Quick Scenarios</h4>
 
           <div className="control-buttons">

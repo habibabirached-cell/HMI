@@ -2265,15 +2265,10 @@ const Canvas = forwardRef(({
     };
 
     return {
-      upper: tieCenterCanvasX(renderComponentsForPane(CANVAS_PANE_UPPER)),
-      lower: tieCenterCanvasX(renderComponentsForPane(CANVAS_PANE_LOWER)),
+      upper: tieCenterCanvasX(filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)),
+      lower: tieCenterCanvasX(filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)),
     };
-  }, [
-    splitView,
-    splitPaneTitles,
-    renderComponentsForPane,
-    canvasBlockTypeScale,
-  ]);
+  }, [splitView, splitPaneTitles, components, canvasBlockTypeScale]);
 
   const SPLIT_TITLE_TOP_PAD_PX = 44;
 

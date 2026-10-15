@@ -18,12 +18,17 @@ import SaveScenarioAsDialog from './components/SaveScenarioAsDialog/SaveScenario
 import { normalizeBusTransferSegments } from './utils/busTransferSegments';
 import {
   normalizeQuickScenarioButtons,
+  ensureMvupsUndampedQuickScenarioButton,
+  designSupportsMvupsDampingToggle,
+  isMvupsQuickScenarioShortcut,
+  normalizeMvupsDampingMode,
   normalizeHiddenDefaultQuickScenarios,
   normalizeHiddenChartPanelNamedConfigs,
   isQuickScenarioPlaceholderPreset,
   isQuickScenarioDesignFirstPreset,
   isQuickScenarioResetPreset,
   resolveDesignEnsemble,
+  resolveMvupsPresetForMode,
 } from './data/quickScenarioUi';
 import * as Scenarios from './scenarios/quickScenarios';
 import {
@@ -718,7 +723,7 @@ function App() {
   const dualChartDrawersStacked = workspaceLayoutPreset === 'conf4';
   /** conf3: four equal quadrants (chart1–chart4) in a 2×2 grid in the right-side drawer. */
   const quadChartDrawers = workspaceLayoutPreset === 'conf3';
-  /** conf1: Controls full-height on the right; conf2/conf3/conf4: bottom-half vertical strip on the left. */
+  /** conf1: Controls full-height on the right; conf2/conf3/conf4: full-height strip on the left (below toolbar). */
   const controlsDockRight = workspaceLayoutPreset === 'conf1';
   const controlsDockLeftBottom =
     workspaceLayoutPreset === 'conf2' ||
@@ -1102,6 +1107,19 @@ function App() {
   const [saveScenarioAsReplaceTarget, setSaveScenarioAsReplaceTarget] = useState(null);
   /** User shortcuts in Quick Scenarios → named chart presets (persisted in design .conf.json). */
   const [quickScenarioButtons, setQuickScenarioButtons] = useState([]);
+  useEffect(() => {
+    if (!namedSimulationConfigs.includes('mvups_undamped')) return;
+    setQuickScenarioButtons((prev) => {
+      const next = ensureMvupsUndampedQuickScenarioButton(prev, namedSimulationConfigs);
+      if (
+        next.length === prev.length
+        && next.every((btn, i) => btn.id === prev[i]?.id && btn.presetName === prev[i]?.presetName)
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [namedSimulationConfigs]);
   /** Full-screen Ideum kiosk (ideum05): hide menus, 3D canvas buttons only. */
   const [ideumKioskMode, setIdeumKioskMode] = useState(false);
   /** Ideum touch-table remote control buttons (legacy sidebar; unused in kiosk mode). */
@@ -1126,6 +1144,8 @@ function App() {
   const [quickScenarioBranchCollapsed, setQuickScenarioBranchCollapsed] = useState(
     () => normalizeQuickScenarioBranchCollapsed(null),
   );
+  /** P2R_18 MVUPS quick scenario: undamped (default) vs damped named preset. */
+  const [mvupsDampingMode, setMvupsDampingMode] = useState('undamped');
   const [designExpansion, setDesignExpansion] = useState(() => ({
     ...DEFAULT_DESIGN_EXPANSION,
   }));
@@ -3662,8 +3682,11 @@ function App() {
   };
 
   const persistQuickScenarioUiToDesign = useCallback(
-    async (buttons, hiddenDefaults) => {
+    async (buttons, hiddenDefaults, uiOverrides = {}) => {
       if (!currentConfigName) return false;
+      const sessionMvupsMode = normalizeMvupsDampingMode(
+        uiOverrides.mvupsDampingMode ?? mvupsDampingMode,
+      );
       try {
         const res = await fetch(`${API_BASE_URL}/api/save`, {
           method: 'POST',
@@ -3689,6 +3712,7 @@ function App() {
                 quickScenarioBranchCollapsed,
                 designExpansion,
                 hiddenChartPanelNamedConfigs,
+                mvupsDampingMode: sessionMvupsMode,
               },
               systemState: {
                 simulationRunning,
@@ -3742,9 +3766,25 @@ function App() {
       designSectionVisibility,
       quickScenarioBranchCollapsed,
       hiddenChartPanelNamedConfigs,
+      mvupsDampingMode,
       splitPaneTitles,
       designViewMode,
       workspaceLayoutPreset,
+    ],
+  );
+
+  const handleMvupsDampingModeChange = useCallback(
+    (mode) => {
+      const next = normalizeMvupsDampingMode(mode);
+      setMvupsDampingMode(next);
+      persistQuickScenarioUiToDesign(quickScenarioButtons, hiddenDefaultQuickScenarios, {
+        mvupsDampingMode: next,
+      });
+    },
+    [
+      persistQuickScenarioUiToDesign,
+      quickScenarioButtons,
+      hiddenDefaultQuickScenarios,
     ],
   );
 
@@ -5000,35 +5040,41 @@ function App() {
       return;
     }
 
+    const presetName = isMvupsQuickScenarioShortcut(shortcut)
+      ? resolveMvupsPresetForMode(mvupsDampingMode, namedSimulationConfigs)
+      : shortcut.presetName;
+    const effectiveShortcut =
+      presetName === shortcut.presetName ? shortcut : { ...shortcut, presetName };
+
     stopLiveRtdsStream();
     handleWorkspaceLayoutPresetChange('conf3');
 
     const isPlaceholder =
-      isQuickScenarioPlaceholderPreset(shortcut.presetName) &&
-      !namedSimulationConfigs.includes(shortcut.presetName);
-    const isDesignFirst = isQuickScenarioDesignFirstPreset(shortcut.presetName);
+      isQuickScenarioPlaceholderPreset(presetName) &&
+      !namedSimulationConfigs.includes(presetName);
+    const isDesignFirst = isQuickScenarioDesignFirstPreset(presetName);
     const isSecondDesignFirstClick =
-      isDesignFirst && quickScenarioDesignPrimedPreset === shortcut.presetName;
+      isDesignFirst && quickScenarioDesignPrimedPreset === presetName;
 
     if (
       quickScenarioDesignPrimedPreset &&
-      quickScenarioDesignPrimedPreset !== shortcut.presetName
+      quickScenarioDesignPrimedPreset !== presetName
     ) {
       setQuickScenarioDesignPrimedPreset(null);
     }
 
-    const sectionVisibility = resolveQuickScenarioDesignVisibility(shortcut.presetName);
+    const sectionVisibility = resolveQuickScenarioDesignVisibility(presetName);
     const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
     if (sectionVisibility) {
       setDesignSectionVisibility(sectionVisibility);
     }
-    const branchCollapsed = quickScenarioBranchCollapsed[shortcut.presetName] ?? true;
+    const branchCollapsed = quickScenarioBranchCollapsed[presetName] ?? true;
     setCanvasComponents((prev) => {
       let next = applyBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         branchCollapsed,
-        shortcut.presetName,
+        presetName,
       );
       if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
         next = applyDesignExpansionToComponents(next, designExpansion);
@@ -5036,14 +5082,14 @@ function App() {
       return next;
     });
 
-    if (isQuickScenarioResetPreset(shortcut.presetName)) {
+    if (isQuickScenarioResetPreset(presetName)) {
       handleStopSimulation();
       setOpenCharts([]);
       setChartStacks([]);
       setPerChartSampleStep({});
       setActiveNamedSimulationConfig(null);
       setQuickScenarioDesignPrimedPreset(null);
-      setActiveQuickScenarioPlaying(shortcut);
+      setActiveQuickScenarioPlaying(effectiveShortcut);
       return;
     }
 
@@ -5054,8 +5100,8 @@ function App() {
       setChartStacks([]);
       setPerChartSampleStep({});
       setActiveNamedSimulationConfig(null);
-      setQuickScenarioDesignPrimedPreset(shortcut.presetName);
-      setActiveQuickScenarioPlaying(shortcut);
+      setQuickScenarioDesignPrimedPreset(presetName);
+      setActiveQuickScenarioPlaying(effectiveShortcut);
       return;
     }
 
@@ -5067,12 +5113,12 @@ function App() {
       handleStopSimulation();
     }
     if (isPlaceholder) {
-      setActiveQuickScenarioPlaying(shortcut);
+      setActiveQuickScenarioPlaying(effectiveShortcut);
       return;
     }
     try {
-      if (shortcut.targetType === 'ensemble' && shortcut.ensembleId) {
-        const ensemble = resolveDesignEnsemble(designEnsembles, shortcut.ensembleId);
+      if (effectiveShortcut.targetType === 'ensemble' && effectiveShortcut.ensembleId) {
+        const ensemble = resolveDesignEnsemble(designEnsembles, effectiveShortcut.ensembleId);
         if (!ensemble) {
           alert('This ensemble no longer exists in the design.');
           return;
@@ -5083,24 +5129,24 @@ function App() {
         if (!sameDesignEnsemble) {
           await handleSelectEnsemble(ensemble);
         }
-        const ensembleOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
+        const ensembleOk = await handleActivateNamedSimulationConfig(presetName);
         if (ensembleOk) {
           await restartSimulationPlaybackFromStart();
-          setActiveQuickScenarioPlaying(shortcut);
+          setActiveQuickScenarioPlaying(effectiveShortcut);
         }
         return;
       }
-      const simId = shortcut.simulationId;
+      const simId = effectiveShortcut.simulationId;
       if (!simId) return;
       const onThisSim =
         !simulationMetadata?.isEnsemble && simulationMetadata?.id === simId;
       if (!onThisSim) {
         await handleRunSimulation(simId);
       }
-      const presetOk = await handleActivateNamedSimulationConfig(shortcut.presetName);
+      const presetOk = await handleActivateNamedSimulationConfig(presetName);
       if (presetOk) {
         await restartSimulationPlaybackFromStart();
-        setActiveQuickScenarioPlaying(shortcut);
+        setActiveQuickScenarioPlaying(effectiveShortcut);
       }
     } catch (e) {
       console.warn(e);
@@ -5841,6 +5887,7 @@ function App() {
         quickScenarioBranchCollapsed,
         designExpansion,
         hiddenChartPanelNamedConfigs,
+        mvupsDampingMode,
       },
       quickScenarioButtons: meta?.quickScenarioButtons ?? quickScenarioButtons,
       hiddenDefaultQuickScenarios:
@@ -8278,8 +8325,14 @@ function App() {
     setHiddenChartPanelNamedConfigs(
       normalizeHiddenChartPanelNamedConfigs(dus?.hiddenChartPanelNamedConfigs),
     );
+    setMvupsDampingMode(normalizeMvupsDampingMode(dus?.mvupsDampingMode));
 
-    setQuickScenarioButtons(normalizeQuickScenarioButtons(data.quickScenarioButtons));
+    setQuickScenarioButtons(
+      ensureMvupsUndampedQuickScenarioButton(
+        normalizeQuickScenarioButtons(data.quickScenarioButtons),
+        data.named_configuration_keys || [],
+      ),
+    );
     const ideumComponents = getIdeumComponents(data.canvasComponents || []);
     const ideumModeActive =
       data.ideumKioskMode === true || ideumComponents.length > 0;
@@ -8537,6 +8590,7 @@ function App() {
         quickScenarioBranchCollapsed,
         designExpansion: saveDesignExpansion,
         hiddenChartPanelNamedConfigs,
+        mvupsDampingMode,
         ...(ideum05NavViewports ? { ideum05NavViewports } : {}),
       },
       quickScenarioButtons,
@@ -9241,6 +9295,13 @@ function App() {
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
       onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
+      mvupsDampingMode={mvupsDampingMode}
+      onMvupsDampingModeChange={handleMvupsDampingModeChange}
+      showMvupsDampingToggle={
+        designSupportsMvupsDampingToggle(namedSimulationConfigs)
+        && /^p2r_18$/i.test(String(currentConfigName || ''))
+      }
+      namedSimulationConfigs={namedSimulationConfigs}
       canSaveScenarioAs={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
       onSaveScenarioAsReplace={handleOpenSaveScenarioAs}
       rightRailGridPeek={gridPeek}
@@ -9264,8 +9325,10 @@ function App() {
       style={
         controlsDockLeftBottom
           ? {
+              top: `${headerBottomPx}px`,
               left: `${controlsLeftInsetPx}px`,
               ['--controls-left-inset']: `${controlsLeftInsetPx}px`,
+              ['--controls-rail-top']: `${headerBottomPx}px`,
               ['--chart-side-dock-width']:
                 workspaceLayoutPreset === 'conf2' ||
                 workspaceLayoutPreset === 'conf3' ||

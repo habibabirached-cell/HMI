@@ -616,6 +616,12 @@
   fill: #1f2933 !important;
 }
 
+.dataVis-quadScatterGrid .g-xtick text,
+.dataVis-quadScatterGrid .g-ytick text {
+  font-size: 18px !important;
+  fill: #1f2933 !important;
+}
+
 .dataVis-quadScatterGrid .cbtitle text,
 .dataVis-quadScatterGrid .cbtitleunshift text {
   font-weight: 400 !important;

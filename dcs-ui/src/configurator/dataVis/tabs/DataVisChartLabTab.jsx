@@ -30,6 +30,12 @@ const COMPACT_AXIS_TITLE_FONT = {
   weight: 700,
 };
 
+const COMPACT_AXIS_TICK_FONT = {
+  size: 18,
+  color: '#1f2933',
+  family: 'system-ui, sans-serif',
+};
+
 function scatterColorBounds(payload, colorColumn, columnStatMap) {
   const label = payload?.color_label || colorColumn;
   const stat = label ? columnStatMap[label] : null;
@@ -462,7 +468,7 @@ export function ScatterSlot({
         : { text: `${payload.y_label} vs ${payload.x_label}`, font: { size: 16 } },
       margin: compact
         ? {
-            l: 0,
+            l: 56,
             r: 40,
             t: 30,
             b: 56,
@@ -474,7 +480,10 @@ export function ScatterSlot({
       selectionrevision: selectionEnabled ? `${slotLabel}-sel` : undefined,
       xaxis: {
         title: compact ? compactTitle(payload.x_label) : payload.x_label,
-        tickfont: compact ? { size: 2, color: '#1f2933' } : undefined,
+        tickfont: compact ? { ...COMPACT_AXIS_TICK_FONT } : undefined,
+        showticklabels: true,
+        ticks: compact ? 'outside' : undefined,
+        ticklen: compact ? 4 : undefined,
         ...(layoutRanges.xRange
           ? { range: layoutRanges.xRange, autorange: false }
           : { autorange: true }),
@@ -482,7 +491,10 @@ export function ScatterSlot({
       },
       yaxis: {
         title: compact ? compactTitle(payload.y_label) : payload.y_label,
-        tickfont: compact ? { size: 2, color: '#1f2933' } : undefined,
+        tickfont: compact ? { ...COMPACT_AXIS_TICK_FONT } : undefined,
+        showticklabels: true,
+        ticks: compact ? 'outside' : undefined,
+        ticklen: compact ? 4 : undefined,
         ...(layoutRanges.yRange
           ? { range: layoutRanges.yRange, autorange: false }
           : { autorange: true }),

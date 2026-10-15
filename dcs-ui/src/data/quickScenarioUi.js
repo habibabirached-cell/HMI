@@ -67,7 +67,63 @@ export const QUICK_SCENARIO_LOWER_PLANT_COLORS = {
   withBessandStatCom: '#2e7d32',
   withBessAlone: '#00695c',
   withStatcomAlone: '#388e3c',
+  mvups_undamped: '#689f38',
 };
+
+export const MVUPS_UNDAMPED_PRESET_NAME = 'mvups_undamped';
+export const MVUPS_DAMPED_PRESET_NAME = 'mvups_damped';
+
+export function normalizeMvupsDampingMode(raw) {
+  return raw === 'damped' ? 'damped' : 'undamped';
+}
+
+export function isMvupsQuickScenarioShortcut(shortcut) {
+  if (!shortcut) return false;
+  if (shortcut.id === 'qs-placeholder-mvups-undamped') return true;
+  const preset = String(shortcut.presetName || '');
+  return preset === MVUPS_UNDAMPED_PRESET_NAME || preset === MVUPS_DAMPED_PRESET_NAME;
+}
+
+export function resolveMvupsPresetForMode(mode, namedSimulationConfigs = []) {
+  const keys = Array.isArray(namedSimulationConfigs) ? namedSimulationConfigs : [];
+  const damped = normalizeMvupsDampingMode(mode) === 'damped';
+  const preferred = damped ? MVUPS_DAMPED_PRESET_NAME : MVUPS_UNDAMPED_PRESET_NAME;
+  if (keys.includes(preferred)) return preferred;
+  if (keys.includes(MVUPS_UNDAMPED_PRESET_NAME)) return MVUPS_UNDAMPED_PRESET_NAME;
+  if (keys.includes(MVUPS_DAMPED_PRESET_NAME)) return MVUPS_DAMPED_PRESET_NAME;
+  return preferred;
+}
+
+export function designSupportsMvupsDampingToggle(namedSimulationConfigs = []) {
+  const keys = Array.isArray(namedSimulationConfigs) ? namedSimulationConfigs : [];
+  return keys.includes(MVUPS_UNDAMPED_PRESET_NAME) && keys.includes(MVUPS_DAMPED_PRESET_NAME);
+}
+
+/** Insert after “With STATCOM Alone” when the design ensemble exposes this named config. */
+export function ensureMvupsUndampedQuickScenarioButton(buttons, namedSimulationConfigs = []) {
+  const list = normalizeQuickScenarioButtons(buttons);
+  if (!namedSimulationConfigs.includes(MVUPS_UNDAMPED_PRESET_NAME)) return list;
+  if (list.some((b) => b.presetName === MVUPS_UNDAMPED_PRESET_NAME)) return list;
+
+  const statcomIdx = list.findIndex((b) => b.presetName === 'withStatcomAlone');
+  const template =
+    statcomIdx >= 0
+      ? list[statcomIdx]
+      : list.find((b) => b.targetType === 'ensemble') ?? null;
+
+  const shortcut = {
+    id: 'qs-placeholder-mvups-undamped',
+    label: 'With MVUPS Alone',
+    icon: '🔋',
+    color: QUICK_SCENARIO_LOWER_PLANT_COLORS.mvups_undamped,
+    presetName: MVUPS_UNDAMPED_PRESET_NAME,
+    targetType: 'ensemble',
+    ensembleId: template?.ensembleId || 'all',
+  };
+
+  const insertAt = statcomIdx >= 0 ? statcomIdx + 1 : list.length;
+  return [...list.slice(0, insertAt), shortcut, ...list.slice(insertAt)];
+}
 
 /**
  * Icons for “Save scenario as” — data-center / power / IT operations themed (~120).

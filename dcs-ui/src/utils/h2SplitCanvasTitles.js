@@ -20,6 +20,14 @@ const LOWER_TITLE_BY_PRESET = {
     line1: 'Augmented Configuration : ',
     line2: '+ STATCOM',
   },
+  mvups_undamped: {
+    line1: 'Augmented Configuration : ',
+    line2: '+ MVUPS',
+  },
+  mvups_damped: {
+    line1: 'Augmented Configuration : ',
+    line2: '+ MVUPS',
+  },
   noBessNoStatcom: null,
 };
 
@@ -64,8 +72,11 @@ export function resolveH2ActivePresetName({
   const v = designSectionVisibility;
   if (v && v.showLower === false) return 'noBessNoStatcom';
   const branches = v?.hideBranches || [];
-  if (branches.includes('statcom')) return 'withBessAlone';
-  if (branches.includes('bess')) return 'withStatcomAlone';
+  if (v?.showMvupsFlatSchematic) {
+    return activeNamedSimulationConfig === 'mvups_damped' ? 'mvups_damped' : 'mvups_undamped';
+  }
+  if (branches.includes('statcom') && !branches.includes('bess')) return 'withBessAlone';
+  if (branches.includes('bess') && !branches.includes('statcom')) return 'withStatcomAlone';
   if (v?.showLower) return 'withBessandStatCom';
   return 'noBessNoStatcom';
 }

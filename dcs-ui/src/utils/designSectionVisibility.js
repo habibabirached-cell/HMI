@@ -13,10 +13,13 @@ import { collectHiddenBranchMemberIds } from './designBranchVisibility';
 /** Y split between upper stack (buses at y≈0) and lower stack (buses at y≈1900). */
 export const DESIGN_SECTION_Y_THRESHOLD = 1800;
 
+export const MVUPS_FLAT_SCHEMATIC_ID_PREFIX = 'p2r-mvups-flat-';
+
 export const DEFAULT_DESIGN_SECTION_VISIBILITY = {
   showUpper: true,
   showLower: true,
   hideBranches: [],
+  showMvupsFlatSchematic: false,
 };
 
 /** Named simulation presets → canvas section visibility (statcom05 quick scenarios). */
@@ -27,6 +30,8 @@ export const QUICK_SCENARIO_DESIGN_VISIBILITY = {
   withBessandStatCom: { showUpper: true, showLower: true },
   withBessAlone: { showUpper: true, showLower: true, hideBranches: ['statcom'] },
   withStatcomAlone: { showUpper: true, showLower: true, hideBranches: ['bess'] },
+  mvups_undamped: { showUpper: true, showLower: true, showMvupsFlatSchematic: true },
+  mvups_damped: { showUpper: true, showLower: true, showMvupsFlatSchematic: true },
 };
 
 export function normalizeDesignSectionVisibility(raw) {
@@ -39,7 +44,20 @@ export function normalizeDesignSectionVisibility(raw) {
     hideBranches: Array.isArray(raw.hideBranches)
       ? raw.hideBranches.filter((b) => b === 'bess' || b === 'statcom')
       : [],
+    showMvupsFlatSchematic: raw.showMvupsFlatSchematic === true,
   };
+}
+
+export function isMvupsFlatSchematicComponentId(id) {
+  return typeof id === 'string' && id.startsWith(MVUPS_FLAT_SCHEMATIC_ID_PREFIX);
+}
+
+export function isMvupsFlatSchematicComponent(component) {
+  if (!component) return false;
+  return (
+    isMvupsFlatSchematicComponentId(component.id) ||
+    component.properties?.mvupsFlatSchematic === true
+  );
 }
 
 export function resolveQuickScenarioDesignVisibility(presetName) {
@@ -136,6 +154,17 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
 
   for (const id of collectHiddenBranchMemberIds(components, connections, v.hideBranches)) {
     hidden.add(id);
+  }
+
+  if (v.showMvupsFlatSchematic) {
+    const { lower } = buildDesignSectionMemberIdSets(components);
+    for (const id of lower) {
+      if (!isMvupsFlatSchematicComponentId(id)) hidden.add(id);
+    }
+  } else {
+    for (const c of components || []) {
+      if (isMvupsFlatSchematicComponentId(c.id)) hidden.add(c.id);
+    }
   }
 
   return hidden;

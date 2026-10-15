@@ -17,6 +17,7 @@ import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
 import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface, isGFMeCollapseAggregateSurface, isBessCollapseAggregateSurface } from '../../utils/collapseAggregate';
 import { GAS_TURBINE_3D_TYPE } from '../../utils/gasTurbine3dLayout';
+import { isMvupsFlatSchematicComponent } from '../../utils/designSectionVisibility';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
@@ -71,6 +72,7 @@ function CanvasBlock({
   const tieStrip = isTieStripMode(component);
   const gasBankStrip = isGasTurbineBankStripMode(component);
   const stripMode = tieStrip || gasBankStrip;
+  const mvupsFlatSchematic = isMvupsFlatSchematicComponent(component);
   const visualConfig = getComponentVisualConfig(component.type);
   const bodyVisualConfig = gfmeCollapse3d
     ? { ...visualConfig, shape: 'schematic-gfme-3d', backgroundTexture: undefined }
@@ -283,7 +285,7 @@ function CanvasBlock({
           </g>
         )}
 
-        {!stripMode && component.embeddedSparklines?.length > 0 &&
+        {!stripMode && !mvupsFlatSchematic && component.embeddedSparklines?.length > 0 &&
           (simulationData?.length > 0 ||
             (component.embeddedSparklines || []).some(
               (s) =>
@@ -546,7 +548,11 @@ function CanvasBlock({
         )}
       </g>
 
-      {!stripMode && component.type !== GAS_TURBINE_3D_TYPE && !bessCollapse3d && !gfmeCollapse3d && (
+      {!stripMode &&
+        !mvupsFlatSchematic &&
+        component.type !== GAS_TURBINE_3D_TYPE &&
+        !bessCollapse3d &&
+        !gfmeCollapse3d && (
         <ComponentConnectionReadout
           connectionReadout={component.connectionReadout}
           simulationData={simulationData}
