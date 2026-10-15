@@ -13800,7 +13800,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2625,
+        "x": 2725,
         "y": 2750
       },
       "status": "online",
@@ -13825,8 +13825,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 2725,
-        "y": 2775
+        "x": 2625,
+        "y": 2625
       },
       "status": "online",
       "properties": {
@@ -13850,7 +13850,7 @@
       "name": "",
       "fullName": "Tie / bypass junction",
       "position": {
-        "x": 3175,
+        "x": 3125,
         "y": 2775
       },
       "status": "online",
@@ -13875,8 +13875,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 2975,
-        "y": 2775
+        "x": 3425,
+        "y": 2625
       },
       "status": "online",
       "properties": {
@@ -13900,7 +13900,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 3075,
+        "x": 2925,
         "y": 2750
       },
       "status": "online",
@@ -13926,7 +13926,7 @@
       "fullName": "Center bus-tie CB 34.5kV 3500A",
       "position": {
         "x": 2025,
-        "y": 2925
+        "y": 2775
       },
       "status": "online",
       "properties": {
@@ -14159,7 +14159,7 @@
       "name": "CB",
       "fullName": "Bus section / riser CB 34.5kV (graphic)",
       "position": {
-        "x": 2875,
+        "x": 2825,
         "y": 2775
       },
       "status": "online",
@@ -14167,57 +14167,6 @@
         "rating": 0,
         "voltage": 34.5,
         "unit": "",
-        "mvupsFlatSchematic": true
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "initialSimStatus": null,
-      "canvasPane": "lower"
-    },
-    {
-      "id": "p2r-mvups-flat-paste-1779985373163-123-gickc",
-      "type": "manual-line-switch",
-      "name": "",
-      "fullName": "Bypass (retour) disconnect",
-      "position": {
-        "x": 3175,
-        "y": 2625
-      },
-      "status": "online",
-      "properties": {
-        "rating": 3500,
-        "voltage": 34.5,
-        "unit": "A",
-        "mvupsFlatSchematic": true
-      },
-      "state": {
-        "power": 0,
-        "voltage": 34.5,
-        "current": 0,
-        "frequency": 60
-      },
-      "isTripped": false,
-      "canvasPane": "lower"
-    },
-    {
-      "id": "p2r-mvups-flat-paste-1779985373163-124-7ebg3",
-      "type": "manual-line-switch",
-      "name": "",
-      "fullName": "Bypass (retour) disconnect",
-      "position": {
-        "x": 2525,
-        "y": 2625
-      },
-      "status": "online",
-      "properties": {
-        "rating": 3500,
-        "voltage": 34.5,
-        "unit": "A",
         "mvupsFlatSchematic": true
       },
       "state": {
@@ -19929,41 +19878,6 @@
       "status": "idle"
     },
     {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-115",
-      "from": "p2r-mvups-flat-paste-1779985373163-110-684ny",
-      "to": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-116",
-      "from": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
-      "to": "p2r-mvups-flat-paste-1779985373163-112-afcdn",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-117",
-      "from": "p2r-mvups-flat-paste-1779985373163-112-afcdn",
-      "to": "p2r-mvups-flat-paste-1779985373163-113-bzdat",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-118",
-      "from": "p2r-mvups-flat-paste-1779985373163-113-bzdat",
-      "to": "p2r-mvups-flat-paste-1779985373163-114-xqb03",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-119",
-      "from": "p2r-mvups-flat-paste-1779985373163-114-xqb03",
-      "to": "p2r-mvups-flat-paste-1779985373163-115-lqtx3",
-      "type": "power",
-      "status": "idle"
-    },
-    {
       "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-120",
       "from": "p2r-mvups-flat-paste-1779985373163-115-lqtx3",
       "to": "p2r-mvups-flat-paste-1779985373163-116-ve2vh",
@@ -20009,20 +19923,6 @@
       "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-126",
       "from": "p2r-mvups-flat-paste-1779985373163-121-hg6zl",
       "to": "p2r-mvups-flat-paste-1779985373163-122-3vejh",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-129",
-      "from": "p2r-mvups-flat-paste-1779985373163-123-gickc",
-      "to": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-conn-paste-1779985373163-131",
-      "from": "p2r-mvups-flat-paste-1779985373163-124-7ebg3",
-      "to": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
       "type": "power",
       "status": "idle"
     },
@@ -20779,34 +20679,6 @@
       "status": "idle"
     },
     {
-      "id": "conn-p2r-mvups-flat-retour-a",
-      "from": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
-      "to": "p2r-mvups-flat-paste-1779985373163-123-gickc",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-retour-b",
-      "from": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
-      "to": "p2r-mvups-flat-paste-1779985373163-124-7ebg3",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-retour-c",
-      "from": "p2r-mvups-flat-paste-1779985373163-123-gickc",
-      "to": "p2r-mvups-flat-paste-1779985373163-0-q5ccd",
-      "type": "power",
-      "status": "idle"
-    },
-    {
-      "id": "conn-p2r-mvups-flat-retour-d",
-      "from": "p2r-mvups-flat-paste-1779985373163-124-7ebg3",
-      "to": "p2r-mvups-flat-paste-1779985373163-1-43w91",
-      "type": "power",
-      "status": "idle"
-    },
-    {
       "id": "conn-p2r-mvups-flat-tie-section-a",
       "from": "p2r-mvups-flat-paste-1779985373163-122-3vejh",
       "to": "p2r-mvups-flat-paste-1779985373163-9-7hdwy",
@@ -20816,6 +20688,62 @@
     {
       "id": "conn-p2r-mvups-flat-tie-section-b",
       "from": "p2r-mvups-flat-paste-1779985373163-9-7hdwy",
+      "to": "p2r-mvups-flat-paste-1779985373163-1-43w91",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-117-9",
+      "from": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
+      "to": "p2r-mvups-flat-paste-1779985373163-9-7hdwy",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-9-114",
+      "from": "p2r-mvups-flat-paste-1779985373163-9-7hdwy",
+      "to": "p2r-mvups-flat-paste-1779985373163-114-xqb03",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-114-111",
+      "from": "p2r-mvups-flat-paste-1779985373163-114-xqb03",
+      "to": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-113-111",
+      "from": "p2r-mvups-flat-paste-1779985373163-113-bzdat",
+      "to": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-110-117",
+      "from": "p2r-mvups-flat-paste-1779985373163-110-684ny",
+      "to": "p2r-mvups-flat-paste-1779985373163-117-zg6zy",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-110-0",
+      "from": "p2r-mvups-flat-paste-1779985373163-110-684ny",
+      "to": "p2r-mvups-flat-paste-1779985373163-0-q5ccd",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-112-111",
+      "from": "p2r-mvups-flat-paste-1779985373163-112-afcdn",
+      "to": "p2r-mvups-flat-paste-1779985373163-111-ici2k",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-p2r-mvups-flat-patch-112-1",
+      "from": "p2r-mvups-flat-paste-1779985373163-112-afcdn",
       "to": "p2r-mvups-flat-paste-1779985373163-1-43w91",
       "type": "power",
       "status": "idle"
@@ -20833,8 +20761,8 @@
       "y": 296.87632161365804
     },
     "panBottom": {
-      "x": 199.36785553083496,
-      "y": -1019.6282481060716
+      "x": 160.76785553083496,
+      "y": -721.6282481060713
     },
     "quadBottomRowShare": 75,
     "mode": "design",
@@ -20858,10 +20786,10 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1792091700446-0": 1,
-    "sim-chart-1792091700446-1": 1,
-    "sim-chart-1792091700446-2": 1,
-    "sim-chart-1792091700446-3": 1
+    "sim-chart-1792095717801-0": 1,
+    "sim-chart-1792095717801-1": 1,
+    "sim-chart-1792095717801-2": 1,
+    "sim-chart-1792095717801-3": 1
   },
   "playbackTimeRange": {
     "t1": 20.0,
