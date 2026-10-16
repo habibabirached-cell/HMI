@@ -37,7 +37,10 @@ import {
   resolveQuickScenarioDesignVisibility,
 } from './utils/designSectionVisibility';
 import {
-  applyBranchCollapseToComponents,
+  applyLoadedDesignExpansionToComponents,
+  applyMvupsFlatUnifiedCollapseToComponents,
+  applyQuickScenarioBranchCollapseToComponents,
+  getMvupsFlatCollapseRepairCollapsed,
   normalizeQuickScenarioBranchCollapsed,
 } from './utils/designCollapseState';
 import {
@@ -4572,9 +4575,10 @@ function App() {
         isTripped: false,
       }));
       setCanvasComponents(
-        applyDesignExpansionToComponents(
+        applyLoadedDesignExpansionToComponents(
           normalizeLoadedCanvasComponents(componentsWithStatus),
           loadedExpansion,
+          dus?.designSectionVisibility,
         ),
       );
     }
@@ -4881,31 +4885,72 @@ function App() {
     });
   }, [handleUpdateComponent, maybeApplyHdAeroBreakerPreset, mirrorHdAeroBreakersToMaingear, sendIdeumClusterCommand]);
 
+  const handleMvupsFlatUnifiedCollapse = useCallback((collapsed) => {
+    setCanvasComponents((prev) => applyMvupsFlatUnifiedCollapseToComponents(prev, collapsed));
+    setDesignExpansion((prev) => ({
+      ...prev,
+      breakersCompact: !!collapsed,
+      peripheralsCompact: !!collapsed,
+    }));
+  }, []);
+
   const handleDesignExpansionChange = useCallback((key, expanded) => {
     setDesignExpansion((prev) => {
-      const next = normalizeDesignExpansion({
-        ...prev,
-        ...(key === 'breakers'
-          ? { breakersCompact: !expanded }
-          : { peripheralsCompact: !expanded }),
-      });
-      setCanvasComponents((comps) => applyDesignExpansionToComponents(comps, next));
+      const mvupsFlat = normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic;
+      const next = normalizeDesignExpansion(
+        mvupsFlat
+          ? { breakersCompact: !expanded, peripheralsCompact: !expanded }
+          : {
+              ...prev,
+              ...(key === 'breakers'
+                ? { breakersCompact: !expanded }
+                : { peripheralsCompact: !expanded }),
+            },
+      );
+      setCanvasComponents((comps) =>
+        mvupsFlat
+          ? applyMvupsFlatUnifiedCollapseToComponents(comps, !expanded)
+          : applyDesignExpansionToComponents(comps, next),
+      );
       return next;
     });
-  }, []);
+  }, [designSectionVisibility]);
 
   const handleRemoteExpansionToggle = useCallback((expansionKey) => {
     setDesignExpansion((prev) => {
-      const next = normalizeDesignExpansion({
-        ...prev,
-        ...(expansionKey === 'breakers'
-          ? { breakersCompact: !prev.breakersCompact }
-          : { peripheralsCompact: !prev.peripheralsCompact }),
-      });
-      setCanvasComponents((comps) => applyDesignExpansionToComponents(comps, next));
+      const mvupsFlat = normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic;
+      const toggledCompact =
+        expansionKey === 'breakers' ? !prev.breakersCompact : !prev.peripheralsCompact;
+      const next = normalizeDesignExpansion(
+        mvupsFlat
+          ? { breakersCompact: toggledCompact, peripheralsCompact: toggledCompact }
+          : {
+              ...prev,
+              ...(expansionKey === 'breakers'
+                ? { breakersCompact: toggledCompact }
+                : { peripheralsCompact: toggledCompact }),
+            },
+      );
+      setCanvasComponents((comps) =>
+        mvupsFlat
+          ? applyMvupsFlatUnifiedCollapseToComponents(comps, toggledCompact)
+          : applyDesignExpansionToComponents(comps, next),
+      );
       return next;
     });
-  }, []);
+  }, [designSectionVisibility]);
+
+  useEffect(() => {
+    if (!normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic) return;
+    const repairCollapsed = getMvupsFlatCollapseRepairCollapsed(canvasComponents);
+    if (repairCollapsed === null) return;
+    setCanvasComponents((prev) => applyMvupsFlatUnifiedCollapseToComponents(prev, repairCollapsed));
+    setDesignExpansion((prev) => ({
+      ...prev,
+      breakersCompact: !!repairCollapsed,
+      peripheralsCompact: !!repairCollapsed,
+    }));
+  }, [canvasComponents, designSectionVisibility]);
 
   const stopLiveRtdsStream = useCallback(() => {
     stopLiveRtdsRef.current?.();
@@ -4922,24 +4967,19 @@ function App() {
     }
     const branchCollapsed = quickScenarioBranchCollapsed[presetName] ?? true;
     const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
-    setCanvasComponents((prev) => {
-      let next = applyBranchCollapseToComponents(
+    setCanvasComponents((prev) =>
+      applyQuickScenarioBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         branchCollapsed,
         presetName,
-      );
-      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
-        next = applyDesignExpansionToComponents(next, designExpansion);
-      }
-      return next;
-    });
+        designExpansion,
+      ),
+    );
   }, [
     quickScenarioBranchCollapsed,
     designSectionVisibility,
     designExpansion,
-    designApiPath,
-    currentConfigName,
   ]);
 
   /** Default P2R_18 wall state: conf3 layout, noBessNoStatcom preset, simulation playing. */
@@ -5126,18 +5166,25 @@ function App() {
       setDesignSectionVisibility(sectionVisibility);
     }
     const branchCollapsed = quickScenarioBranchCollapsed[presetName] ?? true;
-    setCanvasComponents((prev) => {
-      let next = applyBranchCollapseToComponents(
+    setCanvasComponents((prev) =>
+      applyQuickScenarioBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         branchCollapsed,
         presetName,
-      );
-      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
-        next = applyDesignExpansionToComponents(next, designExpansion);
-      }
-      return next;
-    });
+        designExpansion,
+      ),
+    );
+    if (
+      sectionVisibility?.showMvupsFlatSchematic ||
+      visibilityForCollapse?.showMvupsFlatSchematic
+    ) {
+      setDesignExpansion((prev) => ({
+        ...prev,
+        breakersCompact: branchCollapsed,
+        peripheralsCompact: branchCollapsed,
+      }));
+    }
 
     if (isQuickScenarioResetPreset(presetName)) {
       handleStopSimulation();
@@ -5455,19 +5502,26 @@ function App() {
     if (sectionVisibility) {
       setDesignSectionVisibility(sectionVisibility);
     }
-    setCanvasComponents((prev) => {
-      let next = applyBranchCollapseToComponents(
+    setCanvasComponents((prev) =>
+      applyQuickScenarioBranchCollapseToComponents(
         prev,
         visibilityForCollapse,
         collapsed,
         shortcut.presetName,
-      );
-      if (designSupportsExpansionPanel(designApiPath, currentConfigName)) {
-        next = applyDesignExpansionToComponents(next, designExpansion);
-      }
-      return next;
-    });
-  }, [designSectionVisibility, designExpansion, designApiPath, currentConfigName]);
+        designExpansion,
+      ),
+    );
+    if (
+      sectionVisibility?.showMvupsFlatSchematic ||
+      visibilityForCollapse?.showMvupsFlatSchematic
+    ) {
+      setDesignExpansion((prev) => ({
+        ...prev,
+        breakersCompact: collapsed,
+        peripheralsCompact: collapsed,
+      }));
+    }
+  }, [designSectionVisibility, designExpansion]);
 
   const handleDeleteQuickScenarioButton = async (buttonId) => {
     const nextButtons = quickScenarioButtons.filter((b) => b.id !== buttonId);
@@ -8317,9 +8371,10 @@ function App() {
         };
       });
       setCanvasComponents(
-        applyDesignExpansionToComponents(
+        applyLoadedDesignExpansionToComponents(
           normalizeLoadedCanvasComponents(componentsWithIdleStatus),
           loadedExpansion,
+          dus?.designSectionVisibility,
         ),
       );
     }
@@ -9666,6 +9721,7 @@ function App() {
             onAddComponent={handleAddComponent}
             onAddConnection={handleAddConnection}
             onUpdateComponent={handleCanvasUpdateComponent}
+            onMvupsFlatUnifiedCollapse={handleMvupsFlatUnifiedCollapse}
             onAssociateChart={handleAssociateChart}
             onOpenChart={handleOpenChart}
             onCreateMultiComponentChart={handleCreateMultiComponentChart}
@@ -9947,6 +10003,7 @@ function App() {
               onAddComponent={handleAddComponent}
               onAddConnection={handleAddConnection}
               onUpdateComponent={handleCanvasUpdateComponent}
+              onMvupsFlatUnifiedCollapse={handleMvupsFlatUnifiedCollapse}
               onAssociateChart={handleAssociateChart}
               onOpenChart={handleOpenChart}
               onCreateMultiComponentChart={handleCreateMultiComponentChart}

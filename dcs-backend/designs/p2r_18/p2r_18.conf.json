@@ -12843,7 +12843,7 @@
       "fullName": "4 Gas Turbines (MVUPS flat collapsed \u2014 upper set)",
       "position": {
         "x": -325,
-        "y": 1862.5
+        "y": 1912.5
       },
       "status": "online",
       "properties": {
@@ -12872,8 +12872,8 @@
       "name": "4 Gas Turbines",
       "fullName": "4 Gas Turbines (MVUPS flat collapsed \u2014 lower set)",
       "position": {
-        "x": -325,
-        "y": 2712.5
+        "x": -375,
+        "y": 2662.5
       },
       "status": "online",
       "properties": {
@@ -12902,8 +12902,8 @@
       "name": "Aux, IT and Rack Loads ",
       "fullName": "Auxiliary Loads (MVUPS flat collapsed)",
       "position": {
-        "x": 2475,
-        "y": 3112.5
+        "x": 3125,
+        "y": 2662.5
       },
       "status": "online",
       "properties": {
@@ -12927,12 +12927,12 @@
     },
     {
       "id": "comp-mvups-flat-mvups-preview",
-      "type": "bess-50mw",
+      "type": "mvups-3d",
       "name": "MVUPS",
-      "fullName": "MVUPS (3D placeholder \u2014 BESS model)",
+      "fullName": "MVUPS (3D preview)",
       "position": {
-        "x": 2575,
-        "y": 2262.5
+        "x": 1850,
+        "y": 1775
       },
       "status": "online",
       "properties": {
@@ -12942,8 +12942,8 @@
         "mvupsFlatSchematic": true
       },
       "visualOverrides": {
-        "width": 750,
-        "height": 375
+        "width": 1500,
+        "height": 750
       },
       "state": {
         "power": 0,
@@ -12979,7 +12979,7 @@
             "maxY": 2400
           },
           "previewMemberId": "comp-mvups-flat-gen-3d-preview-top",
-          "collapseColumnLeft": -337.5,
+          "collapseColumnLeft": -325,
           "memberIds": [
             "p2r-mvups-flat-paste-1779985373163-144-xorkf",
             "p2r-mvups-flat-paste-1779985373163-146-f5wpn",
@@ -13035,7 +13035,7 @@
             "maxY": 3200
           },
           "previewMemberId": "comp-mvups-flat-gen-3d-preview-bottom",
-          "collapseColumnLeft": -337.5,
+          "collapseColumnLeft": -375,
           "memberIds": [
             "p2r-mvups-flat-paste-1779985373163-145-su0ea",
             "p2r-mvups-flat-paste-1779985373163-147-5cusz",
@@ -13073,8 +13073,8 @@
       "name": "MVUPS Load Bank",
       "fullName": "MVUPS flat \u2014 load + MVUPS flank",
       "position": {
-        "x": 2789,
-        "y": 1876
+        "x": 3083,
+        "y": 1938
       },
       "status": "online",
       "properties": {
@@ -13091,7 +13091,7 @@
             "maxY": 4400
           },
           "previewMemberId": "comp-mvups-flat-mvups-preview",
-          "collapseColumnLeft": 2487.5,
+          "collapseColumnLeft": 1850,
           "collapseCompanionMemberId": "comp-mvups-flat-aux-preview",
           "memberIds": [
             "p2r-mvups-flat-paste-1779985373163-221-slybl",
@@ -13127,8 +13127,8 @@
       "name": "Tie Breaker Network",
       "fullName": "MVUPS flat tie (collapse / expand)",
       "position": {
-        "x": 691,
-        "y": 1800
+        "x": 533,
+        "y": 1788
       },
       "status": "online",
       "properties": {
@@ -13204,8 +13204,8 @@
       "name": "34.5kV Bus",
       "fullName": "Main Distribution Bus 34.5kV (Left)",
       "position": {
-        "x": -162.5,
-        "y": 1735
+        "x": -62.5,
+        "y": 1785
       },
       "status": "online",
       "properties": {
@@ -13233,7 +13233,7 @@
       "name": "",
       "fullName": "Main Distribution Bus 34.5kV (Right)",
       "position": {
-        "x": 3287.5,
+        "x": 1387.5,
         "y": 2230
       },
       "status": "online",
@@ -13340,7 +13340,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 1800
       },
       "status": "online",
@@ -13442,7 +13442,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 1950
       },
       "status": "online",
@@ -13544,7 +13544,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 2100
       },
       "status": "online",
@@ -13646,7 +13646,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 2250
       },
       "status": "online",
@@ -13750,7 +13750,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 2650
       },
       "status": "online",
@@ -13854,7 +13854,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 2800
       },
       "status": "online",
@@ -13958,7 +13958,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 2950
       },
       "status": "online",
@@ -14062,7 +14062,7 @@
       "name": "CT",
       "fullName": "Current Transformer 800:1",
       "position": {
-        "x": -275,
+        "x": -225,
         "y": 3100
       },
       "status": "online",
@@ -14087,7 +14087,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2075,
+        "x": 575,
         "y": 2450
       },
       "status": "online",
@@ -14112,7 +14112,7 @@
       "name": "Bay CB",
       "fullName": "Bay / Bus Tie CB 34.5kV 3500A",
       "position": {
-        "x": 1675,
+        "x": 225,
         "y": 2475
       },
       "status": "online",
@@ -14137,7 +14137,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 1825,
+        "x": 375,
         "y": 2450
       },
       "status": "online",
@@ -14162,7 +14162,7 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 1625.49,
+        "x": 175.49,
         "y": 2325.49
       },
       "status": "online",
@@ -14187,7 +14187,7 @@
       "name": "",
       "fullName": "Tie / bypass junction",
       "position": {
-        "x": 2475,
+        "x": 875,
         "y": 2475
       },
       "status": "online",
@@ -14212,8 +14212,8 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 2775.49,
-        "y": 2325.49
+        "x": 1125.49,
+        "y": 2275.49
       },
       "status": "online",
       "properties": {
@@ -14237,7 +14237,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2275,
+        "x": 775,
         "y": 2450
       },
       "status": "online",
@@ -14262,7 +14262,7 @@
       "name": "Tie CB",
       "fullName": "Center bus-tie CB 34.5kV 3500A",
       "position": {
-        "x": 1325,
+        "x": -75,
         "y": 2475
       },
       "status": "online",
@@ -14288,7 +14288,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 1475,
+        "x": 75,
         "y": 2450
       },
       "status": "online",
@@ -14314,7 +14314,7 @@
       "name": "",
       "fullName": "Tie / bypass junction",
       "position": {
-        "x": 1975,
+        "x": 475,
         "y": 2475
       },
       "status": "online",
@@ -14340,7 +14340,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 2675,
+        "x": 975,
         "y": 2450
       },
       "status": "online",
@@ -14366,7 +14366,7 @@
       "name": "Bay CB",
       "fullName": "Bay / Bus Tie CB 34.5kV 3500A",
       "position": {
-        "x": 2875,
+        "x": 1125,
         "y": 2475
       },
       "status": "online",
@@ -14392,7 +14392,7 @@
       "name": "CT",
       "fullName": "Current Transformer 3500:1",
       "position": {
-        "x": 3025,
+        "x": 1275,
         "y": 2450
       },
       "status": "online",
@@ -14418,7 +14418,7 @@
       "name": "",
       "fullName": "Manual line disconnect 34.5kV",
       "position": {
-        "x": 3425.49,
+        "x": 1525.49,
         "y": 2475.49
       },
       "status": "online",
@@ -14444,7 +14444,7 @@
       "name": "CB",
       "fullName": "Bus section / riser CB 34.5kV (graphic)",
       "position": {
-        "x": 2175,
+        "x": 675,
         "y": 2475
       },
       "status": "online",
@@ -14470,7 +14470,7 @@
       "name": "CT",
       "fullName": "Current Transformer 1500:1",
       "position": {
-        "x": 3375,
+        "x": 1425,
         "y": 2450
       },
       "status": "online",
@@ -14495,7 +14495,7 @@
       "name": "",
       "fullName": "Connection Point",
       "position": {
-        "x": 4025,
+        "x": 2125,
         "y": 2475
       },
       "status": "online",
@@ -14521,8 +14521,8 @@
       "name": "Aux Loads #4",
       "fullName": "Auxiliary Loads",
       "position": {
-        "x": 4125,
-        "y": 2100
+        "x": 2275,
+        "y": 2050
       },
       "status": "online",
       "properties": {
@@ -14547,7 +14547,7 @@
       "name": "Aux CB",
       "fullName": "Auxiliary feeder circuit breaker",
       "position": {
-        "x": 4175,
+        "x": 2225,
         "y": 2475
       },
       "status": "open",
@@ -14573,8 +14573,8 @@
       "name": "DC CB 480V",
       "fullName": "DC Circuit Breaker 480V",
       "position": {
-        "x": 4375,
-        "y": 2456
+        "x": 2475,
+        "y": 2556
       },
       "status": "online",
       "properties": {
@@ -14599,7 +14599,7 @@
       "name": "IT Rack rb",
       "fullName": "IT Rack Load",
       "position": {
-        "x": 4100,
+        "x": 2250,
         "y": 2700
       },
       "status": "online",
@@ -14625,7 +14625,7 @@
       "name": "MVUPS",
       "fullName": "To Data Center Building MVUPS 34.5kV:480V",
       "position": {
-        "x": 3520,
+        "x": 1620,
         "y": 2445
       },
       "status": "online",
@@ -20994,18 +20994,18 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.38106072036746425,
+    "zoom": 0.48556490304237176,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
     },
     "panTop": {
-      "x": 301.14662294750326,
-      "y": 296.87632161365804
+      "x": 148.79317472331053,
+      "y": 269.6949922991478
     },
     "panBottom": {
-      "x": 217.30776158374553,
-      "y": 613.3627185379138
+      "x": 115.36751147980922,
+      "y": 510.0918497588163
     },
     "quadBottomRowShare": 51.5,
     "mode": "design",
@@ -21029,12 +21029,12 @@
   "canvasBlockTypeScale": {
     "manual-line-switch": 0.9804
   },
-  "globalSampleStep": 128,
+  "globalSampleStep": 8,
   "perChartSampleStep": {
-    "sim-chart-1792097960901-0": 1,
-    "sim-chart-1792097960901-1": 1,
-    "sim-chart-1792097960901-2": 1,
-    "sim-chart-1792097960901-3": 1
+    "sim-chart-1792125532156-0": 1,
+    "sim-chart-1792125532156-1": 1,
+    "sim-chart-1792125532156-2": 2,
+    "sim-chart-1792125532156-3": 1
   },
   "playbackTimeRange": {
     "t1": 20.0,
@@ -21053,8 +21053,8 @@
       "withBessandStatCom": true,
       "withBessAlone": true,
       "withStatcomAlone": true,
-      "mvups_undamped": false,
-      "mvups_damped": false
+      "mvups_undamped": true,
+      "mvups_damped": true
     },
     "hiddenChartPanelNamedConfigs": [
       "Reset",

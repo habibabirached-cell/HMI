@@ -2,16 +2,10 @@
   "version": 1,
   "columns": [
     "t",
-    "Vrms_high_STATCOM_1",
     "P_STATCOM_1",
     "Q_STATCOM_1",
     "Vrms_STATCOM_1",
-    "I_STATCOM_1:1",
-    "I_STATCOM_1:2",
-    "I_STATCOM_1:3",
-    "freq_STATCOM_1",
-    "Block",
-    "Vdc_term1"
+    "freq_STATCOM_1"
   ],
   "row_count": 6251,
   "column_files": [
@@ -19,12 +13,6 @@
     "c0001.parquet",
     "c0002.parquet",
     "c0003.parquet",
-    "c0004.parquet",
-    "c0005.parquet",
-    "c0006.parquet",
-    "c0007.parquet",
-    "c0008.parquet",
-    "c0009.parquet",
-    "c0010.parquet"
+    "c0004.parquet"
   ]
 }

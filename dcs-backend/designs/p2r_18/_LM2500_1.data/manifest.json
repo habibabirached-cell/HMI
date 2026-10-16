@@ -5,14 +5,8 @@
     "P_g1",
     "Q_g1",
     "V_g1",
-    "Pmech_gt_1",
-    "Tm_gt_1",
-    "Te_gt_1",
-    "Tm0_gt_1",
-    "Wpu_gt_1",
     "Tm_shaft_gt_1",
-    "freq_gt_1",
-    "Vlow_gt_1"
+    "freq_gt_1"
   ],
   "row_count": 3751,
   "column_files": [
@@ -21,12 +15,6 @@
     "c0002.parquet",
     "c0003.parquet",
     "c0004.parquet",
-    "c0005.parquet",
-    "c0006.parquet",
-    "c0007.parquet",
-    "c0008.parquet",
-    "c0009.parquet",
-    "c0010.parquet",
-    "c0011.parquet"
+    "c0005.parquet"
   ]
 }

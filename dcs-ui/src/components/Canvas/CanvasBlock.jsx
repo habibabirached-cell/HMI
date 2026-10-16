@@ -17,7 +17,14 @@ import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
 import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface, isGFMeCollapseAggregateSurface, isBessCollapseAggregateSurface } from '../../utils/collapseAggregate';
 import { GAS_TURBINE_3D_TYPE } from '../../utils/gasTurbine3dLayout';
-import { isMvupsFlatSchematicComponent } from '../../utils/designSectionVisibility';
+import {
+  isMvupsFlatCollapseOwner,
+  isMvupsFlatSchematicComponent,
+} from '../../utils/designSectionVisibility';
+import {
+  isMvupsFlatUnifiedStripOwner,
+  shouldMvupsFlatUnifiedExpandOnDoubleClick,
+} from '../../utils/designCollapseState';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
 const STRETCHABLE_VERTICAL = ['bus-hv-vertical'];
@@ -55,6 +62,8 @@ function CanvasBlock({
   onNudgeCanvasBlockTypeScale,
   expandGasTurbineBankId = null,
   onExpandGasTurbineBank,
+  mvupsFlatUnifiedCollapse = false,
+  onMvupsFlatUnifiedCollapse,
   allComponents = [],
   ideumKioskMode = false,
   isIdeumTouchTarget = false,
@@ -69,8 +78,14 @@ function CanvasBlock({
   const collapseAggregateArt = isAuxLoadsCollapseAggregateSurface(component, allComponents);
   const gfmeCollapse3d = isGFMeCollapseAggregateSurface(component, allComponents);
   const bessCollapse3d = isBessCollapseAggregateSurface(component, allComponents);
-  const tieStrip = isTieStripMode(component);
-  const gasBankStrip = isGasTurbineBankStripMode(component);
+  const tieStrip =
+    isTieStripMode(component) &&
+    (!mvupsFlatUnifiedCollapse ||
+      !isMvupsFlatCollapseOwner(component) ||
+      isMvupsFlatUnifiedStripOwner(component));
+  const gasBankStrip =
+    isGasTurbineBankStripMode(component) &&
+    (!mvupsFlatUnifiedCollapse || !isMvupsFlatCollapseOwner(component));
   const stripMode = tieStrip || gasBankStrip;
   const mvupsFlatSchematic = isMvupsFlatSchematicComponent(component);
   const visualConfig = getComponentVisualConfig(component.type);
@@ -112,6 +127,15 @@ function CanvasBlock({
       onMouseUp={(e) => onMouseUp(e, component)}
       onDoubleClick={(e) => {
         if (ideumKioskMode) return;
+        if (
+          mvupsFlatUnifiedCollapse &&
+          onMvupsFlatUnifiedCollapse &&
+          shouldMvupsFlatUnifiedExpandOnDoubleClick(component, allComponents)
+        ) {
+          e.stopPropagation();
+          onMvupsFlatUnifiedCollapse(false);
+          return;
+        }
         const tg = component.properties?.tieGroup;
         if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
           if (tg.collapsed === false || stripMode) return;
@@ -136,6 +160,7 @@ function CanvasBlock({
               gasTurbineGroup: { ...gg, collapsed: false },
             },
           });
+          return;
         }
         if (expandGasTurbineBankId && onExpandGasTurbineBank) {
           e.stopPropagation();
@@ -234,6 +259,14 @@ function CanvasBlock({
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (
+                        mvupsFlatUnifiedCollapse &&
+                        onMvupsFlatUnifiedCollapse &&
+                        isMvupsFlatUnifiedStripOwner(component)
+                      ) {
+                        onMvupsFlatUnifiedCollapse(true);
+                        return;
+                      }
                       if (!onUpdateComponent) return;
                       const tg = component.properties?.tieGroup;
                       if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
@@ -258,9 +291,11 @@ function CanvasBlock({
                   >
                     {mode === 'design' ? (
                       <title>
-                        {isGasTurbineBank(component)
-                          ? 'Collapse generation aisle into 3D preview — click dots'
-                          : 'Collapse into tie summary block — click dots at top'}
+                        {mvupsFlatUnifiedCollapse && isMvupsFlatUnifiedStripOwner(component)
+                          ? 'Collapse MVUPS flat view to 3D tiles — click dots'
+                          : isGasTurbineBank(component)
+                            ? 'Collapse generation aisle into 3D preview — click dots'
+                            : 'Collapse into tie summary block — click dots at top'}
                       </title>
                     ) : null}
                   </rect>

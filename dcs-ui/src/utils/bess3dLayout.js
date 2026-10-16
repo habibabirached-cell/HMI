@@ -1,5 +1,10 @@
 /** Collapse-tile BESS blocks that use the Bess.c.glb preview. */
-export const BESS_COLLAPSE_3D_TYPES = new Set(['bess', 'bess-30mw', 'bess-50mw']);
+export const BESS_COLLAPSE_3D_TYPES = new Set([
+  'bess',
+  'bess-30mw',
+  'bess-50mw',
+  'mvups-3d',
+]);
 
 export const BESS3D_TITLE_MARGIN = 2;
 export const BESS3D_TITLE_BASE_FONT = 11;

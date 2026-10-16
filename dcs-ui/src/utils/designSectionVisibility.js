@@ -5,9 +5,10 @@
 
 import {
   isGasTurbineBank,
+  isGasTurbineBankCollapsed,
   getGasTurbineBankCollapseSurfaceMemberIds,
 } from './gasTurbineBank';
-import { isTieBreakerNetwork } from './tieBreakerNetwork';
+import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';
 import { collectHiddenBranchMemberIds } from './designBranchVisibility';
 
 /** Y split between upper stack (buses at y≈0) and lower stack (buses at y≈1900). */
@@ -71,6 +72,19 @@ export function isMvupsFlatSchematicComponent(component) {
     isMvupsFlatCollapseOwner(component) ||
     component.properties?.mvupsFlatSchematic === true
   );
+}
+
+/** Every MVUPS flat collapse owner expanded — full p2r-mvups-flat one-line. */
+export function isMvupsFlatFullyExpanded(components) {
+  if (!components?.length) return false;
+  let owners = 0;
+  for (const c of components) {
+    if (!isMvupsFlatCollapseOwner(c)) continue;
+    owners += 1;
+    if (isGasTurbineBank(c) && isGasTurbineBankCollapsed(c)) return false;
+    if (isTieBreakerNetwork(c) && isTieNetworkCollapsed(c)) return false;
+  }
+  return owners > 0;
 }
 
 export function resolveQuickScenarioDesignVisibility(presetName) {
@@ -175,6 +189,13 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
     for (const id of lower) {
       if (!isMvupsFlatSchematicComponentId(id) && !isMvupsFlatCollapseOwnerId(id)) {
         hidden.add(id);
+      }
+    }
+    if (isMvupsFlatFullyExpanded(components)) {
+      for (const c of components || []) {
+        if (isGasTurbineBank(c) && isMvupsFlatCollapseOwner(c)) {
+          hidden.add(c.id);
+        }
       }
     }
   } else {

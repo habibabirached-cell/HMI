@@ -6,6 +6,7 @@
 
 import { GAS_TURBINE_3D_TYPE } from './gasTurbine3dLayout';
 import { getComponentVisualConfig as defaultGetVisual } from '../data/componentVisuals';
+import { shouldApplyBankCollapseShiftToComponent } from './mvupsFlatLayout';
 
 /** 3-dot collapse strip — matches tie-breaker-network strip. */
 export const GTBANK_STRIP_WIDTH = 34;
@@ -341,6 +342,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
       }
       for (const c of components) {
         if (!c?.id || excluded.has(c.id)) continue;
+        if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
           !componentOverlapsBankVerticalSpan(c, bank, components, getComponentVisualConfig)
@@ -362,6 +364,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
       }
       for (const c of components) {
         if (!c?.id || excluded.has(c.id)) continue;
+        if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
           !componentOverlapsBankVerticalSpan(c, bank, components, getComponentVisualConfig)
@@ -381,6 +384,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
       const dRightward = colLeft - gap - leftMaxRight;
       for (const c of components) {
         if (!c?.id || excluded.has(c.id)) continue;
+        if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
           !componentOverlapsBankVerticalSpan(c, bank, components, getComponentVisualConfig)
@@ -401,6 +405,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
     const dLeftward = rightMinLeft - (colRight + gap);
     for (const c of components) {
       if (!c?.id || excluded.has(c.id)) continue;
+      if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
       if (
         scopeByVerticalBand &&
         !componentOverlapsBankVerticalSpan(c, bank, components, getComponentVisualConfig)

@@ -71,6 +71,15 @@ import {
   DEFAULT_DESIGN_SECTION_VISIBILITY,
   getDesignSectionHiddenMemberIdSet,
 } from '../../utils/designSectionVisibility';
+import {
+  isMvupsFlatUnifiedCollapseMode,
+  shouldMvupsFlatUnifiedExpandOnDoubleClick,
+} from '../../utils/designCollapseState';
+import {
+  buildMvupsFlatExpandedRenderShiftMap,
+  isMvupsFlatFullyExpandedLocal,
+  isMvupsFlatSchematicCanvasComponent,
+} from '../../utils/mvupsFlatLayout';
 import { useCanvasFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
 import { getCanvasBlockTypeScale, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
@@ -272,6 +281,7 @@ const Canvas = forwardRef(({
   onAddComponent,
   onAddConnection,
   onUpdateComponent,
+  onMvupsFlatUnifiedCollapse,
   onAssociateChart,
   onOpenChart,
   onCreateMultiComponentChart,
@@ -529,13 +539,46 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const mvupsFlatExpandedRenderShift = useMemo(
+    () =>
+      buildMvupsFlatExpandedRenderShiftMap(
+        components,
+        designSectionVisibility?.showMvupsFlatSchematic === true,
+      ),
+    [components, designSectionVisibility?.showMvupsFlatSchematic],
+  );
+
   const collapseShiftById = useMemo(() => {
-    const merged = new Map(tieCollapseShiftById);
-    for (const [id, dx] of gasTurbineBankShiftById) {
+    const showMvupsFlat = designSectionVisibility?.showMvupsFlatSchematic === true;
+    const mvupsFlatExpanded =
+      showMvupsFlat && isMvupsFlatFullyExpandedLocal(components);
+    const skipCollapseShiftForId = (id) => {
+      if (!mvupsFlatExpanded) return false;
+      const c = components.find((x) => x.id === id);
+      return isMvupsFlatSchematicCanvasComponent(c);
+    };
+
+    const merged = new Map();
+    for (const [id, dx] of tieCollapseShiftById) {
+      if (skipCollapseShiftForId(id)) continue;
       merged.set(id, (merged.get(id) ?? 0) + dx);
     }
+    for (const [id, dx] of gasTurbineBankShiftById) {
+      if (skipCollapseShiftForId(id)) continue;
+      merged.set(id, (merged.get(id) ?? 0) + dx);
+    }
+    // Expanded MVUPS: authored spacing + render-only pan right (no collapse compression).
+    for (const [id, dx] of mvupsFlatExpandedRenderShift) {
+      merged.set(id, dx);
+    }
     return merged;
-  }, [tieCollapseShiftById, gasTurbineBankShiftById]);
+  }, [
+    tieCollapseShiftById,
+    gasTurbineBankShiftById,
+    mvupsFlatExpandedRenderShift,
+    components,
+    designSectionVisibility?.showMvupsFlatSchematic,
+  ]);
 
   const renderComponents = useMemo(() => {
     return visibleComponents.map((c) => {
@@ -1873,6 +1916,15 @@ const Canvas = forwardRef(({
     [components, stableOnUpdateComponent],
   );
 
+  const mvupsFlatUnifiedCollapse = isMvupsFlatUnifiedCollapseMode(designSectionVisibility);
+
+  const stableMvupsFlatUnifiedCollapse = useCallback(
+    (collapsed) => {
+      onMvupsFlatUnifiedCollapse?.(collapsed);
+    },
+    [onMvupsFlatUnifiedCollapse],
+  );
+
   const stableDesignSelectSingle = useCallback((c) => {
     onClearConnectionMultiSelection();
     onMultiSelect(c.id, false);
@@ -2665,6 +2717,8 @@ const Canvas = forwardRef(({
                 component.id,
               )}
               onExpandGasTurbineBank={stableExpandGasTurbineBank}
+              mvupsFlatUnifiedCollapse={mvupsFlatUnifiedCollapse}
+              onMvupsFlatUnifiedCollapse={stableMvupsFlatUnifiedCollapse}
               allComponents={components}
               ideumKioskMode={ideumKioskMode}
               isIdeumTouchTarget={ideumTouchComponentIds?.has(component.id) ?? false}

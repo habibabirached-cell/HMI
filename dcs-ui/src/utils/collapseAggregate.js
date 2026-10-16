@@ -7,7 +7,7 @@
  * - `auxiliary-loads-bess` bank companion (gasTurbineGroup.collapseCompanionMemberId)
  * - extra collapse tiles (gasTurbineGroup.collapseExtraMemberIds — BESS, GFMe, …)
  * - `gfme-statcom` collapse tiles use g2x2 GLTF preview (isGFMeCollapseAggregateSurface)
- * - `bess-50mw` / `bess-30mw` / `bess` collapse tiles use Bess.c.glb (isBessCollapseAggregateSurface)
+ * - `bess-50mw` / `bess-30mw` / `bess` collapse tiles use Bess.c.glb; `mvups-3d` uses mvups.c.glb
  */
 
 import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';

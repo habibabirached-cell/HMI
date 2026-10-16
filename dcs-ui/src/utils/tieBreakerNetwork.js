@@ -6,6 +6,8 @@
  * equipment toward a fixed‑width aggregate (~50 px gutters) plus stub feeders to anchors.
  */
 
+import { shouldApplyTieCollapseShiftToComponent } from './mvupsFlatLayout';
+
 const TIE_STRIP_EXPANDED_WIDTH = 34;
 /** Short bbox for collapse affordance only (dots + halo); authored height is unchanged in JSON. */
 const TIE_STRIP_EXPANDED_HEIGHT = 24;
@@ -269,6 +271,7 @@ export function buildTieCollapseHorizontalShiftMap(components, getComponentVisua
       rightMinLeft = Infinity;
       for (const c of components) {
         if (!c?.id || excluded.has(c.id)) continue;
+        if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
         if (
           scopeByVerticalBand &&
           !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
@@ -296,6 +299,7 @@ export function buildTieCollapseHorizontalShiftMap(components, getComponentVisua
 
     for (const c of components) {
       if (!c?.id || excluded.has(c.id)) continue;
+      if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
       if (
         scopeByVerticalBand &&
         !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)

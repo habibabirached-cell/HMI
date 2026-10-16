@@ -1,30 +1,10 @@
 {
   "version": 1,
   "columns": [
-    "t",
-    "P_g3",
-    "Q_g3",
-    "V_g3",
-    "Pmech_gt_3",
-    "Tm_gt_3",
-    "Te_gt_3",
-    "Tm0_gt_3",
-    "Wpu_gt_3",
-    "freq_gt_3",
-    "Vlow_gt_3"
+    "t"
   ],
   "row_count": 6251,
   "column_files": [
-    "c0000.parquet",
-    "c0001.parquet",
-    "c0002.parquet",
-    "c0003.parquet",
-    "c0004.parquet",
-    "c0005.parquet",
-    "c0006.parquet",
-    "c0007.parquet",
-    "c0008.parquet",
-    "c0009.parquet",
-    "c0010.parquet"
+    "c0000.parquet"
   ]
 }

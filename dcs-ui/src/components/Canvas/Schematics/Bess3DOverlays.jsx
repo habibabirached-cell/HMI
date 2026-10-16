@@ -52,7 +52,11 @@ export default function Bess3DOverlays({
       const next = renderComponents
         .filter((c) => isBessCollapseAggregateSurface(c, allComponents))
         .map((component) => {
-          const visualConfig = getComponentVisualConfig(component.type);
+          const baseVisual = getComponentVisualConfig(component.type);
+          const visualConfig =
+            component.visualOverrides?.model3dUrl != null
+              ? { ...baseVisual, model3dUrl: component.visualOverrides.model3dUrl }
+              : baseVisual;
           const { width, height } = getScaledCanvasBlockDimensions(
             component,
             visualConfig,
@@ -73,6 +77,7 @@ export default function Bess3DOverlays({
             pixelHeight: Math.max(8, Math.round(slotH)),
             rotation,
             modelUrl: getBess3DModelUrl(visualConfig),
+            viewerProfile: component.type === 'mvups-3d' ? 'mvups' : 'bess',
             title: component.properties?.ideumDecorOnly
               ? ''
               : primaryLabelText(component, visualConfig),
@@ -136,6 +141,7 @@ export default function Bess3DOverlays({
             width={slot.pixelWidth}
             height={slot.pixelHeight}
             modelUrl={slot.modelUrl}
+            viewerProfile={slot.viewerProfile}
           />
           <div
             className="bess-3d-title gas-turbine-3d-title"

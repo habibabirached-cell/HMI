@@ -315,6 +315,27 @@ export const COMPONENT_VISUAL_CONFIG = {
     /** Collapse tiles (750×375) swap to schematic-bess-3d + Bess3DOverlays at render time. */
     model3dUrl: '/models/Bess.c.glb',
   },
+  'mvups-3d': {
+    width: 150,
+    height: 100,
+    icon: '⚡',
+    color: '#4caf50',
+    shape: 'shape-rounded-rect',
+    backgroundTexture: '/component-textures/bess-line-art.png',
+    backgroundTextureOpacity: 0.88,
+    /** MVUPS collapse tile — mvups.c.glb (not Bess.c.glb / mvups.obj). */
+    model3dUrl: '/models/mvups.c.glb',
+  },
+  /** MVUPS one-line block (expanded flat schematic). */
+  'mvups-sld': {
+    width: 460,
+    height: 110,
+    icon: '⚡',
+    color: '#9c27b0',
+    shape: 'shape-rounded-rect',
+    backgroundTexture: '/component-textures/ups-line-art.png',
+    backgroundTextureOpacity: 0.92,
+  },
   /** Legacy compact BESS tile — SVG line-art (pre–Bess.c.glb 3D preview). */
   'bess-compact-old': {
     width: 750,

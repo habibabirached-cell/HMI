@@ -1,18 +1,10 @@
 {
   "version": 1,
   "columns": [
-    "t",
-    "U",
-    "FAULTCODE",
-    "U_1",
-    "FAULTCODE_1"
+    "t"
   ],
   "row_count": 6251,
   "column_files": [
-    "c0000.parquet",
-    "c0001.parquet",
-    "c0002.parquet",
-    "c0003.parquet",
-    "c0004.parquet"
+    "c0000.parquet"
   ]
 }

@@ -6,10 +6,13 @@ import {
   DESIGN_SECTION_Y_THRESHOLD,
   isLowerGasTurbineBank,
   isMvupsFlatCollapseOwner,
+  isMvupsFlatSchematicComponent,
   normalizeDesignSectionVisibility,
 } from './designSectionVisibility';
-import { isGasTurbineBank } from './gasTurbineBank';
-import { isTieBreakerNetwork } from './tieBreakerNetwork';
+import { isCollapseAggregateSurfaceComponent } from './collapseAggregate';
+import { applyDesignExpansionToComponents, normalizeDesignExpansion } from './designExpansion';
+import { isGasTurbineBank, isGasTurbineBankCollapsed } from './gasTurbineBank';
+import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';
 
 /** Presets that show the thin vertical collapse switch in Quick Scenarios. */
 export const QUICK_SCENARIO_COLLAPSE_PRESETS = new Set([
@@ -26,8 +29,8 @@ export const DEFAULT_QUICK_SCENARIO_BRANCH_COLLAPSED = {
   withBessandStatCom: true,
   withBessAlone: true,
   withStatcomAlone: true,
-  mvups_undamped: false,
-  mvups_damped: false,
+  mvups_undamped: true,
+  mvups_damped: true,
 };
 
 /** Which stacked design section each collapse switch affects. */
@@ -143,4 +146,128 @@ export function applyBranchCollapseToComponents(components, visibility, collapse
 
     return c;
   });
+}
+
+/** MVUPS flat quick scenario: one strip (tie) collapses / any tile double-click expands all owners. */
+export const MVUPS_FLAT_UNIFIED_STRIP_OWNER_ID = 'comp-mvups-flat-tie-network';
+
+export function isMvupsFlatUnifiedCollapseMode(visibility) {
+  return normalizeDesignSectionVisibility(visibility).showMvupsFlatSchematic === true;
+}
+
+export function isMvupsFlatUnifiedStripOwner(component) {
+  return component?.id === MVUPS_FLAT_UNIFIED_STRIP_OWNER_ID;
+}
+
+/** Only MVUPS flat tiles/owners — upper baseline GT uses normal per-bank expand. */
+export function shouldMvupsFlatUnifiedExpandOnDoubleClick(component, allComponents) {
+  if (!component || !allComponents?.length) return false;
+  if (!isMvupsFlatSchematicComponent(component)) return false;
+  if (isCollapseAggregateSurfaceComponent(component, allComponents)) return true;
+  if (
+    isTieBreakerNetwork(component) &&
+    isMvupsFlatCollapseOwner(component) &&
+    isTieNetworkCollapsed(component)
+  ) {
+    return true;
+  }
+  if (
+    isGasTurbineBank(component) &&
+    isMvupsFlatCollapseOwner(component) &&
+    isGasTurbineBankCollapsed(component)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function mvupsFlatOwnerCollapsedStates(components) {
+  const states = [];
+  for (const c of components || []) {
+    if (!isMvupsFlatCollapseOwner(c)) continue;
+    if (isGasTurbineBank(c)) states.push(isGasTurbineBankCollapsed(c));
+    else if (isTieBreakerNetwork(c)) states.push(isTieNetworkCollapsed(c));
+  }
+  return states;
+}
+
+/** Mixed collapsed/expanded owners (e.g. breakers vs peripherals toggled separately). */
+export function isMvupsFlatCollapseDesynced(components) {
+  const states = mvupsFlatOwnerCollapsedStates(components);
+  if (states.length <= 1) return false;
+  return !states.every((s) => s === states[0]);
+}
+
+/**
+ * When desynced, collapse all owners (compact 3D tiles) — default MVUPS flat presentation.
+ * @returns {boolean|null} collapsed flag for applyMvupsFlatUnifiedCollapse, or null if in sync
+ */
+export function getMvupsFlatCollapseRepairCollapsed(components) {
+  if (!isMvupsFlatCollapseDesynced(components)) return null;
+  return true;
+}
+
+/** Set collapsed on every MVUPS flat bank + tie owner at once. */
+export function applyMvupsFlatUnifiedCollapseToComponents(components, collapsed) {
+  if (!components?.length) return components;
+  return components.map((c) => {
+    if (!isMvupsFlatCollapseOwner(c)) return c;
+
+    if (isGasTurbineBank(c)) {
+      const g = c.properties?.gasTurbineGroup;
+      if (!g?.memberIds?.length) return c;
+      return {
+        ...c,
+        properties: {
+          ...c.properties,
+          gasTurbineGroup: { ...g, collapsed: !!collapsed },
+        },
+      };
+    }
+
+    if (isTieBreakerNetwork(c)) {
+      const tg = c.properties?.tieGroup;
+      if (!tg?.memberIds?.length) return c;
+      return {
+        ...c,
+        properties: {
+          ...c.properties,
+          tieGroup: { ...tg, collapsed: collapsed ? true : false },
+        },
+      };
+    }
+
+    return c;
+  });
+}
+
+/**
+ * Quick-scenario / collapse switch: MVUPS flat keeps tie + banks in lockstep (no split expansion).
+ */
+export function applyQuickScenarioBranchCollapseToComponents(
+  components,
+  visibility,
+  collapsed,
+  presetName,
+  designExpansion,
+) {
+  const v = normalizeDesignSectionVisibility(visibility);
+  if (v.showMvupsFlatSchematic) {
+    return applyMvupsFlatUnifiedCollapseToComponents(components, collapsed);
+  }
+  let next = applyBranchCollapseToComponents(components, visibility, collapsed, presetName);
+  next = applyDesignExpansionToComponents(next, normalizeDesignExpansion(designExpansion));
+  return next;
+}
+
+/** After loading saved designExpansion while MVUPS flat mode is active. */
+export function applyLoadedDesignExpansionToComponents(components, designExpansion, visibility) {
+  const v = normalizeDesignSectionVisibility(visibility);
+  const exp = normalizeDesignExpansion(designExpansion);
+  if (v.showMvupsFlatSchematic) {
+    const collapsed =
+      exp.breakersCompact !== exp.peripheralsCompact ? true : exp.breakersCompact;
+    return applyMvupsFlatUnifiedCollapseToComponents(components, collapsed);
+  }
+  return applyDesignExpansionToComponents(components, exp);
 }

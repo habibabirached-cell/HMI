@@ -5,7 +5,6 @@
     "Q_BESS1",
     "V_BESS1",
     "freq_BESS_1",
-    "Vrms_BESS_1",
     "P_BESS1"
   ],
   "row_count": 6251,
@@ -14,7 +13,6 @@
     "c0001.parquet",
     "c0002.parquet",
     "c0003.parquet",
-    "c0004.parquet",
-    "c0005.parquet"
+    "c0004.parquet"
   ]
 }
