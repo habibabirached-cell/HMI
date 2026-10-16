@@ -20,8 +20,8 @@ export function validateConfiguratorInputs(inputs) {
   const gridMode = inputs.gridConnectionMode || GRID_CONNECTION_MODES.GRID_CONNECTED;
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
 
-  if (!inputs.loadMW || inputs.loadMW < 200) {
-    return { ok: false, error: 'Enter a data center load of at least 200 MW.' };
+  if (inputs.loadMW == null || inputs.loadMW === '' || Number(inputs.loadMW) < 200) {
+    return { ok: false, error: 'Choose a data center load (200 MW or 1000 MW).' };
   }
 
   if (inputs.loadMW > 1800) {

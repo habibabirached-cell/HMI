@@ -56,6 +56,9 @@ import {
   subscribeConfiguratorExploreSync,
 } from './utils/dataVisConfiguratorSync';
 import { fetchConfiguratorExploreSyncLatest } from '../utils/conf_configuratorCluster';
+import { preloadWacoWithDatasetQuality } from '../utils/conf_wacoPreload';
+import { effectiveDataVisLoadMwTier } from './api/dataVisLoadMw';
+import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
 import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
 const TABS = [
@@ -176,25 +179,64 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     [resetExplorationClientState],
   );
 
+  const reloadInFlightRef = useRef(null);
+
+  const reloadWacoDatasetForTier = useCallback(
+    async (tierOverride) => {
+      const tier = normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier();
+      if (reloadInFlightRef.current) {
+        return reloadInFlightRef.current;
+      }
+      const run = (async () => {
+        try {
+          await preloadWacoWithDatasetQuality(tier, null);
+          resetExplorationClientState();
+          let res = await fetchDataVisMeta(tier);
+          let metaTier = normalizeWacoLoadTier(res?.load_mw);
+          if (metaTier !== tier) {
+            await preloadWacoWithDatasetQuality(tier, null);
+            res = await fetchDataVisMeta(tier);
+            metaTier = normalizeWacoLoadTier(res?.load_mw);
+          }
+          if (metaTier !== tier) {
+            setError(
+              `Waco tier mismatch: expected ${tier} MW but meta returned ${res?.load_mw ?? '?'} MW (${res?.workbook ?? 'unknown'}). Press ${tier}MW again.`,
+            );
+            return;
+          }
+          setMeta(res);
+          if (res?.dataset_mode) {
+            const ui = uiModeFromApiMode(res.dataset_mode);
+            persistDataQualityMode(ui);
+            setDataQualityMode(ui);
+          }
+          setError(null);
+        } catch (err) {
+          setError(err?.message || 'Failed to load Waco dataset.');
+        }
+      })();
+      reloadInFlightRef.current = run.finally(() => {
+        reloadInFlightRef.current = null;
+      });
+      return reloadInFlightRef.current;
+    },
+    [resetExplorationClientState],
+  );
+
   useEffect(() => {
     let cancelled = false;
-    fetchDataVisMeta()
-      .then((res) => {
-        if (cancelled) return;
-        setMeta(res);
-        if (res?.dataset_mode) {
-          const ui = uiModeFromApiMode(res.dataset_mode);
-          persistDataQualityMode(ui);
-          setDataQualityMode(ui);
-        }
-      })
-      .catch((err) => {
+    const bootstrap = async () => {
+      try {
+        await reloadWacoDatasetForTier(effectiveDataVisLoadMwTier());
+      } catch (err) {
         if (!cancelled) setError(err.message);
-      });
+      }
+    };
+    void bootstrap();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadWacoDatasetForTier]);
 
   const rangeFilters = useMemo(() => buildRangeFilters(ranges), [ranges]);
   const sessionUniverseFilters = useMemo(
@@ -458,8 +500,133 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
   if (!meta) {
     return (
       <div className="conf-results-panel conf-results-panel--filled dataVis-root" data-screen-region="data-exploration">
-        <p className="dataVis-muted">Loading Waco 1 GW dataset…</p>
+        <p className="dataVis-muted">Loading Waco study dataset…</p>
       </div>
+    );
+  }
+
+  let mainPanelContent;
+  if (isExploreWall) {
+    mainPanelContent = (
+      <DataVisExploreWallQuadLayout
+        filters={filters}
+        meta={meta}
+        columnStats={columnStatsForViews}
+        onClearAll={clearAllFilters}
+        parcoordsRanges={parcoordsRanges}
+        onParcoordsRangesChange={setParcoordsRanges}
+        onParallelDimensionsChange={setParallelDimensions}
+        parcoordsActive={parcoordsActive}
+        wallResult={wallResult}
+        wallInputs={wallInputs}
+        wallGenerating={wallGenerating}
+        wallStatusMessage={wallStatusMessage}
+      />
+    );
+  } else if (layoutMode === 'quad') {
+    mainPanelContent = (
+      <DataVisQuadLayout
+        filters={filters}
+        chartFilters={plotContextFilters}
+        ranges={ranges}
+        onRangesChange={setRanges}
+        onClearAll={clearAllFilters}
+        parcoordsRanges={parcoordsRanges}
+        meta={meta}
+        onSelectRowIds={handleSelectRow}
+        onParcoordsRangesChange={setParcoordsRanges}
+        onParallelDimensionsChange={setParallelDimensions}
+        parallelDimensions={parallelDimensions}
+        parcoordsActive={parcoordsActive}
+        scatterActive={scatterActive}
+        plotContextFilters={plotContextFilters}
+        highlightRowIds={highlightRowIds}
+        onScatterRowIdsChange={handleScatterRowIdsChange}
+        filteredCount={filteredCount ?? datasetRowCount ?? meta.row_count}
+        totalCount={datasetRowCount ?? meta.row_count}
+        columnStats={columnStatsForViews}
+        onEraseRow={eraseRow}
+        scatterHoverColumns={scatterHoverColumns}
+        tableVisibleColumns={tableVisibleColumns}
+        onTableVisibleColumnsChange={setTableVisibleColumns}
+        tableColumnsCustomized={tableColumnsCustomized}
+        onTableColumnsCustomizedChange={setTableColumnsCustomized}
+        sessionUniverseFilters={sessionUniverseFilters}
+        binCount={binCount}
+        onBinCountChange={setBinCount}
+      />
+    );
+  } else {
+    mainPanelContent = (
+      <>
+        {tab === 'overview' && (
+          <DataVisOverviewTab
+            filters={filters}
+            scenario={meta.scenario}
+            onFilteredCount={setFilteredCount}
+          />
+        )}
+        {tab === 'doe' && <DataVisDoeTab filters={filters} />}
+        {tab === 'dictionary' && <DataVisDictionaryTab columns={meta.columns} />}
+        {tab === 'chart' && (
+          <DataVisChartLabTab
+            plotContextFilters={plotContextFilters}
+            highlightRowIds={highlightRowIds}
+            onScatterRowIdsChange={handleScatterRowIdsChange}
+            defaults={meta.defaults}
+            columnStats={columnStatsForViews}
+            hoverColumns={scatterHoverColumns}
+          />
+        )}
+        {tab === 'heatmap' && (
+          <DataVisHeatmapTab
+            filters={filters}
+            defaults={meta.defaults}
+            columnStats={columnStatsForViews}
+          />
+        )}
+        {tab === 'parallel' && (
+          <DataVisParallelTab
+            filters={filters}
+            defaults={meta.defaults}
+            columnStats={columnStatsForViews}
+            onParcoordsRangesChange={setParcoordsRanges}
+            onDimensionsChange={setParallelDimensions}
+            parcoordsActive={parcoordsActive}
+            parcoordsRanges={parcoordsRanges}
+            onClearAll={clearAllFilters}
+          />
+        )}
+        {tab === 'histogram' && (
+          <DataVisHistogramTab
+            filters={filters}
+            ranges={ranges}
+            columnStats={columnStatsForViews}
+            parcoordsRanges={parcoordsRanges}
+            binCount={binCount}
+            onBinCountChange={setBinCount}
+            sessionUniverseFilters={sessionUniverseFilters}
+          />
+        )}
+        {tab === 'table' && (
+          <DataVisTableTab
+            filters={filters}
+            columnStats={columnStatsForViews}
+            defaults={meta.defaults}
+            parallelDimensions={parallelDimensions}
+            onSelectRowIds={handleSelectRow}
+            onEraseRow={eraseRow}
+            visibleColumns={tableVisibleColumns}
+            onVisibleColumnsChange={setTableVisibleColumns}
+            columnsCustomized={tableColumnsCustomized}
+            onColumnsCustomizedChange={setTableColumnsCustomized}
+          />
+        )}
+        {tab === 'compare' && (
+          <DataVisCompareTab selectedRowIds={compareIds} onSelectedRowIds={setCompareIds} />
+        )}
+        {tab === 'quality' && <DataVisQualityTab filters={filters} />}
+      </>
     );
   }
 
@@ -477,8 +644,12 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
               ·
             </span>
             <span className="dataVis-headerLine__meta">
-              {meta.scenario?.location} · {datasetRowCount ?? meta.row_count} scenarios
-              {dataQualityMode === DATA_QUALITY_CLEAN ? ' · Clean (≥97% load compliance)' : ''}
+              {meta.scenario?.location}
+              {meta.workbook ? ` · ${meta.workbook}` : ''}
+              {meta.load_mw ? ` · ${meta.load_mw} MW` : ''}
+              {' · '}
+              {datasetRowCount ?? meta.row_count} scenarios
+              {dataQualityMode === DATA_QUALITY_CLEAN ? ' · Clean (>=97% load compliance)' : ''}
               {excludedRowIds.length ? ` · ${excludedRowIds.length} erased` : ''}
               {configuratorSyncActive ? ' · Linked to configurator Inputs' : ''}
               {isExploreWall ? '' : ' · Plotly views'}
@@ -550,123 +721,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
       )}
 
       <main className={`dataVis-main${layoutMode === 'quad' || isExploreWall ? ' dataVis-main--quad' : ''}`}>
-        {isExploreWall ? (
-          <DataVisExploreWallQuadLayout
-            filters={filters}
-            meta={meta}
-            columnStats={columnStatsForViews}
-            onClearAll={clearAllFilters}
-            parcoordsRanges={parcoordsRanges}
-            onParcoordsRangesChange={setParcoordsRanges}
-            onParallelDimensionsChange={setParallelDimensions}
-            parcoordsActive={parcoordsActive}
-            wallResult={wallResult}
-            wallInputs={wallInputs}
-            wallGenerating={wallGenerating}
-            wallStatusMessage={wallStatusMessage}
-          />
-        ) : layoutMode === 'quad' ? (
-          <DataVisQuadLayout
-            filters={filters}
-            chartFilters={plotContextFilters}
-            ranges={ranges}
-            onRangesChange={setRanges}
-            onClearAll={clearAllFilters}
-            parcoordsRanges={parcoordsRanges}
-            meta={meta}
-            onSelectRowIds={handleSelectRow}
-            onParcoordsRangesChange={setParcoordsRanges}
-            onParallelDimensionsChange={setParallelDimensions}
-            parallelDimensions={parallelDimensions}
-            parcoordsActive={parcoordsActive}
-            scatterActive={scatterActive}
-            plotContextFilters={plotContextFilters}
-            highlightRowIds={highlightRowIds}
-            onScatterRowIdsChange={handleScatterRowIdsChange}
-            filteredCount={filteredCount ?? datasetRowCount ?? meta.row_count}
-            totalCount={datasetRowCount ?? meta.row_count}
-            columnStats={columnStatsForViews}
-            onEraseRow={eraseRow}
-            scatterHoverColumns={scatterHoverColumns}
-            tableVisibleColumns={tableVisibleColumns}
-            onTableVisibleColumnsChange={setTableVisibleColumns}
-            tableColumnsCustomized={tableColumnsCustomized}
-            onTableColumnsCustomizedChange={setTableColumnsCustomized}
-            sessionUniverseFilters={sessionUniverseFilters}
-            binCount={binCount}
-            onBinCountChange={setBinCount}
-          />
-        ) : (
-          <>
-            {tab === 'overview' && (
-              <DataVisOverviewTab
-                filters={filters}
-                scenario={meta.scenario}
-                onFilteredCount={setFilteredCount}
-              />
-            )}
-            {tab === 'doe' && <DataVisDoeTab filters={filters} />}
-            {tab === 'dictionary' && <DataVisDictionaryTab columns={meta.columns} />}
-            {tab === 'chart' && (
-              <DataVisChartLabTab
-                plotContextFilters={plotContextFilters}
-                highlightRowIds={highlightRowIds}
-                onScatterRowIdsChange={handleScatterRowIdsChange}
-                defaults={meta.defaults}
-                columnStats={columnStatsForViews}
-                hoverColumns={scatterHoverColumns}
-              />
-            )}
-            {tab === 'heatmap' && (
-              <DataVisHeatmapTab
-                filters={filters}
-                defaults={meta.defaults}
-                columnStats={columnStatsForViews}
-              />
-            )}
-            {tab === 'parallel' && (
-              <DataVisParallelTab
-                filters={filters}
-                defaults={meta.defaults}
-                columnStats={columnStatsForViews}
-                onParcoordsRangesChange={setParcoordsRanges}
-                onDimensionsChange={setParallelDimensions}
-                parcoordsActive={parcoordsActive}
-                parcoordsRanges={parcoordsRanges}
-                onClearAll={clearAllFilters}
-              />
-            )}
-            {tab === 'histogram' && (
-              <DataVisHistogramTab
-                filters={filters}
-                ranges={ranges}
-                columnStats={columnStatsForViews}
-                parcoordsRanges={parcoordsRanges}
-                binCount={binCount}
-                onBinCountChange={setBinCount}
-                sessionUniverseFilters={sessionUniverseFilters}
-              />
-            )}
-            {tab === 'table' && (
-              <DataVisTableTab
-                filters={filters}
-                columnStats={columnStatsForViews}
-                defaults={meta.defaults}
-                parallelDimensions={parallelDimensions}
-                onSelectRowIds={handleSelectRow}
-                onEraseRow={eraseRow}
-                visibleColumns={tableVisibleColumns}
-                onVisibleColumnsChange={setTableVisibleColumns}
-                columnsCustomized={tableColumnsCustomized}
-                onColumnsCustomizedChange={setTableColumnsCustomized}
-              />
-            )}
-            {tab === 'compare' && (
-              <DataVisCompareTab selectedRowIds={compareIds} onSelectedRowIds={setCompareIds} />
-            )}
-            {tab === 'quality' && <DataVisQualityTab filters={filters} />}
-          </>
-        )}
+        {mainPanelContent}
       </main>
     </div>
   );

@@ -2413,6 +2413,59 @@
   width: 100%;
   max-width: none;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(10px, 1.2vw, 14px);
+}
+
+.conf-ideum-hub-load-title {
+  display: block;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.conf-ideum-hub-load-hint {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(16px, 1.6vw, 22px);
+  font-weight: 700;
+  color: rgba(0, 78, 80, 0.72);
+}
+
+.conf-ideum-hub-load-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(10px, 1.2vw, 14px);
+  width: 100%;
+}
+
+.conf-ideum-hub-load-btn {
+  border: 4px solid rgba(0, 0, 0, 0.88);
+  border-radius: 24px;
+  background: linear-gradient(180deg, #f8fbfb 0%, #e8f2f2 100%);
+  color: var(--conf-evergreen);
+  font-size: clamp(22px, 2.4vw, 34px);
+  font-weight: 800;
+  padding: clamp(16px, 1.8vw, 22px) clamp(12px, 1.2vw, 18px);
+  cursor: pointer;
+  line-height: 1.1;
+  touch-action: manipulation;
+  box-shadow: var(--conf-cfe-input-shadow);
+}
+
+.conf-ideum-hub-load-btn--active {
+  background-color: #007876;
+  background-image: var(--conf-cfe-pane-fill);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.88);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.28),
+    0 -1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.conf-ideum-hub-load-btn:active {
+  transform: translateY(2px);
 }
 
 .conf-ideum-hub-load-header {
@@ -3565,10 +3618,24 @@
 }
 
 .conf-kpi-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   margin: 16px 0 20px;
+}
+
+.conf-kpi-strip__row {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.conf-kpi-strip__row--top {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.conf-kpi-strip__row--bottom {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .conf-kpi-card {
@@ -5156,9 +5223,12 @@ body.conf-wall-bezel-dragging-both {
 }
 
 .conf-wall-quadrant--kpis .conf-kpi-strip {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(14px, 1.4vw, 22px);
+  gap: clamp(10px, 1vw, 16px);
   margin: 0;
+}
+
+.conf-wall-quadrant--kpis .conf-kpi-strip__row {
+  gap: clamp(10px, 1vw, 16px);
 }
 
 .conf-wall-quadrant .conf-kpi-card {

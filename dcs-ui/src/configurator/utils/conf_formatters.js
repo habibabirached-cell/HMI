@@ -27,6 +27,19 @@ export function formatCurrencyPerMWh(value) {
   return `$${Math.round(n)}/MWh`;
 }
 
+/** Waco / Martin project CAPEX column is USD millions. */
+export function formatProjectCapexUsdM(millions) {
+  const n = Number(millions);
+  if (!Number.isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1000) {
+    const billions = n / 1000;
+    return `$${billions.toFixed(abs >= 10000 ? 1 : 2)}B`;
+  }
+  if (abs >= 100) return `$${Math.round(n).toLocaleString()}M`;
+  return `$${n.toFixed(1)}M`;
+}
+
 export function formatCarbonIntensity(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';

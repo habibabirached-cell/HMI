@@ -318,7 +318,9 @@ function TechCard3DPreview({ tech, meta }) {
 function RenewableMwBand({ techId, band }) {
   if (!band) return null;
   const isSolar = techId === 'solar';
-  const max = isSolar ? SOLAR_MW_BAND_MAX : WIND_MW_BAND_MAX;
+  const fallbackMax = isSolar ? SOLAR_MW_BAND_MAX : WIND_MW_BAND_MAX;
+  const rangeMin = band.rangeMin ?? 0;
+  const rangeMax = band.rangeMax ?? fallbackMax;
   const title = isSolar ? 'Solar' : 'Wind';
   return (
     <div className="conf-ideum-tech-card__capacity-band" aria-label={`${title} nameplate band`}>
@@ -326,14 +328,14 @@ function RenewableMwBand({ techId, band }) {
         side="right"
         layout="tech"
         label={title}
-        min={0}
-        max={max}
+        min={rangeMin}
+        max={rangeMax}
         step={10}
         minBandSpan={10}
         lowerValue={band.lower}
         upperValue={band.upper}
         formatValue={formatMwBandValue}
-        gutterTicks={[0, max]}
+        gutterTicks={[rangeMin, rangeMax]}
         onChange={band.onChange}
         ariaLabel={`${title} AC nameplate acceptable range in megawatts`}
       />

@@ -27,6 +27,10 @@ class ConfiguratorInputs(BaseModel):
     technologyPreferences: dict[str, str] = Field(default_factory=dict)
 
 
+class WacoPreloadRequest(BaseModel):
+    loadMW: Optional[int] = None
+
+
 class ConfiguratorGenerateResponse(BaseModel):
     ok: bool
     synthetic: bool = True

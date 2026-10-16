@@ -20,9 +20,23 @@ from configurator.dataVis.column_metadata import (
     PARALLEL_DEFAULT_DIMS,
 )
 from configurator.dataVis.filters import apply_filters
-from configurator.dataVis.dataset_mode import get_datavis_dataframe, get_dataset_mode, set_dataset_mode
-from configurator.dataVis.loader import column_stats
-from configurator.dataVis.paths import DATAVIS_WACO_SHEET, DATAVIS_WACO_XLSX, SCENARIO_CONTEXT
+from configurator.dataVis.dataset_mode import (
+    get_datavis_dataframe,
+    get_dataset_mode,
+    reset_datavis_mode,
+    set_dataset_mode,
+)
+from configurator.dataVis.loader import (
+    column_stats,
+    get_active_waco_load_mw,
+    load_waco_dataframe,
+    set_active_waco_load_mw,
+)
+from configurator.dataVis.paths import (
+    DATAVIS_WACO_SHEET,
+    scenario_context_for_load,
+    waco_workbook_path,
+)
 from configurator.dataVis.quality import run_quality_checks
 
 
@@ -54,7 +68,8 @@ def get_health() -> dict[str, Any]:
             "ok": True,
             "rows": len(df),
             "dataset_mode": get_dataset_mode(),
-            "workbook": str(DATAVIS_WACO_XLSX.name),
+            "load_mw": get_active_waco_load_mw(),
+            "workbook": waco_workbook_path(get_active_waco_load_mw()).name,
             "sheet": DATAVIS_WACO_SHEET,
         }
     except Exception as exc:  # noqa: BLE001
@@ -78,12 +93,40 @@ def apply_dataset_mode(mode: str) -> dict[str, Any]:
     return set_dataset_mode(mode)
 
 
-def get_meta() -> dict[str, Any]:
+def ensure_waco_tier(load_mw: int | None) -> None:
+    """Select 200 MW vs 1 GW workbook before dataVis queries (mirrors configurator load buttons)."""
+    if load_mw is None:
+        # Do not force DEFAULT_WACO_LOAD_MW here — that reverted active tier to 200 after a 1000 preload.
+        load_waco_dataframe(get_active_waco_load_mw(), force_reload=False)
+        return
+    try:
+        tier = int(round(float(load_mw)))
+    except (TypeError, ValueError):
+        return
+    if tier not in (200, 1000):
+        return
+    prev = get_active_waco_load_mw()
+    load_waco_dataframe(tier, force_reload=False)
+    set_active_waco_load_mw(tier)
+    if prev != tier:
+        reset_datavis_mode()
+
+
+def get_meta(requested_load_mw: int | None = None) -> dict[str, Any]:
+    tier = requested_load_mw if requested_load_mw in (200, 1000) else get_active_waco_load_mw()
+    if get_active_waco_load_mw() != tier:
+        load_waco_dataframe(tier, force_reload=False)
+        set_active_waco_load_mw(tier)
+        reset_datavis_mode()
+
     df = get_datavis_dataframe()
     stats = _column_stats_for_dataframe(df)
+    active = get_active_waco_load_mw()
 
     return {
-        "scenario": SCENARIO_CONTEXT,
+        "scenario": scenario_context_for_load(active),
+        "load_mw": active,
+        "workbook": waco_workbook_path(active).name,
         "dataset_mode": get_dataset_mode(),
         "row_count": len(df),
         "column_count": len(df.columns),

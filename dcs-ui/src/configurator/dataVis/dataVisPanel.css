@@ -101,6 +101,19 @@
 
 .dataVis-exploreWall__kpisPane .conf-kpi-strip {
   gap: clamp(3px, 0.35vw, 6px);
+  flex-shrink: 0;
+}
+
+.dataVis-exploreWall__kpisPane .conf-kpi-strip__row {
+  gap: clamp(3px, 0.35vw, 6px);
+}
+
+.dataVis-exploreWall__kpisPane .conf-kpi-strip__row--top {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dataVis-exploreWall__kpisPane .conf-kpi-strip__row--bottom {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .dataVis-exploreWall__kpisPane .conf-kpi-card {

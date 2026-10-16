@@ -4,6 +4,7 @@
 
 import { resolveMaingearPeerPostBase } from '../../../utils/clusterPeer';
 import { postDataVisDatasetMode } from '../api/conf_dataVisApi';
+import { withDataVisLoadMw } from '../api/dataVisLoadMw';
 import { DATAVIS_CONFIGURATOR_SYNC_CHANNEL } from './dataVisConfiguratorSync';
 
 export const DATAVIS_QUALITY_STORAGE_KEY = 'dcs.dataVis.dataQualityMode';
@@ -26,7 +27,7 @@ export function readPersistedDataQualityMode() {
   } catch {
     /* ignore */
   }
-  return DATA_QUALITY_ORIGINAL;
+  return DATA_QUALITY_CLEAN;
 }
 
 export function persistDataQualityMode(mode) {
@@ -56,7 +57,7 @@ async function postDatasetModeToBase(baseUrl, apiMode) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: apiMode }),
+    body: JSON.stringify(withDataVisLoadMw({ mode: apiMode })),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

@@ -46,8 +46,21 @@ import {
   postConfiguratorExploreSync,
   postConfiguratorExploreSyncToPeer,
 } from './utils/conf_configuratorCluster';
+import { preloadWacoWithDatasetQuality, WACO_DATASET_READY_EVENT } from './utils/conf_wacoPreload';
+import {
+  fetchRenewableMwBoundsFromDataVis,
+  inputsWithRenewableDataSpan,
+} from './utils/conf_renewableMwBounds';
+import {
+  effectiveDataVisLoadMwTier,
+  persistWacoLoadTierForDataVis,
+  WACO_LOAD_TIER_CHANGED_EVENT,
+} from './dataVis/api/dataVisLoadMw';
+import { DEFAULT_WACO_LOAD_TIER } from './utils/conf_wacoLoadTier';
 import {
   applyDataVisDatasetMode,
+  DATA_QUALITY_CLEAN,
+  persistDataQualityMode,
   readPersistedDataQualityMode,
   subscribeDataQualityMode,
 } from './dataVis/utils/dataVisQualityMode';
@@ -109,7 +122,10 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   useWallDisplayKeepAlive(isWallMode);
 
-  const [inputs, setInputs] = useState({ ...CONFIGURATOR_DEFAULT_INPUTS });
+  const [inputs, setInputs] = useState(() => ({
+    ...CONFIGURATOR_DEFAULT_INPUTS,
+    ...(mode === 'ideum' ? { loadMW: DEFAULT_WACO_LOAD_TIER } : {}),
+  }));
   const [uiMode, setUiMode] = useState(UI_MODES.BASIC);
   const [result, setResult] = useState(null);
   const [lastRunInputs, setLastRunInputs] = useState(null);
@@ -133,6 +149,23 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   const [devAutoMartinPreviewBoot, setDevAutoMartinPreviewBoot] = useState(false);
   const [devConfiguratorDataVisSync, setDevConfiguratorDataVisSync] = useState(false);
   const [dataQualityMode, setDataQualityMode] = useState(() => readPersistedDataQualityMode());
+  const [dataVisWacoTier, setDataVisWacoTier] = useState(() => effectiveDataVisLoadMwTier());
+  const [renewableMwBounds, setRenewableMwBounds] = useState(null);
+
+  const applyRenewableMwBounds = useCallback((bounds) => {
+    if (!bounds) return;
+    setRenewableMwBounds(bounds);
+    setInputs((prev) => inputsWithRenewableDataSpan(prev, bounds));
+  }, []);
+
+  const refreshRenewableMwBounds = useCallback(async (loadMW) => {
+    try {
+      const bounds = await fetchRenewableMwBoundsFromDataVis(loadMW ?? effectiveDataVisLoadMwTier());
+      applyRenewableMwBounds(bounds);
+    } catch (err) {
+      console.warn('[configurator] renewable MW bounds failed:', err?.message || err);
+    }
+  }, [applyRenewableMwBounds]);
 
   const isStale = !isWallMode && result?.ok && lastRunInputs && !inputsEqual(inputs, lastRunInputs);
 
@@ -227,15 +260,46 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     return subscribeDataQualityMode(setDataQualityMode);
   }, [isIdeumMode]);
 
+  useEffect(() => {
+    if (!isIdeumMode) return undefined;
+    const tier = effectiveDataVisLoadMwTier();
+    persistWacoLoadTierForDataVis(tier);
+    let cancelled = false;
+    void preloadWacoWithDatasetQuality(tier).then((uiMode) => {
+      if (cancelled) return;
+      if (uiMode) setDataQualityMode(uiMode);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isIdeumMode, refreshRenewableMwBounds]);
+
+  useEffect(() => {
+    if (!isIdeumMode || typeof window === 'undefined') return undefined;
+    const onTierChanged = () => setDataVisWacoTier(effectiveDataVisLoadMwTier());
+    const onDatasetReady = (event) => {
+      const tier = event?.detail?.loadMW ?? effectiveDataVisLoadMwTier();
+      setDataVisWacoTier(tier);
+      void refreshRenewableMwBounds(tier);
+    };
+    window.addEventListener(WACO_LOAD_TIER_CHANGED_EVENT, onTierChanged);
+    window.addEventListener(WACO_DATASET_READY_EVENT, onDatasetReady);
+    return () => {
+      window.removeEventListener(WACO_LOAD_TIER_CHANGED_EVENT, onTierChanged);
+      window.removeEventListener(WACO_DATASET_READY_EVENT, onDatasetReady);
+    };
+  }, [isIdeumMode, refreshRenewableMwBounds]);
+
   const handleDataQualityModeChange = useCallback(async (mode) => {
     try {
       const role = await fetchMachineRole().catch(() => null);
       const next = await applyDataVisDatasetMode(mode, role);
       setDataQualityMode(next);
+      await refreshRenewableMwBounds();
     } catch (err) {
       console.error('[dataVis] dataset mode change failed', err);
     }
-  }, []);
+  }, [refreshRenewableMwBounds]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -676,7 +740,13 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       return;
     }
 
-    setIdeumTab(IDEUM_DATA_EXPLORATION_TAB_ID);
+    try {
+      await pushExploreSyncToCluster();
+    } catch {
+      /* explore-sync warnings already logged */
+    }
+    setDataVisWacoTier(effectiveDataVisLoadMwTier());
+    setIdeumTab(tabId);
   }, [pushExploreSyncToCluster]);
 
   const handleExploreData = useCallback(async () => {
@@ -704,6 +774,12 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       }
       return;
     }
+    try {
+      await pushExploreSyncToCluster();
+    } catch {
+      /* explore-sync warnings already logged */
+    }
+    setDataVisWacoTier(effectiveDataVisLoadMwTier());
     setIdeumTab(IDEUM_EXPLORE_DATA_TAB_ID);
   }, [pushExploreSyncToCluster]);
 
@@ -756,7 +832,19 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   const handleReset = () => {
     if (isWallMode) return;
-    setInputs({ ...CONFIGURATOR_DEFAULT_INPUTS });
+    setInputs({
+      ...CONFIGURATOR_DEFAULT_INPUTS,
+      ...(isIdeumMode ? { loadMW: DEFAULT_WACO_LOAD_TIER } : {}),
+    });
+    if (isIdeumMode) {
+      persistWacoLoadTierForDataVis(DEFAULT_WACO_LOAD_TIER);
+      persistDataQualityMode(DATA_QUALITY_CLEAN);
+      setDataQualityMode(DATA_QUALITY_CLEAN);
+      setDataVisWacoTier(DEFAULT_WACO_LOAD_TIER);
+      void preloadWacoWithDatasetQuality(DEFAULT_WACO_LOAD_TIER).then((uiMode) => {
+        if (uiMode) setDataQualityMode(uiMode);
+      });
+    }
     setUiMode(UI_MODES.BASIC);
     setResult(null);
     setLastRunInputs(null);
@@ -971,6 +1059,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             onReset={handleReset}
             onLoadPreset={handleLoadPreset}
             isOptimizedBusy={isWallSubmitting || isLocalMartinRunning}
+            renewableMwBounds={renewableMwBounds}
             previewSlot={
               !showIdeumLocalMartinWall ? <ConfIdeumPreviewSummary result={result} /> : null
             }
@@ -1014,10 +1103,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_DATA_EXPLORATION_TAB_ID && (
-          <DataVisPanel showQualityToggle={false} />
+          <DataVisPanel key={`datavis-waco-${dataVisWacoTier}`} showQualityToggle={false} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_EXPLORE_DATA_TAB_ID && (
-          <DataVisPanel variant="exploreWall" showQualityToggle={false} />
+          <DataVisPanel
+            key={`explore-waco-${dataVisWacoTier}`}
+            variant="exploreWall"
+            showQualityToggle={false}
+          />
         )}
         {!isIdeumMode && !isWallMode && (
           <ConfInputPanel
@@ -1066,3 +1159,4 @@ export default function DataCenterConfigurator(props) {
     </Conf3dProvider>
   );
 }
+

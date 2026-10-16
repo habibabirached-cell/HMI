@@ -8,10 +8,12 @@ import pandas as pd
 
 from configurator.conf_consolidated import TECH_SPECS
 from configurator.dataVis.loader import load_waco_dataframe
+from configurator.dataVis.paths import DEFAULT_WACO_LOAD_MW
 
 COL_CFE = "Carbon Free Energy (%)"
 COL_LOAD_COMPLIANCE = "Year 1 Load Compliance (%)"
 COL_LCOE = "Project LCOE ($/MWh)"
+COL_PROJECT_CAPEX = "Project CAPEX ($ M)"
 COL_CARBON = "Carbon Density (lb CO2/MWh)"
 COL_TOTAL_AEP_GWH = "Total Yr1 AEP (GWh)"
 COL_SOLAR_MW = "Solar AC Nameplate (MWac)"
@@ -96,6 +98,8 @@ def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], fl
     wind_gwh = _kwh_to_gwh(_num(row, "Year 1 Wind AEP (kWh)"))
     bess_gwh = _kwh_to_gwh(_num(row, "Year 1 BESS AEP (kWh)"))
     thermal_kwh = _num(row, "Year 1 7HA+LM2500 AEP (kWh)")
+    if thermal_kwh <= 0:
+        thermal_kwh = _num(row, "Year 1 LM2500 AEP (kWh)")
     thermal_mw = ha_mw + lm_mw
     if thermal_mw > 0 and thermal_kwh > 0:
         ha_gwh = _kwh_to_gwh(thermal_kwh * (ha_mw / thermal_mw))
@@ -196,7 +200,17 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
     min_cfe_percent = float(inputs.get("minCfePercent") if inputs.get("minCfePercent") is not None else inputs.get("cfeTarget") or 0)
     max_cfe_percent = float(inputs.get("maxCfePercent") if inputs.get("maxCfePercent") is not None else 100)
     reliability_target = float(inputs.get("reliabilityTarget") or 99.99)
-    load_mw = float(inputs.get("loadMW") or 1350)
+    raw_load = inputs.get("loadMW")
+    try:
+        rounded = int(round(float(raw_load))) if raw_load is not None and raw_load != "" else None
+    except (TypeError, ValueError):
+        rounded = None
+    if rounded in (200, 1000):
+        waco_tier = rounded
+        load_mw = float(rounded)
+    else:
+        waco_tier = DEFAULT_WACO_LOAD_MW
+        load_mw = float(raw_load) if raw_load not in (None, "") else float(DEFAULT_WACO_LOAD_MW)
     min_solar_mw = float(inputs.get("minSolarMW") if inputs.get("minSolarMW") is not None else 0)
     max_solar_mw = float(inputs.get("maxSolarMW") if inputs.get("maxSolarMW") is not None else 4000)
     min_wind_mw = float(inputs.get("minWindMW") if inputs.get("minWindMW") is not None else 0)
@@ -206,7 +220,7 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
     max_cfe_fraction = min(1.0, max(0.0, max_cfe_percent / 100.0))
 
     try:
-        df = load_waco_dataframe()
+        df = load_waco_dataframe(waco_tier)
     except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
@@ -245,6 +259,7 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
     achieved_cfe_percent = achieved_cfe_fraction * 100.0
     achieved_rel = _num(winner, COL_LOAD_COMPLIANCE)
     total_installed = sum(r["installedMW"] for r in rows)
+    project_capex_usd_m = _num(winner, COL_PROJECT_CAPEX)
 
     return {
         "ok": True,
@@ -269,6 +284,7 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
             "minCfePercent": min_cfe_percent,
             "maxCfePercent": max_cfe_percent,
             "lcoe": int(round(portfolio_lcoe)),
+            "projectCapexUsdM": round(project_capex_usd_m, 1),
             "carbonIntensity": int(round(carbon)) if carbon > 0 else None,
         },
         "capacityFactors": [

@@ -4,6 +4,7 @@
  */
 
 import { isLocalClusterDev } from '../../utils/conf_configuratorCluster';
+import { normalizeWacoLoadTier } from '../../utils/conf_wacoLoadTier';
 import { fetchMachineRole } from '../../../utils/clusterPeer';
 
 export const DATAVIS_CONFIGURATOR_SYNC_CHANNEL = 'dcs-dataVis-configurator-filters-v1';
@@ -96,12 +97,24 @@ export function readPersistedConfiguratorRanges() {
   }
 }
 
+/** Never persist CONFIGURATOR_DEFAULT loadMW (1000) — only explicit 200|1000 load buttons. */
+export function sanitizeConfiguratorInputsForDataVis(inputs) {
+  if (!inputs || typeof inputs !== 'object') return inputs;
+  const tier = normalizeWacoLoadTier(inputs.loadMW);
+  if (tier == null) {
+    const { loadMW: _drop, ...rest } = inputs;
+    return rest;
+  }
+  return { ...inputs, loadMW: tier };
+}
+
 export function persistConfiguratorInputsForDataVis(inputs, uiMode) {
   if (typeof window === 'undefined') return;
   try {
+    const clean = sanitizeConfiguratorInputsForDataVis(inputs);
     window.sessionStorage.setItem(
       DATAVIS_CONFIGURATOR_INPUTS_STORAGE_KEY,
-      JSON.stringify({ inputs, uiMode, at: Date.now() }),
+      JSON.stringify({ inputs: clean, uiMode, at: Date.now() }),
     );
   } catch {
     /* ignore */
@@ -113,7 +126,11 @@ export function readPersistedConfiguratorInputs() {
   try {
     const raw = window.sessionStorage.getItem(DATAVIS_CONFIGURATOR_INPUTS_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (parsed?.inputs) {
+      parsed.inputs = sanitizeConfiguratorInputsForDataVis(parsed.inputs);
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -122,14 +139,15 @@ export function readPersistedConfiguratorInputs() {
 /** Configurator Inputs → Explore Data / Data Exploration (ranges + full inputs for Martin). */
 export function publishConfiguratorExploreSync(inputs, uiMode) {
   const ranges = configuratorInputsToDataVisRanges(inputs);
+  const cleanInputs = sanitizeConfiguratorInputsForDataVis(inputs);
   persistConfiguratorRangesForDataVis(ranges);
-  persistConfiguratorInputsForDataVis(inputs, uiMode);
+  persistConfiguratorInputsForDataVis(cleanInputs, uiMode);
   if (typeof BroadcastChannel !== 'undefined') {
     const channel = new BroadcastChannel(DATAVIS_CONFIGURATOR_SYNC_CHANNEL);
     channel.postMessage({
       type: 'configurator_explore_sync',
       ranges,
-      inputs,
+      inputs: cleanInputs,
       uiMode,
       at: Date.now(),
     });

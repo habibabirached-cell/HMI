@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import ConfIdeumTechnologyHub from './conf_IdeumTechnologyHub';
 import Conf3dToggleButton from './Conf3dToggleButton';
 import IdeumCorridorRangeRail from './conf_IdeumCorridorRangeRail';
@@ -13,7 +13,13 @@ import {
 } from '../utils/conf_technologyCapex';
 import { formatPercent } from '../utils/conf_formatters';
 import { snapToLoadCompliance } from '../utils/conf_corridorRangeScale';
-
+import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
+import {
+  notifyWacoLoadTierChanged,
+  persistWacoLoadTierForDataVis,
+} from '../dataVis/api/dataVisLoadMw';
+import { preloadWacoWithDatasetQuality } from '../utils/conf_wacoPreload';
+import { DEFAULT_WACO_LOAD_TIER } from '../utils/conf_wacoLoadTier';
 function clampReliabilityTarget(value) {
   return snapToLoadCompliance(value);
 }
@@ -33,117 +39,45 @@ const IDEUM_LOCATION_OPTIONS = [
   { id: 'pennsylvania', label: 'Pennsylvania', cityId: 'philadelphia_pa' },
 ];
 
-const LOAD_MW_MIN = 200;
-const LOAD_MW_MAX = 1800;
-const LOAD_MW_STEP = 50;
-
-const LOAD_MW_TICKS = Array.from(
-  { length: (LOAD_MW_MAX - LOAD_MW_MIN) / LOAD_MW_STEP + 1 },
-  (_, index) => LOAD_MW_MIN + index * LOAD_MW_STEP,
-);
-
-function snapLoadMW(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return LOAD_MW_MIN;
-  const snapped = Math.round(n / LOAD_MW_STEP) * LOAD_MW_STEP;
-  return Math.min(LOAD_MW_MAX, Math.max(LOAD_MW_MIN, snapped));
-}
+const IDEUM_LOAD_MW_OPTIONS = [
+  { value: 200, label: '200MW' },
+  { value: 1000, label: '1000MW' },
+];
 
 function IdeumLoadEditor({ loadMW, onChange }) {
-  const [draft, setDraft] = useState(String(loadMW));
-  const [focused, setFocused] = useState(false);
+  const tier = normalizeWacoLoadTier(loadMW);
 
-  useEffect(() => {
-    if (!focused) {
-      setDraft(String(loadMW));
-    }
-  }, [loadMW, focused]);
-
-  useEffect(() => {
-    const snapped = snapLoadMW(loadMW);
-    if (snapped !== loadMW) {
-      onChange(snapped);
-    }
-  }, [loadMW, onChange]);
-
-  const commitDraft = () => {
-    const trimmed = draft.trim();
-    if (trimmed === '') {
-      onChange(LOAD_MW_MIN);
-      setDraft(String(LOAD_MW_MIN));
-      return;
-    }
-    const next = snapLoadMW(trimmed);
-    onChange(next);
-    setDraft(String(next));
+  const pickLoadTier = (nextTier) => {
+    onChange(nextTier);
   };
-
-  const handleSliderChange = (value) => {
-    const next = snapLoadMW(value);
-    onChange(next);
-    setDraft(String(next));
-  };
-
-  const snappedLoadMW = snapLoadMW(loadMW);
 
   return (
     <div className="conf-ideum-hub-load-editor">
-      <div className="conf-ideum-hub-load-header">
-        <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d">Data Center Load</span>
-        <div className="conf-ideum-hub-load-field">
-          <input
-            id="conf-ideum-load"
-            type="text"
-            inputMode="numeric"
-            className="conf-ideum-hub-load-input"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ''))}
-            onFocus={() => setFocused(true)}
-            onBlur={() => {
-              setFocused(false);
-              commitDraft();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') e.currentTarget.blur();
-            }}
-            aria-label="Load in megawatts"
-          />
-          <span className="conf-ideum-hub-load-unit" aria-hidden="true">MW</span>
-        </div>
-      </div>
-      <div className="conf-ideum-hub-load-slider-wrap">
-        <input
-          type="range"
-          className="conf-ideum-hub-load-slider"
-          min={LOAD_MW_MIN}
-          max={LOAD_MW_MAX}
-          step={LOAD_MW_STEP}
-          value={snappedLoadMW}
-          onChange={(e) => handleSliderChange(e.target.value)}
-          aria-label="Load in megawatts slider"
-          aria-valuemin={LOAD_MW_MIN}
-          aria-valuemax={LOAD_MW_MAX}
-          aria-valuenow={snappedLoadMW}
-          aria-valuetext={`${snappedLoadMW} MW`}
-          list="conf-ideum-load-ticks"
-        />
-        <datalist id="conf-ideum-load-ticks">
-          {LOAD_MW_TICKS.map((tick) => (
-            <option key={tick} value={tick} />
-          ))}
-        </datalist>
-        <div className="conf-ideum-hub-load-ticks" aria-hidden="true">
-          {LOAD_MW_TICKS.map((tick) => (
-            <span
-              key={tick}
-              className={`conf-ideum-hub-load-tick${tick === snappedLoadMW ? ' conf-ideum-hub-load-tick--active' : ''}`}
-            />
-          ))}
-        </div>
-        <div className="conf-ideum-hub-load-tick-labels" aria-hidden="true">
-          <span>{LOAD_MW_MIN}</span>
-          <span>{LOAD_MW_MAX}</span>
-        </div>
+      <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d conf-ideum-hub-load-title">
+        Data Center Load
+      </span>
+      {tier == null ? (
+        <p className="conf-ideum-hub-load-hint">chose Data Center Load...</p>
+      ) : null}
+      <div
+        className="conf-ideum-hub-load-options"
+        role="group"
+        aria-label="Data center load"
+      >
+        {IDEUM_LOAD_MW_OPTIONS.map((option) => {
+          const active = tier === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`conf-ideum-hub-load-btn${active ? ' conf-ideum-hub-load-btn--active' : ''}`}
+              aria-pressed={active}
+              onClick={() => pickLoadTier(option.value)}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -159,13 +93,16 @@ export default function ConfIdeumInputPanel({
   onLoadPreset,
   isOptimizedBusy = false,
   previewSlot = null,
+  renewableMwBounds = null,
 }) {
   const minCfe = inputs.minCfePercent ?? inputs.cfeTarget ?? 0;
   const maxCfe = inputs.maxCfePercent ?? 100;
-  const minSolarMW = inputs.minSolarMW ?? 0;
-  const maxSolarMW = inputs.maxSolarMW ?? 4000;
-  const minWindMW = inputs.minWindMW ?? 0;
-  const maxWindMW = inputs.maxWindMW ?? 3000;
+  const solarSpan = renewableMwBounds?.solar;
+  const windSpan = renewableMwBounds?.wind;
+  const minSolarMW = inputs.minSolarMW ?? solarSpan?.min ?? 0;
+  const maxSolarMW = inputs.maxSolarMW ?? solarSpan?.max ?? 4000;
+  const minWindMW = inputs.minWindMW ?? windSpan?.min ?? 0;
+  const maxWindMW = inputs.maxWindMW ?? windSpan?.max ?? 3000;
   const reliabilityTarget = clampReliabilityTarget(inputs.reliabilityTarget ?? 99.99);
   const update = (patch) => onChange({ ...inputs, ...patch });
 
@@ -188,10 +125,17 @@ export default function ConfIdeumInputPanel({
     });
   };
 
+  const handleLoadTierChange = (loadMW) => {
+    update({ loadMW });
+    persistWacoLoadTierForDataVis(loadMW);
+    notifyWacoLoadTierChanged(loadMW);
+    void preloadWacoWithDatasetQuality(loadMW, null);
+  };
+
   const loadEditor = (
     <IdeumLoadEditor
-      loadMW={inputs.loadMW}
-      onChange={(loadMW) => update({ loadMW })}
+      loadMW={inputs.loadMW ?? DEFAULT_WACO_LOAD_TIER}
+      onChange={handleLoadTierChange}
     />
   );
 
@@ -277,11 +221,15 @@ export default function ConfIdeumInputPanel({
               solar: {
                 lower: minSolarMW,
                 upper: maxSolarMW,
+                rangeMin: solarSpan?.min ?? 0,
+                rangeMax: solarSpan?.max ?? 4000,
                 onChange: (lower, upper) => update({ minSolarMW: lower, maxSolarMW: upper }),
               },
               wind: {
                 lower: minWindMW,
                 upper: maxWindMW,
+                rangeMin: windSpan?.min ?? 0,
+                rangeMax: windSpan?.max ?? 3000,
                 onChange: (lower, upper) => update({ minWindMW: lower, maxWindMW: upper }),
               },
             }}

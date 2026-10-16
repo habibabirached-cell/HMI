@@ -18,6 +18,7 @@ class FilterSpec(BaseModel):
 
 class FilterRequest(BaseModel):
     filters: list[FilterSpec] = Field(default_factory=list)
+    loadMW: int | None = None
 
 
 class RowsRequest(FilterRequest):
@@ -58,7 +59,9 @@ class HistogramRequest(FilterRequest):
 
 class CompareRequest(BaseModel):
     row_ids: list[int] = Field(..., min_length=1, max_length=8)
+    loadMW: int | None = None
 
 
 class DatasetModeRequest(BaseModel):
     mode: Literal["raw", "clean"]
+    loadMW: int | None = None
