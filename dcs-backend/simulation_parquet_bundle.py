@@ -272,21 +272,43 @@ def resolve_bundle_column_name(columns: list[str], requested: str) -> Optional[s
 
 def delete_bundle_column(design_dir: str, sim_name: str, column_name: str) -> bool:
     """
-    Drop one column from the Parquet bundle (rewrite manifest + column files).
-    Returns True if the bundle was rewritten.
+    Drop one column from the Parquet bundle (remove its shard + update manifest).
+    Does not rewrite remaining column files.
+    Returns True if the bundle was updated.
     Raises ValueError if unknown column or last column.
     """
     if not bundle_exists(design_dir, sim_name):
         raise FileNotFoundError("scenario bundle missing")
-    df = read_bundle_dataframe(design_dir, sim_name)
-    cols = [str(c) for c in df.columns]
+    root = scenario_data_dir(design_dir, sim_name)
+    manifest = read_manifest(design_dir, sim_name)
+    cols = [str(c) for c in (manifest.get("columns") or [])]
+    files = [str(f) for f in (manifest.get("column_files") or [])]
+    if len(cols) != len(files):
+        raise ValueError("manifest columns / column_files length mismatch")
     hit = resolve_bundle_column_name(cols, column_name)
     if hit is None:
         raise ValueError(f"Unknown column: {column_name}")
     if len(cols) <= 1:
         raise ValueError("Cannot delete the last remaining column")
-    df2 = df.drop(columns=[hit])
-    write_bundle_from_dataframe(df2, design_dir, sim_name)
+    idx = cols.index(hit)
+    removed_file = files[idx]
+    shard_path = os.path.join(root, removed_file)
+    if os.path.isfile(shard_path):
+        os.remove(shard_path)
+    new_cols = cols[:idx] + cols[idx + 1 :]
+    new_files = files[:idx] + files[idx + 1 :]
+    row_count = int(manifest.get("row_count") or 0)
+    updated = {
+        "version": manifest.get("version", MANIFEST_VERSION),
+        "columns": new_cols,
+        "row_count": row_count,
+        "column_files": new_files,
+    }
+    mp = os.path.join(root, MANIFEST_NAME)
+    with open(mp, "w", encoding="utf-8") as f:
+        json.dump(updated, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    _remove_orphan_column_parquets(root, set(new_files))
     return True
 
 
