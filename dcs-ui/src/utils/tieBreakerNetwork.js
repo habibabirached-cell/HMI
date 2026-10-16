@@ -6,12 +6,6 @@
  * equipment toward a fixed‑width aggregate (~50 px gutters) plus stub feeders to anchors.
  */
 
-import {
-  getGasTurbineBankCollapseSurfaceMemberIds,
-  isGasTurbineBank,
-  isGasTurbineBankCollapsed,
-} from './gasTurbineBank';
-
 const TIE_STRIP_EXPANDED_WIDTH = 34;
 /** Short bbox for collapse affordance only (dots + halo); authored height is unchanged in JSON. */
 const TIE_STRIP_EXPANDED_HEIGHT = 24;
@@ -163,19 +157,6 @@ function anchorCenterY(comp, getComponentVisualConfig) {
   return comp.position.y + h / 2;
 }
 
-/** Collapsed bank preview tiles — positioned by gas-turbine-bank shift, not tie flank pull. */
-function collectCollapsedGasTurbineBankSurfaceIds(components) {
-  const ids = new Set();
-  if (!components?.length) return ids;
-  for (const c of components) {
-    if (!isGasTurbineBank(c) || !isGasTurbineBankCollapsed(c)) continue;
-    for (const id of getGasTurbineBankCollapseSurfaceMemberIds(c.properties?.gasTurbineGroup)) {
-      if (id) ids.add(String(id));
-    }
-  }
-  return ids;
-}
-
 /** Flank CBs in the same vertical band as the tie (render positions, post-collapse shift). */
 function flankStubCandidates(renderComponents, tieRenderComp, side, getComponentVisualConfig) {
   const baseVis = getComponentVisualConfig(tieRenderComp.type);
@@ -266,11 +247,10 @@ export function buildTieCollapseHorizontalShiftMap(components, getComponentVisua
   const scopeByVerticalBand =
     components.filter((c) => isTieBreakerNetwork(c)).length > 1;
 
-  const bankCollapseSurfaceIds = collectCollapsedGasTurbineBankSurfaceIds(components);
-
   for (const tie of anchors) {
     const tg = tie.properties?.tieGroup;
-    const excluded = new Set([...(tg?.memberIds || []), tie.id, ...bankCollapseSurfaceIds]);
+    // Collapsed bank preview tiles shift via gasTurbineBank.js; tie shift applies to other flanks only.
+    const excluded = new Set([...(tg?.memberIds || []), tie.id]);
 
     const baseVis = getComponentVisualConfig(tie.type);
     const tieLeft = tie.position?.x ?? 0;

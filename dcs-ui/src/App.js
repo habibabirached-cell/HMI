@@ -287,7 +287,12 @@ import {
   materializeCanvasPaste,
   scrubTieGroupReferencesAfterDelete,
 } from './utils/canvasDesignClipboard';
-import { scrubGasTurbineGroupReferencesAfterDelete } from './utils/gasTurbineBank';
+import {
+  getGasTurbineBankCollapseSurfaceMemberIds,
+  isGasTurbineBank,
+  isGasTurbineBankCollapsed,
+  scrubGasTurbineGroupReferencesAfterDelete,
+} from './utils/gasTurbineBank';
 import {
   getCachedSimulationPayload,
   setCachedSimulationPayload,
@@ -1468,25 +1473,77 @@ function App() {
     setCanvasComponents(prev => [...prev, newComponent]);
   }, [workspaceLayoutPreset]);
 
+  /** When dragging a collapsed bank preview tile, keep collapseColumnLeft in sync so horizontal drag sticks. */
+  const applyCollapsedBankColumnLeftForDrag = useCallback((components, movedId, newPosition) => {
+    for (const bank of components) {
+      if (!isGasTurbineBank(bank) || !isGasTurbineBankCollapsed(bank)) continue;
+      const g = bank.properties?.gasTurbineGroup;
+      if (!getGasTurbineBankCollapseSurfaceMemberIds(g).includes(movedId)) continue;
+      return {
+        bankId: bank.id,
+        colLeft: newPosition.x,
+      };
+    }
+    return null;
+  }, []);
+
   // Update component position
   const handleMoveComponent = useCallback((componentId, newPosition) => {
-    setCanvasComponents(prev =>
-      prev.map(comp =>
-        comp.id === componentId ? { ...comp, position: newPosition } : comp
-      )
-    );
-  }, []);
+    setCanvasComponents((prev) => {
+      const bankDrag = applyCollapsedBankColumnLeftForDrag(prev, componentId, newPosition);
+      return prev.map((comp) => {
+        if (comp.id === componentId) {
+          return { ...comp, position: newPosition };
+        }
+        if (bankDrag && comp.id === bankDrag.bankId) {
+          const g = comp.properties?.gasTurbineGroup;
+          return {
+            ...comp,
+            properties: {
+              ...comp.properties,
+              gasTurbineGroup: {
+                ...g,
+                collapseColumnLeft: bankDrag.colLeft,
+              },
+            },
+          };
+        }
+        return comp;
+      });
+    });
+  }, [applyCollapsedBankColumnLeftForDrag]);
 
   /** Move many components in one update (group drag). */
   const handleMoveComponents = useCallback((updates) => {
     if (!updates?.length) return;
     const posById = new Map(updates.map((u) => [u.id, u.position]));
-    setCanvasComponents((prev) =>
-      prev.map((comp) =>
-        posById.has(comp.id) ? { ...comp, position: posById.get(comp.id) } : comp,
-      ),
-    );
-  }, []);
+    setCanvasComponents((prev) => {
+      let bankDrag = null;
+      for (const u of updates) {
+        bankDrag = applyCollapsedBankColumnLeftForDrag(prev, u.id, u.position);
+        if (bankDrag) break;
+      }
+      return prev.map((comp) => {
+        if (posById.has(comp.id)) {
+          return { ...comp, position: posById.get(comp.id) };
+        }
+        if (bankDrag && comp.id === bankDrag.bankId) {
+          const g = comp.properties?.gasTurbineGroup;
+          return {
+            ...comp,
+            properties: {
+              ...comp.properties,
+              gasTurbineGroup: {
+                ...g,
+                collapseColumnLeft: bankDrag.colLeft,
+              },
+            },
+          };
+        }
+        return comp;
+      });
+    });
+  }, [applyCollapsedBankColumnLeftForDrag]);
 
   const canvasDesignClipboardRef = useRef(null);
   const canvasPasteGenerationRef = useRef(0);
