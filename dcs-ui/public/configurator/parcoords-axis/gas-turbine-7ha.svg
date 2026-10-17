@@ -1,20 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="7HA gas turbine">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Heavy-duty gas turbine">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#dfe6ee"/>
-      <stop offset="100%" stop-color="#b8c4d4"/>
+    <linearGradient id="ha-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b8cde0"/>
+      <stop offset="100%" stop-color="#dce6ef"/>
     </linearGradient>
-    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f5f7fa"/>
-      <stop offset="50%" stop-color="#9aa8b8"/>
-      <stop offset="100%" stop-color="#5c6a78"/>
+    <linearGradient id="ha-concrete" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9aa3ad"/>
+      <stop offset="100%" stop-color="#5c6570"/>
+    </linearGradient>
+    <linearGradient id="ha-enclosure" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef2f6"/>
+      <stop offset="35%" stop-color="#b8c4d0"/>
+      <stop offset="100%" stop-color="#6b7785"/>
+    </linearGradient>
+    <linearGradient id="ha-compressor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cfd8e0"/>
+      <stop offset="100%" stop-color="#7a8794"/>
+    </linearGradient>
+    <radialGradient id="ha-intake" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#455a64"/>
+      <stop offset="100%" stop-color="#263238"/>
+    </radialGradient>
+    <linearGradient id="ha-exhaust" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#78909c"/>
+      <stop offset="100%" stop-color="#455a64"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" fill="url(#bg)"/>
-  <rect x="8" y="88" width="112" height="16" rx="2" fill="#6b7785"/>
-  <ellipse cx="64" cy="88" rx="48" ry="8" fill="#4a5562"/>
-  <rect x="20" y="56" width="72" height="32" rx="6" fill="url(#metal)"/>
-  <circle cx="92" cy="72" r="18" fill="url(#metal)" stroke="#5c6a78" stroke-width="2"/>
-  <circle cx="92" cy="72" r="8" fill="#3d4650"/>
-  <path d="M92 54 L96 62 L88 62 Z" fill="#c0392b" opacity="0.85"/>
+  <rect width="128" height="128" fill="url(#ha-sky)"/>
+  <ellipse cx="64" cy="102" rx="54" ry="8" fill="#8a939e" opacity="0.45"/>
+  <rect x="10" y="92" width="108" height="14" rx="2" fill="url(#ha-concrete)"/>
+  <rect x="14" y="94" width="100" height="4" fill="#707984" opacity="0.6"/>
+  <!-- enclosure / skid -->
+  <rect x="18" y="58" width="78" height="36" rx="5" fill="url(#ha-enclosure)" stroke="#5c6a78" stroke-width="1.2"/>
+  <rect x="22" y="62" width="70" height="28" rx="3" fill="#4a5562" opacity="0.25"/>
+  <!-- horizontal shaft line -->
+  <rect x="24" y="74" width="68" height="4" rx="1" fill="#37474f" opacity="0.5"/>
+  <!-- compressor section -->
+  <rect x="22" y="64" width="22" height="24" rx="3" fill="url(#ha-compressor)" stroke="#607080"/>
+  <circle cx="33" cy="76" r="9" fill="url(#ha-intake)"/>
+  <circle cx="33" cy="76" r="5" fill="#1c262c"/>
+  <path d="M33 67 L35 73 L31 73 Z" fill="#90a4ae" opacity="0.8"/>
+  <!-- combustion / mid body -->
+  <rect x="44" y="66" width="28" height="20" rx="2" fill="#8a959f"/>
+  <rect x="48" y="70" width="20" height="3" fill="#cfd8dc" opacity="0.5"/>
+  <rect x="48" y="76" width="20" height="3" fill="#cfd8dc" opacity="0.4"/>
+  <!-- generator / power turbine housing -->
+  <rect x="72" y="62" width="20" height="28" rx="4" fill="url(#ha-enclosure)"/>
+  <circle cx="82" cy="76" r="10" fill="url(#ha-compressor)" stroke="#546e7a"/>
+  <circle cx="82" cy="76" r="4" fill="#263238"/>
+  <!-- exhaust stack -->
+  <path d="M96 68 L118 72 L118 80 L96 84 Z" fill="url(#ha-exhaust)"/>
+  <path d="M102 70 L114 72 L114 78 L102 80 Z" fill="#37474f" opacity="0.55"/>
+  <path d="M118 73 L126 76 L118 79 Z" fill="#ff8a65" opacity="0.75"/>
+  <path d="M120 75 L128 76 L120 77 Z" fill="#ffab91" opacity="0.55"/>
+  <!-- roof louvers -->
+  <path d="M26 58 L34 52 M38 58 L46 52 M50 58 L58 52 M62 58 L70 52 M74 58 L82 52" stroke="#8a959f" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- access door -->
+  <rect x="54" y="82" width="12" height="10" rx="1" fill="#546e7a"/>
+  <line x1="60" y1="82" x2="60" y2="92" stroke="#37474f" stroke-width="0.8"/>
 </svg>

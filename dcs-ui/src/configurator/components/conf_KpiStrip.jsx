@@ -4,9 +4,10 @@ import {
   formatPercent,
   formatCarbonFreePercent,
   formatCurrencyPerMWh,
-  formatProjectCapexUsdM,
+  formatProjectCapexPerKw,
   normalizeCfePercentValue,
 } from '../utils/conf_formatters';
+import { resolveWacoLoadTierForDataVis } from '../utils/conf_wacoLoadTier';
 
 export default function ConfKpiStrip({ result }) {
   if (!result?.kpis) return null;
@@ -17,6 +18,7 @@ export default function ConfKpiStrip({ result }) {
   const minCfePct = normalizeCfePercentValue(minCfe);
   const cfeMet = minCfePct <= 0 || achievedCfePct >= minCfePct - 0.1;
   const hasCapex = Number.isFinite(Number(kpis.projectCapexUsdM)) && Number(kpis.projectCapexUsdM) > 0;
+  const loadMW = resolveWacoLoadTierForDataVis(result?.inputs?.loadMW);
 
   return (
     <div className="conf-kpi-strip" data-screen-region="kpis">
@@ -29,9 +31,9 @@ export default function ConfKpiStrip({ result }) {
         <div className="conf-kpi-card">
           <span className="conf-kpi-card__label">Project CAPEX</span>
           <strong className="conf-kpi-card__value">
-            {hasCapex ? formatProjectCapexUsdM(kpis.projectCapexUsdM) : '—'}
+            {hasCapex ? formatProjectCapexPerKw(kpis.projectCapexUsdM, loadMW) : '—'}
           </strong>
-          <small>Least-cost case</small>
+          <small>Least-cost case · per {loadMW.toLocaleString()} MW load</small>
         </div>
       </div>
       <div className="conf-kpi-strip__row conf-kpi-strip__row--bottom">

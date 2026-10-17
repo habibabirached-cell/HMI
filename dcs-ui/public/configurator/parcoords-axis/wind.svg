@@ -1,23 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Wind">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Wind turbine">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#89b4d4"/>
-      <stop offset="100%" stop-color="#d8e8f2"/>
+    <linearGradient id="wind-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
     </linearGradient>
-    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#6b9e5a"/>
-      <stop offset="100%" stop-color="#4a7340"/>
+    <linearGradient id="wind-tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="50%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" fill="url(#sky)"/>
-  <path d="M0 88 Q32 72 64 82 T128 78 L128 128 L0 128 Z" fill="url(#hill)"/>
-  <rect x="61" y="42" width="6" height="52" fill="#e8ecf0"/>
-  <g transform="translate(64 38)">
-    <circle r="4" fill="#5a6570"/>
-    <g fill="#f0f4f8" stroke="#9aa8b5" stroke-width="0.6">
-      <path d="M0 -4 L2 14 L-2 14 Z" transform="rotate(0)"/>
-      <path d="M0 -4 L2 14 L-2 14 Z" transform="rotate(120)"/>
-      <path d="M0 -4 L2 14 L-2 14 Z" transform="rotate(240)"/>
+  <rect width="128" height="128" fill="url(#wind-sky)"/>
+  <g transform="translate(64 64)">
+    <path d="M-5 8 L5 8 L3 52 L-3 52 Z" fill="url(#wind-tower)"/>
+    <path d="M-8 52 Q0 58 8 52 L6 56 Q0 62 -6 56 Z" fill="#64748b"/>
+    <g transform="translate(0 -18)">
+      <ellipse cx="0" cy="0" rx="7" ry="5" fill="#475569"/>
+      <rect x="-2" y="-2" width="4" height="8" rx="1" fill="#64748b"/>
+      <g fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8">
+        <path d="M0 0 L3 36 L-3 36 Z" transform="rotate(-8)"/>
+        <path d="M0 0 L3 36 L-3 36 Z" transform="rotate(112)"/>
+        <path d="M0 0 L3 36 L-3 36 Z" transform="rotate(232)"/>
+      </g>
+      <circle r="4" fill="#334155"/>
+      <circle r="2" fill="#64748b"/>
     </g>
   </g>
 </svg>

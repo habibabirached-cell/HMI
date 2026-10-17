@@ -273,6 +273,11 @@ def generate_martin_configurator_result(
     achieved_rel = _num(winner, COL_LOAD_COMPLIANCE)
     total_installed = sum(r["installedMW"] for r in rows)
     project_capex_usd_m = _num(winner, COL_PROJECT_CAPEX)
+    project_capex_per_kw = (
+        (project_capex_usd_m * 1_000_000.0) / (load_mw * 1000.0)
+        if load_mw > 0 and project_capex_usd_m > 0
+        else None
+    )
 
     return {
         "ok": True,
@@ -299,6 +304,9 @@ def generate_martin_configurator_result(
             "maxCfePercent": max_cfe_percent,
             "lcoe": int(round(portfolio_lcoe)),
             "projectCapexUsdM": round(project_capex_usd_m, 1),
+            "projectCapexPerKw": (
+                round(project_capex_per_kw) if project_capex_per_kw is not None else None
+            ),
             "carbonIntensity": int(round(carbon)) if carbon > 0 else None,
         },
         "capacityFactors": [

@@ -29,6 +29,8 @@ import {
 } from '../utils/dataVisColumnDisplayLabel';
 import {
   applyParcoordsAxisTitleIcons,
+  applyParcoordsExploreWallAxisSpines,
+  applyParcoordsExploreWallSwimlaneHeaders,
   applyParcoordsColorbarTickLabels,
   applyParcoordsColorbarTitleLayout,
   applyParcoordsHorizontalAxisLabels,
@@ -46,13 +48,13 @@ const MAX_PARALLEL_DIMS = 8;
 const PARCOORDS_DOMAIN_Y_COMPACT = [0.14, 0.8];
 const PARCOORDS_DOMAIN_Y = [0.12, 0.82];
 const PARCOORDS_LABEL_FONT_HORIZONTAL_COMPACT = {
-  size: 20,
+  size: 24,
   color: '#1f2933',
   family: 'system-ui, sans-serif',
   weight: 700,
 };
 const PARCOORDS_LABEL_FONT_COMPACT = {
-  size: 20,
+  size: 24,
   color: '#1f2933',
   family: 'system-ui, sans-serif',
   weight: 700,
@@ -261,7 +263,10 @@ export default function DataVisParallelTab({
       applyParcoordsColorbarTickLabels(gd);
       applyParcoordsColorbarTitleLayout(gd, { compact });
       if (lockDimensionsToDefaults) {
+        applyParcoordsExploreWallAxisSpines(gd, dimensions);
         applyParcoordsAxisTitleIcons(gd, dimensions, { compact });
+        applyParcoordsExploreWallSwimlaneHeaders(gd, dimensions);
+        applyParcoordsExploreWallAxisSpines(gd, dimensions);
       } else {
         removeParcoordsAxisIcons(gd.closest('.dataVis-chartBlock--parcoords'));
       }
@@ -567,7 +572,7 @@ export default function DataVisParallelTab({
                   ? {
                       l: 96,
                       r: showColorScale ? 228 : 28,
-                      t: lockDimensionsToDefaults ? 192 : 132,
+                      t: lockDimensionsToDefaults ? 440 : 132,
                       b: 96,
                       pad: 4,
                     }

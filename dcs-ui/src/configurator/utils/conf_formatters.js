@@ -55,6 +55,21 @@ export function formatProjectCapexUsdM(millions) {
   return `$${n.toFixed(1)}M`;
 }
 
+/** Project CAPEX ($ M) normalized by data-center load nameplate → $/kW. */
+export function projectCapexPerKwFromUsdM(millions, loadMW) {
+  const capexM = Number(millions);
+  const load = Number(loadMW);
+  if (!Number.isFinite(capexM) || !Number.isFinite(load) || load <= 0) return NaN;
+  return (capexM * 1_000_000) / (load * 1000);
+}
+
+export function formatProjectCapexPerKw(millions, loadMW) {
+  const perKw = projectCapexPerKwFromUsdM(millions, loadMW);
+  if (!Number.isFinite(perKw)) return '—';
+  const rounded = Math.round(perKw);
+  return `$${rounded.toLocaleString()}/kW`;
+}
+
 export function formatCarbonIntensity(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';

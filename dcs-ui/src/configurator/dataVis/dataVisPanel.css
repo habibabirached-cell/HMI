@@ -724,6 +724,65 @@
   position: relative;
 }
 
+/* Beats .parcoords-control-view .y-axis path.domain { stroke: #000 } below. */
+.dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view .y-axis.dataVis-parcoords-axis--green path.domain,
+.dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view .y-axis.dataVis-parcoords-axis--green line.domain {
+  stroke: #22c55e !important;
+  stroke-width: 3.5px !important;
+  stroke-opacity: 1 !important;
+}
+
+.dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view .y-axis.dataVis-parcoords-axis--carbon path.domain,
+.dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view .y-axis.dataVis-parcoords-axis--carbon line.domain {
+  stroke: #171717 !important;
+  stroke-width: 3.5px !important;
+  stroke-opacity: 1 !important;
+}
+
+.dataVis-parcoords-swimlane {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+}
+
+.dataVis-parcoords-swimlane-label {
+  position: absolute;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-swimlane-label {
+  font-size: 24px;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-swimlane-label--parent {
+  color: #00695c;
+  letter-spacing: 0.02em;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-swimlane-label--outcomes {
+  color: #334155;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-swimlane-label--green {
+  color: #15803d;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-swimlane-label--carbon {
+  color: #171717;
+}
+
+.dataVis-parcoords-swimlane-bracket {
+  pointer-events: none;
+  overflow: visible;
+}
+
 .dataVis-parcoords-axis-icons {
   position: absolute;
   inset: 0;
@@ -741,10 +800,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 25px;
   box-shadow: 0 2px 12px rgba(15, 23, 42, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.92);
   background: #fff;
+}
+
+.dataVis-exploreWall .dataVis-parcoords-axis-icon--photo img {
+  object-fit: contain;
+  background: #050508;
+  border-color: rgba(148, 163, 184, 0.45);
 }
 
 .dataVis-chartBlock--parcoords .parcoords .axis-title,
@@ -818,7 +883,8 @@
 .dataVis-tabPanel--parcoordsQuad .dataVis-chartBlock--parcoords .parcoords-control-view text.axis-title tspan,
 .dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view text.axis-title,
 .dataVis-exploreWall .dataVis-chartBlock--parcoords .parcoords-control-view text.axis-title tspan {
-  font-size: 20px !important;
+  font-size: 24px !important;
+  font-family: system-ui, sans-serif !important;
 }
 
 .dataVis-chartBlock--parcoords .axis-extent-text,
