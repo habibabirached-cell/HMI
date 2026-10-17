@@ -27,7 +27,7 @@ def main() -> int:
     a_src = pd.to_numeric(mv["Amplitude"], errors="coerce").to_numpy(dtype=float)
     order = np.argsort(f_src, kind="stable")
     f_src, a_src = f_src[order], a_src[order]
-    amp = np.interp(f_ref, f_src, a_src, left=0.0, right=0.0) * 100.0
+    amp = np.interp(f_ref, f_src, a_src, left=0.0, right=0.0)
     out = pd.DataFrame({"Frequency": f_ref, "Amplitude": amp})
     write_bundle_from_dataframe(out, DESIGN_DIR, "Csv_mvups")
     sim_path = os.path.join(DESIGN_DIR, "Csv_mvups.sim.json")

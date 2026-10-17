@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "columns": [
+    "t",
+    "Tm_shaft_gt_1_12"
+  ],
+  "row_count": 3751,
+  "column_files": [
+    "c0000.parquet",
+    "c0001.parquet"
+  ]
+}

@@ -3348,6 +3348,8 @@ const ChartPanel = ({
     /** Legend overlaid inside the plot area; reposition via Move legend + arrow keys (saved per chart). */
     const buildInPlotLegendLayout = () => {
       const saved = legendLayoutRef.current[chart.id] ?? chart.legendPosition;
+      const scaleRaw = Number(chart.legendScale);
+      const legendScale = Number.isFinite(scaleRaw) && scaleRaw > 0 ? scaleRaw : 1;
       const legend = {
         orientation: 'v',
         xref: 'paper',
@@ -3356,17 +3358,19 @@ const ChartPanel = ({
         y: saved?.y ?? 0.99,
         xanchor: saved?.xanchor ?? 'right',
         yanchor: saved?.yanchor ?? 'top',
-        font: { family: 'Arial, sans-serif', size: 11, color: '#e0e0e0' },
+        font: { family: 'Arial, sans-serif', size: Math.round(11 * legendScale), color: '#e0e0e0' },
         bgcolor: rgba(0, 0, 0, 0.55 * o),
         bordercolor: lineRgba,
-        borderwidth: 1,
+        borderwidth: Math.max(1, Math.round(legendScale)),
+        itemsizing: 'constant',
+        itemwidth: Math.round(30 * legendScale),
         traceorder: 'normal',
       };
       const titleText = chart.legendTitle?.trim();
       if (titleText) {
         legend.title = {
           text: titleText,
-          font: { family: 'Arial, sans-serif', size: 12, color: '#e0e0e0' },
+          font: { family: 'Arial, sans-serif', size: Math.round(12 * legendScale), color: '#e0e0e0' },
         };
       }
       return legend;

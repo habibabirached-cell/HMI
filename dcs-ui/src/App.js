@@ -62,7 +62,9 @@ import {
 } from './utils/h2SplitCanvasTitles';
 import {
   applyDesignExpansionToComponents,
+  applyBreakersExpansionForPane,
   DEFAULT_DESIGN_EXPANSION,
+  designHasStackedBreakerExpansion,
   designSupportsExpansionPanel,
   normalizeDesignExpansion,
 } from './utils/designExpansion';
@@ -489,6 +491,7 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
         ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
           legendTitle: String(chartDef.legend_title).trim(),
         }),
+        ...(Number(chartDef.legend_scale) > 0 && { legendScale: Number(chartDef.legend_scale) }),
         ...(() => {
           const lp = normalizeLegendPositionFromDef(chartDef);
           return lp ? { legendPosition: lp } : {};
@@ -538,6 +541,7 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
       ...(chartDef.legend_title != null && String(chartDef.legend_title).trim() && {
         legendTitle: String(chartDef.legend_title).trim(),
       }),
+      ...(Number(chartDef.legend_scale) > 0 && { legendScale: Number(chartDef.legend_scale) }),
       ...(() => {
         const lp = normalizeLegendPositionFromDef(chartDef);
         return lp ? { legendPosition: lp } : {};
@@ -4896,24 +4900,35 @@ function App() {
     }));
   }, []);
 
-  const handleDesignExpansionChange = useCallback((key, expanded) => {
+  const handleDesignExpansionChange = useCallback((key, expanded, pane) => {
     setDesignExpansion((prev) => {
       const mvupsFlat = normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic;
+      const stackedBreakers =
+        key === 'breakers' && pane && designHasStackedBreakerExpansion(canvasComponentsRef.current);
       const next = normalizeDesignExpansion(
         mvupsFlat
           ? { breakersCompact: !expanded, peripheralsCompact: !expanded }
-          : {
-              ...prev,
-              ...(key === 'breakers'
-                ? { breakersCompact: !expanded }
-                : { peripheralsCompact: !expanded }),
-            },
+          : stackedBreakers
+            ? {
+                ...prev,
+                ...(pane === 'lower'
+                  ? { breakersCompactLower: !expanded }
+                  : { breakersCompactUpper: !expanded }),
+              }
+            : {
+                ...prev,
+                ...(key === 'breakers'
+                  ? { breakersCompact: !expanded, breakersCompactUpper: !expanded, breakersCompactLower: !expanded }
+                  : { peripheralsCompact: !expanded }),
+              },
       );
-      setCanvasComponents((comps) =>
-        mvupsFlat
-          ? applyMvupsFlatUnifiedCollapseToComponents(comps, !expanded)
-          : applyDesignExpansionToComponents(comps, next),
-      );
+      setCanvasComponents((comps) => {
+        if (mvupsFlat) return applyMvupsFlatUnifiedCollapseToComponents(comps, !expanded);
+        if (stackedBreakers) {
+          return applyBreakersExpansionForPane(comps, next, pane);
+        }
+        return applyDesignExpansionToComponents(comps, next);
+      });
       return next;
     });
   }, [designSectionVisibility]);
@@ -6282,6 +6297,9 @@ function App() {
         }
         if (c.legendTitle != null && String(c.legendTitle).trim()) {
           base.legend_title = String(c.legendTitle).trim();
+        }
+        if (Number(c.legendScale) > 0 && Number(c.legendScale) !== 1) {
+          base.legend_scale = Number(c.legendScale);
         }
         const legendPos = compactLegendPositionForSave(c.legendPosition);
         if (legendPos) base.legend_position = legendPos;
@@ -9425,6 +9443,7 @@ function App() {
       rightRailGridPeek={gridPeek}
       onToggleRightRailGridPeek={toggleRightRailGridPeek}
       showExpansionPanel={designSupportsExpansionPanel(designApiPath, currentConfigName)}
+      stackedBreakerExpansion={designHasStackedBreakerExpansion(canvasComponents)}
       designExpansion={designExpansion}
       onDesignExpansionChange={handleDesignExpansionChange}
     />

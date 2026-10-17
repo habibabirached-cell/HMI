@@ -16,6 +16,13 @@ export const DESIGN_SECTION_Y_THRESHOLD = 1800;
 
 export const MVUPS_FLAT_SCHEMATIC_ID_PREFIX = 'p2r-mvups-flat-';
 
+/** Flat expanded baseline mirror on lower pane (P2R_18 — no collapse owners). */
+export const MVUPS_EXPANDED_MIRROR_ID_PREFIX = 'comp-mvups-exp-';
+
+export function isMvupsExpandedMirrorComponentId(id) {
+  return typeof id === 'string' && id.startsWith(MVUPS_EXPANDED_MIRROR_ID_PREFIX);
+}
+
 export const DEFAULT_DESIGN_SECTION_VISIBILITY = {
   showUpper: true,
   showLower: true,
@@ -187,7 +194,11 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
   if (v.showMvupsFlatSchematic) {
     const { lower } = buildDesignSectionMemberIdSets(components);
     for (const id of lower) {
-      if (!isMvupsFlatSchematicComponentId(id) && !isMvupsFlatCollapseOwnerId(id)) {
+      if (
+        !isMvupsFlatSchematicComponentId(id) &&
+        !isMvupsFlatCollapseOwnerId(id) &&
+        !isMvupsExpandedMirrorComponentId(id)
+      ) {
         hidden.add(id);
       }
     }

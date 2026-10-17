@@ -201,6 +201,7 @@ const SimulationControls = ({
   rightRailGridPeek = false,
   onToggleRightRailGridPeek,
   showExpansionPanel = false,
+  stackedBreakerExpansion = false,
   designExpansion = { breakersCompact: true, peripheralsCompact: true },
   onDesignExpansionChange,
 }) => {
@@ -830,13 +831,36 @@ const SimulationControls = ({
             {showExpansionPanel && (
               <div className="expansion-section">
                 <h4 className="scenarios-title expansion-section-title">Expansion</h4>
-                <ExpansionToggleSwitch
-                  label="Breakers"
-                  compact={designExpansion?.breakersCompact !== false}
-                  onChange={(expanded) => onDesignExpansionChange?.('breakers', expanded)}
-                  titleCompact="Compact tie networks — tap to expand both middle sections"
-                  titleExpanded="Expanded tie networks — tap to compact"
-                />
+                {stackedBreakerExpansion ? (
+                  <>
+                    <ExpansionToggleSwitch
+                      label="Breakers (baseline)"
+                      compact={designExpansion?.breakersCompactUpper !== false}
+                      onChange={(expanded) =>
+                        onDesignExpansionChange?.('breakers', expanded, 'upper')
+                      }
+                      titleCompact="Compact upper tie network"
+                      titleExpanded="Expand upper tie network"
+                    />
+                    <ExpansionToggleSwitch
+                      label="Breakers (MVUPS)"
+                      compact={designExpansion?.breakersCompactLower !== false}
+                      onChange={(expanded) =>
+                        onDesignExpansionChange?.('breakers', expanded, 'lower')
+                      }
+                      titleCompact="Compact lower tie network"
+                      titleExpanded="Expand lower tie network"
+                    />
+                  </>
+                ) : (
+                  <ExpansionToggleSwitch
+                    label="Breakers"
+                    compact={designExpansion?.breakersCompact !== false}
+                    onChange={(expanded) => onDesignExpansionChange?.('breakers', expanded)}
+                    titleCompact="Compact tie networks — tap to expand"
+                    titleExpanded="Expanded tie networks — tap to compact"
+                  />
+                )}
                 <ExpansionToggleSwitch
                   label="Peripherals"
                   compact={designExpansion?.peripheralsCompact !== false}
