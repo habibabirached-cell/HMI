@@ -29,6 +29,8 @@ export const DEFAULT_DESIGN_SECTION_VISIBILITY = {
   showLower: true,
   hideBranches: [],
   showMvupsFlatSchematic: false,
+  /** Titles outside equipment boxes with leader arrows (windOct2026-style one-lines). */
+  canvasExternalPrimaryLabels: false,
 };
 
 /** Named simulation presets → canvas section visibility (statcom05 quick scenarios). */
@@ -54,6 +56,7 @@ export function normalizeDesignSectionVisibility(raw) {
       ? raw.hideBranches.filter((b) => b === 'bess' || b === 'statcom')
       : [],
     showMvupsFlatSchematic: raw.showMvupsFlatSchematic === true,
+    canvasExternalPrimaryLabels: raw.canvasExternalPrimaryLabels === true,
   };
 }
 

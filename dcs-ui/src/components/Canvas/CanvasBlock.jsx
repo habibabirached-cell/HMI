@@ -16,7 +16,17 @@ import {
 } from '../../utils/gasTurbineBank';
 import { useCanvasFontPxDelta, useCollapsedComponentFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
-import { strokeForStatus, getScaledCanvasBlockDimensions } from './shapes/canvasBlockUtils';
+import {
+  strokeForStatus,
+  getScaledCanvasBlockDimensions,
+  primaryLabelText,
+  secondaryLabelText,
+} from './shapes/canvasBlockUtils';
+import ExternalPrimaryLabel from './shapes/ExternalPrimaryLabel';
+import {
+  resolveExternalLabelPlacement,
+  shouldShowExternalPrimaryLabel,
+} from '../../utils/resolveExternalLabelPlacement';
 import { isCollapseAggregateSurfaceComponent, isAuxLoadsCollapseAggregateSurface, isGFMeCollapseAggregateSurface, isBessCollapseAggregateSurface } from '../../utils/collapseAggregate';
 import { GAS_TURBINE_3D_TYPE } from '../../utils/gasTurbine3dLayout';
 import {
@@ -69,6 +79,8 @@ function CanvasBlock({
   onNudgeCanvasBlockTypeScale,
   expandGasTurbineBankId = null,
   onExpandGasTurbineBank,
+  expandWindOctPlantOwnerId = null,
+  onExpandWindOctPlant,
   mvupsFlatUnifiedCollapse = false,
   onMvupsFlatUnifiedCollapse,
   allComponents = [],
@@ -76,6 +88,7 @@ function CanvasBlock({
   isIdeumTouchTarget = false,
   zoom = 1,
   interactiveBreakerPorts = null,
+  canvasExternalPrimaryLabels = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
   const collapsedFontPxDelta = useCollapsedComponentFontPxDelta();
@@ -99,11 +112,30 @@ function CanvasBlock({
   const stripMode = tieStrip || gasBankStrip;
   const mvupsFlatSchematic = isMvupsFlatSchematicComponent(component);
   const visualConfig = getComponentVisualConfig(component.type);
+  const useExternalPrimaryLabel =
+    canvasExternalPrimaryLabels && !stripMode && shouldShowExternalPrimaryLabel(component);
   const bodyVisualConfig = gfmeCollapse3d
     ? { ...visualConfig, shape: 'schematic-gfme-3d', backgroundTexture: undefined }
     : bessCollapse3d
       ? { ...visualConfig, shape: 'schematic-bess-3d', backgroundTexture: undefined }
-      : visualConfig;
+      : useExternalPrimaryLabel
+        ? {
+            ...visualConfig,
+            suppressInlinePrimaryLabel: true,
+            forceInlinePropertyLabel: true,
+          }
+        : visualConfig;
+  const externalLabelText = useExternalPrimaryLabel
+    ? primaryLabelText(component, visualConfig)
+    : '';
+  const externalLabelTooltip = useExternalPrimaryLabel
+    ? [externalLabelText, secondaryLabelText(component, visualConfig), component.fullName]
+        .filter(Boolean)
+        .join(' · ')
+    : null;
+  const externalLabelPlacement = useExternalPrimaryLabel
+    ? resolveExternalLabelPlacement(component)
+    : 'above';
   const { width: baseWidth, height: baseHeight } = getScaledCanvasBlockDimensions(
     component,
     bodyVisualConfig,
@@ -116,6 +148,10 @@ function CanvasBlock({
 
   const centerX = width / 2;
   const centerY = height / 2;
+  const labelAnchorXRatio = Number(component.visualOverrides?.labelAnchorXRatio);
+  const externalLabelCenterX = Number.isFinite(labelAnchorXRatio)
+    ? width * Math.min(1, Math.max(0, labelAnchorXRatio))
+    : centerX;
   const presentationOffline = presenceForcedOffline;
   const ideumDecorOnly = ideumKioskMode && component?.properties?.ideumDecorOnly === true;
   const isInteractiveStubBreaker = component?.type === 'breaker-interactive-stub';
@@ -129,6 +165,20 @@ function CanvasBlock({
     !stripMode &&
     !isInteractiveStubBreaker &&
     !TYPE_SCALE_EXCLUDED.has(component.type);
+
+  const showExternalLabelToggleUi =
+    mode === 'design' &&
+    isSelected &&
+    !isMultiSelected &&
+    onUpdateComponent &&
+    !stripMode &&
+    canvasExternalPrimaryLabels &&
+    shouldShowExternalPrimaryLabel(component);
+
+  const showBlockCornerControls = showBlockTypeScaleUi || showExternalLabelToggleUi;
+  const externalLabelPlacementCurrent = showExternalLabelToggleUi
+    ? resolveExternalLabelPlacement(component)
+    : 'above';
 
   return (
     <g
@@ -180,6 +230,11 @@ function CanvasBlock({
               gasTurbineGroup: { ...gg, collapsed: false },
             },
           });
+          return;
+        }
+        if (expandWindOctPlantOwnerId && onExpandWindOctPlant) {
+          e.stopPropagation();
+          onExpandWindOctPlant(expandWindOctPlantOwnerId);
           return;
         }
         if (expandGasTurbineBankId && onExpandGasTurbineBank) {
@@ -240,6 +295,18 @@ function CanvasBlock({
             interactiveBreakerPorts={interactiveBreakerPorts}
           />
         )}
+
+        {useExternalPrimaryLabel ? (
+          <ExternalPrimaryLabel
+            width={width}
+            height={height}
+            centerX={externalLabelCenterX}
+            text={externalLabelText}
+            placement={externalLabelPlacement}
+            fontPxDelta={labelFontPxDelta}
+            tooltip={externalLabelTooltip}
+          />
+        ) : null}
 
         {stripMode && (
           <g className="tiebreaker-network-strip">
@@ -588,12 +655,60 @@ function CanvasBlock({
           </>
         )}
 
-        {showBlockTypeScaleUi && (
+        {showBlockCornerControls && (
           <g
             className="canvas-block-type-scale-ui"
             pointerEvents="all"
             onMouseDown={(e) => e.stopPropagation()}
           >
+            {showExternalLabelToggleUi ? (
+              <g transform={`translate(${Math.max(4, width - (showBlockTypeScaleUi ? 66 : 26))}, 4)`}>
+                <title>
+                  Toggle title above / below ({externalLabelPlacementCurrent === 'above' ? 'above' : 'below'}{' '}
+                  — click to flip)
+                </title>
+                <rect
+                  x={0}
+                  y={0}
+                  width={18}
+                  height={16}
+                  rx={3}
+                  fill="rgba(0, 0, 0, 0.72)"
+                  stroke="rgba(0, 212, 168, 0.85)"
+                  strokeWidth={1}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = externalLabelPlacementCurrent === 'above' ? 'below' : 'above';
+                    onUpdateComponent(component.id, {
+                      visualOverrides: {
+                        ...(component.visualOverrides || {}),
+                        externalLabelPlacement: next,
+                      },
+                    });
+                  }}
+                />
+                <polygon
+                  points="9,3 6,8 12,8"
+                  fill={
+                    externalLabelPlacementCurrent === 'above'
+                      ? 'rgba(0, 212, 168, 0.95)'
+                      : 'rgba(120, 140, 138, 0.45)'
+                  }
+                  pointerEvents="none"
+                />
+                <polygon
+                  points="9,13 6,8 12,8"
+                  fill={
+                    externalLabelPlacementCurrent === 'below'
+                      ? 'rgba(0, 212, 168, 0.95)'
+                      : 'rgba(120, 140, 138, 0.45)'
+                  }
+                  pointerEvents="none"
+                />
+              </g>
+            ) : null}
+            {showBlockTypeScaleUi ? (
             <g transform={`translate(${Math.max(4, width - 46)}, 4)`}>
               <title>
                 Enlarge every {component.type} block (~{Math.round((BLOCK_TYPE_NUDGE - 1) * 100)}%) —
@@ -626,6 +741,8 @@ function CanvasBlock({
                 +
               </text>
             </g>
+            ) : null}
+            {showBlockTypeScaleUi ? (
             <g transform={`translate(${Math.max(4, width - 26)}, 4)`}>
               <title>
                 Shrink every {component.type} block (~{Math.round((1 - 1 / BLOCK_TYPE_NUDGE) * 100)}%) —
@@ -658,6 +775,7 @@ function CanvasBlock({
                 −
               </text>
             </g>
+            ) : null}
           </g>
         )}
       </g>

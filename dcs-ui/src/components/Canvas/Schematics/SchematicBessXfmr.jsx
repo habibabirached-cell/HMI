@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
-import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { shouldHideSupplementaryLabels } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
@@ -24,9 +24,13 @@ function SchematicBessXfmr({
   lineColor,
   textureHref,
   textureOpacity = 1,
+  hidePrimaryLabel = false,
+  forceInlinePropertyLabel = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, {
+    forceInlinePropertyLabel,
+  });
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsR = adjSvgFontPx(10, fontPxDelta);
   const fsM = adjSvgFontPx(10, fontPxDelta);
@@ -42,8 +46,11 @@ function SchematicBessXfmr({
 
   const boltY = Math.max(3, height * 0.02);
   const primaryY = boltY + BOLT_ROW_H;
-  const topLabelBlockH =
-    fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
+  const topLabelBlockH = hidePrimaryLabel
+    ? hideSupplementary
+      ? 0
+      : fsR * 1.15
+    : fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
   const artH = Math.max(30, height * 0.32);
   const artY = primaryY + topLabelBlockH + LABEL_ART_GAP;
   const artBottom = artY + artH;
@@ -88,6 +95,7 @@ function SchematicBessXfmr({
       >
         ⚡
       </text>
+      {!hidePrimaryLabel || !hideSupplementary ? (
       <text
         x={cx}
         y={primaryY}
@@ -99,13 +107,15 @@ function SchematicBessXfmr({
         pointerEvents="none"
       >
         <SvgHoverTitle>{fullTitle}</SvgHoverTitle>
-        <tspan x={cx} dy={0}>
-          {primaryLabel}
-        </tspan>
+        {!hidePrimaryLabel ? (
+          <tspan x={cx} dy={0}>
+            {primaryLabel}
+          </tspan>
+        ) : null}
         {!hideSupplementary ? (
           <tspan
             x={cx}
-            dy={ratioDy}
+            dy={hidePrimaryLabel ? 0 : ratioDy}
             fill="#bdbdbd"
             fontSize={fsR}
             fontWeight="500"
@@ -114,6 +124,7 @@ function SchematicBessXfmr({
           </tspan>
         ) : null}
       </text>
+      ) : null}
       {textureUrl ? (
         <image
           href={textureUrl}

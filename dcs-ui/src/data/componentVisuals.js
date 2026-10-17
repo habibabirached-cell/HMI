@@ -125,6 +125,15 @@ export const COMPONENT_VISUAL_CONFIG = {
     canvasPrimaryLabel: 'Gas Turbine',
     model3dUrl: '/models/gasT3.glb',
   },
+  'wind-turbine-3d': {
+    width: 500,
+    height: 250,
+    icon: '🌬️',
+    color: '#03a9f4',
+    shape: 'schematic-wind-turbine-3d',
+    canvasPrimaryLabel: 'Wind',
+    model3dUrl: '/models/windTurbineField.glb',
+  },
   'gas-turbine-lm2500': {
     width: 140,
     height: 80,
@@ -249,6 +258,15 @@ export const COMPONENT_VISUAL_CONFIG = {
     icon: '🌀',
     color: '#03a9f4',
     shape: 'shape-rounded-rect'
+  },
+  'gfl-wind-farm': {
+    width: 120,
+    height: 140,
+    icon: '🌀',
+    color: '#0e7490',
+    shape: 'shape-rounded-rect',
+    backgroundTexture: '/component-textures/gfl-wind-line-art.svg',
+    backgroundTextureOpacity: 0.95,
   },
   'solar-pv': {
     width: 140,

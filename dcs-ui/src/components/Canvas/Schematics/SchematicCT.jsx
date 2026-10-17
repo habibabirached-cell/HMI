@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import {
-  getCanvasLabelFlags,
+  shouldHideSupplementaryLabels,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
@@ -33,9 +33,13 @@ function SchematicCT({
   presentationOffline = false,
   primaryLabel,
   secondaryLabel,
+  hidePrimaryLabel = false,
+  forceInlinePropertyLabel = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, {
+    forceInlinePropertyLabel,
+  });
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const maxW = width * 0.92;
@@ -153,7 +157,7 @@ function SchematicCT({
         strokeLinejoin="round"
         pointerEvents="none"
       />
-      {useStackedTspans ? (
+      {!hidePrimaryLabel && useStackedTspans ? (
         <text
           x={cx}
           y={primaryY}
@@ -178,7 +182,7 @@ function SchematicCT({
             {secondaryLabel}
           </tspan>
         </text>
-      ) : (
+      ) : !hidePrimaryLabel ? (
         <>
           <text
             x={cx}
@@ -209,7 +213,20 @@ function SchematicCT({
             </text>
           ) : null}
         </>
-      )}
+      ) : !hideSupplementary && secondaryLabel ? (
+        <text
+          x={cx}
+          y={secondaryBaseline}
+          textAnchor="middle"
+          dominantBaseline="alphabetic"
+          fill="#999"
+          fontSize={fsS}
+          pointerEvents="none"
+        >
+          <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
+          {secondaryLabel}
+        </text>
+      ) : null}
     </>
   );
 }

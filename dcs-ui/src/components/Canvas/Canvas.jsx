@@ -8,6 +8,7 @@ import CanvasBlock from './CanvasBlock';
 import SplitPaneTitleOrnament from './SplitPaneTitleOrnament';
 import SplitPaneTitleLines from './SplitPaneTitleLines';
 import GasTurbine3DOverlays from './Schematics/GasTurbine3DOverlays';
+import WindTurbine3DOverlays from './Schematics/WindTurbine3DOverlays';
 import IdeumComponentLayer from '../IdeumKiosk/IdeumComponentLayer';
 import Ideum05NavLayer from '../IdeumKiosk/Ideum05NavLayer';
 import Ideum07NavLayer from '../IdeumKiosk/Ideum07NavLayer';
@@ -67,6 +68,13 @@ import {
   isGasTurbineBankCollapsed,
   getCollapsedGasTurbineBankIdForMember,
 } from '../../utils/gasTurbineBank';
+import {
+  getWindOctPlantHiddenMemberIdSet,
+  getCollapsedWindOctPlantOwnerIdForMember,
+  getWindOctPlantOwner,
+  expandWindOctPlantOwnerPatch,
+  isWindOctPlantCollapsed,
+} from '../../utils/windOctPlant';
 import {
   DEFAULT_DESIGN_SECTION_VISIBILITY,
   getDesignSectionHiddenMemberIdSet,
@@ -509,6 +517,11 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const hiddenWindOctPlantMemberIds = useMemo(
+    () => getWindOctPlantHiddenMemberIdSet(components),
+    [components],
+  );
+
   const designSectionHiddenMemberIds = useMemo(
     () => getDesignSectionHiddenMemberIdSet(components, designSectionVisibility, connections),
     [components, designSectionVisibility, connections],
@@ -517,9 +530,15 @@ const Canvas = forwardRef(({
   const hiddenAggregateMemberIds = useMemo(() => {
     const hidden = new Set(hiddenTieMemberIds);
     for (const id of hiddenGasTurbineBankMemberIds) hidden.add(id);
+    for (const id of hiddenWindOctPlantMemberIds) hidden.add(id);
     for (const id of designSectionHiddenMemberIds) hidden.add(id);
     return hidden;
-  }, [hiddenTieMemberIds, hiddenGasTurbineBankMemberIds, designSectionHiddenMemberIds]);
+  }, [
+    hiddenTieMemberIds,
+    hiddenGasTurbineBankMemberIds,
+    hiddenWindOctPlantMemberIds,
+    designSectionHiddenMemberIds,
+  ]);
 
   const visibleComponents = useMemo(
     () =>
@@ -1916,6 +1935,16 @@ const Canvas = forwardRef(({
     [components, stableOnUpdateComponent],
   );
 
+  const stableExpandWindOctPlant = useCallback(
+    (ownerId) => {
+      const owner = components.find((c) => c.id === ownerId);
+      const patch = expandWindOctPlantOwnerPatch(owner);
+      if (!patch) return;
+      stableOnUpdateComponent(ownerId, patch);
+    },
+    [components, stableOnUpdateComponent],
+  );
+
   const mvupsFlatUnifiedCollapse = isMvupsFlatUnifiedCollapseMode(designSectionVisibility);
 
   const stableMvupsFlatUnifiedCollapse = useCallback(
@@ -2378,6 +2407,18 @@ const Canvas = forwardRef(({
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         onClick={handleCanvasClick}
+        onDoubleClick={(e) => {
+          if (mode !== 'design' || ideumKioskMode) return;
+          const t = e.target;
+          if (t?.closest?.('.canvas-component')) return;
+          if (!isWindOctPlantCollapsed(components) || !stableOnUpdateComponent) return;
+          const owner = getWindOctPlantOwner(components);
+          const patch = expandWindOctPlantOwnerPatch(owner);
+          if (owner && patch) {
+            e.stopPropagation();
+            stableOnUpdateComponent(owner.id, patch);
+          }
+        }}
       >
         {splitView && (
           <defs>
@@ -2691,6 +2732,9 @@ const Canvas = forwardRef(({
             {paneComponents.map((component) => (
             <CanvasBlock
               key={component.id}
+              canvasExternalPrimaryLabels={
+                designSectionVisibility?.canvasExternalPrimaryLabels === true
+              }
               component={component}
               isSelected={selectedComponent?.id === component.id}
               isMultiSelected={isComponentMultiSelected(component.id)}
@@ -2717,6 +2761,11 @@ const Canvas = forwardRef(({
                 component.id,
               )}
               onExpandGasTurbineBank={stableExpandGasTurbineBank}
+              expandWindOctPlantOwnerId={getCollapsedWindOctPlantOwnerIdForMember(
+                components,
+                component.id,
+              )}
+              onExpandWindOctPlant={stableExpandWindOctPlant}
               mvupsFlatUnifiedCollapse={mvupsFlatUnifiedCollapse}
               onMvupsFlatUnifiedCollapse={stableMvupsFlatUnifiedCollapse}
               allComponents={components}
@@ -2777,6 +2826,21 @@ const Canvas = forwardRef(({
             >
             <GasTurbine3DOverlays
               components={renderComponentsForPane(CANVAS_PANE_UPPER)}
+              pan={panTop}
+              zoom={zoom}
+              canvasRef={canvasRef}
+              blockTypeScale={canvasBlockTypeScale}
+              ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+              onIdeumControlButtonClick={onIdeumControlButtonClick}
+              simulationData={simulationData}
+              ensembleMemberSimulationData={ensembleMemberSimulationData}
+              ensembleColumnGroups={ensembleColumnGroups}
+              simulationColumns={simulationColumns}
+              simulationTime={simulationTime}
+            />
+            <WindTurbine3DOverlays
+              components={renderComponentsForPane(CANVAS_PANE_UPPER)}
+              allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_UPPER)}
               pan={panTop}
               zoom={zoom}
               canvasRef={canvasRef}
@@ -2855,6 +2919,21 @@ const Canvas = forwardRef(({
                   simulationColumns={simulationColumns}
                   simulationTime={simulationTime}
                 />
+                <WindTurbine3DOverlays
+                  components={renderComponentsForPane(CANVAS_PANE_LOWER)}
+                  allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
+                  pan={panBottom}
+                  zoom={zoom}
+                  canvasRef={canvasRef}
+                  blockTypeScale={canvasBlockTypeScale}
+                  ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+                  onIdeumControlButtonClick={onIdeumControlButtonClick}
+                  simulationData={simulationData}
+                  ensembleMemberSimulationData={ensembleMemberSimulationData}
+                  ensembleColumnGroups={ensembleColumnGroups}
+                  simulationColumns={simulationColumns}
+                  simulationTime={simulationTime}
+                />
                 <GFMe3DOverlays
                   renderComponents={renderComponentsForPane(CANVAS_PANE_LOWER)}
                   allComponents={filterComponentsForCanvasPane(components, CANVAS_PANE_LOWER)}
@@ -2898,6 +2977,22 @@ const Canvas = forwardRef(({
         <>
       <GasTurbine3DOverlays
         components={renderComponents}
+        pan={pan}
+        zoom={zoom}
+        canvasRef={canvasRef}
+        blockTypeScale={canvasBlockTypeScale}
+        ideumTouchButtonByComponentId={ideumTouchButtonByComponentId}
+        onIdeumControlButtonClick={onIdeumControlButtonClick}
+        simulationData={simulationData}
+        ensembleMemberSimulationData={ensembleMemberSimulationData}
+        ensembleColumnGroups={ensembleColumnGroups}
+        simulationColumns={simulationColumns}
+        simulationTime={simulationTime}
+      />
+
+      <WindTurbine3DOverlays
+        components={renderComponents}
+        allComponents={components}
         pan={pan}
         zoom={zoom}
         canvasRef={canvasRef}

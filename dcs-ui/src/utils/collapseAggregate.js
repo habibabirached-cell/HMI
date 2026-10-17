@@ -17,6 +17,7 @@ import {
   getGasTurbineBankCollapseSurfaceMemberIds,
 } from './gasTurbineBank';
 import { BESS_COLLAPSE_3D_TYPES } from './bess3dLayout';
+import { isWindOctCollapseSurfaceComponent } from './windOctPlant';
 
 /** Aggregate block types that own a collapse/expand group (strip when expanded). */
 export const COLLAPSE_AGGREGATE_OWNER_TYPES = ['tie-breaker-network', 'gas-turbine-bank'];
@@ -28,6 +29,10 @@ export const COLLAPSE_AGGREGATE_OWNER_TYPES = ['tie-breaker-network', 'gas-turbi
  */
 export function isCollapseAggregateSurfaceComponent(component, components) {
   if (!component?.id || !components?.length) return false;
+
+  if (isWindOctCollapseSurfaceComponent(component, components)) {
+    return true;
+  }
 
   if (isTieBreakerNetwork(component) && isTieNetworkCollapsed(component)) {
     return true;

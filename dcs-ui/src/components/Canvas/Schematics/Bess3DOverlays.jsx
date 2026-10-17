@@ -16,6 +16,7 @@ import {
   BESS3D_TITLE_MARGIN,
 } from '../../../utils/bess3dLayout';
 import { isBessCollapseAggregateSurface } from '../../../utils/collapseAggregate';
+import { shouldHide3dOverlayTitle } from '../../../utils/windOctPlant';
 import OverlayConnectionReadout from './OverlayConnectionReadout';
 
 /**
@@ -78,7 +79,7 @@ export default function Bess3DOverlays({
             rotation,
             modelUrl: getBess3DModelUrl(visualConfig),
             viewerProfile: component.type === 'mvups-3d' ? 'mvups' : 'bess',
-            title: component.properties?.ideumDecorOnly
+            title: shouldHide3dOverlayTitle(component, allComponents)
               ? ''
               : primaryLabelText(component, visualConfig),
             subtitle: component.properties?.ideumDecorOnly
@@ -143,15 +144,17 @@ export default function Bess3DOverlays({
             modelUrl={slot.modelUrl}
             viewerProfile={slot.viewerProfile}
           />
-          <div
-            className="bess-3d-title gas-turbine-3d-title"
-            style={{
-              top: slot.titleMarginPx,
-              fontSize: slot.titleFontPx,
-            }}
-          >
-            {slot.title}
-          </div>
+          {slot.title ? (
+            <div
+              className="bess-3d-title gas-turbine-3d-title"
+              style={{
+                top: slot.titleMarginPx,
+                fontSize: slot.titleFontPx,
+              }}
+            >
+              {slot.title}
+            </div>
+          ) : null}
           {slot.subtitle ? (
             <div
               className="bess-3d-subtitle gas-turbine-3d-mw"

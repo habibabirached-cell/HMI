@@ -2,6 +2,8 @@
  * Shared label + stroke helpers for canvas equipment blocks.
  */
 
+import { transformerVoltageRatioLabel } from '../Schematics/schematicUtils';
+
 export function secondaryLabelText(component, visualConfig) {
   const secMode = visualConfig.canvasSecondaryLabel;
   if (
@@ -23,6 +25,23 @@ export function secondaryLabelText(component, visualConfig) {
   }
   if (component.properties?.rating > 0) {
     return `${component.properties.rating} ${component.properties.unit}`;
+  }
+  return '';
+}
+
+/** Compact property line when external titles carry the name (rating, kV, ratio, etc.). */
+export function inlinePropertyCaption(component, visualConfig) {
+  const fromSecondary = secondaryLabelText(component, visualConfig);
+  if (fromSecondary) return fromSecondary;
+  const p = component?.properties || {};
+  const ratio = transformerVoltageRatioLabel(component);
+  if (ratio) return ratio;
+  if (p.rating > 0 && p.unit) return `${p.rating} ${p.unit}`;
+  if (p.voltage != null && String(p.voltage) !== '' && p.unit) {
+    return `${p.voltage} ${p.unit}`;
+  }
+  if (p.voltage != null && String(p.voltage) !== '') {
+    return `${p.voltage} kV`;
   }
   return '';
 }

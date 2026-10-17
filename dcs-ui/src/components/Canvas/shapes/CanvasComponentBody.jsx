@@ -8,6 +8,7 @@ import SchematicBessXfmr from '../Schematics/SchematicBessXfmr';
 import SchematicLm2500Andritz from '../Schematics/SchematicLm2500Andritz';
 import SchematicHd7H from '../Schematics/SchematicHd7H';
 import SchematicGasTurbine3D from '../Schematics/SchematicGasTurbine3D';
+import SchematicWindTurbine3D from '../Schematics/SchematicWindTurbine3D';
 import SchematicGFMe3D from '../Schematics/SchematicGFMe3D';
 import SchematicBess3D from '../Schematics/SchematicBess3D';
 import SchematicManualLineSwitch from '../Schematics/SchematicManualLineSwitch';
@@ -18,7 +19,12 @@ import ShapeCircle from './shape-circle';
 import ShapeHexagon from './shape-hexagon';
 import ShapeBusBar from './shape-bus-bar';
 import ShapeDashedRect from './shape-dashed-rect';
-import { primaryLabelText, secondaryLabelText, getTextureOpacity } from './canvasBlockUtils';
+import {
+  primaryLabelText,
+  secondaryLabelText,
+  inlinePropertyCaption,
+  getTextureOpacity,
+} from './canvasBlockUtils';
 
 const passthrough = (component, visualConfig, width, height, strokeColor, strokeWidthVal) => ({
   component,
@@ -64,8 +70,12 @@ export default function CanvasComponentBody({
   }
 
   const canvasPrimaryText = primaryLabelText(component, visualConfig);
-  const canvasSecondaryText = secondaryLabelText(component, visualConfig);
+  const forceInlinePropertyLabel = Boolean(visualConfig.forceInlinePropertyLabel);
+  const canvasSecondaryText =
+    secondaryLabelText(component, visualConfig) ||
+    (forceInlinePropertyLabel ? inlinePropertyCaption(component, visualConfig) : '');
   const textureOpacity = getTextureOpacity(visualConfig);
+  const hidePrimaryLabel = Boolean(visualConfig.suppressInlinePrimaryLabel);
 
   switch (shape) {
     case 'schematic-breaker':
@@ -77,6 +87,8 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
         />
       );
 
@@ -89,6 +101,8 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
         />
       );
 
@@ -101,6 +115,8 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
           showFrame
         />
       );
@@ -115,6 +131,8 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
           breakerPorts={interactiveBreakerPorts}
         />
       );
@@ -128,6 +146,8 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
         />
       );
 
@@ -142,6 +162,8 @@ export default function CanvasComponentBody({
           presentationOffline={presentationOffline}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
         />
       );
 
@@ -156,6 +178,8 @@ export default function CanvasComponentBody({
           presentationOffline={presentationOffline}
           primaryLabel={canvasPrimaryText}
           secondaryLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
         />
       );
 
@@ -167,6 +191,8 @@ export default function CanvasComponentBody({
           height={height}
           primaryLabel={canvasPrimaryText}
           mvaLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
           strokeColor={strokeColor}
           strokeWidthVal={strokeWidthVal}
           presentationOffline={presentationOffline}
@@ -184,6 +210,8 @@ export default function CanvasComponentBody({
           height={height}
           primaryLabel={canvasPrimaryText}
           mvaLabel={canvasSecondaryText}
+          hidePrimaryLabel={hidePrimaryLabel}
+          forceInlinePropertyLabel={forceInlinePropertyLabel}
           lineColor={visualConfig.color}
           textureHref={visualConfig.backgroundTexture}
           textureOpacity={textureOpacity}
@@ -228,6 +256,18 @@ export default function CanvasComponentBody({
           strokeWidthVal={strokeWidthVal}
           placeholderOnly={component.properties?.collapsePlaceholderOnly === true}
           glowFilterId={`gt3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
+        />
+      );
+
+    case 'schematic-wind-turbine-3d':
+      return (
+        <SchematicWindTurbine3D
+          width={width}
+          height={height}
+          strokeColor={strokeColor}
+          strokeWidthVal={strokeWidthVal}
+          placeholderOnly={component.properties?.collapsePlaceholderOnly === true}
+          glowFilterId={`wt3d-glow-${String(component.id).replace(/[^a-zA-Z0-9_-]/g, '_')}`}
         />
       );
 

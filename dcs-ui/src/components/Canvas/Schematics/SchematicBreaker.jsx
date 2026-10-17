@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import {
-  getCanvasLabelFlags,
+  shouldHideSupplementaryLabels,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
@@ -18,9 +18,13 @@ function SchematicBreaker({
   strokeWidthVal: _strokeWidthVal,
   primaryLabel,
   secondaryLabel,
+  hidePrimaryLabel = false,
+  forceInlinePropertyLabel = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, {
+    forceInlinePropertyLabel,
+  });
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const cx = width / 2;
@@ -124,7 +128,7 @@ function SchematicBreaker({
           strokeLinecap="round"
         />
       </g>
-      {useStackedTspans ? (
+      {!hidePrimaryLabel && useStackedTspans ? (
         <text
           x={cx}
           y={primaryY}
@@ -149,7 +153,7 @@ function SchematicBreaker({
             {secondaryLabel}
           </tspan>
         </text>
-      ) : (
+      ) : !hidePrimaryLabel ? (
         <>
           <text
             x={cx}
@@ -180,7 +184,20 @@ function SchematicBreaker({
             </text>
           ) : null}
         </>
-      )}
+      ) : !hideSupplementary && secondaryLabel ? (
+        <text
+          x={cx}
+          y={secondaryBaseline}
+          textAnchor="middle"
+          dominantBaseline="alphabetic"
+          fill="#999"
+          fontSize={fsS}
+          pointerEvents="none"
+        >
+          <SvgHoverTitle>{fullTooltip}</SvgHoverTitle>
+          {secondaryLabel}
+        </text>
+      ) : null}
     </>
   );
 }

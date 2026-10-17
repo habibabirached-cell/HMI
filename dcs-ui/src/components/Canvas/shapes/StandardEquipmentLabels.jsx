@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
-import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { shouldHideSupplementaryLabels } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from './canvasSvgLabelHelpers';
 
 /**
@@ -23,9 +23,11 @@ export default function StandardEquipmentLabels({
 }) {
   const canvasFontPxDelta = useCanvasFontPxDelta();
   const fontPxDelta = labelFontPxDelta ?? canvasFontPxDelta;
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, visualConfig);
+  const hidePrimary = Boolean(visualConfig?.suppressInlinePrimaryLabel);
   const fsP = adjSvgFontPx(11, fontPxDelta);
-  const fsS = adjSvgFontPx(10, fontPxDelta);
+  const propertyFs = adjSvgFontPx(hidePrimary && height < 96 ? 8.5 : 10, fontPxDelta);
+  const fsS = propertyFs;
   const fsIcon = adjSvgFontPx(24, fontPxDelta);
   const lineGap = fsP * 1.14;
   const supTooltip =
@@ -35,7 +37,7 @@ export default function StandardEquipmentLabels({
   const titleX = primaryLabelX ?? centerX;
 
   /** Tall narrow slots: horizontal title at top (reads left → right inside the cell). */
-  if (visualConfig.canvasPrimaryLabelHorizontalAtTop && !framedTextureLayout) {
+  if (visualConfig.canvasPrimaryLabelHorizontalAtTop && !framedTextureLayout && !hidePrimary) {
     const hTitleFs = adjSvgFontPx(8.5, fontPxDelta);
     const hWeight = visualConfig.canvasPrimaryLabelVerticalFontWeight ?? 500;
     const labelFill = visualConfig.textureGlowAccent
@@ -77,7 +79,7 @@ export default function StandardEquipmentLabels({
   }
 
   /** Tall narrow slots: rotate title along the cell (default −90° upward). */
-  if (visualConfig.canvasPrimaryLabelVertical && !framedTextureLayout) {
+  if (visualConfig.canvasPrimaryLabelVertical && !framedTextureLayout && !hidePrimary) {
     const vTitleFs = adjSvgFontPx(9, fontPxDelta);
     const vIconFs = adjSvgFontPx(18, fontPxDelta);
     const vAngle =
@@ -149,6 +151,7 @@ export default function StandardEquipmentLabels({
   if (framedTextureLayout) {
     return (
       <>
+        {!hidePrimary ? (
         <text
           x={centerX}
           y={4}
@@ -162,14 +165,16 @@ export default function StandardEquipmentLabels({
           {supTooltip ? <SvgHoverTitle>{supTooltip}</SvgHoverTitle> : null}
           {canvasPrimaryText}
         </text>
-        {!hideSupplementary && canvasSecondaryText ? (
+        ) : null}
+        {canvasSecondaryText && (!hideSupplementary || hidePrimary) ? (
           <text
             x={centerX}
-            y={height - 4}
+            y={height - (hidePrimary ? 3 : 4)}
             textAnchor="middle"
             dominantBaseline="auto"
-            fill="#999"
+            fill="#b0b0b0"
             fontSize={fsS}
+            fontWeight={hidePrimary ? 500 : 400}
             pointerEvents="none"
           >
             {canvasSecondaryText}
@@ -195,6 +200,7 @@ export default function StandardEquipmentLabels({
           {visualConfig.icon}
         </text>
       )}
+      {!hidePrimary ? (
       <text
         x={titleX}
         y={height * 0.42}
@@ -215,6 +221,20 @@ export default function StandardEquipmentLabels({
           </tspan>
         ) : null}
       </text>
+      ) : canvasSecondaryText && (!hideSupplementary || hidePrimary) ? (
+        <text
+          x={titleX}
+          y={hidePrimary ? height - 5 : height * 0.42}
+          textAnchor="middle"
+          dominantBaseline={hidePrimary ? 'auto' : 'hanging'}
+          fill="#b0b0b0"
+          fontSize={fsS}
+          fontWeight={hidePrimary ? 500 : 400}
+          pointerEvents="none"
+        >
+          {canvasSecondaryText}
+        </text>
+      ) : null}
     </>
   );
 }

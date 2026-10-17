@@ -1,0 +1,183 @@
+{
+  "display_name": "Wind14Gflwind 14Ms Hmi",
+  "description": "",
+  "charts_to_display": [
+    {
+      "type": "single",
+      "component_id": "wo26-gfl-wind",
+      "chart_type": "2d",
+      "x_column": "t",
+      "y_column": "Vload_1",
+      "title": "GFL Wind - Vload_1",
+      "sample_step": 128
+    },
+    {
+      "type": "single",
+      "component_id": "wo26-gfl-wind",
+      "chart_type": "2d",
+      "x_column": "t",
+      "y_column": "Pload",
+      "title": "GFL Wind - Pload",
+      "sample_step": 128
+    },
+    {
+      "type": "single",
+      "component_id": "wo26-gfl-wind",
+      "chart_type": "2d",
+      "x_column": "t",
+      "y_column": "f_load",
+      "title": "GFL Wind - f_load",
+      "sample_step": 128,
+      "ui_drawer": "chart2"
+    },
+    {
+      "type": "single",
+      "component_id": "wo26-gfl-wind",
+      "chart_type": "2d",
+      "x_column": "t",
+      "y_column": "f_BESS",
+      "title": "GFL Wind - f_BESS",
+      "sample_step": 128,
+      "ui_drawer": "chart2"
+    },
+    {
+      "type": "single",
+      "component_id": "wo26-gfl-wind",
+      "chart_type": "2d",
+      "x_column": "t",
+      "y_column": "P_BESS",
+      "title": "GFL Wind - P_BESS",
+      "sample_step": 128
+    }
+  ],
+  "event_markers": {},
+  "data_row_count": 60002,
+  "data_column_count": 8,
+  "chart_stacks": [],
+  "chart_sample_default": 128,
+  "chart_panel_height": 300,
+  "chart_panel_opacity": 1.0,
+  "chart_card_width": 500,
+  "derived_variables": [],
+  "simulation_speed": 1.0,
+  "current_configuration": {
+    "view_mode": "customer",
+    "charts_to_display": [
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "Vload_1",
+        "title": "GFL Wind - Vload_1",
+        "sample_step": 128
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "Pload",
+        "title": "GFL Wind - Pload",
+        "sample_step": 128
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "f_load",
+        "title": "GFL Wind - f_load",
+        "sample_step": 128,
+        "ui_drawer": "chart2"
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "f_BESS",
+        "title": "GFL Wind - f_BESS",
+        "sample_step": 128,
+        "ui_drawer": "chart2"
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "P_BESS",
+        "title": "GFL Wind - P_BESS",
+        "sample_step": 128
+      }
+    ],
+    "chart_stacks": [],
+    "chart_sample_default": 128,
+    "chart_panel_height": 300,
+    "chart_panel_opacity": 1.0,
+    "chart_card_width": 500,
+    "derived_variables": [],
+    "event_markers": {},
+    "simulation_speed": 1.0
+  },
+  "c01": {
+    "view_mode": "customer",
+    "charts_to_display": [
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "Vload_1",
+        "title": "GFL Wind - Vload_1",
+        "sample_step": 128
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "Pload",
+        "title": "GFL Wind - Pload",
+        "sample_step": 128
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "f_load",
+        "title": "GFL Wind - f_load",
+        "sample_step": 128,
+        "ui_drawer": "chart2"
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "f_BESS",
+        "title": "GFL Wind - f_BESS",
+        "sample_step": 128,
+        "ui_drawer": "chart2"
+      },
+      {
+        "type": "single",
+        "component_id": "wo26-gfl-wind",
+        "chart_type": "2d",
+        "x_column": "t",
+        "y_column": "P_BESS",
+        "title": "GFL Wind - P_BESS",
+        "sample_step": 128
+      }
+    ],
+    "chart_stacks": [],
+    "chart_sample_default": 128,
+    "chart_panel_height": 300,
+    "chart_panel_opacity": 1.0,
+    "chart_card_width": 500,
+    "derived_variables": [],
+    "event_markers": {},
+    "simulation_speed": 1.0
+  }
+}

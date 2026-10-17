@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
 import {
-  getCanvasLabelFlags,
+  shouldHideSupplementaryLabels,
   diagramSymbolLabelGap,
 } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
@@ -32,9 +32,13 @@ function SchematicCTVertical({
   presentationOffline = false,
   primaryLabel,
   secondaryLabel,
+  hidePrimaryLabel = false,
+  forceInlinePropertyLabel = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, {
+    forceInlinePropertyLabel,
+  });
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsS = adjSvgFontPx(10, fontPxDelta);
   const fullTooltip = [primaryLabel, secondaryLabel].filter(Boolean).join(' · ');
@@ -95,6 +99,7 @@ function SchematicCTVertical({
         strokeLinejoin="round"
         pointerEvents="none"
       />
+      {!hidePrimaryLabel ? (
       <text
         x={primaryX}
         y={cy}
@@ -110,6 +115,7 @@ function SchematicCTVertical({
         ) : null}
         {primaryLabel}
       </text>
+      ) : null}
       {!hideSupplementary && secondaryLabel ? (
         <text
           x={secondaryX}

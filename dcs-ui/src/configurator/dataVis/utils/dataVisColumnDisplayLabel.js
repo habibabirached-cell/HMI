@@ -7,7 +7,7 @@ export const DATAVIS_UNIT_COUNT_COLUMNS = ['7HA Unit #', 'LM2500 Unit #'];
 const DATAVIS_PARALLEL_AXIS_LABEL_LINES = {
   'Solar AC Nameplate (MWac)': ['Solar Power', '(MW)'],
   'Wind Nameplate (MWac)': ['Wind Power', '(MW)'],
-  'BESS power Nameplate (MW)': ['Bess Power', '(MW)'],
+  'BESS power Nameplate (MW)': ['BESS Power', '(MW)'],
   '7HA Unit #': ['Number of', '7HA Units'],
   'LM2500 Unit #': ['Number of', 'LM2500 Units'],
   'Project LCOE ($/MWh)': ['LCOE', '($/MW)'],

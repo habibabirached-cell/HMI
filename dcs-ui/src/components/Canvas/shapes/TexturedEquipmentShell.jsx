@@ -5,6 +5,7 @@ import SchematicAuxLoadsAggregate from '../Schematics/SchematicAuxLoadsAggregate
 import {
   primaryLabelText,
   secondaryLabelText,
+  inlinePropertyCaption,
   resolveTextureUrl,
   getTextureOpacity,
 } from './canvasBlockUtils';
@@ -34,7 +35,10 @@ export default function TexturedEquipmentShell({
   const hideIconForShiftedLabel =
     Number.isFinite(labelAnchorXRatio) && Math.abs(primaryLabelX - centerX) > 1;
   const canvasPrimaryText = primaryLabelText(component, visualConfig);
-  const canvasSecondaryText = secondaryLabelText(component, visualConfig);
+  const forceInlinePropertyLabel = Boolean(visualConfig.forceInlinePropertyLabel);
+  const canvasSecondaryText =
+    secondaryLabelText(component, visualConfig) ||
+    (forceInlinePropertyLabel ? inlinePropertyCaption(component, visualConfig) : '');
 
   if (textureUrl) {
     const labelAlongVerticalSlot = Boolean(visualConfig.canvasPrimaryLabelVertical);

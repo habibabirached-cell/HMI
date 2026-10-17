@@ -18,6 +18,12 @@ export function getCanvasLabelFlags(canvasFontPxDelta) {
   };
 }
 
+/** External title mode: keep rating / kV / MVA rows inside the symbol even at large diagram font +. */
+export function shouldHideSupplementaryLabels(canvasFontPxDelta, visualConfig) {
+  if (visualConfig?.forceInlinePropertyLabel) return false;
+  return getCanvasLabelFlags(canvasFontPxDelta).hideSupplementary;
+}
+
 /**
  * Minimum air gap (px, SVG user space) between schematic text and the symbol stroke.
  * Increases with diagram font +delta so labels “push out” at +6 / +7 instead of colliding.

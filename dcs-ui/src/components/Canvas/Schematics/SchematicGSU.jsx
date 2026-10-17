@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasFontPxDelta } from '../../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../../utils/svgFontDelta';
-import { getCanvasLabelFlags } from '../../../utils/canvasLabelPolicy';
+import { shouldHideSupplementaryLabels } from '../../../utils/canvasLabelPolicy';
 import { SvgHoverTitle } from '../shapes/canvasSvgLabelHelpers';
 import { transformerVoltageRatioLabel } from './schematicUtils';
 
@@ -28,9 +28,13 @@ function SchematicGSU({
   strokeColor = '#4caf50',
   strokeWidthVal = 3,
   presentationOffline = false,
+  hidePrimaryLabel = false,
+  forceInlinePropertyLabel = false,
 }) {
   const fontPxDelta = useCanvasFontPxDelta();
-  const { hideSupplementary } = getCanvasLabelFlags(fontPxDelta);
+  const hideSupplementary = shouldHideSupplementaryLabels(fontPxDelta, {
+    forceInlinePropertyLabel,
+  });
   const fsP = adjSvgFontPx(11, fontPxDelta);
   const fsR = adjSvgFontPx(10, fontPxDelta);
   const fsM = adjSvgFontPx(10, fontPxDelta);
@@ -44,8 +48,11 @@ function SchematicGSU({
       : null;
   const artH = Math.max(32, height * 0.34);
   const primaryY = Math.max(7, height * 0.045);
-  const topLabelBlockH =
-    fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
+  const topLabelBlockH = hidePrimaryLabel
+    ? hideSupplementary
+      ? 0
+      : fsR * 1.15
+    : fsP * 1.12 + (hideSupplementary ? 0 : fsR * 1.15);
   const artY = primaryY + topLabelBlockH + LABEL_ART_GAP;
   const artBottom = artY + artH;
   /** Baseline below art; ~8px cap height keeps a small visual gap from art bottom */
@@ -66,6 +73,7 @@ function SchematicGSU({
   return (
     <>
       <rect width={width} height={height} fill="transparent" stroke="none" rx="4" />
+      {!hidePrimaryLabel || !hideSupplementary ? (
       <text
         x={cx}
         y={primaryY}
@@ -77,13 +85,15 @@ function SchematicGSU({
         pointerEvents="none"
       >
         <SvgHoverTitle>{fullTitle}</SvgHoverTitle>
-        <tspan x={cx} dy={0}>
-          {primaryLabel}
-        </tspan>
+        {!hidePrimaryLabel ? (
+          <tspan x={cx} dy={0}>
+            {primaryLabel}
+          </tspan>
+        ) : null}
         {!hideSupplementary ? (
           <tspan
             x={cx}
-            dy={ratioDy}
+            dy={hidePrimaryLabel ? 0 : ratioDy}
             fill="#bdbdbd"
             fontSize={fsR}
             fontWeight="500"
@@ -92,6 +102,7 @@ function SchematicGSU({
           </tspan>
         ) : null}
       </text>
+      ) : null}
       {textureUrl ? (
         <image
           href={textureUrl}

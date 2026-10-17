@@ -22,6 +22,7 @@ export const COMPONENT_LIBRARY = [
     category: COMPONENT_CATEGORIES.GENERATION,
     components: [
       { id: 'gas-turbine-3d', name: 'Gas Turbine', fullName: 'Gas Turbine', type: 'gas-turbine-3d', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
+      { id: 'wind-turbine-3d', name: 'Wind (3D)', fullName: 'Wind Farm 3D Preview', type: 'wind-turbine-3d', properties: { rating: 200, voltage: 34.5, unit: 'MW' } },
       { id: 'gas-turbine-lm2500', name: 'LM2500', fullName: 'Gas Turbine LM2500', type: 'aeroderivative', properties: { rating: 25, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-andritz', name: 'LM2500 Andritz', fullName: 'LM2500 Andritz A03 33.3MW', type: 'aeroderivative', properties: { rating: 33.3, voltage: 13.8, unit: 'MW' } },
       { id: 'gas-turbine-lm2500-plus', name: 'LM2500+', fullName: 'Gas Turbine LM2500+ / Xpress', type: 'aeroderivative', properties: { rating: 30, voltage: 13.8, unit: 'MW' } },
@@ -37,6 +38,7 @@ export const COMPONENT_LIBRARY = [
       { id: 'fuel-cell', name: 'Fuel Cell', fullName: 'Fuel Cell (Containerized)', type: 'fuel-cell', properties: { rating: 1, voltage: 0.48, unit: 'MW' } },
       { id: 'wind-turbine-type3', name: 'Wind Type III', fullName: 'Wind Turbine Type III', type: 'wind', properties: { rating: 3, voltage: 0.69, unit: 'MW' } },
       { id: 'wind-turbine-type4', name: 'Wind Type IV', fullName: 'Wind Turbine Type IV', type: 'wind', properties: { rating: 5, voltage: 0.69, unit: 'MW' } },
+      { id: 'gfl-wind-farm', name: 'GFL Wind', fullName: 'Grid-Following Wind Farm', type: 'wind', properties: { rating: 200, voltage: 34.5, unit: 'MW' } },
       { id: 'solar-pv', name: 'Solar PV', fullName: 'Solar PV Array', type: 'solar', properties: { rating: 2, voltage: 0.48, unit: 'MW' } },
       { id: 'microturbine', name: 'Microturbine', fullName: 'Microturbine', type: 'microturbine', properties: { rating: 0.2, voltage: 0.48, unit: 'MW' } }
     ]

@@ -5,6 +5,8 @@
 /** LM family + BESS — green (production / storage source) */
 const PRODUCER_TYPES = new Set([
   'gas-turbine-3d',
+  'wind-turbine-3d',
+  'gfl-wind-farm',
   'gas-turbine-lm2500',
   'gas-turbine-lm2500-andritz',
   'gas-turbine-7h',

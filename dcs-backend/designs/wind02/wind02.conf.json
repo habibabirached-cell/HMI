@@ -1,0 +1,871 @@
+{
+  "name": "wind02",
+  "description": "",
+  "canvasComponents": [
+    {
+      "id": "wo26c-wind-3d",
+      "type": "wind-turbine-3d",
+      "name": "GFL Wind",
+      "fullName": "GFL Wind 200 MW",
+      "position": {
+        "x": 375,
+        "y": 162.5
+      },
+      "status": "idle",
+      "properties": {
+        "primaryLabel": "GFL Wind 200 MW",
+        "rating": 200,
+        "voltage": 34.5,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      }
+    },
+    {
+      "id": "wo26c-bess-3d",
+      "type": "bess-50mw",
+      "name": "BESS",
+      "fullName": "Battery Energy Storage 200 MW",
+      "position": {
+        "x": 425,
+        "y": 762.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 34.5,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      }
+    },
+    {
+      "id": "wo26c-load-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Data Center Load",
+      "fullName": "Aux, IT and Rack Loads",
+      "position": {
+        "x": 1725,
+        "y": 362.5
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      }
+    },
+    {
+      "id": "wo26c-bus-mid",
+      "type": "bus-hv-vertical",
+      "name": "34.5 kV Bus",
+      "fullName": "Main Collection Bus 34.5 kV",
+      "position": {
+        "x": 1437.5,
+        "y": 80
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "kV"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 25,
+        "height": 1100
+      }
+    },
+    {
+      "id": "wo26-plant-owner",
+      "type": "tie-breaker-network",
+      "name": "One-line",
+      "fullName": "Wind + BESS + DC one-line (expand / collapse)",
+      "position": {
+        "x": 1333,
+        "y": -12
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "",
+        "tieGroup": {
+          "collapsed": false,
+          "memberIds": [
+            "wo26-gfl-wind",
+            "wo26-wind-cb",
+            "wo26-bus",
+            "wo26-bus-mid-cb",
+            "wo26-bess",
+            "wo26-bess-cb",
+            "wo26-bess-xfmr",
+            "wo26-bess-ct",
+            "wo26-load-ct",
+            "wo26-gsu-dc",
+            "wo26-lv-knot",
+            "wo26-aux",
+            "wo26-aux-cb",
+            "wo26-dc-cb",
+            "wo26-pcs",
+            "wo26-ups",
+            "wo26-it-rack"
+          ]
+        },
+        "windOctPlantGroup": {
+          "previewMemberIds": [
+            "wo26c-wind-3d",
+            "wo26c-bess-3d",
+            "wo26c-load-preview"
+          ],
+          "busMemberIds": [
+            "wo26c-bus-mid"
+          ]
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 218,
+        "height": 1500
+      }
+    },
+    {
+      "id": "wo26-gfl-wind",
+      "type": "gfl-wind-farm",
+      "name": "GFL Wind",
+      "fullName": "GFL Wind 200 MW",
+      "position": {
+        "x": 90,
+        "y": 230
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 34.5,
+        "unit": "MW",
+        "gridFollowing": true
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "externalLabelPlacement": "above"
+      }
+    },
+    {
+      "id": "wo26-wind-cb",
+      "type": "breaker-hv",
+      "name": "CB 34.5kV",
+      "fullName": "Circuit Breaker 34.5 kV",
+      "position": {
+        "x": 325,
+        "y": 275
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 3000,
+        "voltage": 34.5,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "externalLabelPlacement": "above"
+      }
+    },
+    {
+      "id": "wo26-bus",
+      "type": "bus-hv-vertical",
+      "name": "34.5 kV Bus",
+      "fullName": "Main Collection Bus 34.5 kV",
+      "position": {
+        "x": 837.5,
+        "y": 270
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 34.5,
+        "unit": "kV"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "width": 25,
+        "height": 460,
+        "externalLabelPlacement": "above"
+      }
+    },
+    {
+      "id": "wo26-bus-mid-cb",
+      "type": "breaker-hv",
+      "name": "Bus CB",
+      "fullName": "Center bus section CB 34.5 kV",
+      "position": {
+        "x": 625,
+        "y": 275
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 3500,
+        "voltage": 34.5,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper",
+      "visualOverrides": {
+        "externalLabelPlacement": "above"
+      }
+    },
+    {
+      "id": "wo26-bess",
+      "type": "bess-50mw",
+      "name": "BESS",
+      "fullName": "Battery Energy Storage System 200MW",
+      "position": {
+        "x": 75,
+        "y": 550
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 0.7,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.7,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-bess-cb",
+      "type": "breaker-bess",
+      "name": "BESS CB 0.7 kV",
+      "fullName": "BESS Circuit Breaker 0.7 kV",
+      "position": {
+        "x": 275,
+        "y": 856
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 2000,
+        "voltage": 0.7,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.7,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-bess-xfmr",
+      "type": "bess-xfmr",
+      "name": "BESS Xfmr",
+      "fullName": "BESS Xfmr 0.7 kV : 34.5 kV",
+      "position": {
+        "x": 400,
+        "y": 600
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "unit": "MVA",
+        "primaryVoltageKv": 0.7,
+        "secondaryVoltageKv": 34.5
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-bess-ct",
+      "type": "ct",
+      "name": "CT",
+      "fullName": "Current Transformer 2000:1",
+      "position": {
+        "x": 625,
+        "y": 600
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 2000,
+        "voltage": 0,
+        "unit": "2000:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-load-ct",
+      "type": "ct",
+      "name": "CT",
+      "fullName": "Load-side CT",
+      "position": {
+        "x": 925,
+        "y": 400
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 2000,
+        "voltage": 0,
+        "unit": "2000:1"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-gsu-dc",
+      "type": "gsu",
+      "name": "GSU",
+      "fullName": "GSU 34.5 kV : 480 V 50 MVA",
+      "position": {
+        "x": 1100,
+        "y": 400
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 50,
+        "unit": "MVA",
+        "primaryVoltageKv": 34.5,
+        "secondaryVoltageKv": 0.48,
+        "gsuBusOnComponentSide": "left"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-lv-knot",
+      "type": "bus-knot",
+      "name": "",
+      "fullName": "Connection Point",
+      "position": {
+        "x": 1275,
+        "y": 425
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 0,
+        "voltage": 0,
+        "unit": ""
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-aux",
+      "type": "auxiliary-loads-bess",
+      "name": "Auxiliary Loads",
+      "fullName": "Auxiliary Loads",
+      "position": {
+        "x": 1225,
+        "y": 0
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-aux-cb",
+      "type": "breaker-lv",
+      "name": "Aux CB",
+      "fullName": "Auxiliary feeder circuit breaker",
+      "position": {
+        "x": 1275,
+        "y": 725
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 4000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-dc-cb",
+      "type": "breaker-dc",
+      "name": "DC CB 480V",
+      "fullName": "DC Circuit Breaker 480V",
+      "position": {
+        "x": 1475,
+        "y": 406
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 3000,
+        "voltage": 0.48,
+        "unit": "A"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-pcs",
+      "type": "it-pcs-rect-inv",
+      "name": "Rectifier / Inverter",
+      "fullName": "To Data Center Building Xfmr + UPS + Rectifier 34.5kVac:400Vdc 200MW",
+      "position": {
+        "x": 1650,
+        "y": 425
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 0.4,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-ups",
+      "type": "ups",
+      "name": "UPS",
+      "fullName": "LV UPS 400Vdc",
+      "position": {
+        "x": 1650,
+        "y": 650
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 0.4,
+        "unit": "MVA"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    },
+    {
+      "id": "wo26-it-rack",
+      "type": "it-rack-load",
+      "name": "IT Rack Load",
+      "fullName": "IT Rack Load",
+      "position": {
+        "x": 1650,
+        "y": 0
+      },
+      "status": "idle",
+      "properties": {
+        "rating": 200,
+        "voltage": 0.4,
+        "unit": "MW"
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.4,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "upper"
+    }
+  ],
+  "connections": [
+    {
+      "id": "wo26c-wind-bus",
+      "from": "wo26c-wind-3d",
+      "to": "wo26c-bus-mid",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "wo26c-bess-bus",
+      "from": "wo26c-bess-3d",
+      "to": "wo26c-bus-mid",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#2d7a32",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "wo26c-load-bus",
+      "from": "wo26c-load-preview",
+      "to": "wo26c-bus-mid",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal",
+      "style": {
+        "useAuto": false,
+        "color": "#c62828",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "forward"
+      }
+    },
+    {
+      "id": "wo26-c0",
+      "from": "wo26-gfl-wind",
+      "to": "wo26-wind-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c1",
+      "from": "wo26-wind-cb",
+      "to": "wo26-bus-mid-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c1b",
+      "from": "wo26-bus-mid-cb",
+      "to": "wo26-bus",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c2",
+      "from": "wo26-bess",
+      "to": "wo26-bess-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c3",
+      "from": "wo26-bess-cb",
+      "to": "wo26-bess-xfmr",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c4",
+      "from": "wo26-bess-xfmr",
+      "to": "wo26-bess-ct",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c5",
+      "from": "wo26-bess-ct",
+      "to": "wo26-bus",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c6",
+      "from": "wo26-bus",
+      "to": "wo26-load-ct",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c7",
+      "from": "wo26-load-ct",
+      "to": "wo26-gsu-dc",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c8",
+      "from": "wo26-gsu-dc",
+      "to": "wo26-lv-knot",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c9",
+      "from": "wo26-lv-knot",
+      "to": "wo26-aux-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c10",
+      "from": "wo26-aux",
+      "to": "wo26-aux-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c11",
+      "from": "wo26-aux-cb",
+      "to": "wo26-lv-knot",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c12",
+      "from": "wo26-lv-knot",
+      "to": "wo26-dc-cb",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c13",
+      "from": "wo26-dc-cb",
+      "to": "wo26-pcs",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c14",
+      "from": "wo26-pcs",
+      "to": "wo26-ups",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    },
+    {
+      "id": "wo26-c15",
+      "from": "wo26-ups",
+      "to": "wo26-it-rack",
+      "voltage": 0,
+      "type": "AC",
+      "status": "normal"
+    }
+  ],
+  "systemState": {
+    "simulationRunning": false,
+    "zoom": 1.1083145254950608,
+    "pan": {
+      "x": 538.7730006731857,
+      "y": 406.95410089642894
+    },
+    "panTop": {
+      "x": 120,
+      "y": 40
+    },
+    "panBottom": {
+      "x": 40,
+      "y": 80
+    },
+    "quadBottomRowShare": 51.5,
+    "mode": "design",
+    "uiFontPxShift": 5,
+    "canvasFontPxShift": 20,
+    "collapsedComponentFontPxShift": 24,
+    "splitPaneTitles": null,
+    "designViewMode": "canvas",
+    "workspaceLayoutPreset": "conf2"
+  },
+  "variableDrivenPresence": [],
+  "canvasBlockTypeScale": {},
+  "globalSampleStep": 128,
+  "perChartSampleStep": {},
+  "playbackTimeRange": {
+    "t1": 8.0,
+    "t2": 60.0
+  },
+  "designUiSession": {
+    "designSectionVisibility": {
+      "showUpper": true,
+      "showLower": false,
+      "hideBranches": [],
+      "showMvupsFlatSchematic": false,
+      "canvasExternalPrimaryLabels": true
+    },
+    "quickScenarioBranchCollapsed": {
+      "noBessNoStatcom": true,
+      "withBessandStatCom": true,
+      "withBessAlone": true,
+      "withStatcomAlone": true,
+      "mvups_undamped": true,
+      "mvups_damped": true
+    }
+  },
+  "quickScenarioButtons": [],
+  "hiddenDefaultQuickScenarios": [],
+  "ideumControlButtons": [],
+  "ideumKioskMode": false,
+  "busTransferSegments": []
+}
