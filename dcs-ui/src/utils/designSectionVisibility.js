@@ -6,6 +6,7 @@
 import {
   isGasTurbineBank,
   isGasTurbineBankCollapsed,
+  isMvupsWingStripBank,
   getGasTurbineBankCollapseSurfaceMemberIds,
 } from './gasTurbineBank';
 import { isTieBreakerNetwork, isTieNetworkCollapsed } from './tieBreakerNetwork';
@@ -204,7 +205,7 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
     }
     if (isMvupsFlatFullyExpanded(components)) {
       for (const c of components || []) {
-        if (isGasTurbineBank(c) && isMvupsFlatCollapseOwner(c)) {
+        if (isGasTurbineBank(c) && isMvupsFlatCollapseOwner(c) && !isMvupsWingStripBank(c)) {
           hidden.add(c.id);
         }
       }

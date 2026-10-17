@@ -151,6 +151,82 @@ export function applyBranchCollapseToComponents(components, visibility, collapse
 /** MVUPS flat quick scenario: one strip (tie) collapses / any tile double-click expands all owners. */
 export const MVUPS_FLAT_UNIFIED_STRIP_OWNER_ID = 'comp-mvups-flat-tie-network';
 
+/** P2R_18 MVUPS: middle bus and each wing explode on their own "...". */
+export const MVUPS_EXP_MIDDLE_TIE_ID = 'comp-mvups-exp-tie-network';
+export const MVUPS_WING_LEFT_BANK_ID = 'comp-mvups-flat-gen-bank-left';
+export const MVUPS_WING_RIGHT_BANK_ID = 'comp-mvups-flat-gen-bank-right';
+export const MVUPS_WING_LOAD_BANK_ID = 'comp-mvups-flat-load-bank';
+
+const MVUPS_INDEPENDENT_SECTION_OWNERS = {
+  [MVUPS_WING_LEFT_BANK_ID]: [MVUPS_WING_LEFT_BANK_ID],
+  'comp-mvups-flat-gen-3d-preview-left': [MVUPS_WING_LEFT_BANK_ID],
+  [MVUPS_WING_RIGHT_BANK_ID]: [MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID],
+  'comp-mvups-flat-gen-3d-preview-right': [MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID],
+  'comp-mvups-flat-aux-preview': [MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID],
+  'comp-mvups-flat-mvups-preview': [MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID],
+  [MVUPS_WING_LOAD_BANK_ID]: [MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID],
+  [MVUPS_EXP_MIDDLE_TIE_ID]: [MVUPS_EXP_MIDDLE_TIE_ID],
+};
+
+const MVUPS_WING_DOUBLE_CLICK_IDS = new Set([
+  MVUPS_WING_LEFT_BANK_ID,
+  'comp-mvups-flat-gen-3d-preview-left',
+  MVUPS_WING_RIGHT_BANK_ID,
+  'comp-mvups-flat-gen-3d-preview-right',
+  'comp-mvups-flat-aux-preview',
+  'comp-mvups-flat-mvups-preview',
+  MVUPS_WING_LOAD_BANK_ID,
+]);
+
+/** Left or right collapsed wing tile. Double-click opens both wings and leaves the middle tie collapsed. */
+export function isMvupsWingDoubleClickTarget(component) {
+  return MVUPS_WING_DOUBLE_CLICK_IDS.has(component?.id);
+}
+
+export function mvupsBothWingsOwnerIds() {
+  return [MVUPS_WING_LEFT_BANK_ID, MVUPS_WING_RIGHT_BANK_ID, MVUPS_WING_LOAD_BANK_ID];
+}
+
+/** Owner ids toggled together for this tile or strip. Null outside the P2R_18 MVUPS sections. */
+export function mvupsIndependentSectionOwnerIds(component) {
+  const ids = MVUPS_INDEPENDENT_SECTION_OWNERS[component?.id];
+  return ids ? ids.slice() : null;
+}
+
+export function buildMvupsIndependentSectionUpdates(components, ownerIds, collapsed) {
+  const want = new Set(ownerIds || []);
+  const updates = [];
+  for (const c of components || []) {
+    if (!want.has(c.id)) continue;
+    if (isGasTurbineBank(c)) {
+      const g = c.properties?.gasTurbineGroup;
+      if (!g?.memberIds?.length) continue;
+      updates.push({
+        id: c.id,
+        patch: {
+          properties: {
+            ...c.properties,
+            gasTurbineGroup: { ...g, collapsed: !!collapsed },
+          },
+        },
+      });
+    } else if (isTieBreakerNetwork(c)) {
+      const tg = c.properties?.tieGroup;
+      if (!tg?.memberIds?.length) continue;
+      updates.push({
+        id: c.id,
+        patch: {
+          properties: {
+            ...c.properties,
+            tieGroup: { ...tg, collapsed: !!collapsed },
+          },
+        },
+      });
+    }
+  }
+  return updates;
+}
+
 export function isMvupsFlatUnifiedCollapseMode(visibility) {
   return normalizeDesignSectionVisibility(visibility).showMvupsFlatSchematic === true;
 }
@@ -162,6 +238,7 @@ export function isMvupsFlatUnifiedStripOwner(component) {
 /** Only MVUPS flat tiles/owners — upper baseline GT uses normal per-bank expand. */
 export function shouldMvupsFlatUnifiedExpandOnDoubleClick(component, allComponents) {
   if (!component || !allComponents?.length) return false;
+  if (isMvupsWingDoubleClickTarget(component)) return false;
   if (!isMvupsFlatSchematicComponent(component)) return false;
   if (isCollapseAggregateSurfaceComponent(component, allComponents)) return true;
   if (
@@ -185,6 +262,8 @@ function mvupsFlatOwnerCollapsedStates(components) {
   const states = [];
   for (const c of components || []) {
     if (!isMvupsFlatCollapseOwner(c)) continue;
+    // P2R_18 middle bus and wings collapse on their own "...", so mixed state is intentional.
+    if (mvupsIndependentSectionOwnerIds(c)) continue;
     if (isGasTurbineBank(c)) states.push(isGasTurbineBankCollapsed(c));
     else if (isTieBreakerNetwork(c)) states.push(isTieNetworkCollapsed(c));
   }

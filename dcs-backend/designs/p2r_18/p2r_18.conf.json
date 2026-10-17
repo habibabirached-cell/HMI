@@ -4093,7 +4093,7 @@
       "id": "comp-turbine-1",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #1",
-      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #1",
+      "fullName": "LM2500 Andritz A03 33.3 MW — LM2500 #1",
       "position": {
         "x": -175,
         "y": 350
@@ -4351,7 +4351,7 @@
       "id": "comp-turbine-2",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #2",
-      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #2",
+      "fullName": "LM2500 Andritz A03 33.3 MW — LM2500 #2",
       "position": {
         "x": -175,
         "y": 500
@@ -9649,7 +9649,7 @@
       "id": "comp-mvups-exp-turbine-1",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #1",
-      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #1",
+      "fullName": "LM2500 Andritz A03 33.3 MW — LM2500 #1",
       "position": {
         "x": -175,
         "y": 2226
@@ -9847,7 +9847,7 @@
       "id": "comp-mvups-exp-turbine-2",
       "type": "gas-turbine-lm2500-andritz",
       "name": "LM2500 #2",
-      "fullName": "LM2500 Andritz A03 33.3 MW \u2014 LM2500 #2",
+      "fullName": "LM2500 Andritz A03 33.3 MW — LM2500 #2",
       "position": {
         "x": -175,
         "y": 2376
@@ -10438,6 +10438,293 @@
       "canvasPane": "lower"
     },
     {
+      "id": "comp-mvups-flat-gen-3d-preview-left",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (MVUPS collapsed — left)",
+      "position": {
+        "x": -342.5,
+        "y": 1913
+      },
+      "status": "online",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-3d-preview-right",
+      "type": "gas-turbine-3d",
+      "name": "4 Gas Turbines",
+      "fullName": "4 Gas Turbines (MVUPS collapsed — right)",
+      "position": {
+        "x": 2492,
+        "y": 1913
+      },
+      "status": "online",
+      "properties": {
+        "primaryLabel": "4 Gas Turbines",
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-aux-preview",
+      "type": "auxiliary-loads-bess",
+      "name": "Aux, IT and Rack Loads",
+      "fullName": "Auxiliary, IT and rack loads (MVUPS collapsed)",
+      "position": {
+        "x": 2492,
+        "y": 2328
+      },
+      "status": "online",
+      "properties": {
+        "rating": 5,
+        "voltage": 0.48,
+        "unit": "MW",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 750,
+        "height": 375
+      },
+      "state": {
+        "power": 0,
+        "voltage": 0.48,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-mvups-preview",
+      "type": "mvups-3d",
+      "name": "MVUPS",
+      "fullName": "MVUPS (3D preview)",
+      "position": {
+        "x": 2492,
+        "y": 2733
+      },
+      "status": "online",
+      "properties": {
+        "rating": 25,
+        "voltage": 34.5,
+        "unit": "MVA",
+        "mvupsFlatSchematic": true
+      },
+      "visualOverrides": {
+        "width": 1500,
+        "height": 750
+      },
+      "state": {
+        "power": 0,
+        "voltage": 34.5,
+        "current": 0,
+        "frequency": 60,
+        "soc": 85
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-bank-left",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Gen Bank Left",
+      "fullName": "MVUPS collapsed — left 4× LM2500",
+      "position": {
+        "x": 16,
+        "y": 1884
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "left",
+          "verticalBand": {
+            "minY": 1850,
+            "maxY": 4500
+          },
+          "previewMemberId": "comp-mvups-flat-gen-3d-preview-left",
+          "collapseColumnLeft": -342.5,
+          "memberIds": [
+            "comp-mvups-exp-turbine-1",
+            "comp-mvups-exp-gen-cb-1",
+            "comp-mvups-exp-gsu-gen-1",
+            "comp-mvups-exp-ct-gen-800-1",
+            "comp-mvups-exp-turbine-2",
+            "comp-mvups-exp-gen-cb-2",
+            "comp-mvups-exp-gsu-gen-2",
+            "comp-mvups-exp-ct-gen-800-2",
+            "comp-mvups-exp-turbine-3",
+            "comp-mvups-exp-gen-cb-3",
+            "comp-mvups-exp-gsu-gen-3",
+            "comp-mvups-exp-ct-gen-800-3",
+            "comp-mvups-exp-turbine-4",
+            "comp-mvups-exp-gen-cb-4",
+            "comp-mvups-exp-gsu-gen-4",
+            "comp-mvups-exp-ct-gen-800-4"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [],
+            "rightAnchorIds": [
+              "comp-mvups-exp-bus-left"
+            ]
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-gen-bank-right",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Gen Bank Right",
+      "fullName": "MVUPS collapsed — right 4× LM2500",
+      "position": {
+        "x": 2850,
+        "y": 1884
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 1850,
+            "maxY": 4500
+          },
+          "previewMemberId": "comp-mvups-flat-gen-3d-preview-right",
+          "collapseColumnLeft": 2492,
+          "memberIds": [
+            "comp-mvups-exp-turbine-5",
+            "comp-mvups-exp-gen-cb-5",
+            "comp-mvups-exp-gsu-gen-5",
+            "comp-mvups-exp-ct-gen-800-5",
+            "comp-mvups-exp-turbine-6",
+            "comp-mvups-exp-gen-cb-6",
+            "comp-mvups-exp-gsu-gen-6",
+            "comp-mvups-exp-ct-gen-800-6",
+            "comp-mvups-exp-turbine-7",
+            "comp-mvups-exp-gen-cb-7",
+            "comp-mvups-exp-gsu-gen-7",
+            "comp-mvups-exp-ct-gen-800-7",
+            "comp-mvups-exp-turbine-8",
+            "comp-mvups-exp-gen-cb-8",
+            "comp-mvups-exp-gsu-gen-8",
+            "comp-mvups-exp-ct-gen-800-8"
+          ],
+          "stubLinks": {
+            "gapPx": 75,
+            "leftAnchorIds": [
+              "comp-mvups-exp-bus-right"
+            ],
+            "rightAnchorIds": []
+          }
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
+      "id": "comp-mvups-flat-load-bank",
+      "type": "gas-turbine-bank",
+      "name": "MVUPS Load Bank",
+      "fullName": "MVUPS collapsed — load in series under the right turbines",
+      "position": {
+        "x": 2492,
+        "y": 2328
+      },
+      "status": "online",
+      "properties": {
+        "rating": 0,
+        "voltage": 13.8,
+        "unit": "",
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true,
+        "gasTurbineGroup": {
+          "collapsed": true,
+          "side": "right",
+          "verticalBand": {
+            "minY": 1850,
+            "maxY": 4500
+          },
+          "previewMemberId": "comp-mvups-flat-mvups-preview",
+          "collapseColumnLeft": 2492,
+          "memberIds": [
+            "comp-mvups-exp-tail-ct",
+            "comp-mvups-exp-tail-mvups-sld",
+            "comp-mvups-exp-tail-knot",
+            "comp-mvups-exp-tail-aux-loads",
+            "comp-mvups-exp-tail-aux-cb",
+            "comp-mvups-exp-tail-dc-cb",
+            "comp-mvups-exp-tail-it-rack"
+          ],
+          "collapseCompanionMemberId": "comp-mvups-flat-aux-preview"
+        }
+      },
+      "state": {
+        "power": 0,
+        "voltage": 13.8,
+        "current": 0,
+        "frequency": 60
+      },
+      "isTripped": false,
+      "canvasPane": "lower"
+    },
+    {
       "id": "comp-mvups-exp-tie-network",
       "type": "tie-breaker-network",
       "name": "Tie Breaker Network",
@@ -10604,7 +10891,9 @@
               "comp-mvups-exp-bus-section-cb-r-4"
             ]
           }
-        }
+        },
+        "mvupsFlatSchematic": true,
+        "mvupsFlatCollapseOwner": true
       },
       "state": {
         "power": 0,
@@ -10774,7 +11063,7 @@
     {
       "id": "comp-mvups-exp-tail-it-rack",
       "type": "it-rack-load",
-      "name": "IT Rack rb",
+      "name": "IT Rack #1, #2, #3, #4",
       "fullName": "IT Rack Load",
       "position": {
         "x": 3250,
@@ -14776,6 +15065,66 @@
       "to": "comp-mvups-exp-tail-it-rack",
       "type": "power",
       "status": "idle"
+    },
+    {
+      "id": "conn-mvups-flat-bus-to-gen-left",
+      "from": "comp-mvups-flat-gen-3d-preview-left",
+      "to": "comp-mvups-exp-bus-left",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-mvups-flat-bus-to-gen-right",
+      "from": "comp-mvups-flat-gen-3d-preview-right",
+      "to": "comp-mvups-exp-bus-right",
+      "type": "power",
+      "status": "idle"
+    },
+    {
+      "id": "conn-mvups-flat-aux-to-mvups",
+      "from": "comp-mvups-flat-aux-preview",
+      "to": "comp-mvups-flat-mvups-preview",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#3296fb",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "none"
+      }
+    },
+    {
+      "id": "conn-mvups-flat-bus-to-mvups",
+      "from": "comp-mvups-exp-bus-right",
+      "to": "comp-mvups-flat-mvups-preview",
+      "type": "power",
+      "status": "idle",
+      "style": {
+        "useAuto": false,
+        "color": "#3296fb",
+        "thickness": 5,
+        "animation": "none",
+        "depth3d": 38,
+        "glossiness": 18,
+        "shadow": {
+          "blur": 4,
+          "offsetX": 2,
+          "offsetY": 2,
+          "opacity": 0.35,
+          "color": "#000000"
+        },
+        "flowArrows": "none"
+      }
     }
   ],
   "systemState": {
@@ -14825,8 +15174,8 @@
     "sim-chart-1792253074439-5": 1
   },
   "playbackTimeRange": {
-    "t1": 20.0,
-    "t2": 50.0
+    "t1": 20,
+    "t2": 50
   },
   "designUiSession": {
     "ensembleId": "all",
@@ -14858,7 +15207,7 @@
     {
       "id": "qs-1779816645922-d94i3u",
       "label": "No Bess No Statcom",
-      "icon": "\u274c",
+      "icon": "❌",
       "color": "#455a64",
       "presetName": "noBessNoStatcom",
       "targetType": "ensemble",
@@ -14867,7 +15216,7 @@
     {
       "id": "qs-1779820073898-7ersa2",
       "label": "With Bess and StatCom",
-      "icon": "\ud83d\udd0b",
+      "icon": "🔋",
       "color": "#2e7d32",
       "presetName": "withBessandStatCom",
       "targetType": "ensemble",
@@ -14876,7 +15225,7 @@
     {
       "id": "qs-placeholder-bess-alone",
       "label": "With BESS Alone",
-      "icon": "\ud83d\udd0b",
+      "icon": "🔋",
       "color": "#00695c",
       "presetName": "withBessAlone",
       "targetType": "ensemble",
@@ -14885,7 +15234,7 @@
     {
       "id": "qs-placeholder-statcom-alone",
       "label": "With STATCOM Alone",
-      "icon": "\u26a1",
+      "icon": "⚡",
       "color": "#388e3c",
       "presetName": "withStatcomAlone",
       "targetType": "ensemble",
@@ -14894,7 +15243,7 @@
     {
       "id": "qs-placeholder-mvups-undamped",
       "label": "With MVUPS Alone",
-      "icon": "\ud83d\udd0b",
+      "icon": "🔋",
       "color": "#689f38",
       "presetName": "mvups_undamped",
       "targetType": "ensemble",
@@ -14903,7 +15252,7 @@
     {
       "id": "qs-1780124031952-rednbd",
       "label": "Reset",
-      "icon": "\u21ba",
+      "icon": "↺",
       "color": "#47413e",
       "presetName": "Reset",
       "targetType": "ensemble",
@@ -14912,7 +15261,7 @@
     {
       "id": "qs-live-rtds",
       "label": "Live RTDS",
-      "icon": "\ud83d\udce1",
+      "icon": "📡",
       "color": "#2e7d32",
       "presetName": "LiveRtds",
       "targetType": "ensemble",

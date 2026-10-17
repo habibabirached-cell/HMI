@@ -65,5 +65,11 @@ export function shouldApplyBankCollapseShiftToComponent(bank, component) {
 
 export function shouldApplyTieCollapseShiftToComponent(tie, component) {
   if (!isMvupsFlatCollapseOwnerComponent(tie)) return true;
-  return isMvupsFlatSchematicCanvasComponent(component);
+  if (isMvupsFlatSchematicCanvasComponent(component)) return true;
+  // P2R_18 lower one-line (buses and section CBs) pulls in beside this tie, same as baseline.
+  return (
+    tie?.id === 'comp-mvups-exp-tie-network' &&
+    typeof component?.id === 'string' &&
+    component.id.startsWith('comp-mvups-exp-')
+  );
 }

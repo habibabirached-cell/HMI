@@ -121,11 +121,25 @@ export function isGasTurbineBankCollapsed(component) {
   return g.collapsed === true;
 }
 
+/** P2R_18 MVUPS wings: the "..." stays visible collapsed and expanded. */
+const MVUPS_WING_STRIP_BANK_IDS = new Set([
+  'comp-mvups-flat-gen-bank-left',
+  'comp-mvups-flat-gen-bank-right',
+]);
+
+/** Logic-only owner; the right-wing "..." drives it. */
+const MVUPS_LOAD_BANK_HIDDEN_ID = 'comp-mvups-flat-load-bank';
+
+export function isMvupsWingStripBank(component) {
+  return MVUPS_WING_STRIP_BANK_IDS.has(component?.id);
+}
+
 /** Expanded = members visible + thin 3-dot strip at top of flank. */
 export function isGasTurbineBankStripMode(component) {
   if (!isGasTurbineBank(component)) return false;
   const g = component.properties?.gasTurbineGroup;
   if (!g?.memberIds?.length) return false;
+  if (isMvupsWingStripBank(component)) return true;
   return g.collapsed !== true;
 }
 
@@ -197,8 +211,11 @@ export function getGasTurbineBankHiddenMemberIdSet(components) {
     const g = bank.properties?.gasTurbineGroup;
     const surfaceIds = getGasTurbineBankCollapseSurfaceMemberIds(g);
 
-    if (isGasTurbineBankCollapsed(bank)) {
+    if (bank.id === MVUPS_LOAD_BANK_HIDDEN_ID) {
       hidden.add(bank.id);
+    }
+    if (isGasTurbineBankCollapsed(bank)) {
+      if (!isMvupsWingStripBank(bank)) hidden.add(bank.id);
       for (const id of g?.memberIds || []) {
         if (id) hidden.add(String(id));
       }

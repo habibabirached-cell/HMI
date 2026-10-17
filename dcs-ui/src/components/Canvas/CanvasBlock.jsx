@@ -6,11 +6,13 @@ import {
   tieEffectiveDimensions,
   isTieStripMode,
   isTieBreakerNetwork,
+  isTieNetworkCollapsed,
 } from '../../utils/tieBreakerNetwork';
 import {
   gasTurbineBankEffectiveDimensions,
   isGasTurbineBankStripMode,
   isGasTurbineBank,
+  isMvupsWingStripBank,
 } from '../../utils/gasTurbineBank';
 import { useCanvasFontPxDelta, useCollapsedComponentFontPxDelta } from '../../contexts/FontScaleContext';
 import { adjSvgFontPx } from '../../utils/svgFontDelta';
@@ -24,6 +26,11 @@ import {
 import {
   isMvupsFlatUnifiedStripOwner,
   shouldMvupsFlatUnifiedExpandOnDoubleClick,
+  MVUPS_EXP_MIDDLE_TIE_ID,
+  mvupsIndependentSectionOwnerIds,
+  buildMvupsIndependentSectionUpdates,
+  isMvupsWingDoubleClickTarget,
+  mvupsBothWingsOwnerIds,
 } from '../../utils/designCollapseState';
 import CanvasComponentBody from './shapes/CanvasComponentBody';
 
@@ -82,10 +89,13 @@ function CanvasBlock({
     isTieStripMode(component) &&
     (!mvupsFlatUnifiedCollapse ||
       !isMvupsFlatCollapseOwner(component) ||
-      isMvupsFlatUnifiedStripOwner(component));
+      isMvupsFlatUnifiedStripOwner(component) ||
+      component.id === MVUPS_EXP_MIDDLE_TIE_ID);
   const gasBankStrip =
     isGasTurbineBankStripMode(component) &&
-    (!mvupsFlatUnifiedCollapse || !isMvupsFlatCollapseOwner(component));
+    (!mvupsFlatUnifiedCollapse ||
+      !isMvupsFlatCollapseOwner(component) ||
+      isMvupsWingStripBank(component));
   const stripMode = tieStrip || gasBankStrip;
   const mvupsFlatSchematic = isMvupsFlatSchematicComponent(component);
   const visualConfig = getComponentVisualConfig(component.type);
@@ -127,6 +137,16 @@ function CanvasBlock({
       onMouseUp={(e) => onMouseUp(e, component)}
       onDoubleClick={(e) => {
         if (ideumKioskMode) return;
+        if (isMvupsWingDoubleClickTarget(component) && onUpdateComponent) {
+          e.stopPropagation();
+          const wingUpdates = buildMvupsIndependentSectionUpdates(
+            allComponents,
+            mvupsBothWingsOwnerIds(),
+            false,
+          );
+          for (const u of wingUpdates) onUpdateComponent(u.id, u.patch);
+          return;
+        }
         if (
           mvupsFlatUnifiedCollapse &&
           onMvupsFlatUnifiedCollapse &&
@@ -268,6 +288,16 @@ function CanvasBlock({
                         return;
                       }
                       if (!onUpdateComponent) return;
+                      if (isMvupsWingStripBank(component)) {
+                        const wingCollapsed = component.properties?.gasTurbineGroup?.collapsed === true;
+                        const wingUpdates = buildMvupsIndependentSectionUpdates(
+                          allComponents,
+                          mvupsIndependentSectionOwnerIds(component),
+                          !wingCollapsed,
+                        );
+                        for (const u of wingUpdates) onUpdateComponent(u.id, u.patch);
+                        return;
+                      }
                       const tg = component.properties?.tieGroup;
                       if (isTieBreakerNetwork(component) && tg?.memberIds?.length) {
                         onUpdateComponent(component.id, {
@@ -293,9 +323,15 @@ function CanvasBlock({
                       <title>
                         {mvupsFlatUnifiedCollapse && isMvupsFlatUnifiedStripOwner(component)
                           ? 'Collapse MVUPS flat view to 3D tiles — click dots'
-                          : isGasTurbineBank(component)
-                            ? 'Collapse generation aisle into 3D preview — click dots'
-                            : 'Collapse into tie summary block — click dots at top'}
+                          : isMvupsWingStripBank(component)
+                            ? component.properties?.gasTurbineGroup?.collapsed === true
+                              ? 'Explode this wing — click dots'
+                              : 'Collapse this wing — click dots'
+                            : component.id === MVUPS_EXP_MIDDLE_TIE_ID
+                              ? 'Collapse middle bus — click dots'
+                            : isGasTurbineBank(component)
+                              ? 'Collapse generation aisle into 3D preview — click dots'
+                              : 'Collapse into tie summary block — click dots at top'}
                       </title>
                     ) : null}
                   </rect>
@@ -319,6 +355,49 @@ function CanvasBlock({
             })()}
           </g>
         )}
+
+        {!stripMode &&
+          component.id === MVUPS_EXP_MIDDLE_TIE_ID &&
+          isTieNetworkCollapsed(component) && (
+            <g className="mvups-middle-bus-explode">
+              <rect
+                x={width / 2 - 28}
+                y={6}
+                width={56}
+                height={22}
+                rx={4}
+                fill="rgba(8, 24, 40, 0.55)"
+                stroke={strokeColor}
+                strokeWidth={1}
+                style={{ cursor: mode === 'design' ? 'pointer' : 'default' }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!onUpdateComponent) return;
+                  const updates = buildMvupsIndependentSectionUpdates(
+                    allComponents,
+                    mvupsIndependentSectionOwnerIds(component),
+                    false,
+                  );
+                  for (const u of updates) onUpdateComponent(u.id, u.patch);
+                }}
+              >
+                {mode === 'design' ? <title>Explode middle bus — click dots</title> : null}
+              </rect>
+              {[-11, 0, 11].map((dx) => (
+                <circle
+                  key={`mid-bus-dot-${dx}`}
+                  cx={width / 2 + dx}
+                  cy={17}
+                  r={3}
+                  fill={visualConfig.color || '#2e7d7d'}
+                  stroke={strokeColor}
+                  strokeWidth={1}
+                  pointerEvents="none"
+                />
+              ))}
+            </g>
+          )}
 
         {!stripMode && !mvupsFlatSchematic && component.embeddedSparklines?.length > 0 &&
           (simulationData?.length > 0 ||
