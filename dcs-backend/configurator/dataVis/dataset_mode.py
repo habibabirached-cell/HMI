@@ -35,45 +35,36 @@ def reset_datavis_mode() -> None:
 
 
 def get_datavis_dataframe() -> pd.DataFrame:
-    global _mode, _clean_df, _clean_df_tier
-    active = get_active_waco_load_mw()
-    with _lock:
-        if _mode == "clean" and _clean_df is not None and _clean_df_tier == active:
-            return _clean_df
-        if _mode == "clean" and _clean_df is not None and _clean_df_tier != active:
-            _clean_df = None
-            _clean_df_tier = None
-            _mode = "raw"
-    return load_waco_dataframe(active)
+    """Active tier dataframe (pre-cleaned on disk when clean CSV is present)."""
+    return load_waco_dataframe(get_active_waco_load_mw())
 
 
-def _filter_clean(full: pd.DataFrame) -> pd.DataFrame:
+def filter_load_compliance_clean(full: pd.DataFrame) -> pd.DataFrame:
+    """Rows with Year 1 load compliance at or above the clean threshold."""
     if LOAD_COMPLIANCE_COL not in full.columns:
         return full.copy()
     col = pd.to_numeric(full[LOAD_COMPLIANCE_COL], errors="coerce")
     return full.loc[col >= CLEAN_MIN_LOAD_COMPLIANCE].copy()
 
 
+_filter_clean = filter_load_compliance_clean
+
+
 def set_dataset_mode(mode: str) -> dict[str, Any]:
+    """UI clean/original toggle — same on-disk dataset; mode is kept for API compatibility."""
     global _mode, _clean_df, _clean_df_tier
     normalized: DatasetMode = "clean" if mode == "clean" else "raw"
     active = get_active_waco_load_mw()
     with _lock:
-        if normalized == "raw":
-            _clean_df = None
-            _clean_df_tier = None
-            _mode = "raw"
-            df = load_waco_dataframe(active, force_reload=True)
-            row_count = len(df)
-        else:
-            full = load_waco_dataframe(active, force_reload=True)
-            _clean_df = _filter_clean(full)
-            _clean_df_tier = active
-            _mode = "clean"
-            row_count = len(_clean_df)
+        _clean_df = None
+        _clean_df_tier = None
+        _mode = normalized
+        df = load_waco_dataframe(active, force_reload=False)
+        row_count = len(df)
         return {
             "mode": _mode,
             "row_count": row_count,
             "clean_min_load_compliance": CLEAN_MIN_LOAD_COMPLIANCE,
             "load_compliance_column": LOAD_COMPLIANCE_COL,
+            "pre_cleaned_on_disk": True,
         }

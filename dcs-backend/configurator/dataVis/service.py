@@ -35,6 +35,7 @@ from configurator.dataVis.loader import (
 from configurator.dataVis.paths import (
     DATAVIS_WACO_SHEET,
     scenario_context_for_load,
+    waco_dataset_source,
     waco_workbook_path,
 )
 from configurator.dataVis.quality import run_quality_checks
@@ -69,7 +70,8 @@ def get_health() -> dict[str, Any]:
             "rows": len(df),
             "dataset_mode": get_dataset_mode(),
             "load_mw": get_active_waco_load_mw(),
-            "workbook": waco_workbook_path(get_active_waco_load_mw()).name,
+            "workbook": waco_dataset_source(get_active_waco_load_mw()).get("file"),
+            "dataset_source": waco_dataset_source(get_active_waco_load_mw()),
             "sheet": DATAVIS_WACO_SHEET,
         }
     except Exception as exc:  # noqa: BLE001
@@ -126,7 +128,8 @@ def get_meta(requested_load_mw: int | None = None) -> dict[str, Any]:
     return {
         "scenario": scenario_context_for_load(active),
         "load_mw": active,
-        "workbook": waco_workbook_path(active).name,
+        "workbook": waco_dataset_source(active).get("file"),
+        "dataset_source": waco_dataset_source(active),
         "dataset_mode": get_dataset_mode(),
         "row_count": len(df),
         "column_count": len(df.columns),

@@ -1,5 +1,10 @@
 import React from 'react';
-import { formatMW, formatPercent, formatCurrencyPerMWh } from '../utils/conf_formatters';
+import {
+  formatMW,
+  formatPercent,
+  formatCarbonFreePercent,
+  formatCurrencyPerMWh,
+} from '../utils/conf_formatters';
 
 /** One-line preview after successful wall submit. */
 export default function ConfIdeumPreviewSummary({ result }) {
@@ -12,7 +17,7 @@ export default function ConfIdeumPreviewSummary({ result }) {
         <strong>Sent</strong>
         <span>{formatMW(kpis.installedCapacityMW)}</span>
         <span>{formatPercent(kpis.achievedReliability, 2)}</span>
-        <span>CFE {formatPercent(kpis.achievedCfe, 0)}</span>
+        <span>CFE {formatCarbonFreePercent(kpis.achievedCfe, 0)}</span>
         <span>{formatCurrencyPerMWh(kpis.lcoe)}</span>
       </span>
     </section>

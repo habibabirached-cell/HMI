@@ -1,7 +1,9 @@
 import {
+  DATAVIS_CFE_COL,
   DATAVIS_UNIT_COUNT_COLUMNS,
   dataVisParallelAxisLabelLines,
 } from './dataVisColumnDisplayLabel';
+import { parcoordsAxisIconForColumn } from './dataVisParcoordsAxisIcons';
 
 export const DATAVIS_PARCOORDS_LCOE_COLORBAR_TITLE =
   'Levelized Cost of Electricity (LCOE)';
@@ -69,9 +71,9 @@ export function parallelDimensionLayout(columnKey, axisRange) {
   if (columnKey === '7HA Unit #') {
     const maxV = Math.max(3, Math.ceil(Number(axisRange?.[1] ?? 3)));
     const tickvals = [];
-    for (let t = 1; t <= maxV; t += 1) tickvals.push(t);
+    for (let t = 0; t <= maxV; t += 1) tickvals.push(t);
     return {
-      range: [1, maxV],
+      range: [0, maxV],
       tickvals,
       ticktext: tickvals.map(String),
     };
@@ -79,13 +81,22 @@ export function parallelDimensionLayout(columnKey, axisRange) {
 
   if (columnKey === 'LM2500 Unit #') {
     const maxV = Math.max(1, Math.round(Number(axisRange?.[1] ?? 24)));
-    const tickvals = [1];
+    const tickvals = [0, 1];
     for (let t = 2; t <= maxV; t += 2) tickvals.push(t);
     if (tickvals[tickvals.length - 1] < maxV) tickvals.push(maxV);
     return {
-      range: [1, maxV],
+      range: [0, maxV],
       tickvals,
       ticktext: tickvals.map(String),
+    };
+  }
+
+  if (columnKey === DATAVIS_CFE_COL) {
+    const tickvals = [0, 25, 50, 75, 100];
+    return {
+      range: [0, 100],
+      tickvals,
+      ticktext: tickvals.map((t) => `${t}%`),
     };
   }
 
@@ -221,6 +232,58 @@ export function applyParcoordsColorbarTickLabels(graphDiv) {
 
 const PARCOORDS_CB_TITLE_CLASS = 'dataVis-parcoords-cb-title';
 const PARCOORDS_CB_TITLE_HTML_CLASS = 'dataVis-parcoords-cb-title-html';
+export const PARCOORDS_AXIS_ICONS_LAYER_CLASS = 'dataVis-parcoords-axis-icons';
+
+export function removeParcoordsAxisIcons(mount) {
+  mount?.querySelector?.(`.${PARCOORDS_AXIS_ICONS_LAYER_CLASS}`)?.remove();
+}
+
+/** HTML icons centered above each parcoords axis title (Explore Data). */
+export function applyParcoordsAxisTitleIcons(graphDiv, dimensionKeys, { compact = false } = {}) {
+  const mount = parcoordsChartMount(graphDiv);
+  if (!mount || !dimensionKeys?.length) return;
+
+  removeParcoordsAxisIcons(mount);
+  const layer = document.createElement('div');
+  layer.className = PARCOORDS_AXIS_ICONS_LAYER_CLASS;
+  layer.setAttribute('aria-hidden', 'true');
+  mount.appendChild(layer);
+
+  const mountRect = mount.getBoundingClientRect();
+  const iconSize = compact ? 120 : 48;
+  const gapAboveTitle = 8;
+  const axes = sortedParcoordsYAxes(graphDiv);
+
+  axes.forEach((axisEl, index) => {
+    const key = dimensionKeys[index];
+    const meta = parcoordsAxisIconForColumn(key);
+    if (!meta) return;
+    const textEl = axisEl.querySelector('text.axis-title');
+    if (!textEl) return;
+    const titleRect = textEl.getBoundingClientRect();
+    if (titleRect.width < 2 || titleRect.height < 2) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dataVis-parcoords-axis-icon';
+    const img = document.createElement('img');
+    img.src = meta.src;
+    img.alt = '';
+    img.title = meta.alt || '';
+    img.draggable = false;
+    img.width = iconSize;
+    img.height = iconSize;
+    wrap.appendChild(img);
+
+    const centerX = titleRect.left + titleRect.width / 2 - mountRect.left;
+    const top = titleRect.top - mountRect.top - iconSize - gapAboveTitle;
+    wrap.style.left = `${centerX}px`;
+    wrap.style.top = `${top}px`;
+    wrap.style.width = `${iconSize}px`;
+    wrap.style.height = `${iconSize}px`;
+    wrap.style.transform = 'translateX(-50%)';
+    layer.appendChild(wrap);
+  });
+}
 
 function parcoordsChartMount(graphDiv) {
   return graphDiv?.closest?.('.dataVis-chartBlock--parcoords') || graphDiv?.parentElement || null;
@@ -319,7 +382,15 @@ export function applyParcoordsIntegerUnitTicks(graphDiv, dimensionKeys) {
   const unitSet = new Set(DATAVIS_UNIT_COUNT_COLUMNS);
   const axes = sortedParcoordsYAxes(graphDiv);
   axes.forEach((axisEl, index) => {
-    if (!unitSet.has(dimensionKeys[index])) return;
+    const col = dimensionKeys[index];
+    if (col === DATAVIS_CFE_COL) {
+      axisEl.querySelectorAll('.axis .tick text, .axis-extent-top-text, .axis-extent-bottom-text').forEach((textEl) => {
+        const n = Number(String(textEl.textContent).replace(/[%\s,]/g, ''));
+        if (Number.isFinite(n)) textEl.textContent = `${Math.round(n)}%`;
+      });
+      return;
+    }
+    if (!unitSet.has(col)) return;
     axisEl.querySelectorAll('.axis .tick text').forEach((textEl) => {
       const n = Number(String(textEl.textContent).replace(/,/g, ''));
       if (Number.isFinite(n)) textEl.textContent = String(Math.round(n));

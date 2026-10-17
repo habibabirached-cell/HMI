@@ -12,7 +12,7 @@ const DATAVIS_PARALLEL_AXIS_LABEL_LINES = {
   'LM2500 Unit #': ['Number of', 'LM2500 Units'],
   'Project LCOE ($/MWh)': ['LCOE', '($/MW)'],
   [DATAVIS_LOAD_COMPLIANCE_COL]: ['Data Center', 'Uptime'],
-  [DATAVIS_CFE_COL]: ['Carbon Free', 'Power'],
+  [DATAVIS_CFE_COL]: ['Percent Carbon Free', 'Power'],
 };
 
 export function dataVisParallelAxisLabelLines(columnKey) {

@@ -12,6 +12,7 @@ from configurator.dataVis.derived import add_derived_columns
 from configurator.dataVis.paths import (
     DATAVIS_WACO_SHEET,
     DEFAULT_WACO_LOAD_MW,
+    waco_clean_csv_path,
     waco_workbook_path,
 )
 
@@ -70,7 +71,17 @@ def set_active_waco_load_mw(load_mw: int) -> int:
     return tier
 
 
-def _read_waco_workbook(tier: int) -> pd.DataFrame:
+def _finalize_waco_dataframe(raw: pd.DataFrame) -> pd.DataFrame:
+    raw = raw.dropna(how="all")
+    raw = _normalize_dataframe_columns(raw)
+    df = add_derived_columns(raw)
+    df = df.reset_index(drop=True)
+    df["dataVis_row_id"] = df.index.astype(int)
+    return df
+
+
+def read_waco_excel_dataframe(tier: int) -> pd.DataFrame:
+    """Full workbook sheet (used by build_waco_clean_csv.py)."""
     path = waco_workbook_path(tier)
     if not path.is_file():
         raise FileNotFoundError(f"dataVis workbook not found: {path}")
@@ -80,12 +91,25 @@ def _read_waco_workbook(tier: int) -> pd.DataFrame:
         sheet_name=DATAVIS_WACO_SHEET,
         engine="openpyxl",
     )
-    raw = raw.dropna(how="all")
-    raw = _normalize_dataframe_columns(raw)
-    df = add_derived_columns(raw)
-    df = df.reset_index(drop=True)
-    df["dataVis_row_id"] = df.index.astype(int)
-    return df
+    return _finalize_waco_dataframe(raw)
+
+
+def _read_waco_clean_csv(tier: int) -> pd.DataFrame:
+    path = waco_clean_csv_path(tier)
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"dataVis clean CSV not found: {path}. "
+            f"Run: python scripts/build_waco_clean_csv.py"
+        )
+    raw = pd.read_csv(path)
+    return _finalize_waco_dataframe(raw)
+
+
+def _read_waco_dataset(tier: int) -> pd.DataFrame:
+    csv_path = waco_clean_csv_path(tier)
+    if csv_path.is_file():
+        return _read_waco_clean_csv(tier)
+    return read_waco_excel_dataframe(tier)
 
 
 def load_waco_dataframe(load_mw: int | None = None, force_reload: bool = False) -> pd.DataFrame:
@@ -96,15 +120,16 @@ def load_waco_dataframe(load_mw: int | None = None, force_reload: bool = False) 
             _active_load_mw = tier
             return bucket["df"]
 
-    # Excel I/O can take 30–90s — never hold _lock across read_excel (blocks all API threads).
-    df = _read_waco_workbook(tier)
-    path = waco_workbook_path(tier)
+    # Disk I/O can take 30–90s for Excel — never hold _lock across reads.
+    df = _read_waco_dataset(tier)
+    csv_path = waco_clean_csv_path(tier)
+    source_name = csv_path.name if csv_path.is_file() else waco_workbook_path(tier).name
     with _lock:
         _active_load_mw = tier
         _cache_by_load_mw[tier] = {
             "df": df,
             "loaded_at": pd.Timestamp.utcnow().isoformat(),
-            "workbook": path.name,
+            "workbook": source_name,
         }
     return df
 

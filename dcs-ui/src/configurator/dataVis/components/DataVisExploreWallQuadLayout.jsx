@@ -6,14 +6,14 @@ import { parallelDimensionsForExploreWall } from '../utils/dataVisParallelDefaul
 
 const EXPLORE_WALL_SPLIT_KEY = 'dcs-dataVis-explore-wall-split';
 
-function ParallelPane({ title, hint, actions, children }) {
+function ParallelPane({ actions, children }) {
   return (
-    <section className="dataVis-quadSlot dataVis-quadSlot--parallel" aria-label={title}>
-      <header className="dataVis-quadSlot__head">
-        <span className="dataVis-quadSlot__title">{title}</span>
-        {hint ? <span className="dataVis-quadSlot__hint">{hint}</span> : null}
-        {actions ? <div className="dataVis-quadSlot__actions">{actions}</div> : null}
-      </header>
+    <section className="dataVis-quadSlot dataVis-quadSlot--parallel" aria-label="Parallel coordinates">
+      {actions ? (
+        <header className="dataVis-quadSlot__head dataVis-quadSlot__head--actionsOnly">
+          <div className="dataVis-quadSlot__actions">{actions}</div>
+        </header>
+      ) : null}
       <div className="dataVis-quadSlot__body">{children}</div>
     </section>
   );
@@ -57,8 +57,6 @@ export default function DataVisExploreWallQuadLayout({
         statusMessage: wallStatusMessage,
       })}
       <ParallelPane
-        title="Parallel coordinates — Waco scenarios"
-        hint="Linked to Inputs corridor bands · pink = lowest LCOE in view"
         actions={
           <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
             Clear view filters
@@ -71,6 +69,9 @@ export default function DataVisExploreWallQuadLayout({
           columnStats={stats}
           compact
           lockDimensionsToDefaults
+          highlightMartinRowId={
+            wallResult?.martinDataVisRowId ?? wallResult?.martinRowIndex ?? null
+          }
           onParcoordsRangesChange={onParcoordsRangesChange}
           onDimensionsChange={onParallelDimensionsChange}
           parcoordsActive={parcoordsActive}

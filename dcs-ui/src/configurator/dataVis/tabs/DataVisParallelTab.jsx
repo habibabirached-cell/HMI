@@ -12,16 +12,28 @@ import {
   removeBestLcoeOverlay,
   syncBestLcoeOverlay,
 } from '../utils/dataVisParcoordsBestLcoeOverlay';
-import { constraintsFromParcoordsFigure } from '../utils/dataVisParcoordsFilter';
+import {
+  constraintsFromParcoordsFigure,
+  eligibleParallelRowIndices,
+} from '../utils/dataVisParcoordsFilter';
+import {
+  cfeStoredToDisplayPercent,
+  parcoordsBandStoredToDisplay,
+  parcoordsConstraintsDisplayToStored,
+  parcoordsValuesForDimension,
+} from '../utils/dataVisCfeScale';
+import { DATAVIS_CFE_COL } from '../utils/dataVisColumnDisplayLabel';
 import {
   dataVisParallelAxisLabel,
   dataVisParallelAxisLabelMenu,
 } from '../utils/dataVisColumnDisplayLabel';
 import {
+  applyParcoordsAxisTitleIcons,
   applyParcoordsColorbarTickLabels,
   applyParcoordsColorbarTitleLayout,
   applyParcoordsHorizontalAxisLabels,
   applyParcoordsIntegerUnitTicks,
+  removeParcoordsAxisIcons,
   colorbarTickvalsEndingZeroOrFive,
   DATAVIS_PARCOORDS_LCOE_COLORBAR_TITLE,
   formatColorbarTickZeroOrFive,
@@ -135,6 +147,8 @@ export default function DataVisParallelTab({
   onClearAll,
   onDimensionsChange,
   lockDimensionsToDefaults = false,
+  /** Explore wall: pink line = Martin winner (same row as KPIs), not local min LCOE. */
+  highlightMartinRowId = null,
 }) {
   /** Full view filters — parallel shows only matching rows (no gray ghost lines). */
   const queryFilters = filters ?? chartFilters;
@@ -230,13 +244,14 @@ export default function DataVisParallelTab({
   const syncConstraintsFromGraph = useCallback(() => {
     const gd = graphDivRef.current;
     if (!gd?.data) return;
-    const merged = constraintsFromParcoordsFigure({ data: gd.data, layout: gd.layout });
+    const fromFigure = constraintsFromParcoordsFigure({ data: gd.data, layout: gd.layout }, dimensions);
+    const merged = parcoordsConstraintsDisplayToStored(fromFigure);
     const prevKey = JSON.stringify(constraintsRef.current);
     const nextKey = JSON.stringify(merged);
     if (prevKey === nextKey) return;
     constraintsRef.current = merged;
     publishConstraints(merged);
-  }, [publishConstraints]);
+  }, [dimensions, publishConstraints]);
 
   const runParcoordsChrome = useCallback(() => {
     const gd = graphDivRef.current;
@@ -245,13 +260,18 @@ export default function DataVisParallelTab({
       applyParcoordsIntegerUnitTicks(gd, dimensions);
       applyParcoordsColorbarTickLabels(gd);
       applyParcoordsColorbarTitleLayout(gd, { compact });
+      if (lockDimensionsToDefaults) {
+        applyParcoordsAxisTitleIcons(gd, dimensions, { compact });
+      } else {
+        removeParcoordsAxisIcons(gd.closest('.dataVis-chartBlock--parcoords'));
+      }
     }
     syncBestLcoeOverlay(
       chartWrapRef.current,
       graphDivRef.current,
       overlaySpecRef.current,
     );
-  }, [compact, dimensions]);
+  }, [compact, dimensions, lockDimensionsToDefaults]);
 
   const scheduleParcoordsChrome = useCallback(() => {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
@@ -311,6 +331,7 @@ export default function DataVisParallelTab({
     graphDivRef.current = null;
     removeBestLcoeOverlay(chartWrapRef.current, graphDiv);
     removeParcoordsColorbarTitleOverlay(chartWrapRef.current);
+    removeParcoordsAxisIcons(chartWrapRef.current);
   }, []);
 
   const plotBundle = useMemo(() => {
@@ -326,12 +347,22 @@ export default function DataVisParallelTab({
     const dims = payload.dimensions || [];
     const rowIds = payload.row_ids || [];
     const baseColors = payload.color || rowIds.map(() => 0);
-    const eligibleIndices = rowIds.map((_, i) => i);
+    const brushConstraints = { ...(parcoordsRanges || {}), ...(constraintsRef.current || {}) };
+    const eligibleIndices = eligibleParallelRowIndices(payload, brushConstraints);
     const colorLabel = payload.color_label || 'Project LCOE ($/MWh)';
     const lcoeDim = dims.find((d) => /LCOE/i.test(d)) || colorLabel;
     const lcoeByRow = lcoeValuesForHighlight(payload, colorLabel, lcoeDim);
-    const bestLcoeIdx =
-      lcoeByRow.length > 0 ? indexOfMinLcoeRow(lcoeByRow, eligibleIndices) : -1;
+    let bestLcoeIdx = -1;
+    const martinRowId = highlightMartinRowId != null ? Number(highlightMartinRowId) : NaN;
+    if (Number.isFinite(martinRowId) && rowIds.length) {
+      const linkedIdx = rowIds.findIndex((id) => Number(id) === martinRowId);
+      if (linkedIdx >= 0 && eligibleIndices.includes(linkedIdx)) {
+        bestLcoeIdx = linkedIdx;
+      }
+    }
+    if (bestLcoeIdx < 0 && lcoeByRow.length > 0) {
+      bestLcoeIdx = indexOfMinLcoeRow(lcoeByRow, eligibleIndices);
+    }
     const colorStat = columnStatMap[colorLabel];
     const colorFromPayload = payload.color?.filter((v) => v != null) || [];
     const dataLo =
@@ -387,14 +418,15 @@ export default function DataVisParallelTab({
         cmax: dataHi,
       },
       dimensions: dims.map((key) => {
-        const band =
+        const storedBand =
           constraintsRef.current?.[key] ?? parcoordsRanges?.[key] ?? null;
-        const constraintrange = constraintrangeFromBand(band);
+        const displayBand = parcoordsBandStoredToDisplay(key, storedBand);
+        const constraintrange = constraintrangeFromBand(displayBand);
         const axisRange = parallelAxisRangeFromStats(columnStatMap[key]);
         const layout = parallelDimensionLayout(key, axisRange);
         return {
           label: dataVisParallelAxisLabel(key),
-          values: payload.values[key],
+          values: parcoordsValuesForDimension(key, payload.values[key]),
           ...layout,
           ...(constraintrange ? { constraintrange } : {}),
         };
@@ -415,7 +447,11 @@ export default function DataVisParallelTab({
       ? {
           dimensionKeys: dims,
           valuesByDim: Object.fromEntries(
-            dims.map((key) => [key, payload.values[key][bestLcoeIdx]]),
+            dims.map((key) => {
+              const raw = payload.values[key][bestLcoeIdx];
+              const v = key === DATAVIS_CFE_COL ? cfeStoredToDisplayPercent(raw) : raw;
+              return [key, v];
+            }),
           ),
           axisRanges,
           domainX,
@@ -429,7 +465,7 @@ export default function DataVisParallelTab({
       bestLcoeValue,
       bestLcoeOverlay,
     };
-  }, [columnStatMap, compact, parcoordsRanges, payload, uirevision]);
+  }, [columnStatMap, compact, highlightMartinRowId, parcoordsRanges, payload, uirevision]);
 
   overlaySpecRef.current = plotBundle.bestLcoeOverlay;
 
@@ -454,6 +490,28 @@ export default function DataVisParallelTab({
     });
   };
 
+  const bestLcoeBelowChart = Boolean(lockDimensionsToDefaults);
+  const bestLcoeCaption =
+    bestLcoeValue != null ? (
+      <span
+        className={`dataVis-parcoordsBestLcoe${
+          bestLcoeBelowChart ? ' dataVis-parcoordsBestLcoe--belowChart' : ''
+        }`}
+        title="Lowest LCOE among lines in this plot"
+      >
+        <span className="dataVis-parcoordsBestLcoe__swatch" aria-hidden />
+        Lowest LCOE: {bestLcoeValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}{' '}
+        $/MWh
+      </span>
+    ) : null;
+
+  const showParcoordsToolbar =
+    !lockDimensionsToDefaults ||
+    !compact ||
+    parcoordsActive ||
+    (bestLcoeCaption != null && !bestLcoeBelowChart) ||
+    (onClearAll && !compact);
+
   return (
     <div
       className={`dataVis-tabPanel${
@@ -462,86 +520,89 @@ export default function DataVisParallelTab({
           : ' dataVis-tabPanel--parcoordsFull'
       }`}
     >
-      <div className="dataVis-tabPanel__toolbar">
-        <DataVisColumnChipMenu
-          columns={numericCols}
-          mode="multi"
-          selectedMulti={dimensions}
-          maxSelected={MAX_PARALLEL_DIMS}
-          buttonText="Choose dimensions"
-          menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
-          formatColumnLabel={dataVisParallelAxisLabelMenu}
-          onToggle={toggleDim}
-        />
-        {!compact ? (
-          <span className="dataVis-muted dataVis-parcoordsHint">
-            Drag on any axis to filter — use several axes at once. Double-click an axis to reset
-            that axis only{parcoordsActive ? ' · parallel filter active' : ''}.
-          </span>
-        ) : parcoordsActive ? (
-          <span className="dataVis-muted dataVis-parcoordsHint">Parallel filter active</span>
-        ) : null}
-        {bestLcoeValue != null ? (
-          <span className="dataVis-parcoordsBestLcoe" title="Lowest LCOE among lines in this plot">
-            <span className="dataVis-parcoordsBestLcoe__swatch" aria-hidden />
-            Lowest LCOE: {bestLcoeValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}{' '}
-            $/MWh
-          </span>
-        ) : null}
-        {onClearAll && !compact ? (
-          <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
-            Clear all filters
-          </button>
-        ) : null}
-      </div>
+      {showParcoordsToolbar ? (
+        <div className="dataVis-tabPanel__toolbar">
+          {!lockDimensionsToDefaults ? (
+            <DataVisColumnChipMenu
+              columns={numericCols}
+              mode="multi"
+              selectedMulti={dimensions}
+              maxSelected={MAX_PARALLEL_DIMS}
+              buttonText="Choose dimensions"
+              menuHint={`Green = axis in parallel plot. Toggle up to ${MAX_PARALLEL_DIMS} numeric dimensions.`}
+              formatColumnLabel={dataVisParallelAxisLabelMenu}
+              onToggle={toggleDim}
+            />
+          ) : null}
+          {!compact ? (
+            <span className="dataVis-muted dataVis-parcoordsHint">
+              Drag on any axis to filter — use several axes at once. Double-click an axis to reset
+              that axis only{parcoordsActive ? ' · parallel filter active' : ''}.
+            </span>
+          ) : parcoordsActive ? (
+            <span className="dataVis-muted dataVis-parcoordsHint">Parallel filter active</span>
+          ) : null}
+          {bestLcoeCaption && !bestLcoeBelowChart ? bestLcoeCaption : null}
+          {onClearAll && !compact ? (
+            <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
+              Clear all filters
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {error && <p className="dataVis-error">{error}</p>}
       {!payload && !error && <p className="dataVis-muted">Loading parallel coords…</p>}
       {payload && (
-        <div ref={chartWrapRef} className="dataVis-chartBlock dataVis-chartBlock--parcoords">
-          <DataVisPlot
-            data={plotData}
-            layout={{
-              uirevision,
-              title: compact ? undefined : { text: 'Parallel coordinates', font: { size: 16 } },
-              autosize: true,
-              width: plotWrapSize.width,
-              height: plotWrapSize.height,
-              margin: compact
-                ? {
-                    l: 96,
-                    r: showColorScale ? 228 : 28,
-                    t: 132,
-                    b: 96,
-                    pad: 4,
-                  }
-                : {
-                    l: 96,
-                    r: showColorScale ? 172 : 36,
-                    t: 118,
-                    b: 72,
-                    pad: 4,
-                  },
-            }}
-            style={{
-              minHeight: 0,
-              width: '100%',
-              height: '100%',
-              maxWidth: '100%',
-            }}
-            config={
-              compact
-                ? { displayModeBar: false, responsive: true, displaylogo: false }
-                : { displayModeBar: true, responsive: true, displaylogo: false }
-            }
-            useResizeHandler
-            onInitialized={handleInitialized}
-            onPurge={handlePurge}
-            onUpdate={() => scheduleParcoordsChrome()}
-            onRestyle={() => {
-              requestAnimationFrame(() => syncConstraintsFromGraph());
-            }}
-          />
-        </div>
+        <>
+          <div ref={chartWrapRef} className="dataVis-chartBlock dataVis-chartBlock--parcoords">
+            <DataVisPlot
+              data={plotData}
+              layout={{
+                uirevision,
+                title: compact ? undefined : { text: 'Parallel coordinates', font: { size: 16 } },
+                autosize: true,
+                width: plotWrapSize.width,
+                height: plotWrapSize.height,
+                margin: compact
+                  ? {
+                      l: 96,
+                      r: showColorScale ? 228 : 28,
+                      t: lockDimensionsToDefaults ? 192 : 132,
+                      b: 96,
+                      pad: 4,
+                    }
+                  : {
+                      l: 96,
+                      r: showColorScale ? 172 : 36,
+                      t: 118,
+                      b: 72,
+                      pad: 4,
+                    },
+              }}
+              style={{
+                minHeight: 0,
+                width: '100%',
+                height: '100%',
+                maxWidth: '100%',
+              }}
+              config={
+                compact
+                  ? { displayModeBar: false, responsive: true, displaylogo: false }
+                  : { displayModeBar: true, responsive: true, displaylogo: false }
+              }
+              useResizeHandler
+              onInitialized={handleInitialized}
+              onPurge={handlePurge}
+              onUpdate={() => scheduleParcoordsChrome()}
+              onRestyle={() => {
+                requestAnimationFrame(() => syncConstraintsFromGraph());
+              }}
+            />
+          </div>
+          {bestLcoeBelowChart && bestLcoeCaption ? (
+            <div className="dataVis-parcoordsBestLcoeFoot">{bestLcoeCaption}</div>
+          ) : null}
+        </>
       )}
     </div>
   );

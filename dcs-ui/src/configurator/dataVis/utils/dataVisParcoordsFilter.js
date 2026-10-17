@@ -37,7 +37,7 @@ export function dimensionMentionedInEvent(eventData, index) {
 }
 
 /** Read active axis brushes from the live Plotly figure (most reliable for parcoords). */
-export function constraintsFromParcoordsFigure(figure) {
+export function constraintsFromParcoordsFigure(figure, dimensionColumns) {
   const data = figure?.data;
   if (!Array.isArray(data)) return {};
 
@@ -46,13 +46,42 @@ export function constraintsFromParcoordsFigure(figure) {
   if (!Array.isArray(dimensions)) return {};
 
   const constraints = {};
-  dimensions.forEach((dim) => {
-    const label = dim?.label;
-    if (!label) return;
+  dimensions.forEach((dim, index) => {
+    const col = dimensionColumns?.[index];
+    if (!col) return;
     const band = bandFromConstraintrange(dim.constraintrange);
-    if (band) constraints[label] = band;
+    if (band) constraints[col] = band;
   });
   return constraints;
+}
+
+/** Row indices in a parallel payload that satisfy axis brushes (for lowest-LCOE highlight). */
+export function eligibleParallelRowIndices(payload, constraintsByColumn) {
+  const rowIds = payload?.row_ids || [];
+  const n = rowIds.length || payload?.values?.[payload?.dimensions?.[0]]?.length || 0;
+  if (!n) return [];
+
+  const entries = Object.entries(constraintsByColumn || {}).filter(
+    ([, band]) => band && (band.min != null || band.max != null),
+  );
+  if (!entries.length) return [...Array(n).keys()];
+
+  const indices = [];
+  for (let i = 0; i < n; i += 1) {
+    let ok = true;
+    for (const [col, band] of entries) {
+      const lo = band.min ?? band.max;
+      const hi = band.max ?? band.min;
+      if (lo == null || hi == null) continue;
+      const v = Number(payload.values?.[col]?.[i]);
+      if (!Number.isFinite(v) || v < Math.min(lo, hi) || v > Math.max(lo, hi)) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) indices.push(i);
+  }
+  return indices;
 }
 
 export function parseParcoordsRelayout(eventData, dimensionColumns) {

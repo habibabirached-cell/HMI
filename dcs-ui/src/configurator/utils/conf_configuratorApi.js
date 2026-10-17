@@ -6,8 +6,9 @@ import { API_BASE_URL } from '../../apiConfig';
 import { generateConfiguratorResult as generateLocal } from './conf_recordProvider';
 
 function normalizePayload(inputs) {
-  return {
-    ...inputs,
+  const { dataVisFilters, ...rest } = inputs || {};
+  const payload = {
+    ...rest,
     minCfePercent: inputs.minCfePercent ?? inputs.cfeTarget ?? 0,
     maxCfePercent: inputs.maxCfePercent ?? 100,
     minSolarMW: inputs.minSolarMW ?? 0,
@@ -16,6 +17,10 @@ function normalizePayload(inputs) {
     maxWindMW: inputs.maxWindMW ?? 3000,
     gridConnectionMode: inputs.gridConnectionMode ?? 'grid-connected',
   };
+  if (Array.isArray(dataVisFilters)) {
+    payload.dataVisFilters = dataVisFilters;
+  }
+  return payload;
 }
 
 /** Prefer same-origin /api when the UI dev server proxies to the backend (e.g. :3003 → :5000). */

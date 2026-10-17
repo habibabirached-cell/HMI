@@ -5,6 +5,8 @@ import {
   createDefaultTechnologyCapex,
   ideumConfiguratorTechnologyIds,
 } from '../configurator/utils/conf_technologyCapex';
+import { GRID_CONNECTION_MODES } from './conf_constants';
+import { DEFAULT_WACO_LOAD_TIER } from '../configurator/utils/conf_wacoLoadTier';
 
 const DEFAULT_TECH_PREFS = createDefaultTechnologyPreferences();
 
@@ -187,3 +189,19 @@ export const CONFIGURATOR_DEFAULT_INPUTS = {
   technologyCapex: createDefaultTechnologyCapex(),
   technologies: ideumConfiguratorTechnologyIds(),
 };
+
+/** Ideum corridor rails at full span — no narrowing until the user moves a band. */
+export const IDEUM_OPEN_CORRIDOR_INPUTS = {
+  gridConnectionMode: GRID_CONNECTION_MODES.ISLANDED,
+  reliabilityTarget: 97,
+  minCfePercent: 0,
+  maxCfePercent: 100,
+};
+
+export function buildIdeumConfiguratorInputs(loadMW = DEFAULT_WACO_LOAD_TIER) {
+  return {
+    ...CONFIGURATOR_DEFAULT_INPUTS,
+    ...IDEUM_OPEN_CORRIDOR_INPUTS,
+    loadMW,
+  };
+}

@@ -8,8 +8,11 @@ import {
   isLocalClusterDev,
   resolveMaingearPeerPostBase,
 } from '../../utils/clusterPeer';
-import { readPersistedWacoLoadTier } from '../dataVis/api/dataVisLoadMw';
-import { sanitizeConfiguratorInputsForDataVis } from '../dataVis/utils/dataVisConfiguratorSync';
+import { effectiveDataVisLoadMwTier, inputsWithEffectiveWacoLoadTier } from '../dataVis/api/dataVisLoadMw';
+import {
+  configuratorInputsToDataVisRanges,
+  sanitizeConfiguratorInputsForDataVis,
+} from '../dataVis/utils/dataVisConfiguratorSync';
 
 export { isLocalClusterDev };
 
@@ -140,17 +143,16 @@ export function connectConfiguratorClusterUpdates(onSession) {
 }
 
 function exploreSyncBody(inputs, uiMode) {
-  const clean = sanitizeConfiguratorInputsForDataVis(inputs);
-  const sessionTier = readPersistedWacoLoadTier();
-  const inputsForSync =
-    clean?.loadMW != null || sessionTier == null
-      ? clean
-      : { ...clean, loadMW: sessionTier };
+  const inputsForSync = sanitizeConfiguratorInputsForDataVis(
+    inputsWithEffectiveWacoLoadTier(inputs),
+  );
   return {
     inputs: inputsForSync,
+    ranges: configuratorInputsToDataVisRanges(inputsForSync),
     uiMode,
     source: 'ideum',
     at: Date.now(),
+    wacoLoadMW: effectiveDataVisLoadMwTier(),
   };
 }
 

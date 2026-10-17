@@ -1,5 +1,10 @@
 import React from 'react';
-import { formatMW, formatPercent, formatGridMode } from '../utils/conf_formatters';
+import {
+  formatMW,
+  formatPercent,
+  formatCarbonFreePercent,
+  formatGridMode,
+} from '../utils/conf_formatters';
 
 export default function ConfDesignTargets({ result, inputs }) {
   if (!result?.targets || !result?.kpis) return null;
@@ -13,10 +18,10 @@ export default function ConfDesignTargets({ result, inputs }) {
       met: targets.relMet,
     },
     {
-      label: 'Carbon-Free Energy',
+      label: 'Percent Carbon Free Power',
       value: minCfe > 0
-        ? `${formatPercent(kpis.achievedCfe, 0)} achieved (≥ ${formatPercent(minCfe, 0)} minimum)`
-        : `${formatPercent(kpis.achievedCfe, 0)} achieved (no minimum)`,
+        ? `${formatCarbonFreePercent(kpis.achievedCfe, 0)} achieved (≥ ${formatCarbonFreePercent(minCfe, 0)} minimum)`
+        : `${formatCarbonFreePercent(kpis.achievedCfe, 0)} achieved (no minimum)`,
       met: targets.cfeMet,
     },
     {

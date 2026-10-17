@@ -1,3 +1,30 @@
+import { normalizeWacoLoadTier } from './conf_wacoLoadTier';
+
+/** Installed CAPEX unit labels (Ideum touch hub). */
+export const IDEUM_CAPEX_UNIT_KW = '($/kW)';
+export const IDEUM_CAPEX_UNIT_KWH = '($/kWh)';
+
+/** 200 MW tier: show stored $/kW ÷ 0.2 (same basis as 1 GW study). */
+export const IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR = 0.2;
+
+export function ideumCapexDisplayValue(storedValue, loadMW) {
+  const n = Number(storedValue);
+  if (!Number.isFinite(n)) return storedValue;
+  if (normalizeWacoLoadTier(loadMW) === 200) {
+    return n / IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR;
+  }
+  return n;
+}
+
+export function ideumCapexStoredValue(displayValue, loadMW) {
+  const n = Number(displayValue);
+  if (!Number.isFinite(n)) return displayValue;
+  if (normalizeWacoLoadTier(loadMW) === 200) {
+    return n * IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR;
+  }
+  return n;
+}
+
 /** Unit CAPEX defaults for Ideum configurator hub (not yet wired to optimizer). */
 
 export const IDEUM_CAPEX_TECH_IDS = [
@@ -143,6 +170,14 @@ export function buildCapexWheelOptions({ min, max, step }) {
     out.push(Math.round(v * 1000) / 1000);
   }
   return out;
+}
+
+export function ideumCapexWheelOptionsForLoad(wheelPreset, loadMW) {
+  const base = buildCapexWheelOptions(wheelPreset);
+  if (normalizeWacoLoadTier(loadMW) === 200) {
+    return base.map((v) => v / IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR);
+  }
+  return base;
 }
 
 export function nearestCapexWheelOption(value, options) {

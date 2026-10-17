@@ -103,7 +103,7 @@ export default function ConfIdeumInputPanel({
   const maxSolarMW = inputs.maxSolarMW ?? solarSpan?.max ?? 4000;
   const minWindMW = inputs.minWindMW ?? windSpan?.min ?? 0;
   const maxWindMW = inputs.maxWindMW ?? windSpan?.max ?? 3000;
-  const reliabilityTarget = clampReliabilityTarget(inputs.reliabilityTarget ?? 99.99);
+  const reliabilityTarget = clampReliabilityTarget(inputs.reliabilityTarget ?? 97);
   const update = (patch) => onChange({ ...inputs, ...patch });
 
   useEffect(() => {
@@ -174,7 +174,7 @@ export default function ConfIdeumInputPanel({
     left: (
       <IdeumCorridorRangeRail
         side="left"
-        label="Availability"
+        labelLines={['Data', 'Center', 'Uptime']}
         min={97}
         max={100}
         step={0.0001}
@@ -185,13 +185,13 @@ export default function ConfIdeumInputPanel({
         scaleMode="load-compliance-snaps"
         formatValue={formatLoadComplianceDisplay}
         onChange={(lower) => update({ reliabilityTarget: clampReliabilityTarget(lower) })}
-        ariaLabel="Minimum availability target"
+        ariaLabel="Data center uptime minimum target"
       />
     ),
     right: (
       <IdeumCorridorRangeRail
         side="right"
-        label="Carbon Free"
+        labelLines={['Percent', 'Carbon', 'Free', 'Power']}
         min={0}
         max={100}
         step={1}
@@ -202,7 +202,7 @@ export default function ConfIdeumInputPanel({
           maxCfePercent: upper,
           cfeTarget: lower,
         })}
-        ariaLabel="Carbon-free energy acceptable band"
+        ariaLabel="Percent carbon free power acceptable band"
       />
     ),
   };
@@ -214,6 +214,7 @@ export default function ConfIdeumInputPanel({
           <ConfIdeumTechnologyHub
             technologyCapex={inputs.technologyCapex || createDefaultTechnologyCapex()}
             onCapexChange={handleCapexChange}
+            loadMW={inputs.loadMW ?? DEFAULT_WACO_LOAD_TIER}
             loadEditor={loadEditor}
             gridEditor={gridEditor}
             corridor={corridor}

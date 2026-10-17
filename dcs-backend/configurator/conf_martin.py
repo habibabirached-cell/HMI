@@ -7,6 +7,8 @@ from typing import Any
 import pandas as pd
 
 from configurator.conf_consolidated import TECH_SPECS
+from configurator.dataVis.dataset_mode import get_datavis_dataframe
+from configurator.dataVis.filters import apply_filters
 from configurator.dataVis.loader import load_waco_dataframe
 from configurator.dataVis.paths import DEFAULT_WACO_LOAD_MW
 
@@ -196,7 +198,10 @@ def _filter_waco_dataframe(
     return df.loc[mask].copy()
 
 
-def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any]:
+def generate_martin_configurator_result(
+    inputs: dict[str, Any],
+    datavis_filters: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     min_cfe_percent = float(inputs.get("minCfePercent") if inputs.get("minCfePercent") is not None else inputs.get("cfeTarget") or 0)
     max_cfe_percent = float(inputs.get("maxCfePercent") if inputs.get("maxCfePercent") is not None else 100)
     reliability_target = float(inputs.get("reliabilityTarget") or 99.99)
@@ -220,7 +225,8 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
     max_cfe_fraction = min(1.0, max(0.0, max_cfe_percent / 100.0))
 
     try:
-        df = load_waco_dataframe(waco_tier)
+        load_waco_dataframe(waco_tier)
+        df = get_datavis_dataframe()
     except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
@@ -228,16 +234,19 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
             "details": [str(exc)],
         }
 
-    filtered = _filter_waco_dataframe(
-        df,
-        min_cfe_fraction,
-        max_cfe_fraction,
-        reliability_target,
-        min_solar_mw,
-        max_solar_mw,
-        min_wind_mw,
-        max_wind_mw,
-    )
+    if datavis_filters:
+        filtered = apply_filters(df, datavis_filters)
+    else:
+        filtered = _filter_waco_dataframe(
+            df,
+            min_cfe_fraction,
+            max_cfe_fraction,
+            reliability_target,
+            min_solar_mw,
+            max_solar_mw,
+            min_wind_mw,
+            max_wind_mw,
+        )
     if filtered.empty:
         return {
             "ok": False,
@@ -253,6 +262,10 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
     filtered = filtered.sort_values(COL_LCOE, ascending=True, na_position="last")
     winner = filtered.iloc[0]
     row_index = int(winner.name) if winner.name is not None else 0
+    if "dataVis_row_id" in winner.index and pd.notna(winner["dataVis_row_id"]):
+        martin_data_vis_row_id = int(winner["dataVis_row_id"])
+    else:
+        martin_data_vis_row_id = row_index
 
     rows, total_energy, _cfe_energy, portfolio_lcoe, carbon = _build_supply_mix_from_row(winner)
     achieved_cfe_fraction = _num(winner, COL_CFE)
@@ -266,6 +279,7 @@ def generate_martin_configurator_result(inputs: dict[str, Any]) -> dict[str, Any
         "synthetic": False,
         "source": "martin-waco-doe",
         "martinRowIndex": row_index,
+        "martinDataVisRowId": martin_data_vis_row_id,
         "inputs": {**inputs, "minCfePercent": min_cfe_percent, "reliabilityTarget": reliability_target, "loadMW": load_mw},
         "location": {"state": "Texas", "study": "Martin Waco 1 GW DOE"},
         "gridConnectionMode": inputs.get("gridConnectionMode") or "grid-connected",

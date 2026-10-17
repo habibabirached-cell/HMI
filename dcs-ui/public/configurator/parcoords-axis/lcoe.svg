@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="LCOE">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f0e6"/>
+      <stop offset="100%" stop-color="#e8dcc8"/>
+    </linearGradient>
+    <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe082"/>
+      <stop offset="100%" stop-color="#c9a227"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg)"/>
+  <rect x="24" y="72" width="80" height="40" rx="4" fill="#fff" stroke="#c9b896"/>
+  <polyline points="32,96 48,84 64,92 80,76 96,88" fill="none" stroke="#00695c" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="44" cy="44" r="22" fill="url(#coin)" stroke="#a67c00" stroke-width="2"/>
+  <text x="44" y="50" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#5d4037">$</text>
+  <circle cx="84" cy="48" r="16" fill="url(#coin)" stroke="#a67c00" stroke-width="1.5" opacity="0.9"/>
+  <text x="84" y="53" text-anchor="middle" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#5d4037">$</text>
+</svg>

@@ -183,6 +183,8 @@ export function connectClusterWebSocket(onMessage) {
   let ws;
   let closed = false;
   let retryTimer = null;
+  let retryMs = 3000;
+  let loggedConnectFailure = false;
 
   const connect = () => {
     if (closed) return;
@@ -190,10 +192,19 @@ export function connectClusterWebSocket(onMessage) {
     try {
       ws = new WebSocket(url);
     } catch (e) {
-      console.warn('Cluster WebSocket failed to open', e);
-      retryTimer = setTimeout(connect, 3000);
+      if (!loggedConnectFailure) {
+        console.warn('Cluster WebSocket failed to open (will retry quietly)', e);
+        loggedConnectFailure = true;
+      }
+      retryTimer = setTimeout(connect, retryMs);
+      retryMs = Math.min(retryMs * 1.5, 30000);
       return;
     }
+
+    ws.onopen = () => {
+      retryMs = 3000;
+      loggedConnectFailure = false;
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -204,13 +215,14 @@ export function connectClusterWebSocket(onMessage) {
       }
     };
 
-    ws.onerror = (e) => {
-      console.warn('Cluster WebSocket error', e);
+    ws.onerror = () => {
+      /* onclose handles retry; avoid spamming console on every failed attempt */
     };
 
     ws.onclose = () => {
       if (!closed) {
-        retryTimer = setTimeout(connect, 3000);
+        retryTimer = setTimeout(connect, retryMs);
+        retryMs = Math.min(retryMs * 1.5, 30000);
       }
     };
   };

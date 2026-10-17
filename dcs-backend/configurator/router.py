@@ -25,7 +25,7 @@ from configurator.conf_schemas import (
 )
 from configurator.dataVis.dataset_mode import reset_datavis_mode
 from configurator.dataVis.loader import get_active_waco_load_mw, load_waco_dataframe
-from configurator.dataVis.paths import waco_workbook_path
+from configurator.dataVis.paths import waco_dataset_source
 from configurator.dataVis.router import router as datavis_router
 
 router = APIRouter(prefix="/api/configurator", tags=["configurator"])
@@ -103,10 +103,16 @@ async def configurator_health():
 
 
 @router.post("/generate", response_model=ConfiguratorGenerateResponse)
-async def generate_configuration(body: ConfiguratorInputs, pipeline: str = "legacy"):
-    inputs = body.model_dump()
+async def generate_configuration(body: dict, pipeline: str = "legacy"):
+    datavis_filters = body.get("dataVisFilters") if isinstance(body.get("dataVisFilters"), list) else None
+    payload = {k: v for k, v in body.items() if k != "dataVisFilters"}
+    try:
+        inputs_model = ConfiguratorInputs(**payload)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    inputs = inputs_model.model_dump()
     if (pipeline or "legacy").strip().lower() == "martin":
-        result = generate_martin_configurator_result(inputs)
+        result = generate_martin_configurator_result(inputs, datavis_filters=datavis_filters)
     else:
         result = generate_configurator_result(inputs)
     payload = dict(result)
@@ -128,11 +134,13 @@ def _preload_waco_workbook(load_mw: int | None = None) -> dict:
         raise ValueError("loadMW must be 200 or 1000")
     df = load_waco_dataframe(tier, force_reload=True)
     reset_datavis_mode()
+    source = waco_dataset_source(tier)
     return {
         "ok": True,
         "load_mw": tier,
-        "workbook": waco_workbook_path(tier).name,
-        "sheet": "data",
+        "workbook": source.get("file"),
+        "dataset_source": source,
+        "sheet": source.get("sheet", "data"),
         "row_count": int(len(df)),
     }
 

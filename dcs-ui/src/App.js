@@ -265,6 +265,8 @@ import {
 import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
+import { applyWacoLoadTierHandoff } from './configurator/dataVis/api/dataVisLoadMw';
+import { applyExploreSyncHandoff } from './configurator/dataVis/utils/dataVisConfiguratorSync';
 import {
   closeConfiguratorWallOnMaingear,
   isLocalClusterDev,
@@ -5321,6 +5323,8 @@ function App() {
     if (command === 'openDataExploration') {
       fireKioskFocusFast('showDcs');
       if (typeof window !== 'undefined') {
+        applyWacoLoadTierHandoff(payload);
+        applyExploreSyncHandoff(payload?.exploreSync);
         try {
           window.sessionStorage.setItem('dcs.configurator.pendingIdeumTab', 'data-exploration');
         } catch (_) {
@@ -5340,6 +5344,8 @@ function App() {
     if (command === 'openExploreData') {
       fireKioskFocusFast('showDcs');
       if (typeof window !== 'undefined') {
+        applyWacoLoadTierHandoff(payload);
+        applyExploreSyncHandoff(payload?.exploreSync);
         try {
           window.sessionStorage.setItem('dcs.configurator.pendingIdeumTab', 'explore-data');
         } catch (_) {

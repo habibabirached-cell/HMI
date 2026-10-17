@@ -42,6 +42,35 @@ export function effectiveDataVisLoadMwTier() {
   return readPersistedWacoLoadTier() ?? DEFAULT_WACO_LOAD_TIER;
 }
 
+/** Ideum → Maingear remote-command payload (separate browser session on wall PC). */
+export function wacoLoadTierHandoffPayload() {
+  return { wacoLoadMW: effectiveDataVisLoadMwTier() };
+}
+
+/** Apply tier from cluster remote-command payload on Maingear UI. */
+export function applyWacoLoadTierHandoff(payload) {
+  const tier = normalizeWacoLoadTier(payload?.wacoLoadMW ?? payload?.loadMW);
+  if (tier == null) return effectiveDataVisLoadMwTier();
+  const prev = readPersistedWacoLoadTier();
+  if (prev === tier) return tier;
+  persistWacoLoadTierForDataVis(tier);
+  notifyWacoLoadTierChanged(tier);
+  return tier;
+}
+
+export function inputsWithEffectiveWacoLoadTier(inputs) {
+  if (!inputs || typeof inputs !== 'object') return inputs;
+  return { ...inputs, loadMW: effectiveDataVisLoadMwTier() };
+}
+
+/** Remote command payload: Waco tier + corridor filters for Maingear UI. */
+export function buildExploreRemoteCommandPayload(exploreSyncPayload) {
+  return {
+    wacoLoadMW: effectiveDataVisLoadMwTier(),
+    exploreSync: exploreSyncPayload,
+  };
+}
+
 /** Persist tier and reload — same cold-start path as opening the app with that default. */
 export function reloadPageWithWacoLoadTier(loadMW) {
   if (typeof window === 'undefined') return;

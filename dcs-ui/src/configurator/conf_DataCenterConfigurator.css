@@ -925,6 +925,12 @@
   container-type: inline-size;
 }
 
+.conf-ideum-corridor-label-wrap:has(.conf-ideum-corridor-label--word-stack) {
+  overflow: visible;
+  min-height: 0;
+  padding-bottom: 4px;
+}
+
 .conf-ideum-title-3d {
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -967,12 +973,27 @@
   display: block;
 }
 
+.conf-ideum-corridor-label--word-stack {
+  font-size: clamp(14px, 8.5cqi, 22px);
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  gap: 0.04em;
+}
+
+.conf-ideum-corridor-rail--range .conf-ideum-corridor-label--word-stack {
+  font-size: clamp(15px, 9cqi, 24px);
+}
+
 .conf-ideum-corridor-rail--left.conf-ideum-corridor-rail--range .conf-ideum-corridor-label-wrap {
   min-height: 52px;
   padding: 0 0 4px;
 }
 
-.conf-ideum-corridor-rail--left.conf-ideum-corridor-rail--range .conf-ideum-corridor-label--stacked {
+.conf-ideum-corridor-rail--left.conf-ideum-corridor-rail--range .conf-ideum-corridor-label-wrap:has(.conf-ideum-corridor-label--word-stack) {
+  min-height: 0;
+}
+
+.conf-ideum-corridor-rail--left.conf-ideum-corridor-rail--range .conf-ideum-corridor-label--stacked:not(.conf-ideum-corridor-label--word-stack) {
   width: 100%;
   font-size: clamp(28px, 19cqi, 44px);
   line-height: 0.98;

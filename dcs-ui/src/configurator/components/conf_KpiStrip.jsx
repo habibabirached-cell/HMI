@@ -2,8 +2,10 @@ import React from 'react';
 import {
   formatMW,
   formatPercent,
+  formatCarbonFreePercent,
   formatCurrencyPerMWh,
   formatProjectCapexUsdM,
+  normalizeCfePercentValue,
 } from '../utils/conf_formatters';
 
 export default function ConfKpiStrip({ result }) {
@@ -11,7 +13,9 @@ export default function ConfKpiStrip({ result }) {
   const { kpis } = result;
   const minCfe = kpis.minCfePercent ?? kpis.cfeTarget ?? 0;
   const relMet = kpis.achievedReliability >= kpis.reliabilityTarget - 0.0001;
-  const cfeMet = minCfe <= 0 || kpis.achievedCfe >= minCfe - 0.1;
+  const achievedCfePct = normalizeCfePercentValue(kpis.achievedCfe);
+  const minCfePct = normalizeCfePercentValue(minCfe);
+  const cfeMet = minCfePct <= 0 || achievedCfePct >= minCfePct - 0.1;
   const hasCapex = Number.isFinite(Number(kpis.projectCapexUsdM)) && Number(kpis.projectCapexUsdM) > 0;
 
   return (
@@ -44,10 +48,10 @@ export default function ConfKpiStrip({ result }) {
           </div>
         </div>
         <div className={`conf-kpi-card ${cfeMet ? 'conf-kpi--met' : 'conf-kpi--miss'}`}>
-          <span className="conf-kpi-card__label">Carbon-Free Energy</span>
-          <strong className="conf-kpi-card__value">{formatPercent(kpis.achievedCfe, 0)}</strong>
+          <span className="conf-kpi-card__label">Percent Carbon Free Power</span>
+          <strong className="conf-kpi-card__value">{formatCarbonFreePercent(kpis.achievedCfe, 0)}</strong>
           <div className="conf-kpi-card__footnote">
-            <small>{minCfe > 0 ? `Minimum: ${formatPercent(minCfe, 0)}` : 'No minimum set'}</small>
+            <small>{minCfePct > 0 ? `Minimum: ${formatCarbonFreePercent(minCfe, 0)}` : 'No minimum set'}</small>
             <span className="conf-kpi-card__status">{cfeMet ? '✓ Meets minimum' : '⚠ Below minimum'}</span>
           </div>
         </div>

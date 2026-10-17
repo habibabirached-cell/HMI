@@ -191,9 +191,13 @@ export default function IdeumCorridorRangeRail({
     >
       <div className="conf-ideum-corridor-label-wrap" aria-hidden="true">
         {labelLines?.length ? (
-          <span className="conf-ideum-corridor-label conf-ideum-corridor-label--stacked conf-ideum-title-3d">
-            {labelLines.map((line) => (
-              <span key={line} className="conf-ideum-corridor-label__line">{line}</span>
+          <span
+            className={`conf-ideum-corridor-label conf-ideum-corridor-label--stacked conf-ideum-title-3d${
+              labelLines.length > 2 ? ' conf-ideum-corridor-label--word-stack' : ''
+            }`}
+          >
+            {labelLines.map((line, lineIndex) => (
+              <span key={`${line}-${lineIndex}`} className="conf-ideum-corridor-label__line">{line}</span>
             ))}
           </span>
         ) : (

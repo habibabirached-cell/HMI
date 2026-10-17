@@ -10,6 +10,8 @@ import { fetchMachineRole } from '../../../utils/clusterPeer';
 export const DATAVIS_CONFIGURATOR_SYNC_CHANNEL = 'dcs-dataVis-configurator-filters-v1';
 export const DATAVIS_CONFIGURATOR_RANGES_STORAGE_KEY = 'dcs.dataVis.lastConfiguratorRanges';
 export const DATAVIS_CONFIGURATOR_INPUTS_STORAGE_KEY = 'dcs.dataVis.lastConfiguratorInputs';
+/** Dev new-tab / Maingear remote — localStorage (sessionStorage is per-tab). */
+export const EXPLORE_SYNC_HANDOFF_STORAGE_KEY = 'dcs.configurator.exploreSyncHandoff';
 
 export const CONFIGURATOR_SYNC_COLUMNS = {
   cfe: 'Carbon Free Energy (%)',
@@ -17,6 +19,43 @@ export const CONFIGURATOR_SYNC_COLUMNS = {
   solar: 'Solar AC Nameplate (MWac)',
   wind: 'Wind Nameplate (MWac)',
 };
+
+/** Merge corridor + parallel brushes into Martin Waco filter inputs (lowest LCOE case). */
+export function martinInputsFromExploreFilters(baseInputs, ranges, parcoordsRanges) {
+  if (!baseInputs || typeof baseInputs !== 'object') return baseInputs;
+
+  const merged = { ...baseInputs };
+  const bandFor = (col) => parcoordsRanges?.[col] ?? ranges?.[col];
+
+  const cfe = bandFor(CONFIGURATOR_SYNC_COLUMNS.cfe);
+  if (cfe && (cfe.min != null || cfe.max != null)) {
+    const lo = Math.min(cfe.min ?? cfe.max, cfe.max ?? cfe.min);
+    const hi = Math.max(cfe.min ?? cfe.max, cfe.max ?? cfe.min);
+    const toPct = lo <= 1.0001 && hi <= 1.0001 ? 100 : 1;
+    merged.minCfePercent = lo * toPct;
+    merged.maxCfePercent = hi * toPct;
+    merged.cfeTarget = merged.minCfePercent;
+  }
+
+  const load = bandFor(CONFIGURATOR_SYNC_COLUMNS.loadCompliance);
+  if (load && load.min != null) {
+    merged.reliabilityTarget = Math.max(load.min, load.max ?? load.min);
+  }
+
+  const solar = bandFor(CONFIGURATOR_SYNC_COLUMNS.solar);
+  if (solar && (solar.min != null || solar.max != null)) {
+    merged.minSolarMW = Math.min(solar.min ?? solar.max, solar.max ?? solar.min);
+    merged.maxSolarMW = Math.max(solar.min ?? solar.max, solar.max ?? solar.min);
+  }
+
+  const wind = bandFor(CONFIGURATOR_SYNC_COLUMNS.wind);
+  if (wind && (wind.min != null || wind.max != null)) {
+    merged.minWindMW = Math.min(wind.min ?? wind.max, wind.max ?? wind.min);
+    merged.maxWindMW = Math.max(wind.min ?? wind.max, wind.max ?? wind.min);
+  }
+
+  return merged;
+}
 
 /** Map Ideum configurator inputs → dataVis histogram range map (Waco column keys). */
 export function configuratorInputsToDataVisRanges(inputs) {
@@ -153,7 +192,74 @@ export function publishConfiguratorExploreSync(inputs, uiMode) {
     });
     channel.close();
   }
-  return { ranges, inputs, uiMode };
+  return { ranges, inputs: cleanInputs, uiMode };
+}
+
+export function stashExploreSyncHandoffForNewTab(inputs, uiMode) {
+  const payload = publishConfiguratorExploreSync(inputs, uiMode);
+  if (typeof window === 'undefined') return payload;
+  try {
+    window.localStorage.setItem(
+      EXPLORE_SYNC_HANDOFF_STORAGE_KEY,
+      JSON.stringify({ ...payload, at: Date.now() }),
+    );
+  } catch {
+    /* ignore */
+  }
+  return payload;
+}
+
+export function consumeExploreSyncHandoff() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(EXPLORE_SYNC_HANDOFF_STORAGE_KEY);
+    if (!raw) return null;
+    window.localStorage.removeItem(EXPLORE_SYNC_HANDOFF_STORAGE_KEY);
+    const parsed = JSON.parse(raw);
+    if (parsed?.inputs) {
+      parsed.inputs = sanitizeConfiguratorInputsForDataVis(parsed.inputs);
+    }
+    applyExploreSyncHandoff(parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** First paint on Explore tab (new browser tab): localStorage handoff → session + React state. */
+export function readInitialExploreSyncState(isExploreWall) {
+  if (typeof window === 'undefined') {
+    return { ranges: {}, ideumWallInputs: null, wallUiMode: null };
+  }
+  const handoff = consumeExploreSyncHandoff();
+  const ranges = handoff?.ranges || readPersistedConfiguratorRanges() || {};
+  if (!isExploreWall) {
+    return { ranges, ideumWallInputs: null, wallUiMode: null };
+  }
+  const stored = readPersistedConfiguratorInputs();
+  return {
+    ranges,
+    ideumWallInputs: stored?.inputs ?? handoff?.inputs ?? null,
+    wallUiMode: stored?.uiMode ?? handoff?.uiMode ?? null,
+  };
+}
+
+/** Apply corridor sync on this browser (Maingear after remote command, or new tab). */
+export function applyExploreSyncHandoff(handoff) {
+  if (!handoff) return;
+  const { ranges, inputs, uiMode } = handoff;
+  if (ranges) persistConfiguratorRangesForDataVis(ranges);
+  if (inputs) persistConfiguratorInputsForDataVis(inputs, uiMode);
+  if (typeof BroadcastChannel === 'undefined') return;
+  const channel = new BroadcastChannel(DATAVIS_CONFIGURATOR_SYNC_CHANNEL);
+  channel.postMessage({
+    type: 'configurator_explore_sync',
+    ranges,
+    inputs,
+    uiMode,
+    at: Date.now(),
+  });
+  channel.close();
 }
 
 /** @deprecated use publishConfiguratorExploreSync */

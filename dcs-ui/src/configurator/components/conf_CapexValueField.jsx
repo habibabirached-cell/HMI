@@ -153,6 +153,7 @@ export default function ConfCapexValueField({
   unit,
   value,
   wheelPreset,
+  wheelOptions = null,
   formatDisplay = formatCapexDisplay,
   onCommit,
 }) {
@@ -161,8 +162,10 @@ export default function ConfCapexValueField({
   const [focused, setFocused] = useState(false);
 
   const options = useMemo(
-    () => buildCapexWheelOptions(wheelPreset),
-    [wheelPreset],
+    () => (Array.isArray(wheelOptions) && wheelOptions.length
+      ? wheelOptions
+      : buildCapexWheelOptions(wheelPreset)),
+    [wheelOptions, wheelPreset],
   );
 
   useEffect(() => {

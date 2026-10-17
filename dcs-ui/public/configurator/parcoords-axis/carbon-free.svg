@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Carbon-free energy">
+  <defs>
+    <linearGradient id="cfe-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b3e5fc"/>
+      <stop offset="100%" stop-color="#e8f5e9"/>
+    </linearGradient>
+    <linearGradient id="cfe-leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#66bb6a"/>
+      <stop offset="100%" stop-color="#2e7d32"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#cfe-sky)"/>
+  <circle cx="88" cy="36" r="16" fill="#fff9c4" opacity="0.9"/>
+  <path d="M64 108 C40 88 36 64 48 48 C56 38 72 40 80 52 C92 70 88 92 64 108 Z" fill="url(#cfe-leaf)"/>
+  <path d="M64 108 C64 80 64 58 64 48" fill="none" stroke="#1b5e20" stroke-width="2" opacity="0.5"/>
+  <path d="M64 72 C52 68 44 58 42 48" fill="none" stroke="#1b5e20" stroke-width="1.5" opacity="0.4"/>
+  <path d="M64 82 C76 78 84 66 86 54" fill="none" stroke="#1b5e20" stroke-width="1.5" opacity="0.4"/>
+  <text x="64" y="118" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#2e7d32">0% CO2</text>
+</svg>

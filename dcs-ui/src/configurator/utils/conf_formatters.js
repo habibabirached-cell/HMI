@@ -21,6 +21,21 @@ export function formatPercent(value, decimals = 1) {
   return `${n.toFixed(decimals)}%`;
 }
 
+/** Waco CFE column is 0–1; KPIs may already be 0–100. */
+export function normalizeCfePercentValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return NaN;
+  if (n >= 0 && n <= 1.0001) return n * 100;
+  return n;
+}
+
+/** Carbon-free energy — accept Waco fraction (0–1) or percent (0–100). */
+export function formatCarbonFreePercent(value, decimals = 0) {
+  const pct = normalizeCfePercentValue(value);
+  if (!Number.isFinite(pct)) return '—';
+  return formatPercent(pct, decimals);
+}
+
 export function formatCurrencyPerMWh(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '—';

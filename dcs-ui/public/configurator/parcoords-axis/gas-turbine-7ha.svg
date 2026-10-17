@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="7HA gas turbine">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dfe6ee"/>
+      <stop offset="100%" stop-color="#b8c4d4"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f7fa"/>
+      <stop offset="50%" stop-color="#9aa8b8"/>
+      <stop offset="100%" stop-color="#5c6a78"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg)"/>
+  <rect x="8" y="88" width="112" height="16" rx="2" fill="#6b7785"/>
+  <ellipse cx="64" cy="88" rx="48" ry="8" fill="#4a5562"/>
+  <rect x="20" y="56" width="72" height="32" rx="6" fill="url(#metal)"/>
+  <circle cx="92" cy="72" r="18" fill="url(#metal)" stroke="#5c6a78" stroke-width="2"/>
+  <circle cx="92" cy="72" r="8" fill="#3d4650"/>
+  <path d="M92 54 L96 62 L88 62 Z" fill="#c0392b" opacity="0.85"/>
+</svg>

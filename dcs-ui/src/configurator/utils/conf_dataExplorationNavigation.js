@@ -15,6 +15,15 @@ import {
 } from '../../utils/clusterPeer';
 import { isLocalClusterDev } from './conf_configuratorCluster';
 import { IDEUM_DATA_EXPLORATION_TAB_ID } from '../components/conf_IdeumPageTabs';
+import {
+  buildExploreRemoteCommandPayload,
+  inputsWithEffectiveWacoLoadTier,
+  WACO_LOAD_MW_URL_PARAM,
+} from '../dataVis/api/dataVisLoadMw';
+import {
+  publishConfiguratorExploreSync,
+  stashExploreSyncHandoffForNewTab,
+} from '../dataVis/utils/dataVisConfiguratorSync';
 
 export { IDEUM_DATA_EXPLORATION_TAB_ID };
 export const IDEUM_EXPLORE_DATA_TAB_ID = 'explore-data';
@@ -50,33 +59,40 @@ export function consumePendingIdeumTab() {
   }
 }
 
-export function buildDataExplorationConfiguratorUrl(originPathname = '/') {
+function buildIdeumExploreUrl(originPathname, tabId, inputs, uiMode) {
+  const handoff = stashExploreSyncHandoffForNewTab(
+    inputsWithEffectiveWacoLoadTier(inputs),
+    uiMode,
+  );
   const url = new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
   url.pathname = originPathname;
   url.searchParams.set('view', DATA_EXPLORATION_CONFIGURATOR_VIEW);
-  url.searchParams.set(IDEUM_TAB_URL_PARAM, IDEUM_DATA_EXPLORATION_TAB_ID);
-  return url.toString();
-}
-
-export function buildExploreDataConfiguratorUrl(originPathname = '/') {
-  const url = new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
-  url.pathname = originPathname;
-  url.searchParams.set('view', DATA_EXPLORATION_CONFIGURATOR_VIEW);
-  url.searchParams.set(IDEUM_TAB_URL_PARAM, IDEUM_EXPLORE_DATA_TAB_ID);
+  url.searchParams.set(IDEUM_TAB_URL_PARAM, tabId);
+  url.searchParams.set(WACO_LOAD_MW_URL_PARAM, String(handoff?.inputs?.loadMW ?? inputs?.loadMW ?? 200));
   return url.toString();
 }
 
 /** Dev MacBook Pro: open Data Exploration in a new browser tab. */
-export function openDataExplorationDevNewTab() {
+export function openDataExplorationDevNewTab(inputs, uiMode) {
   if (typeof window === 'undefined') return;
-  const url = buildDataExplorationConfiguratorUrl(window.location.pathname);
+  const url = buildIdeumExploreUrl(
+    window.location.pathname,
+    IDEUM_DATA_EXPLORATION_TAB_ID,
+    inputs,
+    uiMode,
+  );
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 /** Dev MacBook: Explore Data 4-up (wall + parallel) in a new tab. */
-export function openExploreDataDevNewTab() {
+export function openExploreDataDevNewTab(inputs, uiMode) {
   if (typeof window === 'undefined') return;
-  const url = buildExploreDataConfiguratorUrl(window.location.pathname);
+  const url = buildIdeumExploreUrl(
+    window.location.pathname,
+    IDEUM_EXPLORE_DATA_TAB_ID,
+    inputs,
+    uiMode,
+  );
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
@@ -99,12 +115,28 @@ export function startIdeumDataExplorationMaingearTunnel(role) {
   });
 }
 
-export async function requestDataExplorationOnMaingear(role) {
-  await sendRemoteCommandToMaingear(role, DATA_EXPLORATION_REMOTE_COMMAND);
+export async function requestDataExplorationOnMaingear(role, inputs, uiMode) {
+  const exploreSync = publishConfiguratorExploreSync(
+    inputsWithEffectiveWacoLoadTier(inputs),
+    uiMode,
+  );
+  await sendRemoteCommandToMaingear(
+    role,
+    DATA_EXPLORATION_REMOTE_COMMAND,
+    buildExploreRemoteCommandPayload(exploreSync),
+  );
 }
 
-export async function requestExploreDataOnMaingear(role) {
-  await sendRemoteCommandToMaingear(role, EXPLORE_DATA_REMOTE_COMMAND);
+export async function requestExploreDataOnMaingear(role, inputs, uiMode) {
+  const exploreSync = publishConfiguratorExploreSync(
+    inputsWithEffectiveWacoLoadTier(inputs),
+    uiMode,
+  );
+  await sendRemoteCommandToMaingear(
+    role,
+    EXPLORE_DATA_REMOTE_COMMAND,
+    buildExploreRemoteCommandPayload(exploreSync),
+  );
 }
 
 export async function resolveExploreDataNavigationAction(explicitRole = null) {

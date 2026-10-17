@@ -12,6 +12,11 @@ import {
   formatGasPriceDisplay,
   HD_GT_CYCLE_MODE,
   IDEUM_CAPEX_DISABLED_TECH_IDS,
+  IDEUM_CAPEX_UNIT_KW,
+  IDEUM_CAPEX_UNIT_KWH,
+  ideumCapexDisplayValue,
+  ideumCapexStoredValue,
+  ideumCapexWheelOptionsForLoad,
   normalizeTechnologyCapex,
   setHeavyDutyCycleMode,
   setTechnologyCapexField,
@@ -131,20 +136,24 @@ const COMING_SOON_RIBBONS = {
   fuelCell: 'Coming Q2 2027',
   recipEngine: 'Coming soon',
 };
-function TechCapexPanel({ techId, capex, onCapexChange }) {
+function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
   const patch = useCallback((field, raw) => {
     onCapexChange(setTechnologyCapexField(capex, techId, field, raw));
   }, [capex, onCapexChange, techId]);
+
+  const commitKwCapex = useCallback((field, displayValue) => {
+    patch(field, ideumCapexStoredValue(displayValue, loadMW));
+  }, [loadMW, patch]);
 
   if (techId === 'solar') {
     return (
       <ConfCapexValueField
         id="conf-capex-solar"
         label="Installed CAPEX"
-        unit="/ kW AC"
-        value={capex.solar.capexPerKwAc}
-        wheelPreset={CAPEX_WHEEL_PRESETS.solarPerKwAc}
-        onCommit={(v) => patch('capexPerKwAc', v)}
+        unit={IDEUM_CAPEX_UNIT_KW}
+        value={ideumCapexDisplayValue(capex.solar.capexPerKwAc, loadMW)}
+        wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.solarPerKwAc, loadMW)}
+        onCommit={(v) => commitKwCapex('capexPerKwAc', v)}
       />
     );
   }
@@ -153,10 +162,10 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
       <ConfCapexValueField
         id="conf-capex-wind"
         label="Installed CAPEX"
-        unit="/ kW"
-        value={capex.wind.capexPerKw}
-        wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
-        onCommit={(v) => patch('capexPerKw', v)}
+        unit={IDEUM_CAPEX_UNIT_KW}
+        value={ideumCapexDisplayValue(capex.wind.capexPerKw, loadMW)}
+        wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
+        onCommit={(v) => commitKwCapex('capexPerKw', v)}
       />
     );
   }
@@ -166,10 +175,10 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
         <ConfCapexValueField
           id="conf-capex-aero"
           label="Installed CAPEX"
-          unit="/ kW"
-          value={capex.aeroderivativeGT.capexPerKw}
-          wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
-          onCommit={(v) => patch('capexPerKw', v)}
+          unit={IDEUM_CAPEX_UNIT_KW}
+          value={ideumCapexDisplayValue(capex.aeroderivativeGT.capexPerKw, loadMW)}
+          wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
+          onCommit={(v) => commitKwCapex('capexPerKw', v)}
         />
         <ConfCapexValueField
           id="conf-capex-aero-gas"
@@ -214,10 +223,10 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
         <ConfCapexValueField
           id="conf-capex-hd"
           label="Installed CAPEX"
-          unit="/ kW"
-          value={capex.heavyDutyGT.capexPerKw}
-          wheelPreset={CAPEX_WHEEL_PRESETS.generationPerKw}
-          onCommit={(v) => patch('capexPerKw', v)}
+          unit={IDEUM_CAPEX_UNIT_KW}
+          value={ideumCapexDisplayValue(capex.heavyDutyGT.capexPerKw, loadMW)}
+          wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
+          onCommit={(v) => commitKwCapex('capexPerKw', v)}
         />
         <ConfCapexValueField
           id="conf-capex-hd-gas"
@@ -236,10 +245,10 @@ function TechCapexPanel({ techId, capex, onCapexChange }) {
       <ConfCapexValueField
         id="conf-capex-bess-kwh"
         label="Installed CAPEX"
-        unit="/ kWh"
-        value={capex.battery.capexPerKwh}
-        wheelPreset={CAPEX_WHEEL_PRESETS.bessEnergyPerKwh}
-        onCommit={(v) => patch('capexPerKwh', v)}
+        unit={IDEUM_CAPEX_UNIT_KWH}
+        value={ideumCapexDisplayValue(capex.battery.capexPerKwh, loadMW)}
+        wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.bessEnergyPerKwh, loadMW)}
+        onCommit={(v) => commitKwCapex('capexPerKwh', v)}
       />
     );
   }
@@ -350,6 +359,7 @@ function HubTechCard({
   disabled,
   cardRef,
   onCapexChange,
+  loadMW,
   capacityBand = null,
 }) {
   const gridArea = BOTTOM_TIER_SLOTS.has(meta.slot)
@@ -390,6 +400,7 @@ function HubTechCard({
               techId={tech.id}
               capex={capex}
               onCapexChange={onCapexChange}
+              loadMW={loadMW}
             />
           ) : null}
         </div>
@@ -471,6 +482,7 @@ function HubCenter({ loadEditor, gridEditor, centerStageRef }) {
 export default function ConfIdeumTechnologyHub({
   technologyCapex,
   onCapexChange,
+  loadMW = 200,
   loadEditor = null,
   gridEditor = null,
   corridor,
@@ -520,6 +532,7 @@ export default function ConfIdeumTechnologyHub({
           disabled={DISABLED_HUB_TECH.has(tech.id)}
           cardRef={(el) => { cardRefs.current[tech.id] = el; }}
           onCapexChange={onCapexChange}
+          loadMW={loadMW}
           capacityBand={renewableCapacityBands?.[tech.id]}
         />
       ))}
@@ -534,6 +547,7 @@ export default function ConfIdeumTechnologyHub({
             disabled={DISABLED_HUB_TECH.has(tech.id)}
             cardRef={(el) => { cardRefs.current[tech.id] = el; }}
             onCapexChange={onCapexChange}
+            loadMW={loadMW}
             capacityBand={renewableCapacityBands?.[tech.id]}
           />
         ))}

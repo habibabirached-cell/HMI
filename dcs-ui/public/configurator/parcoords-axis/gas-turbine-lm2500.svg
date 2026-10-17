@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="LM2500 gas turbine">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e4eaf0"/>
+      <stop offset="100%" stop-color="#b0bec8"/>
+    </linearGradient>
+    <linearGradient id="jet" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#78909c"/>
+      <stop offset="100%" stop-color="#cfd8dc"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg)"/>
+  <rect x="10" y="90" width="108" height="12" fill="#607080"/>
+  <path d="M24 78 Q64 58 104 78 L104 88 L24 88 Z" fill="url(#jet)"/>
+  <ellipse cx="28" cy="78" rx="14" ry="14" fill="#90a4ae" stroke="#546e7a"/>
+  <circle cx="28" cy="78" r="6" fill="#37474f"/>
+  <path d="M100 70 L118 78 L100 86 Z" fill="#455a64"/>
+  <path d="M108 76 L124 78 L108 80 Z" fill="#ff7043" opacity="0.75"/>
+</svg>

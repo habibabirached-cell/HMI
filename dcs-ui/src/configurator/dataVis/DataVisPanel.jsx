@@ -48,16 +48,22 @@ import {
 } from './utils/dataVisHistogramBins';
 import {
   exploreSyncPayloadFromMessage,
+  martinInputsFromExploreFilters,
   persistConfiguratorInputsForDataVis,
   persistConfiguratorRangesForDataVis,
   readPersistedConfiguratorInputs,
   readPersistedConfiguratorRanges,
+  readInitialExploreSyncState,
   shouldSyncConfiguratorToDataVis,
   subscribeConfiguratorExploreSync,
 } from './utils/dataVisConfiguratorSync';
 import { fetchConfiguratorExploreSyncLatest } from '../utils/conf_configuratorCluster';
 import { preloadWacoWithDatasetQuality } from '../utils/conf_wacoPreload';
-import { effectiveDataVisLoadMwTier } from './api/dataVisLoadMw';
+import {
+  applyWacoLoadTierHandoff,
+  effectiveDataVisLoadMwTier,
+  inputsWithEffectiveWacoLoadTier,
+} from './api/dataVisLoadMw';
 import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
 import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
@@ -88,16 +94,25 @@ function readLayoutMode() {
 
 export default function DataVisPanel({ showQualityToggle = true, variant = 'default' }) {
   const isExploreWall = variant === 'exploreWall';
+  const initialExploreSync = useMemo(
+    () => readInitialExploreSyncState(isExploreWall),
+    [isExploreWall],
+  );
   const [meta, setMeta] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
   const [layoutMode, setLayoutMode] = useState(() => (isExploreWall ? 'quad' : readLayoutMode()));
   const [wallResult, setWallResult] = useState(null);
   const [wallInputs, setWallInputs] = useState(null);
+  /** Corridor inputs from Ideum explore-sync (stable base for filter → Martin updates). */
+  const [ideumWallInputs, setIdeumWallInputs] = useState(() => initialExploreSync.ideumWallInputs);
+  const [wallUiMode, setWallUiMode] = useState(
+    () => initialExploreSync.wallUiMode ?? UI_MODES.BASIC,
+  );
   const [wallGenerating, setWallGenerating] = useState(false);
   const [wallStatusMessage, setWallStatusMessage] = useState('');
   const wallMartinSeqRef = useRef(0);
-  const [ranges, setRanges] = useState({});
+  const [ranges, setRanges] = useState(() => initialExploreSync.ranges);
   const [filteredCount, setFilteredCount] = useState(null);
   const [compareIds, setCompareIds] = useState([]);
   const [parcoordsRanges, setParcoordsRanges] = useState({});
@@ -327,16 +342,21 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     [ranges, parcoordsRanges, scatterRowIds],
   );
 
-  const runMartinFromInputs = useCallback(async (inputs, uiMode) => {
+  const runMartinFromInputs = useCallback(async (inputs, uiMode, dataVisFilters) => {
     if (!inputs) return;
     const seq = ++wallMartinSeqRef.current;
     setWallGenerating(true);
     setWallStatusMessage('Updating optimized configuration…');
     try {
-      const next = await generateMartinConfiguratorResult({ ...inputs, uiMode: uiMode || UI_MODES.BASIC });
+      const next = await generateMartinConfiguratorResult({
+        ...inputs,
+        uiMode: uiMode || UI_MODES.BASIC,
+        ...(Array.isArray(dataVisFilters) ? { dataVisFilters } : {}),
+      });
       if (seq !== wallMartinSeqRef.current) return;
       setWallResult(next);
       setWallInputs(inputs);
+      setWallUiMode(uiMode || UI_MODES.BASIC);
     } finally {
       if (seq === wallMartinSeqRef.current) {
         setWallGenerating(false);
@@ -353,10 +373,11 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
         setParcoordsRanges({});
       }
       if (payload?.inputs && isExploreWall) {
-        void runMartinFromInputs(payload.inputs, payload.uiMode);
+        setIdeumWallInputs(payload.inputs);
+        if (payload.uiMode) setWallUiMode(payload.uiMode);
       }
     },
-    [isExploreWall, runMartinFromInputs],
+    [isExploreWall],
   );
 
   const clearAllFilters = () => {
@@ -387,14 +408,24 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
   const handleExploreSyncPayload = useCallback(
     (payload) => {
       if (!payload) return;
+      if (payload.inputs) {
+        const prevTier = effectiveDataVisLoadMwTier();
+        const tier = applyWacoLoadTierHandoff(payload.inputs);
+        if (tier !== prevTier) {
+          void reloadWacoDatasetForTier(tier);
+        }
+      }
       if (isExploreWall) {
         applyConfiguratorExploreSync(payload);
         return;
       }
       if (payload.ranges) applyConfiguratorSyncRanges(payload.ranges);
     },
-    [applyConfiguratorExploreSync, applyConfiguratorSyncRanges, isExploreWall],
+    [applyConfiguratorExploreSync, applyConfiguratorSyncRanges, isExploreWall, reloadWacoDatasetForTier],
   );
+
+  const handleExploreSyncPayloadRef = useRef(handleExploreSyncPayload);
+  handleExploreSyncPayloadRef.current = handleExploreSyncPayload;
 
   useEffect(() => {
     let cancelled = false;
@@ -411,7 +442,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
       }
       if (payload.ranges) persistConfiguratorRangesForDataVis(payload.ranges);
       if (payload.inputs) persistConfiguratorInputsForDataVis(payload.inputs, payload.uiMode);
-      handleExploreSyncPayload(payload);
+      handleExploreSyncPayloadRef.current(payload);
     });
 
     const bootstrapLocal = () => {
@@ -420,7 +451,8 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
       if (isExploreWall) {
         const storedInputs = readPersistedConfiguratorInputs();
         if (storedInputs?.inputs) {
-          void runMartinFromInputs(storedInputs.inputs, storedInputs.uiMode);
+          setIdeumWallInputs(storedInputs.inputs);
+          if (storedInputs.uiMode) setWallUiMode(storedInputs.uiMode);
         }
       }
     };
@@ -432,14 +464,14 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
       .then((res) => {
         if (cancelled) return;
         const payload = exploreSyncPayloadFromMessage(res?.sync);
-        if (payload) handleExploreSyncPayload(payload);
+        if (payload) handleExploreSyncPayloadRef.current(payload);
       })
       .catch(() => {});
 
     shouldSyncConfiguratorToDataVis().then((useBroadcast) => {
       if (cancelled || !useBroadcast) return;
       unsubscribeChannel = subscribeConfiguratorExploreSync((payload) => {
-        handleExploreSyncPayload(payload);
+        handleExploreSyncPayloadRef.current(payload);
       });
     });
 
@@ -448,7 +480,36 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
       unsubscribeChannel();
       unsubscribeCluster();
     };
-  }, [applyConfiguratorSyncRanges, handleExploreSyncPayload, isExploreWall, runMartinFromInputs]);
+  }, [applyConfiguratorSyncRanges, isExploreWall]);
+
+  useEffect(() => {
+    if (!isExploreWall || !ideumWallInputs) return undefined;
+    const timer = window.setTimeout(() => {
+      const filtered = martinInputsFromExploreFilters(ideumWallInputs, ranges, parcoordsRanges);
+      const dataVisFilters = buildDataVisFilters(
+        ranges,
+        parcoordsRanges,
+        null,
+        excludedRowIds,
+        dataQualityMode,
+      );
+      void runMartinFromInputs(
+        inputsWithEffectiveWacoLoadTier(filtered),
+        wallUiMode,
+        dataVisFilters,
+      );
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [
+    dataQualityMode,
+    excludedRowIds,
+    isExploreWall,
+    ideumWallInputs,
+    wallUiMode,
+    ranges,
+    parcoordsRanges,
+    runMartinFromInputs,
+  ]);
 
   useEffect(() => {
     if (!meta) return undefined;

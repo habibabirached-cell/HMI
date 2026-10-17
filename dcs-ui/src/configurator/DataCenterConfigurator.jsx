@@ -7,7 +7,10 @@ import ConfIdeumPageTabs, { IDEUM_DATA_EXPLORATION_TAB_ID } from './components/c
 import DataVisPanel from './dataVis/DataVisPanel';
 import ConfTradeSpacePanel from './components/conf_TradeSpacePanel';
 import ConfResultsPanel from './components/conf_ResultsPanel';
-import { CONFIGURATOR_DEFAULT_INPUTS } from '../configuratorData/conf_scenarios';
+import {
+  buildIdeumConfiguratorInputs,
+  CONFIGURATOR_DEFAULT_INPUTS,
+} from '../configuratorData/conf_scenarios';
 import { UI_MODES } from '../configuratorData/conf_constants';
 import {
   generateConfiguratorResult,
@@ -40,7 +43,10 @@ import {
 import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { API_BASE_URL } from '../apiConfig';
 import { fetchMachineRole, resolveMaingearPeerPostBase } from '../utils/clusterPeer';
-import { publishConfiguratorExploreSync } from './dataVis/utils/dataVisConfiguratorSync';
+import {
+  configuratorInputsToDataVisRanges,
+  publishConfiguratorExploreSync,
+} from './dataVis/utils/dataVisConfiguratorSync';
 import {
   logExploreSyncResult,
   postConfiguratorExploreSync,
@@ -53,7 +59,10 @@ import {
 } from './utils/conf_renewableMwBounds';
 import {
   effectiveDataVisLoadMwTier,
+  hydrateWacoLoadTierFromUrl,
+  inputsWithEffectiveWacoLoadTier,
   persistWacoLoadTierForDataVis,
+  WACO_LOAD_MW_URL_PARAM,
   WACO_LOAD_TIER_CHANGED_EVENT,
 } from './dataVis/api/dataVisLoadMw';
 import { DEFAULT_WACO_LOAD_TIER } from './utils/conf_wacoLoadTier';
@@ -122,10 +131,16 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   useWallDisplayKeepAlive(isWallMode);
 
-  const [inputs, setInputs] = useState(() => ({
-    ...CONFIGURATOR_DEFAULT_INPUTS,
-    ...(mode === 'ideum' ? { loadMW: DEFAULT_WACO_LOAD_TIER } : {}),
-  }));
+  const [inputs, setInputs] = useState(() => {
+    if (mode === 'ideum' || mode === 'martin-dev-tab') {
+      let loadMW = DEFAULT_WACO_LOAD_TIER;
+      if (typeof window !== 'undefined') {
+        loadMW = hydrateWacoLoadTierFromUrl();
+      }
+      return buildIdeumConfiguratorInputs(loadMW);
+    }
+    return { ...CONFIGURATOR_DEFAULT_INPUTS };
+  });
   const [uiMode, setUiMode] = useState(UI_MODES.BASIC);
   const [result, setResult] = useState(null);
   const [lastRunInputs, setLastRunInputs] = useState(null);
@@ -146,16 +161,30 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     return fromUrl || 'configure';
   });
   const dataExplorationTunnelRef = useRef(null);
+  const lastExploreSyncFingerprintRef = useRef('');
   const [devAutoMartinPreviewBoot, setDevAutoMartinPreviewBoot] = useState(false);
   const [devConfiguratorDataVisSync, setDevConfiguratorDataVisSync] = useState(false);
   const [dataQualityMode, setDataQualityMode] = useState(() => readPersistedDataQualityMode());
-  const [dataVisWacoTier, setDataVisWacoTier] = useState(() => effectiveDataVisLoadMwTier());
+  const [dataVisWacoTier, setDataVisWacoTier] = useState(() => (
+    mode === 'ideum' ? effectiveDataVisLoadMwTier() : DEFAULT_WACO_LOAD_TIER
+  ));
   const [renewableMwBounds, setRenewableMwBounds] = useState(null);
 
   const applyRenewableMwBounds = useCallback((bounds) => {
     if (!bounds) return;
     setRenewableMwBounds(bounds);
-    setInputs((prev) => inputsWithRenewableDataSpan(prev, bounds));
+    setInputs((prev) => {
+      const next = inputsWithRenewableDataSpan(prev, bounds);
+      if (
+        prev.minSolarMW === next.minSolarMW
+        && prev.maxSolarMW === next.maxSolarMW
+        && prev.minWindMW === next.minWindMW
+        && prev.maxWindMW === next.maxWindMW
+      ) {
+        return prev;
+      }
+      return next;
+    });
   }, []);
 
   const refreshRenewableMwBounds = useCallback(async (loadMW) => {
@@ -227,33 +256,42 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   }, [isIdeumMode]);
 
   const pushExploreSyncToCluster = useCallback(async () => {
-    publishConfiguratorExploreSync(inputs, uiMode);
+    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
+    publishConfiguratorExploreSync(tiered, uiMode);
     try {
       const role = await fetchMachineRole().catch(() => null);
       const peerBase = role?.isIdeum ? resolveMaingearPeerPostBase(role) : '';
       // Ideum → Maingear: browser POST direct to Ethernet (same as clean-data). Avoid Ideum
       // backend forward — it often 502s when the server cannot reach Maingear even if the browser can.
       if (peerBase) {
-        const peer = await postConfiguratorExploreSyncToPeer(peerBase, inputs, uiMode);
+        const peer = await postConfiguratorExploreSyncToPeer(peerBase, tiered, uiMode);
         logExploreSyncResult('maingear-peer', peer);
         return;
       }
-      const local = await postConfiguratorExploreSync(null, inputs, uiMode);
+      const local = await postConfiguratorExploreSync(null, tiered, uiMode);
       logExploreSyncResult('local-backend', local);
     } catch (err) {
       console.warn('[configurator] explore-sync to Maingear failed:', err?.message || err);
     }
   }, [inputs, uiMode]);
 
-  /** Inputs corridor bands + Martin inputs → Explore Data / Data Exploration (real-time). */
+  /** Inputs corridor bands → session + Maingear (even while Data Exploration tab is open). */
   useEffect(() => {
-    if (!isIdeumMode || ideumTab !== 'configure') return undefined;
-    publishConfiguratorExploreSync(inputs, uiMode);
+    if (!isIdeumMode) return undefined;
+    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
+    const fingerprint = JSON.stringify({
+      ranges: configuratorInputsToDataVisRanges(tiered),
+      loadMW: tiered.loadMW,
+      uiMode,
+    });
+    if (fingerprint === lastExploreSyncFingerprintRef.current) return undefined;
+    lastExploreSyncFingerprintRef.current = fingerprint;
+    publishConfiguratorExploreSync(tiered, uiMode);
     const timer = window.setTimeout(() => {
       void pushExploreSyncToCluster();
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [ideumTab, inputs, isIdeumMode, pushExploreSyncToCluster, uiMode]);
+  }, [inputs, isIdeumMode, pushExploreSyncToCluster, uiMode]);
 
   useEffect(() => {
     if (!isIdeumMode) return undefined;
@@ -626,7 +664,10 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
         role?.isIdeum && role?.peerBackendUrl && !isLocalClusterDev()
           ? (API_BASE_URL || '')
           : resolveMaingearBackendUrl(role);
-      const session = await submitConfiguratorMartinToMaingear(backendUrl, { ...inputs, uiMode });
+      const session = await submitConfiguratorMartinToMaingear(
+        backendUrl,
+        inputsWithEffectiveWacoLoadTier({ ...inputs, uiMode }),
+      );
       if (session.status === 'error' || !session.result?.ok) {
         setError(session.error || session.result?.error || 'Configuration could not be generated on Maingear.');
         setErrorDetails(session.errorDetails || session.result?.details || []);
@@ -684,7 +725,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     if (openDevTab) {
       const tabKey = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const handoff = {
-        inputs: { ...inputs },
+        inputs: inputsWithEffectiveWacoLoadTier({ ...inputs }),
         uiMode,
         runMartinWallPreview: true,
         tabKey,
@@ -699,6 +740,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       const url = new URL(`${window.location.origin}${window.location.pathname}`);
       url.searchParams.set('view', 'configurator-martin-preview');
       url.searchParams.set(MARTIN_PREVIEW_URL_PARAM, tabKey);
+      url.searchParams.set(WACO_LOAD_MW_URL_PARAM, String(effectiveDataVisLoadMwTier()));
       window.open(url.toString(), '_blank', 'noopener,noreferrer');
       return;
     }
@@ -721,16 +763,19 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       /* dev fallback below */
     }
 
+    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
+    publishConfiguratorExploreSync(tiered, uiMode);
+
     const action = await resolveDataExplorationNavigationAction(role);
     if (action === 'new-tab') {
-      openDataExplorationDevNewTab();
+      openDataExplorationDevNewTab(inputs, uiMode);
       return;
     }
     if (action === 'maingear-remote') {
       try {
         dataExplorationTunnelRef.current?.();
-        await requestDataExplorationOnMaingear(role);
         await pushExploreSyncToCluster();
+        await requestDataExplorationOnMaingear(role, inputs, uiMode);
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Data Exploration opened on Maingear (touch table stays on current view).');
         setError(null);
@@ -747,7 +792,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
     setDataVisWacoTier(effectiveDataVisLoadMwTier());
     setIdeumTab(tabId);
-  }, [pushExploreSyncToCluster]);
+  }, [inputs, pushExploreSyncToCluster, uiMode]);
 
   const handleExploreData = useCallback(async () => {
     let role = null;
@@ -756,16 +801,19 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     } catch {
       /* dev fallback */
     }
+    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
+    publishConfiguratorExploreSync(tiered, uiMode);
+
     const action = await resolveExploreDataNavigationAction(role);
     if (action === 'new-tab') {
-      openExploreDataDevNewTab();
+      openExploreDataDevNewTab(inputs, uiMode);
       return;
     }
     if (action === 'maingear-remote') {
       try {
         dataExplorationTunnelRef.current?.();
-        await requestExploreDataOnMaingear(role);
         await pushExploreSyncToCluster();
+        await requestExploreDataOnMaingear(role, inputs, uiMode);
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Explore Data opened on Maingear (touch table stays on Inputs).');
         setError(null);
@@ -781,7 +829,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     }
     setDataVisWacoTier(effectiveDataVisLoadMwTier());
     setIdeumTab(IDEUM_EXPLORE_DATA_TAB_ID);
-  }, [pushExploreSyncToCluster]);
+  }, [inputs, pushExploreSyncToCluster, uiMode]);
 
   /** Header Preview — Martin on this machine (same as Maingear optimized). */
   const handleMartinLocalConfigure = useCallback(async () => {
@@ -832,10 +880,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   const handleReset = () => {
     if (isWallMode) return;
-    setInputs({
-      ...CONFIGURATOR_DEFAULT_INPUTS,
-      ...(isIdeumMode ? { loadMW: DEFAULT_WACO_LOAD_TIER } : {}),
-    });
+    const base = isIdeumMode
+      ? buildIdeumConfiguratorInputs(DEFAULT_WACO_LOAD_TIER)
+      : { ...CONFIGURATOR_DEFAULT_INPUTS };
+    setInputs(
+      isIdeumMode && renewableMwBounds
+        ? inputsWithRenewableDataSpan(base, renewableMwBounds)
+        : base,
+    );
     if (isIdeumMode) {
       persistWacoLoadTierForDataVis(DEFAULT_WACO_LOAD_TIER);
       persistDataQualityMode(DATA_QUALITY_CLEAN);
