@@ -17,7 +17,7 @@ WACO_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
     1000: "Waco_1000MW_clean.csv",
 }
 
-DEFAULT_WACO_LOAD_MW = 200
+DEFAULT_WACO_LOAD_MW = 1000
 
 # Default workbook path — legacy imports
 DATAVIS_WACO_XLSX = DATA_MARTIN_DIR / WACO_WORKBOOK_BY_LOAD_MW[DEFAULT_WACO_LOAD_MW]

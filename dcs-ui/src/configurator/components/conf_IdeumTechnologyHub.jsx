@@ -132,8 +132,8 @@ const BOTTOM_TIER_SLOTS = new Set(['left-bottom', 'bottom', 'bottom-mid', 'right
 const BOTTOM_TIER_ORDER = ['left-bottom', 'bottom', 'bottom-mid', 'right-bottom'];
 
 const COMING_SOON_RIBBONS = {
-  nuclear: 'Coming Q4 2027',
-  fuelCell: 'Coming Q2 2027',
+  nuclear: 'Coming in 2027',
+  fuelCell: 'Coming in 2027',
   recipEngine: 'Coming soon',
 };
 function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {

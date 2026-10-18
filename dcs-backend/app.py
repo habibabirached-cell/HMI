@@ -72,6 +72,12 @@ from simulation_parquet_bundle import (
     scenario_data_dir,
     time_column_min_max_from_bundle,
 )
+from p2r18_mvups_fft_csv import (
+    is_p2r18_mvups_fft_csv_source,
+    mvups_fft_csv_exists,
+    mvups_fft_csv_metadata,
+    mvups_fft_csv_project_rows,
+)
 from clone_graph_presets import clone_graph_presets_between_designs
 from reset_config_simulation_bounds import reset_all_config_simulation_bounds
 # Import Pydantic schemas for request/response validation
@@ -2352,7 +2358,12 @@ async def load_simulation_metadata(design_name: str, sim_name: str):
         time_column_name: Optional[str] = None
         time_column_min: Optional[float] = None
         time_column_max: Optional[float] = None
-        if bundle_exists(dir_path, sim_name):
+        if is_p2r18_mvups_fft_csv_source(catalog_rel, sim_name) and mvups_fft_csv_exists(
+            dir_path
+        ):
+            columns, row_count = mvups_fft_csv_metadata(dir_path)
+            time_column_name = "Frequency"
+        elif bundle_exists(dir_path, sim_name):
             columns, row_count = read_bundle_columns_row_count(dir_path, sim_name)
             if row_count > 0 and columns:
                 time_column_name = _pick_time_column_header(columns)
@@ -2402,6 +2413,62 @@ async def load_simulation_data_columns(
     try:
         dir_path, catalog_rel = resolve_design_storage_from_api(design_name)
 
+        if limit is not None and limit < 1:
+            raise HTTPException(status_code=400, detail="Query parameter 'limit' must be >= 1 when provided")
+
+        requested = [c.strip() for c in columns.split(",") if c.strip()]
+        if not requested:
+            raise HTTPException(
+                status_code=400,
+                detail="Query parameter 'columns' must list at least one column name",
+            )
+
+        if is_p2r18_mvups_fft_csv_source(catalog_rel, sim_name) and mvups_fft_csv_exists(
+            dir_path
+        ):
+            header, _total = mvups_fft_csv_metadata(dir_path)
+
+            def resolve_one_col_csv(req: str, hdr: list[str]) -> Optional[str]:
+                if req in hdr:
+                    return req
+                req_strip = req.strip()
+                for h in hdr:
+                    if h.strip() == req_strip:
+                        return h
+                return None
+
+            resolved: list[str] = []
+            missing: list[str] = []
+            for req in requested:
+                hit = resolve_one_col_csv(req, header)
+                if hit is None:
+                    missing.append(req)
+                elif hit not in resolved:
+                    resolved.append(hit)
+            if missing:
+                raise HTTPException(status_code=400, detail=f"Unknown columns: {missing}")
+            try:
+                rows, total_data_rows = mvups_fft_csv_project_rows(
+                    dir_path, resolved, offset, limit
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            end_offset = offset + len(rows)
+            print(
+                f"GET …/data: {catalog_rel}/{sim_name} offset={offset} limit={limit} "
+                f"source=p2r_18_mvups_fft.csv rows={len(rows)}"
+            )
+            return {
+                "design_name": design_name,
+                "sim_name": sim_name,
+                "data": rows,
+                "columns": resolved,
+                "row_count": len(rows),
+                "row_count_total": total_data_rows,
+                "offset": offset,
+                "has_more": end_offset < total_data_rows,
+            }
+
         if not bundle_exists(dir_path, sim_name):
             raise HTTPException(
                 status_code=404,
@@ -2413,16 +2480,6 @@ async def load_simulation_data_columns(
             raise HTTPException(
                 status_code=500,
                 detail=f"Could not load simulation data mirror for {sim_name}",
-            )
-
-        if limit is not None and limit < 1:
-            raise HTTPException(status_code=400, detail="Query parameter 'limit' must be >= 1 when provided")
-
-        requested = [c.strip() for c in columns.split(",") if c.strip()]
-        if not requested:
-            raise HTTPException(
-                status_code=400,
-                detail="Query parameter 'columns' must list at least one column name",
             )
 
         def resolve_one_col(req: str, header: list[str]) -> Optional[str]:

@@ -37,7 +37,7 @@ export function readDataVisLoadMwTier() {
   return readPersistedWacoLoadTier();
 }
 
-/** Tier on every dataVis / preload call — 200 MW until a load button picks 1000. */
+/** Tier on every dataVis / preload call — defaults to 1000 MW until a load button picks 200. */
 export function effectiveDataVisLoadMwTier() {
   return readPersistedWacoLoadTier() ?? DEFAULT_WACO_LOAD_TIER;
 }

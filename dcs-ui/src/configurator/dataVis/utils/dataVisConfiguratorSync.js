@@ -39,7 +39,11 @@ export function martinInputsFromExploreFilters(baseInputs, ranges, parcoordsRang
 
   const load = bandFor(CONFIGURATOR_SYNC_COLUMNS.loadCompliance);
   if (load && load.min != null) {
-    merged.reliabilityTarget = Math.max(load.min, load.max ?? load.min);
+    const lo = Math.min(load.min, load.max ?? load.min);
+    const hi = Math.max(load.min, load.max ?? load.min);
+    // Waco histogram uses 0–1; Ideum uptime slider uses 0–100. Minimum uptime = lower handle.
+    const toPct = lo <= 1.0001 && hi <= 1.0001 ? 100 : 1;
+    merged.reliabilityTarget = lo * toPct;
   }
 
   const solar = bandFor(CONFIGURATOR_SYNC_COLUMNS.solar);
