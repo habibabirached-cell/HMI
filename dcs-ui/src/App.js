@@ -3957,7 +3957,7 @@ function App() {
       return;
     }
     try {
-      if (command === 'add8Turbines') {
+      if (command === 'add8Turbines' || command === 'addMvupsOnly') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
       }
       const result = await sendRemoteCommandToMaingear(role, command);

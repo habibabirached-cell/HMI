@@ -15276,5 +15276,57 @@
   ],
   "ideumControlButtons": [],
   "ideumKioskMode": false,
+  "remoteControlProfile": {
+    "enabled": true,
+    "commands": {
+      "add8Turbines": {
+        "label": "No Bess No Statcom",
+        "presetName": "noBessNoStatcom",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addStatcomAndGFMe": {
+        "label": "With Bess and StatCom",
+        "presetName": "withBessandStatCom",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addBessOnly": {
+        "label": "With BESS Alone",
+        "presetName": "withBessAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addGfmeOnly": {
+        "label": "With STATCOM Alone",
+        "presetName": "withStatcomAlone",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "addMvupsOnly": {
+        "label": "With MVUPS Alone",
+        "presetName": "mvups_undamped",
+        "targetType": "ensemble",
+        "ensembleId": "all"
+      },
+      "toggleBreakersExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "breakers"
+      },
+      "togglePeripheralsExpansion": {
+        "action": "toggleExpansion",
+        "expansionKey": "peripherals"
+      },
+      "reset": {
+        "label": "Reset",
+        "presetName": "Reset",
+        "targetType": "ensemble",
+        "ensembleId": "all_"
+      },
+      "liveRtds": {
+        "label": "Live RTDS"
+      }
+    }
+  },
   "busTransferSegments": []
 }

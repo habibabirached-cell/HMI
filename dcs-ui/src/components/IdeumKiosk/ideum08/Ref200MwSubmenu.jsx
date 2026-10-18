@@ -33,6 +33,7 @@ export const REF200_IDEUM_COMMANDS = {
   addBess: 'addBessOnly',
   addGfme: 'addGfmeOnly',
   addBessAndGfme: 'addStatcomAndGFMe',
+  addMvups: 'addMvupsOnly',
   forcedPowerOscillation: 'add8Turbines',
 };
 
@@ -80,9 +81,9 @@ function SubmenuUseCaseTile({
       aria-disabled={disabled || undefined}
     >
       <span
-        className={`ideum-component-btn__title ideum07-ref200__use-case-title ideum-component-btn__title--featured${
-          titleClassName ? ` ${titleClassName}` : ''
-        }`}
+        className={`ideum-component-btn__title ideum07-ref200__use-case-title${
+          disabled ? ' ideum-component-btn__title--disabled' : ' ideum-component-btn__title--featured'
+        }${titleClassName ? ` ${titleClassName}` : ''}`}
       >
         {label}
       </span>
@@ -119,6 +120,7 @@ function SubmenuModelTile({
   disabled = false,
   dimmed = false,
   modelComingSoon = false,
+  comingSoonLabel = 'Coming soon',
   previewImageUrl = null,
   previewImageAlt,
   ideumCommand = null,
@@ -201,7 +203,7 @@ function SubmenuModelTile({
         }`}
       >
         {modelComingSoon ? (
-          <span className="ideum07-nav-card__3d-coming-soon-label">Coming soon</span>
+          <span className="ideum07-nav-card__3d-coming-soon-label">{comingSoonLabel}</span>
         ) : null}
         {showPreviewImage ? (
           <img
@@ -435,8 +437,8 @@ export default function Ideum08Ref200MwSubmenu({
                 label="Add MVUPS"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
                 previewImageAlt="Medium voltage UPS skid"
-                disabled
-                dimmed
+                ideumCommand={REF200_IDEUM_COMMANDS.addMvups}
+                onIdeumCommand={onIdeumCommand}
               />
               <SubmenuModelTile
                 zoom={zoom}
@@ -445,6 +447,8 @@ export default function Ideum08Ref200MwSubmenu({
                 previewImageAlt="Solid-state transformer skid"
                 disabled
                 dimmed
+                modelComingSoon
+                comingSoonLabel="Coming very soon"
               />
             </div>
           </Ref200ColumnBucket>
@@ -462,23 +466,24 @@ export default function Ideum08Ref200MwSubmenu({
             >
               <SubmenuUseCaseTile
                 zoom={zoom}
-                label="Forced Power Oscillation"
+                label="Forced Power Oscillation (FPO)"
+                titleClassName="ideum07-ref200__use-case-title--multiline"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ForcedPowerOscillation}
                 ideumCommand={REF200_IDEUM_COMMANDS.forcedPowerOscillation}
                 onIdeumCommand={onIdeumCommand}
               />
               <SubmenuUseCaseTile
                 zoom={zoom}
-                label="Contingency scenarios"
-                imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ContingencyScenarios}
+                label="Sub-Synchronous Torsional Interaction (SSTI)"
+                titleClassName="ideum07-ref200__use-case-title--multiline"
+                imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Ssti}
                 disabled
                 dimmed
               />
               <SubmenuUseCaseTile
                 zoom={zoom}
-                label="Sub-Synchronous Torsional Interaction (SSTI)"
-                titleClassName="ideum07-ref200__use-case-title--multiline"
-                imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Ssti}
+                label="Contingency scenarios"
+                imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ContingencyScenarios}
                 disabled
                 dimmed
               />

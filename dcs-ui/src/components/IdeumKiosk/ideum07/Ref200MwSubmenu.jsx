@@ -70,7 +70,9 @@ function SubmenuUseCaseTile({
       aria-disabled={disabled || undefined}
     >
       <span
-        className="ideum-component-btn__title ideum07-ref200__use-case-title ideum-component-btn__title--featured"
+        className={`ideum-component-btn__title ideum07-ref200__use-case-title${
+          disabled ? ' ideum-component-btn__title--disabled' : ' ideum-component-btn__title--featured'
+        }`}
         style={{ fontSize: titleFontPx }}
       >
         {label}
