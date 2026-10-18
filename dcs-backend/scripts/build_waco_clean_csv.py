@@ -13,31 +13,22 @@ if str(ROOT) not in sys.path:
 from configurator.dataVis.dataset_mode import (
     CLEAN_MIN_LOAD_COMPLIANCE,
     LOAD_COMPLIANCE_COL,
-    filter_load_compliance_clean,
 )
-from configurator.dataVis.loader import read_waco_excel_dataframe
-from configurator.dataVis.paths import WACO_WORKBOOK_BY_LOAD_MW, waco_clean_csv_path, waco_workbook_path
+from configurator.dataVis.export_clean_csv import export_waco_tier
+from configurator.dataVis.paths import WACO_WORKBOOK_BY_LOAD_MW, waco_workbook_path
 
 
 def export_tier(tier: int) -> tuple[Path, int, int]:
-    workbook = waco_workbook_path(tier)
-    if not workbook.is_file():
-        raise FileNotFoundError(f"Missing source workbook: {workbook}")
-
-    full = read_waco_excel_dataframe(tier)
-    clean = filter_load_compliance_clean(full)
-    clean = clean.reset_index(drop=True)
-    clean["dataVis_row_id"] = clean.index.astype(int)
-
-    out = waco_clean_csv_path(tier)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    clean.to_csv(out, index=False)
-    return out, len(full), len(clean)
+    return export_waco_tier(tier)
 
 
 def main() -> None:
     summaries: list[str] = []
     for tier in (200, 1000):
+        workbook = waco_workbook_path(tier)
+        if not workbook.is_file():
+            summaries.append(f"Skipped {tier} MW: missing {workbook.name}")
+            continue
         out, full_rows, clean_rows = export_tier(tier)
         summaries.append(
             f"{tier} MW: {WACO_WORKBOOK_BY_LOAD_MW[tier]} "

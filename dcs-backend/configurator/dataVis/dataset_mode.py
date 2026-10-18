@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from configurator.dataVis.loader import get_active_waco_load_mw, load_waco_dataframe
+from configurator.dataVis.loader import get_active_waco_load_mw, load_martin_dataframe
 
 LOAD_COMPLIANCE_COL = "Year 1 Load Compliance (%)"
 CLEAN_MIN_LOAD_COMPLIANCE = 97.0
@@ -35,8 +35,8 @@ def reset_datavis_mode() -> None:
 
 
 def get_datavis_dataframe() -> pd.DataFrame:
-    """Active tier dataframe (pre-cleaned on disk when clean CSV is present)."""
-    return load_waco_dataframe(get_active_waco_load_mw())
+    """Active Martin study dataframe (pre-cleaned on disk when clean CSV is present)."""
+    return load_martin_dataframe(load_mw=get_active_waco_load_mw())
 
 
 def filter_load_compliance_clean(full: pd.DataFrame) -> pd.DataFrame:
@@ -59,7 +59,7 @@ def set_dataset_mode(mode: str) -> dict[str, Any]:
         _clean_df = None
         _clean_df_tier = None
         _mode = normalized
-        df = load_waco_dataframe(active, force_reload=False)
+        df = load_martin_dataframe(load_mw=active, force_reload=False)
         row_count = len(df)
         return {
             "mode": _mode,

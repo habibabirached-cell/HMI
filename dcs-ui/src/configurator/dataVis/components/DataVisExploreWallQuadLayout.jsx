@@ -55,14 +55,9 @@ export default function DataVisExploreWallQuadLayout({
         inputs: wallInputs,
         isGenerating: wallGenerating,
         statusMessage: wallStatusMessage,
+        onClearAll,
       })}
-      <ParallelPane
-        actions={
-          <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
-            Clear view filters
-          </button>
-        }
-      >
+      <ParallelPane>
         <DataVisParallelTab
           filters={filters}
           defaults={parallelDefaults}

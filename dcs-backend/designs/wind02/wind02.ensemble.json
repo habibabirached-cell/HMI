@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "ensembles": [
+    {
+      "id": "s14_",
+      "display_name": "s14_",
+      "member_simulations": [
+        "wind14GFLWind_14ms_HMI",
+        "f10GFLWind_10ms_HMI",
+        "f12GFLWind_12ms_HMI"
+      ],
+      "chart_panel": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — P_GFL",
+              "wind14GFLWind_14ms_HMI — P_BESS",
+              "wind14GFLWind_14ms_HMI — Pload",
+              "f10GFLWind_10ms_HMI — P_GFL",
+              "f10GFLWind_10ms_HMI — P_BESS",
+              "f10GFLWind_10ms_HMI — Pload",
+              "f12GFLWind_12ms_HMI — P_GFL",
+              "f12GFLWind_12ms_HMI — P_BESS",
+              "f12GFLWind_12ms_HMI — Pload"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          },
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — Vload_1",
+              "f10GFLWind_10ms_HMI — Vload_1",
+              "f12GFLWind_12ms_HMI — Vload_1"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          },
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — f_load",
+              "f10GFLWind_10ms_HMI — f_load",
+              "f12GFLWind_12ms_HMI — f_load"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "f14": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "2d",
+            "x_column": "t",
+            "y_column": "Vload_1",
+            "title": "GFL Wind - Vload_1",
+            "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
+            "sample_step": 128
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      },
+      "all": {
+        "charts_to_display": [
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — P_GFL",
+              "wind14GFLWind_14ms_HMI — P_BESS",
+              "wind14GFLWind_14ms_HMI — Pload",
+              "f10GFLWind_10ms_HMI — P_GFL",
+              "f10GFLWind_10ms_HMI — P_BESS",
+              "f10GFLWind_10ms_HMI — Pload",
+              "f12GFLWind_12ms_HMI — P_GFL",
+              "f12GFLWind_12ms_HMI — P_BESS",
+              "f12GFLWind_12ms_HMI — Pload"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          },
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — Vload_1",
+              "f10GFLWind_10ms_HMI — Vload_1",
+              "f12GFLWind_12ms_HMI — Vload_1"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          },
+          {
+            "type": "single",
+            "component_id": "wo26c-wind-3d",
+            "chart_type": "nd",
+            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "y_columns": [
+              "wind14GFLWind_14ms_HMI — f_load",
+              "f10GFLWind_10ms_HMI — f_load",
+              "f12GFLWind_12ms_HMI — f_load"
+            ],
+            "title": "GFL Wind - nD",
+            "ensemble_cross_member": true,
+            "sample_step": 128
+          }
+        ],
+        "chart_stacks": [],
+        "chart_sample_default": 128,
+        "chart_panel_height": 300,
+        "chart_panel_opacity": 1.0,
+        "chart_card_width": 500,
+        "view_mode": "customer",
+        "derived_variables": [],
+        "simulation_speed": 1.0
+      }
+    }
+  ]
+}

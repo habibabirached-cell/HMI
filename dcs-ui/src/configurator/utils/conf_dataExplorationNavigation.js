@@ -18,8 +18,10 @@ import { IDEUM_DATA_EXPLORATION_TAB_ID } from '../components/conf_IdeumPageTabs'
 import {
   buildExploreRemoteCommandPayload,
   inputsWithEffectiveWacoLoadTier,
+  MARTIN_STUDY_URL_PARAM,
   WACO_LOAD_MW_URL_PARAM,
 } from '../dataVis/api/dataVisLoadMw';
+import { effectiveMartinStudy } from './conf_martinStudy';
 import {
   publishConfiguratorExploreSync,
   stashExploreSyncHandoffForNewTab,
@@ -68,7 +70,9 @@ function buildIdeumExploreUrl(originPathname, tabId, inputs, uiMode) {
   url.pathname = originPathname;
   url.searchParams.set('view', DATA_EXPLORATION_CONFIGURATOR_VIEW);
   url.searchParams.set(IDEUM_TAB_URL_PARAM, tabId);
+  const stateId = handoff?.inputs?.stateId ?? inputs?.stateId;
   url.searchParams.set(WACO_LOAD_MW_URL_PARAM, String(handoff?.inputs?.loadMW ?? inputs?.loadMW ?? 200));
+  url.searchParams.set(MARTIN_STUDY_URL_PARAM, effectiveMartinStudy(stateId));
   return url.toString();
 }
 

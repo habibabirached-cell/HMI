@@ -15,11 +15,16 @@ import { formatPercent } from '../utils/conf_formatters';
 import { snapToLoadCompliance } from '../utils/conf_corridorRangeScale';
 import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
 import {
+  clearPersistedWacoLoadTier,
   notifyWacoLoadTierChanged,
   persistWacoLoadTierForDataVis,
 } from '../dataVis/api/dataVisLoadMw';
 import { preloadWacoWithDatasetQuality } from '../utils/conf_wacoPreload';
 import { DEFAULT_WACO_LOAD_TIER } from '../utils/conf_wacoLoadTier';
+import {
+  martinStudyForStateId,
+  persistMartinStudyForDataVis,
+} from '../utils/conf_martinStudy';
 function clampReliabilityTarget(value) {
   return snapToLoadCompliance(value);
 }
@@ -34,9 +39,7 @@ function formatLoadComplianceDisplay(value) {
 
 const IDEUM_LOCATION_OPTIONS = [
   { id: 'texas', label: 'Texas', cityId: 'dallas_tx' },
-  { id: 'arizona', label: 'Arizona', cityId: 'phoenix_az' },
-  { id: 'idaho', label: 'Idaho', cityId: 'boise_id' },
-  { id: 'pennsylvania', label: 'Pennsylvania', cityId: 'philadelphia_pa' },
+  { id: 'wisconsin', label: 'Wisconsin', cityId: 'madison_wi' },
 ];
 
 const IDEUM_LOAD_MW_OPTIONS = [
@@ -44,8 +47,11 @@ const IDEUM_LOAD_MW_OPTIONS = [
   { value: 1000, label: '1000MW' },
 ];
 
-function IdeumLoadEditor({ loadMW, onChange }) {
+function IdeumLoadEditor({ loadMW, onChange, stateId }) {
   const tier = normalizeWacoLoadTier(loadMW);
+  const loadOptions = stateId === 'wisconsin'
+    ? IDEUM_LOAD_MW_OPTIONS.filter((option) => option.value === 200)
+    : IDEUM_LOAD_MW_OPTIONS;
 
   const pickLoadTier = (nextTier) => {
     onChange(nextTier);
@@ -56,7 +62,7 @@ function IdeumLoadEditor({ loadMW, onChange }) {
       <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d conf-ideum-hub-load-title">
         Data Center Load
       </span>
-      {tier == null ? (
+      {tier == null && stateId !== 'wisconsin' ? (
         <p className="conf-ideum-hub-load-hint">chose Data Center Load...</p>
       ) : null}
       <div
@@ -64,7 +70,7 @@ function IdeumLoadEditor({ loadMW, onChange }) {
         role="group"
         aria-label="Data center load"
       >
-        {IDEUM_LOAD_MW_OPTIONS.map((option) => {
+        {loadOptions.map((option) => {
           const active = tier === option.value;
           return (
             <button
@@ -118,6 +124,15 @@ export default function ConfIdeumInputPanel({
     }
   }, [inputs.technologies?.length]);
 
+  useEffect(() => {
+    const known = IDEUM_LOCATION_OPTIONS.some((option) => option.id === inputs.stateId);
+    if (known) {
+      persistMartinStudyForDataVis(martinStudyForStateId(inputs.stateId));
+      return;
+    }
+    update({ stateId: 'texas', cityId: 'dallas_tx' });
+  }, [inputs.stateId]);
+
   const handleCapexChange = (technologyCapex) => {
     update({
       technologyCapex: normalizeTechnologyCapex(technologyCapex),
@@ -126,15 +141,50 @@ export default function ConfIdeumInputPanel({
   };
 
   const handleLoadTierChange = (loadMW) => {
+    const stateId = inputs.stateId || 'texas';
     update({ loadMW });
     persistWacoLoadTierForDataVis(loadMW);
     notifyWacoLoadTierChanged(loadMW);
-    void preloadWacoWithDatasetQuality(loadMW, null);
+    void preloadWacoWithDatasetQuality(loadMW, null, stateId).then(() => {
+      if (stateId === 'texas') {
+        onExploreData?.();
+      }
+    });
+  };
+
+  const handleLocationChange = async (nextStateId) => {
+    const option = IDEUM_LOCATION_OPTIONS.find((entry) => entry.id === nextStateId);
+    persistMartinStudyForDataVis(martinStudyForStateId(nextStateId));
+
+    if (nextStateId === 'wisconsin') {
+      update({
+        stateId: nextStateId,
+        cityId: option?.cityId ?? inputs.cityId,
+        loadMW: 200,
+      });
+      persistWacoLoadTierForDataVis(200);
+      notifyWacoLoadTierChanged(200);
+      try {
+        await preloadWacoWithDatasetQuality(200, null, nextStateId);
+        onExploreData?.();
+      } catch {
+        /* preload failure logged in preload helper */
+      }
+      return;
+    }
+
+    clearPersistedWacoLoadTier();
+    update({
+      stateId: nextStateId,
+      cityId: option?.cityId ?? inputs.cityId,
+      loadMW: undefined,
+    });
   };
 
   const loadEditor = (
     <IdeumLoadEditor
-      loadMW={inputs.loadMW ?? DEFAULT_WACO_LOAD_TIER}
+      loadMW={inputs.loadMW}
+      stateId={inputs.stateId || 'texas'}
       onChange={handleLoadTierChange}
     />
   );
@@ -155,11 +205,7 @@ export default function ConfIdeumInputPanel({
           className="conf-ideum-hub-location-select"
           value={inputs.stateId || 'texas'}
           onChange={(e) => {
-            const option = IDEUM_LOCATION_OPTIONS.find((entry) => entry.id === e.target.value);
-            update({
-              stateId: e.target.value,
-              cityId: option?.cityId ?? inputs.cityId,
-            });
+            void handleLocationChange(e.target.value);
           }}
         >
           {IDEUM_LOCATION_OPTIONS.map((option) => (

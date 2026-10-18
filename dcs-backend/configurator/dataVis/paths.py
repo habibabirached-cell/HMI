@@ -19,6 +19,13 @@ WACO_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
 
 DEFAULT_WACO_LOAD_MW = 1000
 
+BADGER_WORKBOOK = "Badger_Hollow_Creek_200MW_live_CAPEX.xlsx"
+BADGER_CLEAN_CSV = "Badger_Hollow_Creek_200MW_clean.csv"
+
+MARTIN_STUDY_WACO = "waco"
+MARTIN_STUDY_BADGER = "badger_hollow_creek"
+MARTIN_STUDIES = frozenset({MARTIN_STUDY_WACO, MARTIN_STUDY_BADGER})
+
 # Default workbook path — legacy imports
 DATAVIS_WACO_XLSX = DATA_MARTIN_DIR / WACO_WORKBOOK_BY_LOAD_MW[DEFAULT_WACO_LOAD_MW]
 
@@ -28,6 +35,49 @@ def waco_workbook_path(load_mw: int) -> Path:
     if not name:
         raise ValueError(f"Unsupported Waco load tier: {load_mw} MW (expected 200 or 1000).")
     return DATA_MARTIN_DIR / name
+
+
+def badger_workbook_path() -> Path:
+    return DATA_MARTIN_DIR / BADGER_WORKBOOK
+
+
+def badger_clean_csv_path() -> Path:
+    return DATA_MARTIN_DIR / BADGER_CLEAN_CSV
+
+
+def badger_dataset_source() -> dict[str, str]:
+    csv_path = badger_clean_csv_path()
+    if csv_path.is_file():
+        return {
+            "kind": "csv",
+            "file": csv_path.name,
+            "source_workbook": BADGER_WORKBOOK,
+            "martin_study": MARTIN_STUDY_BADGER,
+        }
+    workbook = badger_workbook_path()
+    return {
+        "kind": "xlsx",
+        "file": workbook.name,
+        "sheet": DATAVIS_WACO_SHEET,
+        "martin_study": MARTIN_STUDY_BADGER,
+    }
+
+
+def martin_study_from_state_id(state_id: object) -> str:
+    if str(state_id or "").lower() == "wisconsin":
+        return MARTIN_STUDY_BADGER
+    return MARTIN_STUDY_WACO
+
+
+def scenario_context_for_badger() -> dict[str, object]:
+    firm = 200
+    return {
+        "location": "Badger Hollow Creek, Wisconsin",
+        "firm_load_mw": firm,
+        "annual_load_gwh": firm * 8.76,
+        "description": f"Charu DOE — Martin simulation results ({firm} MW firm load)",
+        "martin_study": MARTIN_STUDY_BADGER,
+    }
 
 
 def waco_clean_csv_path(load_mw: int) -> Path:
@@ -46,9 +96,15 @@ def waco_dataset_source(load_mw: int) -> dict[str, str]:
             "kind": "csv",
             "file": csv_path.name,
             "source_workbook": WACO_WORKBOOK_BY_LOAD_MW[tier],
+            "martin_study": MARTIN_STUDY_WACO,
         }
     workbook = waco_workbook_path(tier)
-    return {"kind": "xlsx", "file": workbook.name, "sheet": DATAVIS_WACO_SHEET}
+    return {
+        "kind": "xlsx",
+        "file": workbook.name,
+        "sheet": DATAVIS_WACO_SHEET,
+        "martin_study": MARTIN_STUDY_WACO,
+    }
 
 
 def scenario_context_for_load(load_mw: int) -> dict[str, object]:
@@ -58,6 +114,7 @@ def scenario_context_for_load(load_mw: int) -> dict[str, object]:
         "firm_load_mw": firm,
         "annual_load_gwh": firm * 8.76,
         "description": f"Charu DOE — Martin simulation results ({firm} MW firm load)",
+        "martin_study": MARTIN_STUDY_WACO,
     }
 
 

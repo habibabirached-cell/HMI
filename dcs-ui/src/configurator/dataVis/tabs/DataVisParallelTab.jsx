@@ -47,6 +47,8 @@ const MAX_PARALLEL_DIMS = 8;
 /** Inset parcoords from plot edges (room for axis labels + colorbar). */
 const PARCOORDS_DOMAIN_Y_COMPACT = [0.14, 0.8];
 const PARCOORDS_DOMAIN_Y = [0.12, 0.82];
+/** Explore Data wall — tall axes under swim-lane headers, minimal foot gap. */
+const PARCOORDS_DOMAIN_Y_EXPLORE_WALL = [0.11, 0.965];
 const PARCOORDS_LABEL_FONT_HORIZONTAL_COMPACT = {
   size: 24,
   color: '#1f2933',
@@ -389,7 +391,12 @@ export default function DataVisParallelTab({
         ? PARCOORDS_DOMAIN_X_COMPACT
         : PARCOORDS_DOMAIN_X
       : PARCOORDS_DOMAIN_X_NO_SCALE;
-    const domainY = compact ? [0.14, 0.88] : [0.06, 0.94];
+    const domainY =
+      compact && lockDimensionsToDefaults
+        ? PARCOORDS_DOMAIN_Y_EXPLORE_WALL
+        : compact
+          ? [0.14, 0.88]
+          : [0.06, 0.94];
     const line = {
       type: 'parcoords',
       uirevision,
@@ -470,7 +477,15 @@ export default function DataVisParallelTab({
       bestLcoeValue,
       bestLcoeOverlay,
     };
-  }, [columnStatMap, compact, highlightMartinRowId, parcoordsRanges, payload, uirevision]);
+  }, [
+    columnStatMap,
+    compact,
+    highlightMartinRowId,
+    lockDimensionsToDefaults,
+    parcoordsRanges,
+    payload,
+    uirevision,
+  ]);
 
   overlaySpecRef.current = plotBundle.bestLcoeOverlay;
 
@@ -510,12 +525,14 @@ export default function DataVisParallelTab({
       </span>
     ) : null;
 
+  const isExploreWallParcoords = compact && lockDimensionsToDefaults;
   const showParcoordsToolbar =
-    !lockDimensionsToDefaults ||
-    !compact ||
-    parcoordsActive ||
-    (bestLcoeCaption != null && !bestLcoeBelowChart) ||
-    (onClearAll && !compact);
+    !isExploreWallParcoords &&
+    (!lockDimensionsToDefaults ||
+      !compact ||
+      parcoordsActive ||
+      (bestLcoeCaption != null && !bestLcoeBelowChart) ||
+      (onClearAll && !compact));
 
   return (
     <div
@@ -569,13 +586,21 @@ export default function DataVisParallelTab({
                 width: plotWrapSize.width,
                 height: plotWrapSize.height,
                 margin: compact
-                  ? {
-                      l: 96,
-                      r: showColorScale ? 228 : 28,
-                      t: lockDimensionsToDefaults ? 440 : 132,
-                      b: 96,
-                      pad: 4,
-                    }
+                  ? lockDimensionsToDefaults
+                    ? {
+                        l: 96,
+                        r: showColorScale ? 228 : 28,
+                        t: 378,
+                        b: 24,
+                        pad: 2,
+                      }
+                    : {
+                        l: 96,
+                        r: showColorScale ? 228 : 28,
+                        t: 132,
+                        b: 96,
+                        pad: 4,
+                      }
                   : {
                       l: 96,
                       r: showColorScale ? 172 : 36,

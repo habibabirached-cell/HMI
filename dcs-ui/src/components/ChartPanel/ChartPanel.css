@@ -183,6 +183,26 @@
   min-height: var(--chart-min-height, 260px);
 }
 
+/* conf5: one right column. n charts each take 1/n of the dock height. */
+.chart-panel--equal-vertical .chart-panel-side-inner .chart-panel-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+}
+
+.chart-panel--equal-vertical .chart-panel-side-inner .chart-panel-chart,
+.chart-panel--equal-vertical .chart-panel-side-inner .chart-panel-stack {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  overflow: hidden;
+}
+
 /* Resize handle */
 .chart-panel-resize-handle {
   position: absolute;

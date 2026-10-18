@@ -77,6 +77,11 @@ const Toolbar = ({
       label: '#4',
       title: 'Conf 4: like conf 2, chart2 under chart1',
     },
+    {
+      id: 'conf5',
+      label: '#5',
+      title: 'Conf 5: one column on the right; charts split the height equally',
+    },
   ];
 
   useEffect(() => {

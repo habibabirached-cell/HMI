@@ -9,8 +9,12 @@ import pandas as pd
 from configurator.conf_consolidated import TECH_SPECS
 from configurator.dataVis.dataset_mode import get_datavis_dataframe
 from configurator.dataVis.filters import apply_filters
-from configurator.dataVis.loader import load_waco_dataframe
-from configurator.dataVis.paths import DEFAULT_WACO_LOAD_MW
+from configurator.dataVis.loader import load_martin_dataframe
+from configurator.dataVis.paths import (
+    DEFAULT_WACO_LOAD_MW,
+    MARTIN_STUDY_BADGER,
+    martin_study_from_state_id,
+)
 
 COL_CFE = "Carbon Free Energy (%)"
 COL_LOAD_COMPLIANCE = "Year 1 Load Compliance (%)"
@@ -224,13 +228,18 @@ def generate_martin_configurator_result(
     min_cfe_fraction = min(1.0, max(0.0, min_cfe_percent / 100.0))
     max_cfe_fraction = min(1.0, max(0.0, max_cfe_percent / 100.0))
 
+    martin_study = martin_study_from_state_id(inputs.get("stateId"))
+    if martin_study == MARTIN_STUDY_BADGER:
+        waco_tier = 200
+        load_mw = 200.0
+
     try:
-        load_waco_dataframe(waco_tier)
+        load_martin_dataframe(load_mw=waco_tier, martin_study=martin_study)
         df = get_datavis_dataframe()
     except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
-            "error": "Martin Waco dataset could not be loaded.",
+            "error": "Martin study dataset could not be loaded.",
             "details": [str(exc)],
         }
 
@@ -286,7 +295,11 @@ def generate_martin_configurator_result(
         "martinRowIndex": row_index,
         "martinDataVisRowId": martin_data_vis_row_id,
         "inputs": {**inputs, "minCfePercent": min_cfe_percent, "reliabilityTarget": reliability_target, "loadMW": load_mw},
-        "location": {"state": "Texas", "study": "Martin Waco 1 GW DOE"},
+        "location": (
+            {"state": "Wisconsin", "study": "Martin Badger Hollow Creek 200 MW DOE"}
+            if martin_study == MARTIN_STUDY_BADGER
+            else {"state": "Texas", "study": "Martin Waco DOE"}
+        ),
         "gridConnectionMode": inputs.get("gridConnectionMode") or "grid-connected",
         "summary": (
             f"Least-cost Martin Waco case with carbon-free energy "

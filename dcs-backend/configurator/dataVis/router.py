@@ -21,15 +21,18 @@ router = APIRouter(prefix="/dataVis", tags=["configurator-dataVis"])
 
 
 @router.get("/health")
-def datavis_health(loadMW: int | None = Query(None)):
-    service.ensure_waco_tier(loadMW)
+def datavis_health(
+    loadMW: int | None = Query(None),
+    martinStudy: str | None = Query(None),
+):
+    service.ensure_waco_tier(loadMW, martinStudy)
     return service.get_health()
 
 
 @router.post("/dataset-mode")
 async def datavis_dataset_mode(body: DatasetModeRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         result = service.apply_dataset_mode(body.mode)
         await cluster_manager.broadcast(
             {"type": "datavis_dataset_mode", "mode": result["mode"], "row_count": result["row_count"]},
@@ -42,11 +45,14 @@ async def datavis_dataset_mode(body: DatasetModeRequest):
 
 
 @router.get("/meta")
-def datavis_meta(loadMW: int | None = Query(None)):
+def datavis_meta(
+    loadMW: int | None = Query(None),
+    martinStudy: str | None = Query(None),
+):
     try:
-        service.ensure_waco_tier(loadMW)
+        service.ensure_waco_tier(loadMW, martinStudy)
         tier = int(loadMW) if loadMW in (200, 1000) else None
-        return service.get_meta(tier)
+        return service.get_meta(tier, martinStudy)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
@@ -56,7 +62,7 @@ def datavis_meta(loadMW: int | None = Query(None)):
 @router.post("/column-stats")
 def datavis_column_stats(body: FilterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         filters = [f.model_dump() for f in body.filters]
         return service.get_column_stats(filters)
     except Exception as exc:  # noqa: BLE001
@@ -66,7 +72,7 @@ def datavis_column_stats(body: FilterRequest):
 @router.post("/filter-row-ids")
 def datavis_filter_row_ids(body: FilterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         filters = [f.model_dump() for f in body.filters]
         return service.get_filtered_row_ids(filters)
     except Exception as exc:  # noqa: BLE001
@@ -76,7 +82,7 @@ def datavis_filter_row_ids(body: FilterRequest):
 @router.post("/overview")
 def datavis_overview(body: FilterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         filters = [f.model_dump() for f in body.filters]
         return service.get_overview(filters)
     except Exception as exc:  # noqa: BLE001
@@ -86,7 +92,7 @@ def datavis_overview(body: FilterRequest):
 @router.post("/doe-summary")
 def datavis_doe_summary(body: FilterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         filters = [f.model_dump() for f in body.filters]
         return service.get_doe_summary(filters)
     except Exception as exc:  # noqa: BLE001
@@ -96,7 +102,7 @@ def datavis_doe_summary(body: FilterRequest):
 @router.post("/rows")
 def datavis_rows(body: RowsRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.get_rows(body.model_dump())
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -105,7 +111,7 @@ def datavis_rows(body: RowsRequest):
 @router.post("/chart/scatter")
 def datavis_scatter(body: ScatterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.build_scatter(body.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -116,7 +122,7 @@ def datavis_scatter(body: ScatterRequest):
 @router.post("/chart/heatmap")
 def datavis_heatmap(body: HeatmapRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.build_heatmap(body.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -127,7 +133,7 @@ def datavis_heatmap(body: HeatmapRequest):
 @router.post("/chart/histogram")
 def datavis_histogram(body: HistogramRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.build_histogram(body.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -138,7 +144,7 @@ def datavis_histogram(body: HistogramRequest):
 @router.post("/chart/parallel")
 def datavis_parallel(body: ParallelRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.build_parallel(body.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -149,7 +155,7 @@ def datavis_parallel(body: ParallelRequest):
 @router.post("/quality")
 def datavis_quality(body: FilterRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         filters = [f.model_dump() for f in body.filters]
         return service.get_quality(filters)
     except Exception as exc:  # noqa: BLE001
@@ -159,7 +165,7 @@ def datavis_quality(body: FilterRequest):
 @router.post("/compare")
 def datavis_compare(body: CompareRequest):
     try:
-        service.ensure_waco_tier(body.loadMW)
+        service.ensure_waco_tier(body.loadMW, body.martinStudy)
         return service.compare_rows(body.row_ids)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

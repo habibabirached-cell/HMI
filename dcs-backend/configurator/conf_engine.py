@@ -20,6 +20,7 @@ TECHNOLOGIES: dict[str, dict[str, Any]] = {
 
 STATES: dict[str, dict[str, Any]] = {
     "texas": {"label": "Texas", "solar": 0.62, "wind": 1.0, "lcoeFactor": 1.0, "carbonFactor": 1.0},
+    "wisconsin": {"label": "Wisconsin", "solar": 0.32, "wind": 1.0, "lcoeFactor": 1.0, "carbonFactor": 1.0},
     "arizona": {"label": "Arizona", "solar": 1.0, "wind": 0.32, "lcoeFactor": 0.96, "carbonFactor": 0.94},
     "idaho": {"label": "Idaho", "solar": 0.62, "wind": 1.0, "lcoeFactor": 0.95, "carbonFactor": 0.96},
     "pennsylvania": {"label": "Pennsylvania", "solar": 0.32, "wind": 0.62, "lcoeFactor": 1.04, "carbonFactor": 1.0},
@@ -32,6 +33,7 @@ STATES: dict[str, dict[str, Any]] = {
 
 CITIES: dict[str, dict[str, str]] = {
     "dallas_tx": {"label": "Dallas, TX", "stateId": "texas"},
+    "madison_wi": {"label": "Madison, WI", "stateId": "wisconsin"},
     "houston_tx": {"label": "Houston, TX", "stateId": "texas"},
     "phoenix_az": {"label": "Phoenix, AZ", "stateId": "arizona"},
     "boise_id": {"label": "Boise, ID", "stateId": "idaho"},

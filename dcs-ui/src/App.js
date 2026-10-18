@@ -272,6 +272,7 @@ import { connectLiveRtds, stopLiveRtdsApi } from './utils/rtdsLiveClient';
 import { showRtdsLiveError } from './utils/rtdsLiveErrors';
 import DataCenterConfigurator from './configurator/DataCenterConfigurator';
 import { applyWacoLoadTierHandoff } from './configurator/dataVis/api/dataVisLoadMw';
+import { applyMartinStudyHandoff } from './configurator/utils/conf_martinStudy';
 import { applyExploreSyncHandoff } from './configurator/dataVis/utils/dataVisConfiguratorSync';
 import {
   closeConfiguratorWallOnMaingear,
@@ -683,11 +684,11 @@ function App() {
       window.removeEventListener('resize', sync);
     };
   }, [viewMode]);
-  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = 2×2 chart grid in right drawer + Controls bottom-left; conf4 = like conf2 but chart2 under chart1. */
+  /** Toolbar: conf1 = charts bottom + Controls right; conf2 = charts right + Controls bottom-left; conf3 = 2×2 chart grid in right drawer + Controls bottom-left; conf4 = like conf2 but chart2 under chart1; conf5 = one right column, charts split the height equally. */
   const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState(() => {
     try {
       const v = window.localStorage?.getItem('dcsWorkspaceLayoutPreset');
-      if (v === 'conf2' || v === 'conf3' || v === 'conf4') return v;
+      if (v === 'conf2' || v === 'conf3' || v === 'conf4' || v === 'conf5') return v;
     } catch {
       /* ignore */
     }
@@ -726,7 +727,8 @@ function App() {
     if (
       workspaceLayoutPreset === 'conf2' ||
       workspaceLayoutPreset === 'conf3' ||
-      workspaceLayoutPreset === 'conf4'
+      workspaceLayoutPreset === 'conf4' ||
+      workspaceLayoutPreset === 'conf5'
     ) {
       return 'sideRight';
     }
@@ -741,15 +743,18 @@ function App() {
   const dualChartDrawersStacked = workspaceLayoutPreset === 'conf4';
   /** conf3: four equal quadrants (chart1–chart4) in a 2×2 grid in the right-side drawer. */
   const quadChartDrawers = workspaceLayoutPreset === 'conf3';
-  /** conf1: Controls full-height on the right; conf2/conf3/conf4: full-height strip on the left (below toolbar). */
+  /** conf5: every open chart stacks in one right-hand column and shares the height equally. */
+  const equalVerticalChartColumn = workspaceLayoutPreset === 'conf5';
+  /** conf1: Controls full-height on the right; conf2/conf3/conf4/conf5: full-height strip on the left (below toolbar). */
   const controlsDockRight = workspaceLayoutPreset === 'conf1';
   const controlsDockLeftBottom =
     workspaceLayoutPreset === 'conf2' ||
     workspaceLayoutPreset === 'conf3' ||
-    workspaceLayoutPreset === 'conf4';
+    workspaceLayoutPreset === 'conf4' ||
+    workspaceLayoutPreset === 'conf5';
   const controlsLeftInsetPx = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
   const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
-    if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3' || preset === 'conf4') {
+    if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3' || preset === 'conf4' || preset === 'conf5') {
       if (preset === 'conf3') {
         setCanvasComponents((prev) => {
           if (!designHasStackedSections(prev) || prev.some(
@@ -5507,6 +5512,7 @@ function App() {
     if (command === 'openDataExploration') {
       fireKioskFocusFast('showDcs');
       if (typeof window !== 'undefined') {
+        applyMartinStudyHandoff(payload);
         applyWacoLoadTierHandoff(payload);
         applyExploreSyncHandoff(payload?.exploreSync);
         try {
@@ -5528,6 +5534,7 @@ function App() {
     if (command === 'openExploreData') {
       fireKioskFocusFast('showDcs');
       if (typeof window !== 'undefined') {
+        applyMartinStudyHandoff(payload);
         applyWacoLoadTierHandoff(payload);
         applyExploreSyncHandoff(payload?.exploreSync);
         try {
@@ -8760,7 +8767,8 @@ function App() {
         restoredLayout === 'conf1' ||
         restoredLayout === 'conf2' ||
         restoredLayout === 'conf3' ||
-        restoredLayout === 'conf4'
+        restoredLayout === 'conf4' ||
+        restoredLayout === 'conf5'
       ) {
         setWorkspaceLayoutPreset(restoredLayout);
       }
@@ -9641,7 +9649,8 @@ function App() {
               ['--chart-side-dock-width']:
                 workspaceLayoutPreset === 'conf2' ||
                 workspaceLayoutPreset === 'conf3' ||
-                workspaceLayoutPreset === 'conf4'
+                workspaceLayoutPreset === 'conf4' ||
+                workspaceLayoutPreset === 'conf5'
                   ? `${chartSideDockWidth}px`
                   : '0px',
               ['--controls-chart-gap']: `${CONTROLS_CHART_GAP_PX}px`,
@@ -10436,6 +10445,7 @@ function App() {
           dualChartDrawers={dualWorkspaceDrawers}
           dualChartDrawersStacked={dualChartDrawersStacked}
           quadChartDrawers={quadChartDrawers}
+          equalVerticalChartColumn={equalVerticalChartColumn}
           quadBottomRowShare={quadBottomRowShare}
           onQuadBottomRowShareChange={setQuadBottomRowShare}
           onMoveChartDrawer={handleMoveChartDrawer}

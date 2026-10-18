@@ -480,6 +480,7 @@ function syncLegendMoveOutline(gd, armed) {
  * - dualChartDrawers: workspace conf1/conf2/conf4 → two labeled strips (chart1 / chart2)
  * - dualChartDrawersStacked: conf4 → chart2 under chart1 (default: side-by-side columns)
  * - quadChartDrawers: conf3 → four equal quadrants (chart1–chart4) in a 2×2 grid
+ * - equalVerticalChartColumn: conf5 → one right column; each chart takes 1/n of the height
  * - onMoveChartDrawer(chartId, 'chart1' | 'chart2' | 'chart3' | 'chart4'): move chart between drawers
  * - onSwapChartDrawers(chartIdA, chartIdB): swap quadrant/stack slot (toolbar drag-and-drop)
  */
@@ -549,6 +550,7 @@ const ChartPanel = ({
   dualChartDrawers = false,
   dualChartDrawersStacked = false,
   quadChartDrawers = false,
+  equalVerticalChartColumn = false,
   quadBottomRowShare: quadBottomRowShareProp,
   onQuadBottomRowShareChange,
   onMoveChartDrawer,
@@ -2148,11 +2150,14 @@ const ChartPanel = ({
 
   const cardSizeCssVars = (chart) => {
     const size = effectiveCardSizePx(chart);
-    if (isVerticalChartLayout) {
+    if (isVerticalChartLayout && !equalVerticalChartColumn) {
       return {
         '--chart-height': `${size}px`,
         '--chart-min-height': `${Math.max(200, size - 50)}px`,
       };
+    }
+    if (equalVerticalChartColumn) {
+      return {};
     }
     return {
       '--chart-min-width': `${Math.max(200, size - 150)}px`,
@@ -4290,7 +4295,7 @@ const ChartPanel = ({
     layoutMode === 'sideRight'
       ? `chart-panel--layout-side-right${
           quadChartDrawers ? ' chart-panel--layout-side-right-quad' : ''
-        }`
+        }${equalVerticalChartColumn ? ' chart-panel--equal-vertical' : ''}`
       : layoutMode === 'top'
         ? 'chart-panel--layout-top'
         : 'chart-panel--layout-bottom';

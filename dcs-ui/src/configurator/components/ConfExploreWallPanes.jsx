@@ -46,11 +46,14 @@ function WallDetailsTable({ mix }) {
   );
 }
 
-function ExplorePane({ title, className, children }) {
+function ExplorePane({ title, className, children, headerAction = null }) {
   return (
     <section className={`conf-wall-quadrant ${className}`.trim()} aria-label={title}>
       <header className="conf-wall-quadrant__header">
         <h2 className="conf-wall-quadrant__title">{title}</h2>
+        {headerAction ? (
+          <div className="conf-wall-quadrant__headerActions">{headerAction}</div>
+        ) : null}
       </header>
       <div className="conf-wall-quadrant__body">{children}</div>
     </section>
@@ -67,7 +70,24 @@ function ExploreWallLoading({ message }) {
 }
 
 /** Returns [TL, TR, BL] panes for WallBezelShell (spread as children). BR is parallel coords in layout. */
-export function buildExploreWallPanes({ result, inputs, isGenerating, statusMessage }) {
+function exploreWallClearFiltersButton(onClearAll) {
+  if (!onClearAll) return null;
+  return (
+    <button type="button" className="dataVis-quadSlot__clear" onClick={onClearAll}>
+      Clear all filters
+    </button>
+  );
+}
+
+export function buildExploreWallPanes({
+  result,
+  inputs,
+  isGenerating,
+  statusMessage,
+  onClearAll,
+}) {
+  const clearFiltersAction = exploreWallClearFiltersButton(onClearAll);
+
   if (isGenerating) {
     return [
       <ExplorePane key="arch" title="Recommended Architecture" className="conf-wall-quadrant--architecture">
@@ -76,7 +96,12 @@ export function buildExploreWallPanes({ result, inputs, isGenerating, statusMess
       <ExplorePane key="kpi" title="Key Performance Indicators" className="conf-wall-quadrant--kpis">
         <ExploreWallLoading />
       </ExplorePane>,
-      <ExplorePane key="supply" title="Optimal Supply Mix" className="conf-wall-quadrant--supply">
+      <ExplorePane
+        key="supply"
+        title="Optimal Supply Mix · Economics & Environment"
+        className="conf-wall-quadrant--supply dataVis-exploreWall__supplyEconomics"
+        headerAction={clearFiltersAction}
+      >
         <ExploreWallLoading />
       </ExplorePane>,
     ];
@@ -90,7 +115,12 @@ export function buildExploreWallPanes({ result, inputs, isGenerating, statusMess
       <ExplorePane key="kpi" title="Key Performance Indicators" className="conf-wall-quadrant--kpis">
         <p className="dataVis-muted">KPIs appear when a configuration is available.</p>
       </ExplorePane>,
-      <ExplorePane key="supply" title="Optimal Supply Mix" className="conf-wall-quadrant--supply">
+      <ExplorePane
+        key="supply"
+        title="Optimal Supply Mix · Economics & Environment"
+        className="conf-wall-quadrant--supply dataVis-exploreWall__supplyEconomics"
+        headerAction={clearFiltersAction}
+      >
         <p className="dataVis-muted">Supply mix appears when a configuration is available.</p>
       </ExplorePane>,
     ];
@@ -136,6 +166,7 @@ export function buildExploreWallPanes({ result, inputs, isGenerating, statusMess
       key="supply"
       title="Optimal Supply Mix · Economics & Environment"
       className="conf-wall-quadrant--supply dataVis-exploreWall__supplyEconomics"
+      headerAction={clearFiltersAction}
     >
       <ConfMetricsPanel result={result} />
       <WallDetailsTable mix={result.supplyMix} />

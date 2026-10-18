@@ -29,6 +29,7 @@ class ConfiguratorInputs(BaseModel):
 
 class WacoPreloadRequest(BaseModel):
     loadMW: Optional[int] = None
+    martinStudy: Optional[str] = None
 
 
 class ConfiguratorGenerateResponse(BaseModel):

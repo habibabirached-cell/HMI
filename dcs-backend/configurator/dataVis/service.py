@@ -28,12 +28,19 @@ from configurator.dataVis.dataset_mode import (
 )
 from configurator.dataVis.loader import (
     column_stats,
+    get_active_martin_study,
     get_active_waco_load_mw,
+    load_martin_dataframe,
     load_waco_dataframe,
+    set_active_martin_study,
     set_active_waco_load_mw,
 )
 from configurator.dataVis.paths import (
     DATAVIS_WACO_SHEET,
+    MARTIN_STUDY_BADGER,
+    MARTIN_STUDIES,
+    badger_dataset_source,
+    scenario_context_for_badger,
     scenario_context_for_load,
     waco_dataset_source,
     waco_workbook_path,
@@ -62,6 +69,12 @@ def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
     return [{k: _json_safe(v) for k, v in row.items()} for row in rows]
 
 
+def _active_dataset_source() -> dict[str, str]:
+    if get_active_martin_study() == MARTIN_STUDY_BADGER:
+        return badger_dataset_source()
+    return waco_dataset_source(get_active_waco_load_mw())
+
+
 def get_health() -> dict[str, Any]:
     try:
         df = get_datavis_dataframe()
@@ -70,8 +83,9 @@ def get_health() -> dict[str, Any]:
             "rows": len(df),
             "dataset_mode": get_dataset_mode(),
             "load_mw": get_active_waco_load_mw(),
-            "workbook": waco_dataset_source(get_active_waco_load_mw()).get("file"),
-            "dataset_source": waco_dataset_source(get_active_waco_load_mw()),
+            "martin_study": get_active_martin_study(),
+            "workbook": _active_dataset_source().get("file"),
+            "dataset_source": _active_dataset_source(),
             "sheet": DATAVIS_WACO_SHEET,
         }
     except Exception as exc:  # noqa: BLE001
@@ -95,11 +109,28 @@ def apply_dataset_mode(mode: str) -> dict[str, Any]:
     return set_dataset_mode(mode)
 
 
-def ensure_waco_tier(load_mw: int | None) -> None:
-    """Select 200 MW vs 1 GW workbook before dataVis queries (mirrors configurator load buttons)."""
+def ensure_waco_tier(load_mw: int | None, martin_study: str | None = None) -> None:
+    """Select Martin study + Waco tier before dataVis queries."""
+    ensure_martin_dataset(load_mw=load_mw, martin_study=martin_study)
+
+
+def ensure_martin_dataset(
+    load_mw: int | None = None,
+    martin_study: str | None = None,
+) -> None:
+    study = martin_study if martin_study in MARTIN_STUDIES else get_active_martin_study()
+    prev_study = get_active_martin_study()
+    if martin_study in MARTIN_STUDIES:
+        set_active_martin_study(martin_study)
+        study = martin_study
+    if study == MARTIN_STUDY_BADGER:
+        if prev_study != study:
+            reset_datavis_mode()
+        load_martin_dataframe(load_mw=200, martin_study=study, force_reload=False)
+        return
+
     if load_mw is None:
-        # Do not force DEFAULT_WACO_LOAD_MW here — that reverted active tier to 200 after a 1000 preload.
-        load_waco_dataframe(get_active_waco_load_mw(), force_reload=False)
+        load_martin_dataframe(load_mw=get_active_waco_load_mw(), martin_study=study, force_reload=False)
         return
     try:
         tier = int(round(float(load_mw)))
@@ -108,28 +139,32 @@ def ensure_waco_tier(load_mw: int | None) -> None:
     if tier not in (200, 1000):
         return
     prev = get_active_waco_load_mw()
-    load_waco_dataframe(tier, force_reload=False)
+    load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=False)
     set_active_waco_load_mw(tier)
-    if prev != tier:
+    if prev_study != study or prev != tier:
         reset_datavis_mode()
 
 
-def get_meta(requested_load_mw: int | None = None) -> dict[str, Any]:
-    tier = requested_load_mw if requested_load_mw in (200, 1000) else get_active_waco_load_mw()
-    if get_active_waco_load_mw() != tier:
-        load_waco_dataframe(tier, force_reload=False)
-        set_active_waco_load_mw(tier)
-        reset_datavis_mode()
+def get_meta(requested_load_mw: int | None = None, martin_study: str | None = None) -> dict[str, Any]:
+    ensure_martin_dataset(load_mw=requested_load_mw, martin_study=martin_study)
 
     df = get_datavis_dataframe()
     stats = _column_stats_for_dataframe(df)
     active = get_active_waco_load_mw()
+    study = get_active_martin_study()
+    if study == MARTIN_STUDY_BADGER:
+        scenario = scenario_context_for_badger()
+        source = badger_dataset_source()
+    else:
+        scenario = scenario_context_for_load(active)
+        source = waco_dataset_source(active)
 
     return {
-        "scenario": scenario_context_for_load(active),
+        "scenario": scenario,
         "load_mw": active,
-        "workbook": waco_dataset_source(active).get("file"),
-        "dataset_source": waco_dataset_source(active),
+        "martin_study": study,
+        "workbook": source.get("file"),
+        "dataset_source": source,
         "dataset_mode": get_dataset_mode(),
         "row_count": len(df),
         "column_count": len(df.columns),

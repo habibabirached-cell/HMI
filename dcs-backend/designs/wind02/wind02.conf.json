@@ -131,7 +131,7 @@
         "voltage": 34.5,
         "unit": "",
         "tieGroup": {
-          "collapsed": false,
+          "collapsed": true,
           "memberIds": [
             "wo26-gfl-wind",
             "wo26-wind-cb",
@@ -816,10 +816,10 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 1.1083145254950608,
+    "zoom": 0.7983145254950605,
     "pan": {
-      "x": 538.7730006731857,
-      "y": 406.95410089642894
+      "x": -210.4269993268143,
+      "y": 372.3541008964296
     },
     "panTop": {
       "x": 120,
@@ -836,7 +836,7 @@
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": null,
     "designViewMode": "canvas",
-    "workspaceLayoutPreset": "conf2"
+    "workspaceLayoutPreset": "conf5"
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
@@ -847,6 +847,7 @@
     "t2": 60.0
   },
   "designUiSession": {
+    "ensembleId": "s14_",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": false,

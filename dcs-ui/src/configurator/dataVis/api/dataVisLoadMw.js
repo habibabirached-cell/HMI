@@ -2,11 +2,17 @@ import {
   DEFAULT_WACO_LOAD_TIER,
   normalizeWacoLoadTier,
 } from '../../utils/conf_wacoLoadTier';
+import {
+  MARTIN_STUDY_BADGER,
+  effectiveMartinStudy,
+  persistMartinStudyForDataVis,
+} from '../../utils/conf_martinStudy';
 
 /** Set only by Ideum 200MW / 1000MW buttons — not cleared by explore-sync corridor updates. */
 export const DATAVIS_WACO_LOAD_TIER_STORAGE_KEY = 'dcs.dataVis.wacoLoadTier';
 
 export const WACO_LOAD_MW_URL_PARAM = 'wacoLoadMW';
+export const MARTIN_STUDY_URL_PARAM = 'martinStudy';
 
 export const WACO_LOAD_TIER_CHANGED_EVENT = 'dcs:waco-load-tier-changed';
 
@@ -38,19 +44,40 @@ export function readDataVisLoadMwTier() {
 }
 
 /** Tier on every dataVis / preload call — defaults to 1000 MW until a load button picks 200. */
-export function effectiveDataVisLoadMwTier() {
+export function effectiveDataVisLoadMwTier(stateId) {
+  const study = effectiveMartinStudy(stateId);
+  if (study === MARTIN_STUDY_BADGER) return 200;
   return readPersistedWacoLoadTier() ?? DEFAULT_WACO_LOAD_TIER;
 }
 
+export function clearPersistedWacoLoadTier() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(DATAVIS_WACO_LOAD_TIER_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Ideum → Maingear remote-command payload (separate browser session on wall PC). */
-export function wacoLoadTierHandoffPayload() {
-  return { wacoLoadMW: effectiveDataVisLoadMwTier() };
+export function wacoLoadTierHandoffPayload(stateId) {
+  return {
+    wacoLoadMW: effectiveDataVisLoadMwTier(stateId),
+    martinStudy: effectiveMartinStudy(stateId),
+    stateId,
+  };
 }
 
 /** Apply tier from cluster remote-command payload on Maingear UI. */
 export function applyWacoLoadTierHandoff(payload) {
+  const stateId = payload?.stateId;
+  if (payload?.martinStudy || stateId) {
+    persistMartinStudyForDataVis(
+      payload?.martinStudy ?? effectiveMartinStudy(stateId),
+    );
+  }
   const tier = normalizeWacoLoadTier(payload?.wacoLoadMW ?? payload?.loadMW);
-  if (tier == null) return effectiveDataVisLoadMwTier();
+  if (tier == null) return effectiveDataVisLoadMwTier(stateId);
   const prev = readPersistedWacoLoadTier();
   if (prev === tier) return tier;
   persistWacoLoadTierForDataVis(tier);
@@ -60,13 +87,22 @@ export function applyWacoLoadTierHandoff(payload) {
 
 export function inputsWithEffectiveWacoLoadTier(inputs) {
   if (!inputs || typeof inputs !== 'object') return inputs;
-  return { ...inputs, loadMW: effectiveDataVisLoadMwTier() };
+  const stateId = inputs.stateId;
+  const martinStudy = effectiveMartinStudy(stateId);
+  return {
+    ...inputs,
+    loadMW: effectiveDataVisLoadMwTier(stateId),
+    martinStudy,
+  };
 }
 
 /** Remote command payload: Waco tier + corridor filters for Maingear UI. */
 export function buildExploreRemoteCommandPayload(exploreSyncPayload) {
+  const stateId = exploreSyncPayload?.inputs?.stateId;
   return {
-    wacoLoadMW: effectiveDataVisLoadMwTier(),
+    wacoLoadMW: effectiveDataVisLoadMwTier(stateId),
+    martinStudy: effectiveMartinStudy(stateId),
+    stateId,
     exploreSync: exploreSyncPayload,
   };
 }
@@ -102,12 +138,19 @@ export function hydrateWacoLoadTierFromUrl() {
   }
 }
 
-export function withDataVisLoadMw(body = {}) {
-  return { ...body, loadMW: effectiveDataVisLoadMwTier() };
+export function withDataVisLoadMw(body = {}, stateId) {
+  const study = effectiveMartinStudy(stateId ?? body.stateId);
+  return {
+    ...body,
+    loadMW: effectiveDataVisLoadMwTier(stateId ?? body.stateId),
+    martinStudy: study,
+  };
 }
 
-export function dataVisLoadMwQueryString() {
-  return `loadMW=${encodeURIComponent(String(effectiveDataVisLoadMwTier()))}`;
+export function dataVisLoadMwQueryString(stateId) {
+  const tier = effectiveDataVisLoadMwTier(stateId);
+  const study = effectiveMartinStudy(stateId);
+  return `loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}`;
 }
 export function notifyWacoLoadTierChanged(loadMW) {
   if (typeof window === 'undefined') return;

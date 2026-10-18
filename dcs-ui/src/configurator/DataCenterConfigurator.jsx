@@ -62,6 +62,7 @@ import {
   hydrateWacoLoadTierFromUrl,
   inputsWithEffectiveWacoLoadTier,
   persistWacoLoadTierForDataVis,
+  readPersistedWacoLoadTier,
   WACO_LOAD_MW_URL_PARAM,
   WACO_LOAD_TIER_CHANGED_EVENT,
 } from './dataVis/api/dataVisLoadMw';
@@ -133,9 +134,10 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   const [inputs, setInputs] = useState(() => {
     if (mode === 'ideum' || mode === 'martin-dev-tab') {
-      let loadMW = DEFAULT_WACO_LOAD_TIER;
+      let loadMW;
       if (typeof window !== 'undefined') {
-        loadMW = hydrateWacoLoadTierFromUrl();
+        hydrateWacoLoadTierFromUrl();
+        loadMW = readPersistedWacoLoadTier() ?? undefined;
       }
       return buildIdeumConfiguratorInputs(loadMW);
     }

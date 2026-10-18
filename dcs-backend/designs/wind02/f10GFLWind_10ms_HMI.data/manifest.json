@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "columns": [
+    "t",
+    "Vload_1",
+    "Pload",
+    "f_load",
+    "f_GFLW",
+    "f_BESS",
+    "P_BESS",
+    "P_GFL"
+  ],
+  "row_count": 60002,
+  "column_files": [
+    "c0000.parquet",
+    "c0001.parquet",
+    "c0002.parquet",
+    "c0003.parquet",
+    "c0004.parquet",
+    "c0005.parquet",
+    "c0006.parquet",
+    "c0007.parquet"
+  ]
+}

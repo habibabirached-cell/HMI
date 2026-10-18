@@ -5178,9 +5178,17 @@ body.conf-wall-bezel-dragging-both {
 
 .conf-wall-quadrant__header {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: clamp(12px, 1.2vw, 20px);
   padding-bottom: clamp(10px, 1vw, 16px);
   border-bottom: 3px solid var(--conf-evergreen);
+}
+
+.conf-wall-quadrant__headerActions {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .conf-wall-quadrant__title {

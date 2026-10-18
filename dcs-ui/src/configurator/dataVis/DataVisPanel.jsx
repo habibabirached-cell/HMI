@@ -65,6 +65,11 @@ import {
   inputsWithEffectiveWacoLoadTier,
 } from './api/dataVisLoadMw';
 import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
+import {
+  applyMartinStudyHandoff,
+  effectiveMartinStudy,
+  readPersistedMartinStudy,
+} from '../utils/conf_martinStudy';
 import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
 const TABS = [
@@ -197,25 +202,30 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
   const reloadInFlightRef = useRef(null);
 
   const reloadWacoDatasetForTier = useCallback(
-    async (tierOverride) => {
-      const tier = normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier();
+    async (tierOverride, stateIdOverride) => {
+      const storedInputs = readPersistedConfiguratorInputs()?.inputs;
+      const stateId = stateIdOverride ?? storedInputs?.stateId ?? 'texas';
+      const tier = normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier(stateId);
+      const expectedStudy = effectiveMartinStudy(stateId);
       if (reloadInFlightRef.current) {
         return reloadInFlightRef.current;
       }
       const run = (async () => {
         try {
-          await preloadWacoWithDatasetQuality(tier, null);
+          await preloadWacoWithDatasetQuality(tier, null, stateId);
           resetExplorationClientState();
-          let res = await fetchDataVisMeta(tier);
+          let res = await fetchDataVisMeta(tier, stateId);
           let metaTier = normalizeWacoLoadTier(res?.load_mw);
-          if (metaTier !== tier) {
-            await preloadWacoWithDatasetQuality(tier, null);
-            res = await fetchDataVisMeta(tier);
+          let metaStudy = res?.martin_study ?? res?.dataset_source?.martin_study;
+          if (metaTier !== tier || metaStudy !== expectedStudy) {
+            await preloadWacoWithDatasetQuality(tier, null, stateId);
+            res = await fetchDataVisMeta(tier, stateId);
             metaTier = normalizeWacoLoadTier(res?.load_mw);
+            metaStudy = res?.martin_study ?? res?.dataset_source?.martin_study;
           }
-          if (metaTier !== tier) {
+          if (metaTier !== tier || metaStudy !== expectedStudy) {
             setError(
-              `Waco tier mismatch: expected ${tier} MW but meta returned ${res?.load_mw ?? '?'} MW (${res?.workbook ?? 'unknown'}). Press ${tier}MW again.`,
+              `Martin dataset mismatch: expected ${expectedStudy} ${tier} MW but meta returned ${metaStudy ?? '?'} ${res?.load_mw ?? '?'} MW (${res?.workbook ?? 'unknown'}). Press ${tier}MW again.`,
             );
             return;
           }
@@ -409,10 +419,14 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     (payload) => {
       if (!payload) return;
       if (payload.inputs) {
-        const prevTier = effectiveDataVisLoadMwTier();
+        const stateId = payload.inputs.stateId;
+        const prevTier = effectiveDataVisLoadMwTier(stateId);
+        const prevStudy = readPersistedMartinStudy();
+        applyMartinStudyHandoff(payload.inputs);
         const tier = applyWacoLoadTierHandoff(payload.inputs);
-        if (tier !== prevTier) {
-          void reloadWacoDatasetForTier(tier);
+        const study = readPersistedMartinStudy();
+        if (tier !== prevTier || study !== prevStudy) {
+          void reloadWacoDatasetForTier(tier, stateId);
         }
       }
       if (isExploreWall) {

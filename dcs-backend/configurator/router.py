@@ -24,8 +24,14 @@ from configurator.conf_schemas import (
     WacoPreloadRequest,
 )
 from configurator.dataVis.dataset_mode import reset_datavis_mode
-from configurator.dataVis.loader import get_active_waco_load_mw, load_waco_dataframe
-from configurator.dataVis.paths import waco_dataset_source
+from configurator.dataVis.loader import get_active_martin_study, load_martin_dataframe
+from configurator.dataVis.paths import (
+    MARTIN_STUDY_BADGER,
+    MARTIN_STUDIES,
+    badger_dataset_source,
+    martin_study_from_state_id,
+    waco_dataset_source,
+)
 from configurator.dataVis.router import router as datavis_router
 
 router = APIRouter(prefix="/api/configurator", tags=["configurator"])
@@ -128,16 +134,34 @@ def _waco_tier_from_load_mw(load_mw: object) -> int | None:
     return tier if tier in (200, 1000) else None
 
 
-def _preload_waco_workbook(load_mw: int | None = None) -> dict:
-    tier = _waco_tier_from_load_mw(load_mw)
-    if tier is None:
-        raise ValueError("loadMW must be 200 or 1000")
-    df = load_waco_dataframe(tier, force_reload=True)
+def _resolve_martin_study(martin_study: object, state_id: object = None) -> str:
+    if isinstance(martin_study, str) and martin_study in MARTIN_STUDIES:
+        return martin_study
+    return martin_study_from_state_id(state_id)
+
+
+def _preload_martin_workbook(
+    load_mw: int | None = None,
+    *,
+    martin_study: str | None = None,
+    state_id: object = None,
+) -> dict:
+    study = _resolve_martin_study(martin_study, state_id)
+    if study == MARTIN_STUDY_BADGER:
+        tier = 200
+        df = load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=True)
+        source = badger_dataset_source()
+    else:
+        tier = _waco_tier_from_load_mw(load_mw)
+        if tier is None:
+            raise ValueError("loadMW must be 200 or 1000")
+        df = load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=True)
+        source = waco_dataset_source(tier)
     reset_datavis_mode()
-    source = waco_dataset_source(tier)
     return {
         "ok": True,
         "load_mw": tier,
+        "martin_study": get_active_martin_study(),
         "workbook": source.get("file"),
         "dataset_source": source,
         "sheet": source.get("sheet", "data"),
@@ -145,12 +169,23 @@ def _preload_waco_workbook(load_mw: int | None = None) -> dict:
     }
 
 
-async def _handle_waco_preload(load_mw: int | None) -> dict:
-    tier = _waco_tier_from_load_mw(load_mw)
-    if tier is None:
-        raise HTTPException(status_code=400, detail="loadMW must be 200 or 1000")
+async def _handle_waco_preload(
+    load_mw: int | None,
+    *,
+    martin_study: str | None = None,
+    state_id: object = None,
+) -> dict:
+    if _resolve_martin_study(martin_study, state_id) != MARTIN_STUDY_BADGER:
+        tier = _waco_tier_from_load_mw(load_mw)
+        if tier is None:
+            raise HTTPException(status_code=400, detail="loadMW must be 200 or 1000")
     try:
-        return await asyncio.to_thread(_preload_waco_workbook, tier)
+        return await asyncio.to_thread(
+            _preload_martin_workbook,
+            load_mw,
+            martin_study=martin_study,
+            state_id=state_id,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -173,7 +208,10 @@ async def configurator_waco_preload(
     """Load Waco study workbook (200 MW or 1 GW) into backend cache (Martin / dataVis)."""
     payload = body or WacoPreloadRequest()
     tier_mw = payload.loadMW if payload.loadMW is not None else loadMW
-    return await _handle_waco_preload(tier_mw)
+    return await _handle_waco_preload(
+        tier_mw,
+        martin_study=payload.martinStudy,
+    )
 
 
 @router.get("/cluster/session")
@@ -262,11 +300,21 @@ async def configurator_cluster_close(body: dict | None = None):
     )
 
 
-async def _forward_waco_preload_to_peer(peer_base: str, load_mw: int | None = None) -> dict:
+async def _forward_waco_preload_to_peer(
+    peer_base: str,
+    load_mw: int | None = None,
+    *,
+    martin_study: str | None = None,
+    state_id: object = None,
+) -> dict:
     url = f"{peer_base.rstrip('/')}/api/configurator/waco/preload"
-    post_body = {}
+    post_body: dict[str, object] = {}
     if load_mw is not None:
         post_body["loadMW"] = load_mw
+    if martin_study in MARTIN_STUDIES:
+        post_body["martinStudy"] = martin_study
+    if state_id:
+        post_body["stateId"] = state_id
 
     def _post() -> tuple[dict, int]:
         req = urllib.request.Request(
@@ -305,13 +353,25 @@ async def configurator_cluster_waco_preload(body: dict | None = None):
     """
     payload = body if isinstance(body, dict) else {}
     tier = _waco_tier_from_load_mw(payload.get("loadMW"))
+    martin_study = payload.get("martinStudy")
+    state_id = payload.get("stateId")
     role = resolve_machine_role()
-    local = await asyncio.to_thread(_preload_waco_workbook, tier)
+    local = await asyncio.to_thread(
+        _preload_martin_workbook,
+        tier,
+        martin_study=martin_study,
+        state_id=state_id,
+    )
 
     peer_url = (role.get("peerBackendUrl") or "").strip()
     if role.get("isIdeum") and peer_url and not role.get("combinedWallAndTouch"):
         try:
-            peer = await _forward_waco_preload_to_peer(peer_url, tier)
+            peer = await _forward_waco_preload_to_peer(
+                peer_url,
+                tier,
+                martin_study=martin_study if isinstance(martin_study, str) else None,
+                state_id=state_id,
+            )
             return {"ok": True, "local": local, "peer": peer, "forwarded": True}
         except HTTPException as exc:
             return {
@@ -364,10 +424,16 @@ async def _forward_cluster_explore_sync_to_peer(peer_base: str, body: dict) -> d
 async def _sync_waco_workbook_from_inputs(inputs: dict | None) -> dict | None:
     if not isinstance(inputs, dict):
         return None
+    study = _resolve_martin_study(inputs.get("martinStudy"), inputs.get("stateId"))
     tier = _waco_tier_from_load_mw(inputs.get("loadMW"))
-    if tier is None:
+    if study != MARTIN_STUDY_BADGER and tier is None:
         return None
-    return await asyncio.to_thread(_preload_waco_workbook, tier)
+    return await asyncio.to_thread(
+        _preload_martin_workbook,
+        tier if tier is not None else 200,
+        martin_study=study,
+        state_id=inputs.get("stateId"),
+    )
 
 
 @router.post("/cluster/explore-sync")

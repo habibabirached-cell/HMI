@@ -199,9 +199,14 @@ export const IDEUM_OPEN_CORRIDOR_INPUTS = {
 };
 
 export function buildIdeumConfiguratorInputs(loadMW = DEFAULT_WACO_LOAD_TIER) {
-  return {
+  const next = {
     ...CONFIGURATOR_DEFAULT_INPUTS,
     ...IDEUM_OPEN_CORRIDOR_INPUTS,
-    loadMW,
   };
+  if (loadMW != null) {
+    next.loadMW = loadMW;
+  } else {
+    delete next.loadMW;
+  }
+  return next;
 }

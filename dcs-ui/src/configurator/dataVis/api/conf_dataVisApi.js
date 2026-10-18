@@ -4,6 +4,7 @@
 
 import { API_BASE_URL } from '../../../apiConfig';
 import { normalizeWacoLoadTier } from '../../utils/conf_wacoLoadTier';
+import { effectiveMartinStudy } from '../../utils/conf_martinStudy';
 import {
   dataVisLoadMwQueryString,
   effectiveDataVisLoadMwTier,
@@ -15,13 +16,14 @@ const DATAVIS_BASE = API_BASE_URL
   ? `${API_BASE_URL}/api/configurator/dataVis`
   : '/api/configurator/dataVis';
 
-function resolveMetaLoadMw(loadMW) {
-  return normalizeWacoLoadTier(loadMW) ?? effectiveDataVisLoadMwTier();
+function resolveMetaLoadMw(loadMW, stateId) {
+  return normalizeWacoLoadTier(loadMW) ?? effectiveDataVisLoadMwTier(stateId);
 }
 
-function metaUrl(loadMW) {
-  const tier = resolveMetaLoadMw(loadMW);
-  return `${DATAVIS_BASE}/meta?loadMW=${encodeURIComponent(String(tier))}`;
+function metaUrl(loadMW, stateId) {
+  const tier = resolveMetaLoadMw(loadMW, stateId);
+  const study = effectiveMartinStudy(stateId);
+  return `${DATAVIS_BASE}/meta?loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}`;
 }
 
 async function parseJson(res) {
@@ -46,8 +48,8 @@ export async function fetchDataVisHealth() {
   return parseJson(res);
 }
 
-export async function fetchDataVisMeta(loadMW) {
-  const res = await fetch(metaUrl(loadMW));
+export async function fetchDataVisMeta(loadMW, stateId) {
+  const res = await fetch(metaUrl(loadMW, stateId));
   return parseJson(res);
 }
 
