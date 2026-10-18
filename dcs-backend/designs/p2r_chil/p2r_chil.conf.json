@@ -24723,18 +24723,18 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.745564903042372,
+    "zoom": 0.695564903042372,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
     },
     "panTop": {
-      "x": -123.0068252766895,
+      "x": -51.0068252766895,
       "y": 233.89499229914784
     },
     "panBottom": {
-      "x": -79.03248852019082,
-      "y": -69.7081502411839
+      "x": -7.0324885201908245,
+      "y": 218.2918497588161
     },
     "quadBottomRowShare": 51.5,
     "mode": "design",
@@ -24748,7 +24748,7 @@
       },
       "lower": {
         "line1": "Augmented Configuration : ",
-        "line2": "+ BESS and +STATCOM"
+        "line2": "+ MVUPS"
       }
     },
     "designViewMode": "canvas",
@@ -24769,7 +24769,7 @@
       "showUpper": true,
       "showLower": true,
       "hideBranches": [],
-      "showMvupsFlatSchematic": false,
+      "showMvupsFlatSchematic": true,
       "canvasExternalPrimaryLabels": false
     },
     "quickScenarioBranchCollapsed": {

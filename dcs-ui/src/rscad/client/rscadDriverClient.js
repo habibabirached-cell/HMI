@@ -1,10 +1,14 @@
 /**
  * Browser client for Roberto's RSCAD driver (Windows host, port 8008).
- * The page is served from the Maingear, so the socket uses that same host.
- * Start payload matches the sibling repo CAD_Driver/rscad-driver-svc/src/ws_client/run_streaming_scenario.py.
+ * The driver runs only on the Maingear. Ideum opens the kiosk at localhost,
+ * so the socket must target the Maingear Ethernet host, not the page host.
+ * Start payload matches CAD_Driver/rscad-driver-svc/src/ws_client/run_streaming_scenario.py.
  */
 
+import { fetchMachineRole } from '../../utils/clusterPeer';
+
 const RSCAD_PORT = '8008';
+const MAINGEAR_RSCAD_HOST = '192.168.50.1';
 const CONNECT_TIMEOUT_MS = 8000;
 const START_TIMEOUT_MS = 60000;
 
@@ -60,8 +64,40 @@ function pageHost() {
   return window.location.hostname || '127.0.0.1';
 }
 
-export function rscadDriverWebSocketUrl() {
-  return `ws://${pageHost()}:${RSCAD_PORT}/ws/stream_model`;
+function hostFromUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  try {
+    return new URL(url).hostname || '';
+  } catch {
+    return '';
+  }
+}
+
+function isLoopbackHost(host) {
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+/**
+ * Ideum kiosk → Maingear Ethernet (192.168.50.1).
+ * Maingear or a dev laptop → the host that served this page (Roberto's client uses 127.0.0.1).
+ */
+export async function resolveRscadDriverHost() {
+  try {
+    const role = await fetchMachineRole();
+    if (role?.isIdeum && !role?.isMaingear) {
+      const peerHost = hostFromUrl(role.peerBackendUrl);
+      if (peerHost && !isLoopbackHost(peerHost)) return peerHost;
+      return MAINGEAR_RSCAD_HOST;
+    }
+  } catch {
+    /* same-machine fallback below */
+  }
+  return pageHost();
+}
+
+export async function rscadDriverWebSocketUrl() {
+  const host = await resolveRscadDriverHost();
+  return `ws://${host}:${RSCAD_PORT}/ws/stream_model`;
 }
 
 function snapshot() {
@@ -94,18 +130,17 @@ function closeSocket() {
   }
 }
 
-function waitForOpen(ws, timeoutMs) {
+function waitForOpen(ws, timeoutMs, url) {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error('RSCAD server not reachable'));
-    }, timeoutMs);
+    const fail = () => reject(new Error(`RSCAD server not reachable at ${url}`));
+    const timer = setTimeout(fail, timeoutMs);
     ws.onopen = () => {
       clearTimeout(timer);
       resolve();
     };
     ws.onerror = () => {
       clearTimeout(timer);
-      reject(new Error('RSCAD server not reachable'));
+      fail();
     };
   });
 }
@@ -142,9 +177,10 @@ export async function startRscadSimulation() {
 
   try {
     closeSocket();
-    const ws = new WebSocket(rscadDriverWebSocketUrl());
+    const url = await rscadDriverWebSocketUrl();
+    const ws = new WebSocket(url);
     socket = ws;
-    await waitForOpen(ws, CONNECT_TIMEOUT_MS);
+    await waitForOpen(ws, CONNECT_TIMEOUT_MS, url);
     const pending = waitForReply(ws, START_TIMEOUT_MS);
     ws.send(JSON.stringify(START_MESSAGE));
     const reply = await pending;
