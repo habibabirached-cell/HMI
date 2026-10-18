@@ -767,12 +767,9 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
     const tiered = inputsWithEffectiveWacoLoadTier(inputs);
     publishConfiguratorExploreSync(tiered, uiMode);
-    if (isLocalClusterDev()) {
-      if (tabId === IDEUM_EXPLORE_DATA_TAB_ID) openExploreDataDevNewTab(tiered, uiMode);
-      else openDataExplorationDevNewTab(tiered, uiMode);
-      return;
-    }
 
+    // Ideum serves this UI at localhost:3003. Do not treat that hostname as the
+    // dev laptop — fetch the machine role first so Ideum opens Maingear.
     let role = null;
     try {
       role = await fetchMachineRole();
@@ -782,14 +779,15 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
     const action = await resolveDataExplorationNavigationAction(role);
     if (action === 'new-tab') {
-      openDataExplorationDevNewTab(tiered, uiMode);
+      if (tabId === IDEUM_EXPLORE_DATA_TAB_ID) openExploreDataDevNewTab(tiered, uiMode);
+      else openDataExplorationDevNewTab(tiered, uiMode);
       return;
     }
     if (action === 'maingear-remote') {
       try {
         dataExplorationTunnelRef.current?.();
         await pushExploreSyncToCluster();
-        await requestDataExplorationOnMaingear(role, inputs, uiMode);
+        await requestDataExplorationOnMaingear(role, tiered, uiMode);
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Data Exploration opened on Maingear (touch table stays on current view).');
         setError(null);
@@ -812,10 +810,8 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     const currentInputs = inputsOverride?.stateId ? { ...inputs, ...inputsOverride } : inputs;
     const tiered = inputsWithEffectiveWacoLoadTier(currentInputs);
     publishConfiguratorExploreSync(tiered, uiMode);
-    if (isLocalClusterDev()) {
-      openExploreDataDevNewTab(tiered, uiMode);
-      return;
-    }
+    // Ideum serves this UI at localhost:3003. Hostname alone is not "dev" —
+    // only a dev/unknown role opens a local tab. Ideum sends openExploreData to Maingear.
     let role = null;
     try {
       role = await fetchMachineRole();
@@ -832,7 +828,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       try {
         dataExplorationTunnelRef.current?.();
         await pushExploreSyncToCluster();
-        await requestExploreDataOnMaingear(role, inputs, uiMode);
+        await requestExploreDataOnMaingear(role, tiered, uiMode);
         dataExplorationTunnelRef.current = startIdeumDataExplorationMaingearTunnel(role);
         setStatusMessage('Explore Data opened on Maingear (touch table stays on Inputs).');
         setError(null);
