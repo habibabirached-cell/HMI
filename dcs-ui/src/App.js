@@ -285,6 +285,7 @@ import {
   appendRscadWallSample,
   buildRscadWallOpenCharts,
   emptyRscadWallSeries,
+  isRscadWallChart,
   RSCAD_CHARTS_OPEN_COMMAND,
   RSCAD_METER_SAMPLE_COMMAND,
 } from './utils/rscadWallCharts';
@@ -5362,11 +5363,23 @@ function App() {
   );
 
   useEffect(() => {
+    if (!openCharts.some(isRscadWallChart)) return;
+    if (workspaceLayoutPreset !== 'conf3') {
+      handleWorkspaceLayoutPresetChange('conf3');
+    }
+    const half = typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.5) : 0;
+    if (half > 0 && chartSideDockWidth < half) {
+      setChartSideDockWidth(getChartPanelMaxSideWidthPx());
+    }
+  }, [openCharts, workspaceLayoutPreset, chartSideDockWidth, handleWorkspaceLayoutPresetChange]);
+
+  useEffect(() => {
     if (!pendingRscadWallRef.current) return;
     if (!isActiveP2RChilDesign()) return;
     pendingRscadWallRef.current = false;
     rscadWallShownRef.current = true;
     handleWorkspaceLayoutPresetChange('conf3');
+    setChartSideDockWidth(getChartPanelMaxSideWidthPx());
     setChartStacks([]);
     setPerChartSampleStep({});
     setOpenCharts(buildRscadWallOpenCharts());
@@ -5767,6 +5780,7 @@ function App() {
       });
       const showRscadWall = (resetSeries) => {
         handleWorkspaceLayoutPresetChange('conf3');
+        setChartSideDockWidth(getChartPanelMaxSideWidthPx());
         setChartStacks([]);
         setPerChartSampleStep({});
         setOpenCharts(buildRscadWallOpenCharts());

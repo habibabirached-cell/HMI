@@ -573,7 +573,12 @@ const ChartPanel = ({
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ y: 0, height: 0 });
   /** Minimize to a thin bar; charts tray stays above the canvas (z-index) either way. */
+  const rscadWallChartsOpen = Boolean(charts?.some(isRscadWallChart));
+  if (rscadWallChartsOpen) {
+    layoutMode = 'sideRight';
+  }
   const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (rscadWallChartsOpen) return false;
     if (typeof window === 'undefined') return false;
     try {
       return window.localStorage.getItem('dcsChartPanelCollapsed') === '1';
@@ -581,7 +586,22 @@ const ChartPanel = ({
       return false;
     }
   });
+  // The RSCAD wall has no usable hinge: a collapsed side tray is a 30px strip on the
+  // far edge of the four-screen span. Keep that drawer painted open.
+  if (rscadWallChartsOpen && isCollapsed) {
+    setIsCollapsed(false);
+  }
+  useEffect(() => {
+    if (!rscadWallChartsOpen) return;
+    try {
+      window.localStorage.setItem('dcsChartPanelCollapsed', '0');
+    } catch {
+      /* ignore */
+    }
+  }, [rscadWallChartsOpen]);
+
   const toggleChartCollapse = () => {
+    if (rscadWallChartsOpen) return;
     setIsCollapsed((c) => {
       const n = !c;
       try {
@@ -4388,6 +4408,8 @@ const ChartPanel = ({
     </span>
   );
 
+  const rscadSideWidthPx =
+    typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.5) : sidePanelWidth;
   const shellPositionStyle =
     layoutMode === 'sideRight'
       ? {
@@ -4395,7 +4417,9 @@ const ChartPanel = ({
           bottom: 0,
           left: 'auto',
           right: typeof insetRight === 'number' ? `${insetRight}px` : undefined,
-          width: isCollapsed ? `${CHART_SIDE_COLLAPSED_PX}px` : `${sidePanelWidth}px`,
+          width: isCollapsed
+            ? `${CHART_SIDE_COLLAPSED_PX}px`
+            : `${rscadWallChartsOpen ? Math.max(sidePanelWidth, rscadSideWidthPx) : sidePanelWidth}px`,
           height: 'auto',
         }
       : layoutMode === 'top'
@@ -4422,7 +4446,7 @@ const ChartPanel = ({
       }`}
       style={{
         ...shellPositionStyle,
-        zIndex: CHART_PANEL_Z_STACK,
+        zIndex: rscadWallChartsOpen ? 5300 : CHART_PANEL_Z_STACK,
         '--chart-panel-shell-a': String(shellA),
         '--chart-panel-card-a': String(shellA),
         '--chart-panel-inset-left': typeof insetLeft === 'number' ? `${insetLeft}px` : '0px',
