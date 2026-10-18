@@ -289,16 +289,15 @@ function Ref200ColumnBucket({
 }
 
 function DampedToggleRow({ zoom }) {
-  const [damped, setDamped] = useState(true);
-  const undamped = !damped;
+  const [undamped, setUndamped] = useState(true);
   return (
     <Ref200HorizontalToggleRow
       zoom={zoom}
-      leftLabel="Damped"
-      rightLabel="Undamped"
-      rightActive={undamped}
-      onToggle={() => setDamped((v) => !v)}
-      ariaLabel="Damped or undamped mode"
+      leftLabel="Undamped"
+      rightLabel="Damped"
+      rightActive={!undamped}
+      onToggle={() => setUndamped((v) => !v)}
+      ariaLabel="Undamped or damped mode"
     />
   );
 }

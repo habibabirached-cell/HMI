@@ -25,7 +25,11 @@ if errorlevel 1 goto :err_npm
 
 if not exist "%VERNOVA_DIR%\package.json" goto :err_vernova_dir
 
-echo [0/6] Copy Malta cluster role config...
+echo [0/7] Docker prep (start engine or stop prior demo)...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%prepare-demo-start.ps1" -RepoRoot "%REPO_ROOT%"
+if errorlevel 1 goto :fail
+
+echo [1/7] Copy Malta cluster role config...
 call "%REPO_ROOT%\malta.copy.bat" nopause
 if errorlevel 1 goto :fail
 
@@ -34,32 +38,27 @@ if not exist "%REPO_ROOT%\.env" (
 )
 
 echo.
-echo [1/6] Starting kiosk focus and mouse servers...
+echo [2/7] Starting kiosk focus and mouse servers...
 call "%BAT_DIR%start-kiosk-focus-server.bat"
 call "%BAT_DIR%start-kiosk-mouse-server.bat"
 
 echo.
-echo [2/6] Ensure Docker Desktop / engine is running...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%ensure-docker-desktop.ps1"
-if errorlevel 1 goto :fail
-
-echo.
-echo [3/6] Starting Docker stack...
+echo [3/7] Starting Docker stack...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%run-docker-compose.ps1" -RepoRoot "%REPO_ROOT%" -EnvFile "%REPO_ROOT%\.env" -ComposeFile "%REPO_ROOT%\docker-compose-dev.yml"
 if errorlevel 1 goto :err_docker_compose
 
 echo.
-echo [4/6] Starting Vernova dev server...
+echo [4/7] Starting Vernova dev server...
 start "Vernova dev" /MIN cmd /c ""%BAT_DIR%start-vernova-dev.bat" "%VERNOVA_DIR%""
 timeout /t 3 /nobreak >nul
 
 echo.
-echo [5/6] Waiting for ports 5000, 3003, 5173...
+echo [5/7] Waiting for ports 5000, 3003, 5173...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BAT_DIR%wait-for-ports.ps1" -KioskWindowsScript "%BAT_DIR%kiosk-windows.ps1"
 if errorlevel 1 goto :err_ports
 
 echo.
-echo [6/6] Opening Chrome (touch display 1, wall display 2)...
+echo [7/7] Opening Chrome (touch display 1, wall display 2)...
 call "%BAT_DIR%open-malta-wall-vernova-chrome.bat" -NoActivate
 if errorlevel 1 goto :err_vernova_chrome
 

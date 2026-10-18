@@ -9,9 +9,12 @@ export default function Ref200HorizontalToggleRow({
   rightActive,
   onToggle,
   ariaLabel,
+  rowClassName = '',
 }) {
   return (
-    <div className="ideum07-ref200__toggle-row ideum08-ref200__toggle-row">
+    <div
+      className={`ideum07-ref200__toggle-row ideum08-ref200__toggle-row${rowClassName ? ` ${rowClassName}` : ''}`}
+    >
       <span
         className={`ideum07-ref200__toggle-label ideum08-ref200__toggle-label${
           !rightActive ? ' ideum07-ref200__toggle-label--active' : ''
