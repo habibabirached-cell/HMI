@@ -14,7 +14,9 @@ param(
     [ValidatePattern('^192\.168\.50\.\d+$')]
     [string] $IpAddress,
 
-    [string] $AdapterName
+    [string] $AdapterName,
+
+    [switch] $Daily
 )
 
 Set-StrictMode -Version Latest
@@ -69,7 +71,32 @@ function Get-DirectEthernetAdapter {
     throw 'No suitable Ethernet adapter found. Pass -AdapterName explicitly.'
 }
 
-if (-not (Test-Admin)) {
+function Test-StaticIpOnAdapter {
+    param(
+        [string] $ExpectedIp,
+        [string] $AdapterAlias
+    )
+    $addrs = Get-NetIPAddress -InterfaceAlias $AdapterAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue
+    return [bool]($addrs | Where-Object { $_.IPAddress -eq $ExpectedIp })
+}
+
+if ($Daily) {
+    try {
+        $aliasCheck = Get-DirectEthernetAdapter
+        if (Test-StaticIpOnAdapter -ExpectedIp $IpAddress -AdapterAlias $aliasCheck) {
+            Write-Host "Ethernet daily check OK: $IpAddress already on $aliasCheck"
+            exit 0
+        }
+    } catch {
+        Write-Host "WARN: Ethernet daily check skipped ($($_.Exception.Message))"
+        exit 0
+    }
+    if (-not (Test-Admin)) {
+        Write-Host "WARN: Ethernet is not $IpAddress — fix once with 02_FIRST_TIME_Setup_Ethernet_Admin (Run as administrator). Continuing startup."
+        exit 0
+    }
+    Write-Host "Daily start: applying Ethernet setup (elevated session)..."
+} elseif (-not (Test-Admin)) {
     throw 'Run as Administrator (right-click the .bat file -> Run as administrator).'
 }
 
