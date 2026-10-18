@@ -1,0 +1,134 @@
+/**
+ * Live RSCAD plots for the p2r_chil wall.
+ * Configuration #3: 2×2 drawer on the right two screens.
+ * Time is a sample counter (0.1 s), not Simtime.
+ */
+
+import { appendLiveRtdsPoint } from './liveRtdsCharts';
+
+export const RSCAD_SAMPLE_DT_S = 0.1;
+export const RSCAD_CHARTS_OPEN_COMMAND = 'rscadChartsOpen';
+export const RSCAD_METER_SAMPLE_COMMAND = 'rscadMeterSample';
+
+const LOAD_COLOR = '#005E60';
+const GENERATOR_COLOR = '#E0A045';
+const FREQUENCY_COLOR = '#2E9B6A';
+const VOLTAGE_LOAD_COLOR = '#E07A6A';
+const VOLTAGE_GEN_COLOR = '#3D9BDC';
+
+export function isRscadWallChart(chart) {
+  return Array.isArray(chart?.rscadTraces) && chart.rscadTraces.length > 0;
+}
+
+export function rscadWallSampleFromMeters(meters, index) {
+  if (!meters || typeof meters !== 'object') return null;
+  if (meters.status || meters.error || meters.command) return null;
+  const present = ['P_UPS_LOAD', 'PMAC', 'W', 'VGB', 'LoadSideV_rms_pu'].some(
+    (key) => meters[key] != null && meters[key] !== '',
+  );
+  if (!present) return null;
+
+  const num = (key) => {
+    const value = Number(meters[key]);
+    return Number.isFinite(value) ? value : null;
+  };
+  const speed = num('W');
+  return {
+    t: index * RSCAD_SAMPLE_DT_S,
+    loadDemand: num('P_UPS_LOAD'),
+    generator: num('PMAC'),
+    frequency: speed == null ? null : speed / (2 * Math.PI),
+    voltageLoad: num('LoadSideV_rms_pu'),
+    voltageGen: num('VGB'),
+  };
+}
+
+function wallChart({ id, title, yLabel, yMin, yMax, drawer, traces }) {
+  return {
+    id,
+    chartType: '2d',
+    title,
+    xLabel: 'Time (seconds)',
+    yLabel,
+    rscadTraces: traces,
+    uiDrawer: drawer,
+    axisRange: { xLocked: false, yLocked: true, yMin, yMax },
+  };
+}
+
+/** chart1 top-left of the right drawer, then chart2, chart3, chart4. */
+export function buildRscadWallOpenCharts() {
+  const stamp = Date.now();
+  return [
+    wallChart({
+      id: `rscad-load-${stamp}`,
+      title: 'Data center load',
+      yLabel: 'Load demand (megawatts)',
+      yMin: 50,
+      yMax: 150,
+      drawer: 'chart1',
+      traces: [{ channel: 'loadDemand', name: 'Load demand', color: LOAD_COLOR }],
+    }),
+    wallChart({
+      id: `rscad-generator-${stamp}`,
+      title: 'One generator',
+      yLabel: 'Output of one generator (megawatts)',
+      yMin: 0,
+      yMax: 30,
+      drawer: 'chart2',
+      traces: [{ channel: 'generator', name: 'One generator', color: GENERATOR_COLOR }],
+    }),
+    wallChart({
+      id: `rscad-frequency-${stamp}`,
+      title: 'Grid frequency',
+      yLabel: 'Frequency (hertz)',
+      yMin: 55,
+      yMax: 65,
+      drawer: 'chart3',
+      traces: [{ channel: 'frequency', name: 'Frequency', color: FREQUENCY_COLOR }],
+    }),
+    wallChart({
+      id: `rscad-voltage-${stamp}`,
+      title: 'Voltage',
+      yLabel: 'Voltage compared with normal',
+      yMin: 0.8,
+      yMax: 1.2,
+      drawer: 'chart4',
+      traces: [
+        { channel: 'voltageLoad', name: 'At the data center', color: VOLTAGE_LOAD_COLOR },
+        { channel: 'voltageGen', name: 'At the generators', color: VOLTAGE_GEN_COLOR },
+      ],
+    }),
+  ];
+}
+
+export function emptyRscadWallSeries() {
+  return {
+    active: true,
+    loadDemand: [],
+    generator: [],
+    frequency: [],
+    voltageLoad: [],
+    voltageGen: [],
+  };
+}
+
+export function appendRscadWallSample(series, sample) {
+  const base = series?.loadDemand ? { ...series, active: true } : emptyRscadWallSeries();
+  const t = Number(sample?.t);
+  if (!Number.isFinite(t)) return base;
+  return {
+    ...base,
+    active: true,
+    loadDemand: appendLiveRtdsPoint(base.loadDemand, t, Number(sample.loadDemand)),
+    generator: appendLiveRtdsPoint(base.generator, t, Number(sample.generator)),
+    frequency: appendLiveRtdsPoint(base.frequency, t, Number(sample.frequency)),
+    voltageLoad: appendLiveRtdsPoint(base.voltageLoad, t, Number(sample.voltageLoad)),
+    voltageGen: appendLiveRtdsPoint(base.voltageGen, t, Number(sample.voltageGen)),
+  };
+}
+
+export function rscadWallChartHasPoints(chart, series) {
+  if (!isRscadWallChart(chart) || !series?.active) return false;
+  return chart.rscadTraces.some((trace) => (series[trace.channel]?.length ?? 0) > 0);
+}

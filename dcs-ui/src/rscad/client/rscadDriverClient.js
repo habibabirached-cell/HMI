@@ -5,7 +5,13 @@
  * Start payload matches CAD_Driver/rscad-driver-svc/src/ws_client/run_streaming_scenario.py.
  */
 
-import { fetchMachineRole } from '../../utils/clusterPeer';
+import { fetchMachineRole, isLocalClusterDev, sendRemoteCommandToMaingear } from '../../utils/clusterPeer';
+import { relayDevWallRemoteCommand } from '../../utils/ideumDevMaingearTab';
+import {
+  RSCAD_CHARTS_OPEN_COMMAND,
+  RSCAD_METER_SAMPLE_COMMAND,
+  rscadWallSampleFromMeters,
+} from '../../utils/rscadWallCharts';
 
 const RSCAD_PORT = '8008';
 const MAINGEAR_RSCAD_HOST = '192.168.50.1';
@@ -57,7 +63,20 @@ let socket = null;
 let simulationId = null;
 let busy = false;
 let statusText = '';
+let meterSampleIndex = 0;
+let wallRole = null;
+let forwardWarned = false;
 const listeners = new Set();
+
+async function publishRscadWall(command, payload) {
+  if (wallRole?.isIdeum && !wallRole?.isMaingear) {
+    await sendRemoteCommandToMaingear(wallRole, command, payload);
+    return;
+  }
+  if (isLocalClusterDev()) {
+    relayDevWallRemoteCommand(command, payload);
+  }
+}
 
 function pageHost() {
   if (typeof window === 'undefined') return '127.0.0.1';
@@ -192,7 +211,34 @@ export async function startRscadSimulation() {
     }
     simulationId = String(reply.id);
     statusText = '';
-    ws.onmessage = () => {};
+    meterSampleIndex = 0;
+    forwardWarned = false;
+    try {
+      wallRole = await fetchMachineRole();
+    } catch {
+      wallRole = null;
+    }
+    try {
+      await publishRscadWall(RSCAD_CHARTS_OPEN_COMMAND);
+    } catch (error) {
+      console.warn('[rscad] could not open Maingear charts', error);
+    }
+    ws.onmessage = (event) => {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      const sample = rscadWallSampleFromMeters(data, meterSampleIndex);
+      if (!sample) return;
+      meterSampleIndex += 1;
+      publishRscadWall(RSCAD_METER_SAMPLE_COMMAND, sample).catch((error) => {
+        if (forwardWarned) return;
+        forwardWarned = true;
+        console.warn('[rscad] meter forward failed', error);
+      });
+    };
     return snapshot();
   } catch (error) {
     simulationId = null;
@@ -220,6 +266,7 @@ export async function stopRscadSimulation() {
   } finally {
     simulationId = null;
     statusText = '';
+    meterSampleIndex = 0;
     closeSocket();
     busy = false;
     emit();

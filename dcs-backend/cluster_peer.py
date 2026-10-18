@@ -24,6 +24,7 @@ NON_REPLAY_REMOTE_COMMANDS = frozenset({
     "loadP2RChil",
     "loadWind02",
     "resetHdAero",
+    "rscadMeterSample",
 })
 
 VALID_REMOTE_COMMANDS = frozenset({
@@ -52,6 +53,8 @@ VALID_REMOTE_COMMANDS = frozenset({
     "showDcs",
     "openDataExploration",
     "openExploreData",
+    "rscadChartsOpen",
+    "rscadMeterSample",
 })
 
 

@@ -282,6 +282,13 @@ import {
   LIVE_RTDS_PRESET,
 } from './utils/liveRtdsCharts';
 import {
+  appendRscadWallSample,
+  buildRscadWallOpenCharts,
+  emptyRscadWallSeries,
+  RSCAD_CHARTS_OPEN_COMMAND,
+  RSCAD_METER_SAMPLE_COMMAND,
+} from './utils/rscadWallCharts';
+import {
   augmentEnsemblePrimaryWithCrossMemberDerived,
   augmentRowsWithDerived,
 } from './utils/formulaEvaluator';
@@ -980,6 +987,10 @@ function App() {
   }, [simulationRunning]);
 
   const [liveRtdsSeries, setLiveRtdsSeries] = useState(emptyLiveRtdsSeries);
+  const pendingRscadWallRef = useRef(false);
+  const rscadChilLoadRef = useRef(false);
+  const rscadWallShownRef = useRef(false);
+  const rscadPendingSamplesRef = useRef([]);
   const stopLiveRtdsRef = useRef(null);
 
   /** Last simulation time (seconds) from metadata / loaded CSV — drives playback loop when reached. */
@@ -5350,6 +5361,22 @@ function App() {
     [currentConfigName, designApiPath],
   );
 
+  useEffect(() => {
+    if (!pendingRscadWallRef.current) return;
+    if (!isActiveP2RChilDesign()) return;
+    pendingRscadWallRef.current = false;
+    rscadWallShownRef.current = true;
+    handleWorkspaceLayoutPresetChange('conf3');
+    setChartStacks([]);
+    setPerChartSampleStep({});
+    setOpenCharts(buildRscadWallOpenCharts());
+    const queued = rscadPendingSamplesRef.current.splice(0);
+    setLiveRtdsSeries((prev) => {
+      const start = prev?.loadDemand ? { ...prev, active: true } : emptyRscadWallSeries();
+      return queued.reduce((series, sample) => appendRscadWallSample(series, sample), start);
+    });
+  }, [currentConfigName, designApiPath, isActiveP2RChilDesign, handleWorkspaceLayoutPresetChange]);
+
   const applyP2r18DesignOnlyPreset = useCallback(
     async (presetName, effectiveShortcut) => {
       stopLiveRtdsStream();
@@ -5730,6 +5757,63 @@ function App() {
     }
     if (command === 'liveRtds') {
       await handleLiveRtds();
+      return;
+    }
+    if (command === RSCAD_CHARTS_OPEN_COMMAND || command === RSCAD_METER_SAMPLE_COMMAND) {
+      const onChil = isP2RChilDesign({
+        name: currentConfigName,
+        design_catalog_rel: designApiPath,
+        csv_status: { design_catalog_rel: designApiPath },
+      });
+      const showRscadWall = (resetSeries) => {
+        handleWorkspaceLayoutPresetChange('conf3');
+        setChartStacks([]);
+        setPerChartSampleStep({});
+        setOpenCharts(buildRscadWallOpenCharts());
+        if (resetSeries) {
+          rscadPendingSamplesRef.current = [];
+          setLiveRtdsSeries(emptyRscadWallSeries());
+        } else {
+          setLiveRtdsSeries((prev) => (prev?.loadDemand ? { ...prev, active: true } : emptyRscadWallSeries()));
+        }
+      };
+      if (!onChil) {
+        pendingRscadWallRef.current = true;
+        if (command === RSCAD_METER_SAMPLE_COMMAND && payload) {
+          const queued = rscadPendingSamplesRef.current;
+          if (queued.length < 400) queued.push(payload);
+        }
+        if (!rscadChilLoadRef.current) {
+          rscadChilLoadRef.current = true;
+          try {
+            const res = await fetch(
+              `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(IDEUM05_P2R_CHIL_MAINGEAR_CATALOG)}/load`,
+            );
+            if (res.ok) {
+              const loadedConfig = await res.json();
+              loadSkipSessionRestoreRef.current = true;
+              handleConfigurationLoadedRef.current?.(loadedConfig);
+            }
+          } catch (e) {
+            console.warn('rscad wall: p2r_chil load failed', e);
+          } finally {
+            rscadChilLoadRef.current = false;
+          }
+        }
+        return;
+      }
+      if (command === RSCAD_CHARTS_OPEN_COMMAND) {
+        rscadWallShownRef.current = true;
+        showRscadWall(true);
+        return;
+      }
+      if (!rscadWallShownRef.current) {
+        rscadWallShownRef.current = true;
+        showRscadWall(false);
+      }
+      if (payload) {
+        setLiveRtdsSeries((prev) => appendRscadWallSample(prev, payload));
+      }
       return;
     }
     if (command === 'showPlotsForCurrentDesign') {

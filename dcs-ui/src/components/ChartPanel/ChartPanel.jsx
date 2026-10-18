@@ -22,6 +22,7 @@ import {
 } from '../../utils/ensembleCrossMemberChart';
 import { cellFloat, findColumnKey } from '../../utils/csvRowAccess';
 import { LIVE_RTDS_Y_TICK_FORMAT, LIVE_RTDS_CHART_MARGIN_LEFT } from '../../utils/liveRtdsCharts';
+import { isRscadWallChart, rscadWallChartHasPoints } from '../../utils/rscadWallCharts';
 import {
   buildScatterMarkerStyle,
   buildTraceLineStyle,
@@ -2258,6 +2259,9 @@ const ChartPanel = ({
       if (!liveRtdsSeries?.active) return false;
       return (liveRtdsSeries[chart.liveRtdsChannel]?.length ?? 0) > 0;
     }
+    if (isRscadWallChart(chart)) {
+      return rscadWallChartHasPoints(chart, liveRtdsSeries);
+    }
     if (chart.ensembleCrossMember) {
       return crossMemberDataReady(chart, ensembleMemberSimulationData);
     }
@@ -2279,7 +2283,7 @@ const ChartPanel = ({
    */
   useEffect(() => {
     charts.forEach((chart) => {
-      if (chart.liveRtdsChannel) {
+      if (chart.liveRtdsChannel || isRscadWallChart(chart)) {
         return;
       }
       if (simulationMetadata?.isEnsemble && chart.ensembleCrossMember) {
@@ -2785,6 +2789,20 @@ const ChartPanel = ({
    * Filters data based on simulation time if simulation is running
    */
   const generatePlotlyData = (chart, data) => {
+    if (isRscadWallChart(chart) && liveRtdsSeries?.active) {
+      return chart.rscadTraces.map((trace) => {
+        const points = liveRtdsSeries[trace.channel] || [];
+        if (!points.length) return null;
+        return {
+          type: 'scatter',
+          mode: 'lines',
+          x: points.map((point) => point.t),
+          y: points.map((point) => point.v),
+          name: trace.name,
+          line: { color: trace.color, width: 2 },
+        };
+      }).filter(Boolean);
+    }
     if (chart.liveRtdsChannel && liveRtdsSeries?.active) {
       const channel = chart.liveRtdsChannel;
       const points = liveRtdsSeries[channel] || [];
@@ -3709,6 +3727,9 @@ const ChartPanel = ({
         ...baseLayout,
         ...(chart.liveRtdsChannel
           ? { margin: { ...baseLayout.margin, l: LIVE_RTDS_CHART_MARGIN_LEFT } }
+          : {}),
+        ...(isRscadWallChart(chart)
+          ? { margin: { ...baseLayout.margin, l: 148 } }
           : {}),
         ...(chartHasMultiTraceLegend(chart)
           ? { showlegend: true, legend: buildInPlotLegendLayout() }
@@ -5010,14 +5031,14 @@ const ChartPanel = ({
               </button>
 
               {/* Loading State (only when fetching CSV, not when using simulationData) */}
-              {!simulationData?.length && !chart.liveRtdsChannel && loadingCharts[chart.id] && (
+              {!simulationData?.length && !chart.liveRtdsChannel && !isRscadWallChart(chart) && loadingCharts[chart.id] && (
                 <div className="chart-panel-chart-loading">
                   <div className="chart-panel-spinner"></div>
                   <div>Loading chart data...</div>
                 </div>
               )}
 
-              {chart.liveRtdsChannel && liveRtdsSeries?.active && !chartDataReadyToPlot(chart) && (
+              {(chart.liveRtdsChannel || isRscadWallChart(chart)) && liveRtdsSeries?.active && !chartDataReadyToPlot(chart) && (
                 <div className="chart-panel-chart-loading">
                   <div className="chart-panel-spinner"></div>
                   <div>Waiting for RTDS live data…</div>
@@ -5025,7 +5046,7 @@ const ChartPanel = ({
               )}
 
               {/* Error State (fetch failed when not using simulationData) */}
-              {!chart.liveRtdsChannel && !simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
+              {!chart.liveRtdsChannel && !isRscadWallChart(chart) && !simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
                 <div className="chart-panel-chart-error">
                   <div className="chart-panel-error-icon">⚠️</div>
                   <div>Failed to load chart data</div>
@@ -5058,7 +5079,7 @@ const ChartPanel = ({
               })()}
 
               {/* Empty State */}
-              {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !(chart.liveRtdsChannel && liveRtdsSeries?.active) && (
+                    {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !((chart.liveRtdsChannel || isRscadWallChart(chart)) && liveRtdsSeries?.active) && (
                 <div className="chart-panel-chart-empty">
                   <div className="chart-panel-empty-icon">📊</div>
                   <div>No data available</div>
@@ -5155,8 +5176,11 @@ const ChartPanel = ({
                         <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
                       </svg>
                     </button>
-                    {!simulationData?.length && !chart.liveRtdsChannel && loadingCharts[chart.id] && (
+                    {!simulationData?.length && !chart.liveRtdsChannel && !isRscadWallChart(chart) && loadingCharts[chart.id] && (
                       <div className="chart-panel-chart-loading"><div className="chart-panel-spinner"></div><div>Loading chart data...</div></div>
+                    )}
+                    {(chart.liveRtdsChannel || isRscadWallChart(chart)) && liveRtdsSeries?.active && !chartDataReadyToPlot(chart) && (
+                      <div className="chart-panel-chart-loading"><div className="chart-panel-spinner"></div><div>Waiting for RTDS live data…</div></div>
                     )}
                     {!simulationData?.length && !loadingCharts[chart.id] && chartData[chart.id] === null && (
                       <div className="chart-panel-chart-error"><div className="chart-panel-error-icon">⚠️</div><div>Failed to load chart data</div></div>
@@ -5179,9 +5203,9 @@ const ChartPanel = ({
                         </>
                       );
                     })()}
-                    {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !(chart.liveRtdsChannel && liveRtdsSeries?.active) && (
-                      <div className="chart-panel-chart-empty"><div className="chart-panel-empty-icon">📊</div><div>No data available</div></div>
-                    )}
+              {!loadingCharts[chart.id] && !chartDataReadyToPlot(chart) && !((chart.liveRtdsChannel || isRscadWallChart(chart)) && liveRtdsSeries?.active) && (
+                <div className="chart-panel-chart-empty"><div className="chart-panel-empty-icon">📊</div><div>No data available</div></div>
+              )}
                   </div>
                   {chartResizeEdge(chart)}
                 </div>

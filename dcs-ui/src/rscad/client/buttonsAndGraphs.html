@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ideum buttons → Roberto JSON → Maingear plots</title>
+  <style>
+    :root {
+      --bg: #0e1418;
+      --card: #172026;
+      --ink: #e7eef2;
+      --muted: #9aafb8;
+      --line: #2c3e48;
+      --teal: #1aa6a6;
+      --amber: #e0a045;
+      --green: #7dcea0;
+      --red: #e07a6a;
+      --blue: #7eb6d9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.5 "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    header, main { max-width: 1080px; margin: 0 auto; padding: 28px 22px 64px; }
+    header { padding-bottom: 0; }
+    h1 { font-size: 28px; line-height: 1.25; margin: 0 0 10px; }
+    h2 { font-size: 22px; margin: 36px 0 10px; }
+    h3 { font-size: 18px; margin: 0 0 8px; }
+    p { margin: 0 0 12px; }
+    a { color: var(--teal); }
+    .lede { color: var(--muted); font-size: 17px; }
+    .callout {
+      border-left: 4px solid var(--amber);
+      background: #241c12;
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+    .ok {
+      border-left: 4px solid var(--teal);
+      background: #102226;
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+    img.screen {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: block;
+    }
+    ol.seq { padding-left: 22px; }
+    ol.seq li { margin: 0 0 10px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px 16px 8px;
+      margin: 14px 0 22px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      padding: 2px 8px;
+      color: var(--muted);
+      margin-right: 6px;
+    }
+    pre {
+      background: #0b1014;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      overflow: auto;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #d5e4ea;
+    }
+    .plots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    figure {
+      margin: 0;
+      background: #0b1014;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    svg { width: 100%; height: auto; display: block; }
+    .axis { fill: #9aafb8; font-size: 12px; }
+    .title { fill: #e7eef2; font-size: 13px; font-weight: 650; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+    th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+    .muted { color: var(--muted); }
+    @media (max-width: 800px) { .plots { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test Reference Architecture: buttons, JSON, and the four Maingear plots</h1>
+    <p class="lede">Source of the JSON: <code>CAD_Driver/rscad-driver-svc/src/ws_client/run_streaming_scenario.py</code>. The comments that contain the word <code>HMI</code> are the messages Roberto marked for these buttons. The socket is <code>ws://192.168.50.1:8008/ws/stream_model</code>.</p>
+  </header>
+  <main>
+    <div class="callout">
+      <strong>Where the curves go.</strong> The Ideum touch table only sends commands. Roberto’s server answers on that same socket, so the meter numbers first arrive in the Ideum browser. The four plots are drawn on the Maingear, on the <code>p2r_chil</code> design, in the CXC four-screen layout. They are not drawn on the Ideum, and they are not drawn in the Malta view.
+      <p>Pressing these architecture buttons on the Maingear opens <code>p2r_chil</code> across the four CXC screens. That is the page that shows the graphs. There is no <code>maltaView</code> on that machine.</p>
+      <p>On the dev laptop the same press opens one window that stands in for the wall:</p>
+      <p><code>http://localhost:3003/?design=p2r_chil&amp;maltaView=wall&amp;ideumRemote=add8Turbines</code></p>
+      <p>Use that URL to see <code>p2r_chil</code> while coding. The graphs still belong to the CXC Maingear four-screen view of <code>p2r_chil</code>, not to the Malta wall (<code>?maltaView=wall</code> is only how the laptop fakes one wall screen).</p>
+    </div>
+
+    <h2>The screen</h2>
+    <p>This is the Ideum page <code>?design=ideum08</code>, Test Reference Architecture. Only the labeled controls below talk to RSCAD. Collapse / Expand breakers, Collapse / Expand peripherals, and Toggle simulation are the existing wall controls. They do not send Roberto’s JSON. Add SST and Add SST &amp; storage are not in this script.</p>
+    <img class="screen" src="test-reference-architecture.jpg" alt="Test Reference Architecture: Start, Stop, Add BESS, Add MVUPS, Baseload, AI Load" />
+
+    <h2>One fact that changes the design</h2>
+    <p>No reconfiguration button owns its own graph. Start opens four plots, and they stay those four plots for the whole demo. Baseload, AI Load, Add BESS, and Add MVUPS only flip switches inside the running case. You watch the same curves change shape.</p>
+    <p>The plant on screen is the same 200&nbsp;MW story: eight LM2500s (two groups of four) feeding a data-center load. Baseline means those eight turbines and the load only. No battery, no MVUPS.</p>
+
+    <h2>1. Sequence to press</h2>
+    <p>Every message after Start must carry the <code>id</code> from the Start reply. Stop ends that id. The next Start opens a new socket and returns a new id.</p>
+    <ol class="seq">
+      <li><strong>Start</strong> (left column). Sends <code>start_message</code>. Before the case runs, Topology is 0 (MVUPS off) and AI_load is 0 (constant baseload). The reply is <code>{"status":"start","id":"..."}</code>. Save that id. Streaming begins, and all four Maingear plots start moving. For the demo, start this before the audience arrives and let the baseload settle. Abu asked for on the order of 100 seconds of settle before AI load. Roberto’s test script only waits 5 seconds; that wait is not the demo.</li>
+      <li><strong>AI Load</strong> (right column, lower picture). Sends <code>connect_ai_load_message</code>. The load stops being flat and becomes a spiky profile, and the megawatts rise. The four plots keep going; the shape changes after a short pause while RSCAD applies the switch.</li>
+      <li><strong>Baseload</strong> (right column, upper picture), any time you want the flat load back. Sends <code>tunr_off_ai_load_message</code> (that spelling is in the file). AI_load returns to 0. There is no separate “disconnect” besides this.</li>
+      <li><strong>Add BESS</strong> (middle column, top). Sends <code>connect_bess_message</code>. Four actions in one message: de-block both battery stacks, then close both onto the grid. Do this before Add MVUPS. The demo does not disconnect the battery. A disconnect message exists in the file and has no button.</li>
+      <li><strong>Add MVUPS</strong> (middle column, second tile). Sends <code>connect_mvups_message</code>. Inside that one message the order is AI_load off, Topology on, AI_load on. Topology is the series MVUPS switch. MVUPS sits in series between the generators and the load. After it is in, generator-side voltage should look cleaner than load-side voltage.</li>
+      <li><strong>Stop</strong> (left column, next to Start). Sends <code>stop_simulation_message</code>. The case stops and the socket closes. Everything is disconnected. Start again for a new id.</li>
+    </ol>
+    <div class="ok">
+      Spoken order of the plant, once Start is already running on baseload: AI Load, then Add BESS, then Add MVUPS. Baseload is the way back to the flat load. You can show Baseload and AI Load on the eight turbines alone, before either augmented tile.
+    </div>
+
+    <h2>2. The four graphs on the Maingear</h2>
+    <p>X is the same on every plot: <strong>Time (s)</strong>. Abu’s written table does not rename the X axis, so this stays the label from the recording. Do not plot <code>Simtime</code>. Start a counter at 0 when Start succeeds, and add <code>0.1</code> for each meter message (that is <code>streaming_interval</code>). A <code>set_config</code> pauses the stream for a couple of seconds while RSCAD runs a subtask. Keep adding 0.1 only when a sample actually arrives.</p>
+    <div class="ok">
+      <strong>Ranges from Abu, confirmed by Parth (18 Oct, 6:47&nbsp;PM).</strong> Voltage is 0.8–1.2. The words on the charts are for the audience. The meter names stay in the code.
+      <table>
+        <thead><tr><th>Drawer cell</th><th>Title on the chart</th><th>Y axis</th><th>Range</th><th>Signal</th></tr></thead>
+        <tbody>
+          <tr><td>Top left</td><td>Data center load</td><td>Load demand (megawatts)</td><td>50–150</td><td><code>P_UPS_LOAD</code></td></tr>
+          <tr><td>Top right</td><td>One generator</td><td>Output of one generator (megawatts)</td><td>0–30</td><td><code>PMAC</code></td></tr>
+          <tr><td>Bottom left</td><td>Grid frequency</td><td>Frequency (hertz)</td><td>55–65</td><td><code>W / (2π)</code></td></tr>
+          <tr><td>Bottom right</td><td>Voltage</td><td>Voltage compared with normal</td><td>0.8–1.2</td><td><code>LoadSideV_rms_pu</code> behind, <code>VGB</code> on top. Legend: “At the data center”, “At the generators”.</td></tr>
+        </tbody>
+      </table>
+      Top left means the top-left cell of configuration #3, the 2×2 drawer on the right two screens of <code>p2r_chil</code>. It is not the top-left screen of the wall. X on every chart is Time (seconds).
+    </div>
+
+    <div class="plots">
+      <figure>
+        <svg viewBox="0 0 420 230" role="img" aria-label="Load demand mockup">
+          <text class="title" x="48" y="18">Top-left screen — P_UPS_LOAD</text>
+          <line x1="48" y1="30" x2="48" y2="180" stroke="#9aafb8" />
+          <line x1="48" y1="180" x2="390" y2="180" stroke="#9aafb8" />
+          <text class="axis" x="8" y="40">150</text>
+          <text class="axis" x="16" y="184">50</text>
+          <text class="axis" x="150" y="206">Time (s)</text>
+          <text class="axis" x="52" y="78" transform="rotate(-90 52 110)">Load Demand (MW)</text>
+          <polyline fill="none" stroke="#7eb6d9" stroke-width="2" points="48,110 120,108 180,112 200,70 230,130 260,60 300,140 340,75 390,120" />
+        </svg>
+        <figcaption>Y label <strong>Load Demand (MW)</strong>, fixed from 50 to 150. X label <strong>Time (s)</strong>. Flat while Baseload is on (the left part of the line). Spiky after AI Load.</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 420 230" role="img" aria-label="Generator power mockup">
+          <text class="title" x="48" y="18">Top-right screen — PMAC</text>
+          <line x1="48" y1="30" x2="48" y2="180" stroke="#9aafb8" />
+          <line x1="48" y1="180" x2="390" y2="180" stroke="#9aafb8" />
+          <text class="axis" x="16" y="40">30</text>
+          <text class="axis" x="16" y="184">0</text>
+          <text class="axis" x="150" y="206">Time (s)</text>
+          <text class="axis" x="36" y="168" transform="rotate(-90 36 168)" font-size="11">LM#1 Generator Power (MW)</text>
+          <polyline fill="none" stroke="#e0a045" stroke-width="2" points="48,140 90,132 140,136 190,100 240,108 290,70 340,90 390,78" />
+        </svg>
+        <figcaption>Y label <strong>LM#1 Generator Power (MW)</strong>, fixed from 0 to 30. X label <strong>Time (s)</strong>. This is <code>PMAC</code>, the first LM. It moves when the load steps and when BESS or MVUPS comes online. It is always this one trace.</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 420 230" role="img" aria-label="Frequency mockup">
+          <text class="title" x="48" y="18">Third screen — frequency from W</text>
+          <line x1="48" y1="30" x2="48" y2="180" stroke="#9aafb8" />
+          <line x1="48" y1="180" x2="390" y2="180" stroke="#9aafb8" />
+          <text class="axis" x="16" y="40">65</text>
+          <text class="axis" x="16" y="184">55</text>
+          <text class="axis" x="150" y="206">Time (s)</text>
+          <text class="axis" x="52" y="96" transform="rotate(-90 52 120)">Frequency (Hz)</text>
+          <polyline fill="none" stroke="#7dcea0" stroke-width="2" points="48,100 80,102 120,96 160,108 200,94 240,112 280,98 320,104 360,92 390,100" />
+        </svg>
+        <figcaption>Y label <strong>Frequency (Hz)</strong>, fixed from 55 to 65. X label <strong>Time (s)</strong>. Plot <code>W / (2π)</code>, not the raw meter. 60&nbsp;Hz sits in the middle. The meter name stays <code>W</code>.</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 420 230" role="img" aria-label="Voltage mockup">
+          <text class="title" x="48" y="18">Fourth screen — two voltages, one plot</text>
+          <line x1="48" y1="30" x2="48" y2="180" stroke="#9aafb8" />
+          <line x1="48" y1="180" x2="390" y2="180" stroke="#9aafb8" />
+          <text class="axis" x="8" y="40">1.2</text>
+          <text class="axis" x="8" y="184">0.8</text>
+          <text class="axis" x="150" y="206">Time (s)</text>
+          <text class="axis" x="52" y="100" transform="rotate(-90 52 124)">Voltage (PU)</text>
+          <polyline fill="none" stroke="#e07a6a" stroke-width="2" points="48,90 70,120 100,85 130,125 160,88 190,118 220,95 250,128 280,86 310,115 340,92 370,122 390,98" />
+          <polyline fill="none" stroke="#7eb6d9" stroke-width="2.4" points="48,102 100,100 160,106 220,99 280,104 340,101 390,103" />
+          <text class="axis" x="250" y="78">VGB on top</text>
+          <text class="axis" x="250" y="148">load side behind</text>
+        </svg>
+        <figcaption>Y label <strong>Voltage (PU)</strong>, fixed from 0.8 to 1.2. X label <strong>Time (s)</strong>. One chart, two colors. Draw <code>LoadSideV_rms_pu</code> first and call it “Load side”. Draw <code>VGB</code> after it, on top, and call it “Generator side”. After Add MVUPS, generator side should be the cleaner line. Both sit near 1, inside this window.</figcaption>
+      </figure>
+    </div>
+
+    <h3>What each curve is for</h3>
+    <table>
+      <thead>
+        <tr><th>Meter in the JSON</th><th>Plot</th><th>Why it is on the wall</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>P_UPS_LOAD</code></td>
+          <td>Load Demand (MW), Y 50–150, X Time (s)</td>
+          <td>This is the data-center load the eight turbines are feeding. Baseload is a steady demand. AI Load is the jumpy profile. You see the plant working harder when that button is pressed.</td>
+        </tr>
+        <tr>
+          <td><code>PMAC</code></td>
+          <td>LM#1 Generator Power (MW), Y 0–30, X Time (s)</td>
+          <td>Power from the first LM, meter <code>PMAC</code>. It should move with the load, and again when the battery and the MVUPS join.</td>
+        </tr>
+        <tr>
+          <td><code>W</code> → Hz</td>
+          <td>Frequency (Hz), Y 55–65, X Time (s)</td>
+          <td>Grid frequency. Divide the streamed number by 2π. Held near 60&nbsp;Hz means the machines are holding speed while the load and the extra equipment change.</td>
+        </tr>
+        <tr>
+          <td><code>LoadSideV_rms_pu</code> and <code>VGB</code></td>
+          <td>Voltage (PU), Y 0.8–1.2, X Time (s), one chart</td>
+          <td>Load-side voltage versus generator-side voltage. The point of MVUPS in this demo is that the generator side stays cleaner than the load side once the series UPS is in.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">Also streamed, and not plotted: <code>Q_UPS_LOAD</code>, <code>Vgridrms</code>, <code>BESS1_MW_scale</code>, <code>BESS2_MW_scale</code>, <code>Simtime</code>. Leave them in the Start output list so the capture stays complete. Do not put <code>Simtime</code> on an axis.</p>
+
+    <h2>3. Each button, the JSON, and what the plots do</h2>
+    <p>Replace <code>0000000</code> with the id from Start. The Ideum already does that for Start and Stop. The server is on the Maingear; the Ideum must not open <code>localhost:8008</code>.</p>
+
+    <article class="card" id="start">
+      <h3><span class="tag">Left column</span> Start</h3>
+      <p>Opens the case <code>CDC_LM8unit_2BESS_MVUPS</code>, forces the baseline switches, and chooses which meters come back. Topology 0 means the MVUPS path is off. AI_load 0 means the constant baseload, not the AI profile. This is the only message that both starts the case and defines the output list. After the id comes back, meter objects with no <code>status</code> field arrive about 10 times a second. That is when the Maingear draws all four plots.</p>
+      <p>Variable in the script: <code>start_message</code>. The same two switches are also in <code>initial_start_message</code>, commented <code>HMI reset to baseline</code>. That second object is a <code>set_config</code> for a case that is already running. This screen has no separate reset button. Start already applies that baseline before run.</p>
+      <pre>{
+  "command": "start",
+  "body": {
+    "name": "CDC_LM8unit_2BESS_MVUPS",
+    "do_compile_case": false,
+    "model_file": "CDC_LM8unit_2BESS_MVUPS\\CDC_LM8unit_2BESS_MVUPS.rtfx",
+    "streaming_interval": 0.1,
+    "prop_set_wait": 1,
+    "config": [
+      {
+        "id": 75504,
+        "name": "Topology",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      },
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      }
+    ],
+    "output": [
+      { "id": 24763, "name": "VGB", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 470, "name": "PMAC", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75586, "name": "P_UPS_LOAD", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75587, "name": "Q_UPS_LOAD", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75589, "name": "Vgridrms", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75588, "name": "LoadSideV_rms_pu", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75441, "name": "BESS1_MW_scale", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 75442, "name": "BESS2_MW_scale", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 24816, "name": "Simtime", "type": "meter", "subtab": "Draft", "subpage": "SS #1" },
+      { "id": 2114, "name": "W", "type": "meter", "subtab": "Draft", "subpage": "SS #1" }
+    ]
+  }
+}</pre>
+      <p>First reply, then keep the socket open:</p>
+      <pre>{ "status": "start", "id": "&lt;simulation id&gt;", "message": "..." }</pre>
+    </article>
+
+    <article class="card" id="baseload">
+      <h3><span class="tag">Use cases</span> Baseload</h3>
+      <p>Puts the running case back on the constant data-center load. AI_load goes to 0. On the wall, load demand should settle toward a flat line inside 50–150&nbsp;MW, and the generator trace should calm down with it. Frequency should stay near 60&nbsp;Hz. Script comment: <code>HMI baseload button message</code>. Variable: <code>tunr_off_ai_load_message</code>.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      }
+    ]
+  }
+}</pre>
+    </article>
+
+    <article class="card" id="ai-load">
+      <h3><span class="tag">Use cases</span> AI Load</h3>
+      <p>Closes the AI_load switch. The load is no longer a constant baseload; it is the spiky profile. Load demand on the top-left screen is the curve that should show that. The meeting called this “connect AI load”. The file does not put the letters HMI on this object; Baseload is the one explicitly marked. This is still the message for the AI Load picture.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      }
+    ]
+  }
+}</pre>
+    </article>
+
+    <article class="card" id="bess">
+      <h3><span class="tag">Augmented</span> Add BESS</h3>
+      <p>Brings both battery blocks onto the grid while the case is running. One press sends four steps: ST2DBlk and ST1DBlk to 1 (de-block), then BESS1OnGrid and BESS2OnGrid to 1. You should see the generator and load traces move as the batteries pick up part of the step. Do this before Add MVUPS. Script comment: <code>HMI - Use this to connect bess</code>. Variable: <code>connect_bess_message</code>. The header comment in the file says BESS2OnGrid = 2; the JSON that actually gets sent uses position 1. Send the JSON.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      {
+        "id": 75382,
+        "name": "ST2DBlk",
+        "type": "pushbutton",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      },
+      {
+        "id": 75378,
+        "name": "ST1DBlk",
+        "type": "pushbutton",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      },
+      {
+        "id": 75380,
+        "name": "BESS1OnGrid",
+        "type": "pushbutton",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      },
+      {
+        "id": 75384,
+        "name": "BESS2OnGrid",
+        "type": "pushbutton",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      }
+    ]
+  }
+}</pre>
+    </article>
+
+    <article class="card" id="mvups">
+      <h3><span class="tag">Augmented</span> Add MVUPS</h3>
+      <p>Inserts the medium-voltage UPS in series. The message is three ordered steps, not one switch: turn AI_load off, set Topology to 1, turn AI_load back on. Topology is the MVUPS. After this, on the voltage plot, keep VGB (generator side) drawn on top of load-side voltage so the cleaner generator trace stays visible. Press Add BESS first. Script comment: <code>HMI - connect mvups</code>. Variable: <code>connect_mvups_message</code>.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      },
+      {
+        "id": 75504,
+        "name": "Topology",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      },
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 1 }
+      }
+    ]
+  }
+}</pre>
+    </article>
+
+    <article class="card" id="stop">
+      <h3><span class="tag">Left column</span> Stop</h3>
+      <p>Stops that simulation id and closes the socket. The plots stop. The next Start is a new socket and a new id. There is no HMI comment on this object; the meeting assigned it to the Stop button.</p>
+      <pre>{
+  "command": "stop",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;"
+  }
+}</pre>
+    </article>
+
+    <h2>Messages in the file with no button on this page</h2>
+    <article class="card">
+      <h3>Reset to baseline — <code>initial_start_message</code></h3>
+      <p>Comment in the file: <code>HMI reset to baseline</code>. Same two switches as Start (Topology 0, AI_load 0), but as <code>set_config</code> on an id that already exists. Use it only if a running case must be put back to eight turbines and baseload without stopping. This page does not have that button. Start already begins in that state.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      {
+        "id": 75504,
+        "name": "Topology",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      },
+      {
+        "id": 75363,
+        "name": "AI_load",
+        "type": "switch",
+        "subtab": "Draft",
+        "subpage": "SS #1",
+        "properties": { "position": 0 }
+      }
+    ]
+  }
+}</pre>
+    </article>
+    <article class="card">
+      <h3>Disconnect BESS — <code>turn_off_bess_message</code></h3>
+      <p>Comment in the file: <code>HMI use this to disconnect bess</code>, and also “for now, we do not disconnect bess in our demo.” The de-block buttons stay at 1. Only BESS1OnGrid and BESS2OnGrid go to 0. Do not add this button for Monday.</p>
+      <pre>{
+  "command": "set_config",
+  "body": {
+    "id": "&lt;simulation id from Start&gt;",
+    "prop_set_wait": 2,
+    "config": [
+      { "id": 75382, "name": "ST2DBlk", "type": "pushbutton", "subtab": "Draft", "subpage": "SS #1", "properties": { "position": 1 } },
+      { "id": 75378, "name": "ST1DBlk", "type": "pushbutton", "subtab": "Draft", "subpage": "SS #1", "properties": { "position": 1 } },
+      { "id": 75380, "name": "BESS1OnGrid", "type": "pushbutton", "subtab": "Draft", "subpage": "SS #1", "properties": { "position": 0 } },
+      { "id": 75384, "name": "BESS2OnGrid", "type": "pushbutton", "subtab": "Draft", "subpage": "SS #1", "properties": { "position": 0 } }
+    ]
+  }
+}</pre>
+    </article>
+
+    <h2>What one streamed sample looks like</h2>
+    <p>After Start, every tick is one JSON object. Keys are the meter names. Values are numbers. There is no <code>status</code> and no timestamp. The Maingear log line is <code>Sending payload to client:</code> followed by that object. Numbers below are only a shape, not a captured sample.</p>
+    <pre>{
+  "VGB": 0.99,
+  "PMAC": 12.4,
+  "P_UPS_LOAD": 100.2,
+  "Q_UPS_LOAD": 5.1,
+  "Vgridrms": 1.0,
+  "LoadSideV_rms_pu": 0.98,
+  "BESS1_MW_scale": 0.0,
+  "BESS2_MW_scale": 0.0,
+  "Simtime": 124.0,
+  "W": 376.99
+}</pre>
+    <p>If <code>W</code> is about 377, then <code>W / (2π)</code> is about 60&nbsp;Hz and the frequency plot is correct. If a real sample is already near 60, do not divide.</p>
+
+    <h2>Do we need a debug capture before coding the plots?</h2>
+    <p>Not for the buttons. The JSON to send is already in the script, and Start on the Ideum is already reaching the Maingear.</p>
+    <p>The Y ranges are locked by Abu’s table, so a capture is no longer needed to choose them. One check is still worth a glance at the server window after Start: <code>W / (2π)</code> should land near 60. If the raw <code>W</code> is already near 60, do not divide. No debug buttons are required for that.</p>
+    <p class="muted">When the EMS-connected model replaces this case, the file name and these component ids change. The button sequence and the four plots stay the same. Send the new ids the same way this script does.</p>
+  </main>
+</body>
+</html>
