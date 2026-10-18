@@ -21,6 +21,7 @@ IDEUM_ETHERNET_IP = "192.168.50.2"
 NON_REPLAY_REMOTE_COMMANDS = frozenset({
     "loadHdAero",
     "loadP2R18",
+    "loadWind02",
     "resetHdAero",
 })
 
@@ -43,6 +44,7 @@ VALID_REMOTE_COMMANDS = frozenset({
     "loadHdAero",
     "resetHdAero",
     "loadP2R18",
+    "loadWind02",
     "toggleInteractiveBreaker",
     "showVernova",
     "showDcs",

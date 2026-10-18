@@ -20,6 +20,8 @@ import {
   getIdeum08RootBucketChrome,
   IDEUM08_REF_200MW_SUBMENU,
   IDEUM08_REFERENCE_ARCHITECTURES,
+  IDEUM08_TEST_REF_ARCH_SUBMENU,
+  IDEUM08_DISPATCHABLE_WIND_200MW_SUBMENU,
   isIdeum08AutoFitNavScreen,
   isIdeum08NavCardDisabled,
   isIdeum08NavCardFeatured,
@@ -31,6 +33,8 @@ import Ideum05BackButton from '../Ideum05BackButton';
 import Ideum05Nav3DViewer from '../Ideum05Nav3DViewer';
 import Ideum08DataCentersHub from './DataCentersHub';
 import Ideum08Ref200MwSubmenu from './Ref200MwSubmenu';
+import TestReferenceArchitectureSubmenu from '../common/TestReferenceArchitectureSubmenu';
+import DispatchableWind200MwSubmenu from '../common/DispatchableWind200MwSubmenu';
 import IdeumSuperBucket from '../common/IdeumSuperBucket';
 import IdeumKioskHomeCluster from '../common/IdeumKioskHomeCluster';
 
@@ -304,6 +308,8 @@ export default function Ideum08NavLayer({
   const cards = useMemo(() => getIdeum08NavCards(screenId), [screenId]);
   const isHub = screenId === IDEUM08_DATA_CENTERS_HUB;
   const isRef200Submenu = screenId === IDEUM08_REF_200MW_SUBMENU;
+  const isTestRefArchSubmenu = screenId === IDEUM08_TEST_REF_ARCH_SUBMENU;
+  const isDispatchableWindSubmenu = screenId === IDEUM08_DISPATCHABLE_WIND_200MW_SUBMENU;
   const isRoot = screenId === IDEUM08_NAV_ROOT;
   const isAdvancedAnalysis = screenId === IDEUM08_ADVANCED_ANALYSIS;
   const isAdvancedControls = screenId === IDEUM08_ADVANCED_CONTROLS;
@@ -396,6 +402,34 @@ export default function Ideum08NavLayer({
         onReset={onIdeum05Reset}
         ideumExpansionMirror={ideumExpansionMirror}
         onIdeumExpansionToggle={onIdeumExpansionToggle}
+        onIdeumToggleSimulation={onIdeumToggleSimulation}
+      />
+    );
+  }
+
+  if (isTestRefArchSubmenu) {
+    return (
+      <TestReferenceArchitectureSubmenu
+        zoom={zoom}
+        onBack={onBack}
+        onHome={onHome}
+        onIdeumCommand={onIdeumRef200MwCommand}
+        onReset={onIdeum05Reset}
+        ideumExpansionMirror={ideumExpansionMirror}
+        onIdeumExpansionToggle={onIdeumExpansionToggle}
+        onIdeumToggleSimulation={onIdeumToggleSimulation}
+      />
+    );
+  }
+
+  if (isDispatchableWindSubmenu) {
+    return (
+      <DispatchableWind200MwSubmenu
+        zoom={zoom}
+        onBack={onBack}
+        onHome={onHome}
+        onIdeumCommand={onIdeumRef200MwCommand}
+        onReset={onIdeum05Reset}
         onIdeumToggleSimulation={onIdeumToggleSimulation}
       />
     );

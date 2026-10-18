@@ -51,7 +51,7 @@ function ref200BucketWellPadding(subsetGapPx) {
   };
 }
 
-function SubmenuUseCaseTile({
+export function SubmenuUseCaseTile({
   label,
   imageUrl,
   imageAlt,
@@ -99,7 +99,7 @@ function SubmenuUseCaseTile({
   );
 }
 
-function SubmenuModelTile({
+export function SubmenuModelTile({
   label,
   modelUrl,
   modelUrlSecondary,
@@ -262,7 +262,7 @@ function SubmenuModelTile({
   );
 }
 
-function Ref200ColumnBucket({
+export function Ref200ColumnBucket({
   title,
   variant,
   bucketChrome,
@@ -290,7 +290,7 @@ function Ref200ColumnBucket({
   );
 }
 
-function DampedToggleRow({ zoom }) {
+export function Ref200BaselineDampedToggleRow({ zoom }) {
   const [undamped, setUndamped] = useState(true);
   return (
     <Ref200HorizontalToggleRow
@@ -368,7 +368,7 @@ export default function Ideum08Ref200MwSubmenu({
               onIdeumCommand={onIdeumCommand}
             />
             <div className="ideum08-ref200__toggle-stack">
-              <DampedToggleRow zoom={zoom} />
+              <Ref200BaselineDampedToggleRow zoom={zoom} />
               <Ref200ExpansionTouchPanel
                 zoom={zoom}
                 ideumExpansionMirror={ideumExpansionMirror}

@@ -139,6 +139,7 @@ import {
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
   IDEUM05_P2R18_MAINGEAR_CATALOG,
+  IDEUM05_WIND02_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
 import {
@@ -247,6 +248,14 @@ import {
   isClusterWallCommandTarget,
   isMaltaTouchClient,
 } from './utils/maltaClusterView';
+import {
+  DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND,
+  IDEUM_DEV_WALL_REMOTE_COMMANDS,
+  openDevMaingearP2R18WallTab,
+  openDevMaingearWind02WallTab,
+  parseIdeumRemoteDeepLink,
+  stripIdeumRemoteFromUrl,
+} from './utils/ideumDevMaingearTab';
 import {
   computePlaybackClockOriginSeconds,
 } from './utils/playbackClockOrigin';
@@ -363,6 +372,16 @@ function isP2R18Design(loadedConfig) {
   const name = String(loadedConfig?.name || '').toLowerCase();
   const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
   return name === 'p2r_18' || rel === 'p2r_18' || rel.endsWith('/p2r_18');
+}
+
+function isWind02Design(loadedConfig) {
+  const name = String(loadedConfig?.name || '').toLowerCase();
+  const rel = String(
+    loadedConfig?.design_catalog_rel
+      || loadedConfig?.csv_status?.design_catalog_rel
+      || '',
+  ).toLowerCase();
+  return name === 'wind02' || rel === 'wind02' || rel.endsWith('/wind02');
 }
 
 /** P2R_18 and HD_Aero share ensemble id `all` on the Maingear wall. */
@@ -1121,6 +1140,8 @@ function App() {
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
    */
   const pendingDesignUiRestoreRef = useRef(null);
+  /** Ideum dispatchable-wind: addBessOnly may arrive before loadWind02 finishes on Maingear. */
+  const pendingWind02AddBessRef = useRef(false);
   /** Set when GET /ensembles finishes for `designApiPath` so post-load restore can distinguish “still fetching” from “empty list”. */
   const ensemblesHydratedForPathRef = useRef(null);
   /** designApiPath for the loaded simulation/ensemble — both HD_Aero and P2R_18 reuse ensemble id `all`. */
@@ -1213,6 +1234,8 @@ function App() {
   const [configuratorWallMountKey, setConfiguratorWallMountKey] = useState(0);
   // After ?design=&sim= opens the catalog design, we run the scenario (and optional named preset) in a second effect.
   const [simDeepLinkFollowup, setSimDeepLinkFollowup] = useState(null);
+  /** Dev wall tab: ?design=p2r_18&maltaView=wall&ideumRemote=addBessOnly after catalog load. */
+  const [ideumRemoteFollowup, setIdeumRemoteFollowup] = useState(null);
   /** Incremented on this effect’s cleanup so in-flight async from a Strict Mode “aborted” run does not clear follow-up or apply stale results. */
   const deepLinkFollowupEpochRef = useRef(0);
   // Bumped when Load Design finishes so we can read localStorage and queue the same follow-up as a URL deep link.
@@ -3965,12 +3988,32 @@ function App() {
       return;
     }
     if (!isClusterTouchCommandSource(role, maltaView)) {
+      if (command === DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND) {
+        openDevMaingearWind02WallTab('addBessOnly');
+        return;
+      }
+      if (IDEUM_DEV_WALL_REMOTE_COMMANDS.has(command)) {
+        openDevMaingearP2R18WallTab(command);
+        return;
+      }
       alert(
         'Remote touch controls are not enabled in this browser tab. Open the Malta touch screen tab (?maltaView=touch) or configure this PC as Ideum.',
       );
       return;
     }
     try {
+      if (command === DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND) {
+        await sendRemoteCommandToMaingear(role, 'loadWind02');
+        const windResult = await sendRemoteCommandToMaingear(role, 'addBessOnly', {
+          targetDesign: 'wind02',
+        });
+        if (!windResult.deliveredToClients) {
+          alert(
+            'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
+          );
+        }
+        return;
+      }
       if (command === 'add8Turbines') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
       }
@@ -4220,7 +4263,7 @@ function App() {
       return { ok: true, command, focus: true };
     }
 
-    if (command === 'loadP2R18' || command === 'loadHdAero') {
+    if (command === 'loadP2R18' || command === 'loadWind02' || command === 'loadHdAero') {
       fireKioskFocusFast('showDcs');
     }
 
@@ -5445,6 +5488,62 @@ function App() {
     await handleIdeumControlButtonClick({ command: 'liveRtds' });
   }, [handleIdeumControlButtonClick]);
 
+  const applyWind02RemoteAddBessOnly = useCallback(async () => {
+    const loadedSnap = {
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    };
+    if (!designApiPath || !isWind02Design(loadedSnap)) {
+      return false;
+    }
+
+    handleWorkspaceLayoutPresetChange('conf5');
+
+    const sectionVisibility = normalizeDesignSectionVisibility({
+      showUpper: true,
+      showLower: false,
+      hideBranches: [],
+      canvasExternalPrimaryLabels: true,
+    });
+    setDesignSectionVisibility(sectionVisibility);
+    setViewMode('customer');
+    setRightRailCollapsed(false);
+    setRightRailGridPeek(true);
+
+    const ensemble = resolveDesignEnsemble(designEnsembles, 's14_');
+    if (!ensemble) {
+      console.warn('[wind02] remote addBessOnly: ensemble s14_ not found');
+      return false;
+    }
+    const sameEnsemble =
+      simulationMetadata?.ensembleId === ensemble.id
+      && simulationDesignPathRef.current === designApiPath;
+    if (!sameEnsemble) {
+      await handleSelectEnsemble(ensemble);
+    }
+
+    const presetOk = await handleActivateNamedSimulationConfig('all');
+    if (presetOk) {
+      handleStopSimulation();
+    }
+    return presetOk;
+  }, [
+    currentConfigName,
+    designApiPath,
+    designEnsembles,
+    handleActivateNamedSimulationConfig,
+    handleSelectEnsemble,
+    handleStopSimulation,
+    handleWorkspaceLayoutPresetChange,
+    simulationMetadata?.ensembleId,
+  ]);
+
+  const applyWind02RemoteAddBessOnlyRef = useRef(applyWind02RemoteAddBessOnly);
+  useEffect(() => {
+    applyWind02RemoteAddBessOnlyRef.current = applyWind02RemoteAddBessOnly;
+  }, [applyWind02RemoteAddBessOnly]);
+
   const handleRemoteClusterCommand = async (command, payload) => {
     if (!command) return;
 
@@ -5600,6 +5699,29 @@ function App() {
       }
       return;
     }
+    if (command === 'loadWind02') {
+      if (
+        isWind02Design({
+          name: currentConfigName,
+          design_catalog_rel: designApiPath,
+          csv_status: { design_catalog_rel: designApiPath },
+        })
+      ) {
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(IDEUM05_WIND02_MAINGEAR_CATALOG)}/load`,
+        );
+        if (!res.ok) return;
+        const loadedConfig = await res.json();
+        loadSkipSessionRestoreRef.current = true;
+        handleConfigurationLoadedRef.current?.(loadedConfig);
+      } catch (e) {
+        console.warn('loadWind02 remote command failed', e);
+      }
+      return;
+    }
     if (command === 'toggleInteractiveBreaker') {
       const componentId = payload?.componentId;
       const status = payload?.status;
@@ -5620,6 +5742,26 @@ function App() {
         setRightRailGridPeek(true);
       }
       return;
+    }
+
+    if (command === 'addBessOnly') {
+      const loadedSnap = {
+        name: currentConfigName,
+        design_catalog_rel: designApiPath,
+        csv_status: { design_catalog_rel: designApiPath },
+      };
+      const wantsWind02 =
+        payload?.targetDesign === 'wind02' || pendingWind02AddBessRef.current;
+      if (wantsWind02) {
+        if (!isWind02Design(loadedSnap)) {
+          pendingWind02AddBessRef.current = true;
+          await handleRemoteClusterCommand('loadWind02');
+          return;
+        }
+        pendingWind02AddBessRef.current = false;
+        await applyWind02RemoteAddBessOnly();
+        return;
+      }
     }
 
     if (!remoteControlProfile?.enabled) return;
@@ -8407,7 +8549,12 @@ function App() {
     // Save the configuration name for future quick saves
     setCurrentConfigName(loadedConfig.name);
 
-    if (isP2R18Design(loadedConfig) || isHDAeroDesign(loadedConfig) || isHDAeroIdeumDesign(loadedConfig)) {
+    if (
+      isP2R18Design(loadedConfig)
+      || isWind02Design(loadedConfig)
+      || isHDAeroDesign(loadedConfig)
+      || isHDAeroIdeumDesign(loadedConfig)
+    ) {
       // Same as pressing Hide on Simulation Controls — tuck property panel, keep scenario strip.
       setRightRailCollapsed(false);
       setRightRailGridPeek(true);
@@ -9260,6 +9407,7 @@ function App() {
     const simParsed = parseSimulationDeepLink(window.location.search);
     const designOnlyParsed = simParsed ? null : parseDesignOnlyDeepLink(window.location.search);
     const catalogDesign = simParsed?.design ?? designOnlyParsed?.design;
+    const ideumRemoteBootstrap = parseIdeumRemoteDeepLink(window.location.search);
     if (!catalogDesign) return;
     deepLinkBootstrapStartedRef.current = true;
     dcsSimDbg('URL bootstrap parsed', {
@@ -9298,6 +9446,12 @@ function App() {
         if (simParsed) {
           setSimDeepLinkFollowup({ sim: simParsed.sim, config: simParsed.config });
         }
+        if (
+          ideumRemoteBootstrap
+          && IDEUM_DEV_WALL_REMOTE_COMMANDS.has(ideumRemoteBootstrap)
+        ) {
+          setIdeumRemoteFollowup(ideumRemoteBootstrap);
+        }
       } catch (e) {
         if (!cancelled) console.warn('[Deep link] Error', e);
       }
@@ -9307,6 +9461,74 @@ function App() {
       deepLinkBootstrapStartedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!ideumRemoteFollowup) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    const loadedDesign = {
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    };
+    const remoteDesignReady =
+      isP2R18Design(loadedDesign) || isWind02Design(loadedDesign);
+    if (!remoteDesignReady) return;
+    if (!remoteControlProfile?.commands?.[ideumRemoteFollowup]) return;
+    if (
+      isWind02Design(loadedDesign)
+      && ensemblesHydratedForPathRef.current !== designApiPath
+    ) {
+      return;
+    }
+
+    const command = ideumRemoteFollowup;
+    setIdeumRemoteFollowup(null);
+    let cancelled = false;
+    (async () => {
+      try {
+        if (isWind02Design(loadedDesign)) {
+          await applyWind02RemoteAddBessOnlyRef.current();
+        } else {
+          await handleRemoteClusterCommandRef.current(command);
+        }
+      } catch (e) {
+        if (!cancelled) console.warn('[Deep link] ideumRemote follow-up failed', command, e);
+      } finally {
+        if (!cancelled) stripIdeumRemoteFromUrl();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    ideumRemoteFollowup,
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    remoteControlProfile,
+    designEnsembles,
+  ]);
+
+  useEffect(() => {
+    if (!pendingWind02AddBessRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    const loadedDesign = {
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    };
+    if (!isWind02Design(loadedDesign)) return;
+    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
+
+    pendingWind02AddBessRef.current = false;
+    void applyWind02RemoteAddBessOnlyRef.current();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    sessionRestoreTrigger,
+  ]);
 
   useEffect(() => {
     if (!simDeepLinkFollowup) return;

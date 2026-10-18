@@ -491,3 +491,25 @@
   border-color: rgba(0, 212, 168, 0.72);
   color: #ecfbf7;
 }
+
+/* Dispatchable wind baseline: tall 3D preview + compact sim toggle at bottom. */
+.ideum08-dispatchable-wind-200__baseline .ideum08-dispatchable-wind-200__baseline-tile,
+.ideum08-dispatchable-wind-200__baseline .ideum07-ref200__tile--baseline.ideum08-dispatchable-wind-200__baseline-tile,
+.ideum08-dispatchable-wind-200__baseline .ideum08-ref200__tile--baseline.ideum08-dispatchable-wind-200__baseline-tile {
+  flex: 1 1 0;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  margin: clamp(6px, 1vw, 12px) clamp(6px, 1vw, 12px) clamp(6px, 0.8vh, 10px);
+  width: auto;
+  box-sizing: border-box;
+}
+
+.ideum08-dispatchable-wind-200__baseline .ideum08-dispatchable-wind-200__toggle-stack {
+  flex: 0 0 auto;
+  min-height: auto;
+  justify-content: flex-end;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: clamp(8px, 1.2vh, 16px);
+}

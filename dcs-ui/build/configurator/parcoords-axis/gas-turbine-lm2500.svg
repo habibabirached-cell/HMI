@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Aeroderivative gas turbine">
+  <defs>
+    <linearGradient id="lm-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c5d4e3"/>
+      <stop offset="100%" stop-color="#e8eef4"/>
+    </linearGradient>
+    <linearGradient id="lm-pad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a939e"/>
+      <stop offset="100%" stop-color="#5a626c"/>
+    </linearGradient>
+    <linearGradient id="lm-nacelle" x1="0" y1="0" x2="1" y2="0.3">
+      <stop offset="0%" stop-color="#eceff1"/>
+      <stop offset="40%" stop-color="#b0bec5"/>
+      <stop offset="100%" stop-color="#607d8b"/>
+    </linearGradient>
+    <linearGradient id="lm-engine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#78909c"/>
+      <stop offset="50%" stop-color="#cfd8dc"/>
+      <stop offset="100%" stop-color="#546e7a"/>
+    </linearGradient>
+    <radialGradient id="lm-fan" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#37474f"/>
+      <stop offset="100%" stop-color="#102027"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#lm-sky)"/>
+  <ellipse cx="64" cy="100" rx="52" ry="7" fill="#8a939e" opacity="0.4"/>
+  <rect x="12" y="90" width="104" height="12" rx="2" fill="url(#lm-pad)"/>
+  <!-- trailer / skid -->
+  <rect x="16" y="78" width="96" height="14" rx="2" fill="#546e7a"/>
+  <circle cx="28" cy="94" r="5" fill="#37474f" stroke="#263238"/>
+  <circle cx="100" cy="94" r="5" fill="#37474f" stroke="#263238"/>
+  <!-- aeroderivative package: long nacelle -->
+  <path d="M20 72 Q64 58 108 72 L108 82 Q64 70 20 82 Z" fill="url(#lm-nacelle)" stroke="#607080" stroke-width="1"/>
+  <path d="M24 74 Q64 62 104 74 L104 80 Q64 68 24 80 Z" fill="url(#lm-engine)" opacity="0.85"/>
+  <!-- inlet bellmouth -->
+  <ellipse cx="26" cy="77" rx="12" ry="11" fill="#90a4ae" stroke="#546e7a"/>
+  <ellipse cx="26" cy="77" rx="7" ry="6.5" fill="url(#lm-fan)"/>
+  <circle cx="26" cy="77" r="2.5" fill="#cfd8dc"/>
+  <!-- fan blades hint -->
+  <path d="M26 70 L28 77 L24 77 Z" fill="#b0bec5" opacity="0.9"/>
+  <path d="M26 84 L28 77 L24 77 Z" fill="#b0bec5" opacity="0.9"/>
+  <path d="M19 77 L26 79 L26 75 Z" fill="#b0bec5" opacity="0.9"/>
+  <path d="M33 77 L26 79 L26 75 Z" fill="#b0bec5" opacity="0.9"/>
+  <!-- center fuselage detail -->
+  <rect x="44" y="73" width="36" height="8" rx="2" fill="#78909c" opacity="0.6"/>
+  <line x1="52" y1="74" x2="52" y2="80" stroke="#455a64" stroke-width="0.6" opacity="0.7"/>
+  <line x1="60" y1="74" x2="60" y2="80" stroke="#455a64" stroke-width="0.6" opacity="0.7"/>
+  <line x1="68" y1="74" x2="68" y2="80" stroke="#455a64" stroke-width="0.6" opacity="0.7"/>
+  <!-- exhaust nozzle -->
+  <path d="M108 74 L122 77 L108 80 Z" fill="#455a64"/>
+  <path d="M112 75 L124 77 L112 79 Z" fill="#37474f"/>
+  <path d="M118 76 L128 77 L118 78 Z" fill="#ff7043" opacity="0.8"/>
+  <path d="M122 76.5 L128 77 L122 77.5 Z" fill="#ffab91" opacity="0.65"/>
+  <!-- support leg -->
+  <rect x="58" y="82" width="4" height="8" fill="#607080"/>
+</svg>

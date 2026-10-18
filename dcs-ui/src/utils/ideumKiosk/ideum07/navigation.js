@@ -68,6 +68,8 @@ export const IDEUM07_ADVANCED_CONTROLS = 'advanced-controls';
 export const IDEUM07_HIL_CONTROLLER_SUBMENU = 'hil-controller-submenu';
 export const IDEUM07_REFERENCE_ARCHITECTURES = 'reference-architectures';
 export const IDEUM07_REF_200MW_SUBMENU = 'ref-200-mw-submenu';
+export const IDEUM07_TEST_REF_ARCH_SUBMENU = 'test-ref-architecture-submenu';
+export const IDEUM07_DISPATCHABLE_WIND_200MW_SUBMENU = 'dispatchable-wind-200-mw-submenu';
 
 export const IDEUM07_HIL_SUBMENU_PREVIEW_MATCH_GROUP = 'ideum07-hil-submenu-preview';
 
@@ -87,6 +89,9 @@ export function getIdeum07SuperBucketTitle(screenId) {
     return 'Controller Hardware-in-the-Loop Testing';
   }
   if (screenId === IDEUM07_REF_200MW_SUBMENU) return '200 MW Architecture';
+  if (screenId === IDEUM07_DISPATCHABLE_WIND_200MW_SUBMENU) {
+    return 'Dispatchable Wind Powered 200 MW Architecture';
+  }
   if (screenId === IDEUM07_REFERENCE_ARCHITECTURES) {
     return 'Reference Power Block Architectures';
   }
@@ -265,6 +270,7 @@ const SCREENS = {
       preview: 'HIL validation of reference architecture',
       previewImageUrl: IDEUM07_NAV_IMAGE_URLS.hilTestRefArchOperation,
       ...IDEUM07_HIL_SUBMENU_PREVIEW_IMAGE,
+      navDrillTarget: IDEUM07_TEST_REF_ARCH_SUBMENU,
       navFeatured: true,
     },
     {
@@ -339,6 +345,7 @@ const SCREENS = {
       modelFitScale: 0.92,
       modelYOffset: 0.1,
       cameraPitchLift: 0.5,
+      navDrillTarget: IDEUM07_DISPATCHABLE_WIND_200MW_SUBMENU,
       navFeatured: true,
     },
     {

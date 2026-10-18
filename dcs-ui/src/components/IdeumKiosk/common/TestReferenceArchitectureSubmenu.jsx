@@ -1,0 +1,183 @@
+import React from 'react';
+import { getComponentVisualConfig } from '../../../data/componentVisuals';
+import { getBess3DModelUrl } from '../../../utils/bess3dLayout';
+import { getGasTurbine3DModelUrl } from '../../../utils/gasTurbine3dLayout';
+import { getIdeum08RootBucketChrome, IDEUM08_NAV_IMAGE_URLS } from '../../../utils/ideumKiosk/ideum08/navigation';
+import IdeumSuperBucket from './IdeumSuperBucket';
+import Ref200ExpansionTouchPanel from '../ideum08/Ref200ExpansionTouchPanel';
+import {
+  REF200_IDEUM_COMMANDS,
+  Ref200BaselineDampedToggleRow,
+  Ref200ColumnBucket,
+  SubmenuModelTile,
+  SubmenuUseCaseTile,
+} from '../ideum08/Ref200MwSubmenu';
+import '../ideum08/DataCentersHub.css';
+import '../ideum08/Ref200MwSubmenu.css';
+
+const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
+const LM2500_3D_VISUAL = getComponentVisualConfig('gas-turbine-3d');
+const LM2500_MODEL = getGasTurbine3DModelUrl(LM2500_3D_VISUAL);
+const BESS_MODEL = getBess3DModelUrl(BESS_VISUAL);
+
+function ref200SideTitleFontPx(zoom = 1) {
+  const z = Math.max(Number(zoom) || 1, 0.01);
+  return Math.max(12, Math.round(11 * 1.12 * z));
+}
+
+function ref200BucketWellPadding(subsetGapPx) {
+  return {
+    paddingTop: subsetGapPx,
+    paddingLeft: subsetGapPx,
+    paddingRight: subsetGapPx,
+    paddingBottom: subsetGapPx,
+  };
+}
+
+/** HIL → Test Reference Architecture (3-column layout like 200 MW Architecture). */
+export default function TestReferenceArchitectureSubmenu({
+  zoom = 1,
+  onBack,
+  onHome,
+  onIdeumCommand,
+  onReset,
+  ideumExpansionMirror,
+  onIdeumExpansionToggle,
+  onIdeumToggleSimulation,
+}) {
+  const bucketChrome = getIdeum08RootBucketChrome(zoom);
+  const hubInsetPx = Math.max(8, Math.round(8 * zoom));
+  const titleFontPx = ref200SideTitleFontPx(zoom);
+
+  return (
+    <div
+      className="ideum07-hub ideum07-ref200-submenu ideum05-nav-layer ideum08-test-ref-arch"
+      role="region"
+      aria-label="Test Reference Architecture"
+      style={{
+        padding: hubInsetPx,
+        '--ideum07-ref200-title-font': `${titleFontPx}px`,
+      }}
+    >
+      <IdeumSuperBucket
+        className="ideum07-hub-screen"
+        contentClassName="ideum07-hub-screen__content ideum07-ref200-submenu__content"
+        contentStyle={ref200BucketWellPadding(bucketChrome.subsetGapPx)}
+        title="Test Reference Architecture"
+        bucketChrome={bucketChrome}
+        showBack
+        onBack={onBack}
+        showHome={Boolean(onHome)}
+        onHome={onHome}
+        showMaingearTouchActions
+        onReset={onReset}
+      >
+        <div
+          className="ideum07-hub__row ideum07-ref200-submenu__row"
+          style={{ gap: bucketChrome.bucketGapPx }}
+        >
+          <Ref200ColumnBucket
+            title="Baseline Configuration"
+            bucketChrome={bucketChrome}
+            onHome={onHome}
+            onReset={onReset}
+            className="ideum07-ref200-submenu__bucket ideum07-ref200-submenu__bucket--baseline"
+            contentClassName="ideum07-ref200-submenu__bucket-content--baseline"
+          >
+            <SubmenuModelTile
+              zoom={zoom}
+              className="ideum07-ref200__tile--baseline ideum08-ref200__tile--baseline ideum07-root-subcard--stability"
+              label="8xLM2500 + 2xBESS"
+              modelUrl={LM2500_MODEL}
+              modelUrlSecondary={BESS_MODEL}
+              fitScale={0.52}
+              fitScaleSecondary={0.95}
+              modelYOffset={0.06}
+              cameraPitchLift={0.42}
+              ideumCommand={REF200_IDEUM_COMMANDS.addBess}
+              onIdeumCommand={onIdeumCommand}
+            />
+            <div className="ideum08-ref200__toggle-stack">
+              <Ref200BaselineDampedToggleRow zoom={zoom} />
+              <Ref200ExpansionTouchPanel
+                zoom={zoom}
+                ideumExpansionMirror={ideumExpansionMirror}
+                onIdeumExpansionToggle={onIdeumExpansionToggle}
+              />
+              <button
+                type="button"
+                className="ideum08-ref200__sim-toggle-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onIdeumToggleSimulation?.();
+                }}
+              >
+                Toggle simulation
+              </button>
+            </div>
+          </Ref200ColumnBucket>
+
+          <Ref200ColumnBucket
+            title="Augmented Configurations"
+            variant="applications"
+            bucketChrome={bucketChrome}
+            onHome={onHome}
+            onReset={onReset}
+            className="ideum07-ref200-submenu__bucket"
+          >
+            <div
+              className="ideum07-ref200-submenu__stack"
+              style={{ gap: bucketChrome.subsetGapPx }}
+            >
+              <SubmenuModelTile
+                zoom={zoom}
+                className="ideum07-ref200__tile--tall"
+                label="Add MVUPS + SST"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
+                previewImageAlt="Medium-voltage UPS and solid-state transformer skids"
+              />
+              <SubmenuModelTile
+                zoom={zoom}
+                className="ideum07-ref200__tile--tall"
+                label="Add SST & Storage"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Sst}
+                previewImageAlt="Solid-state transformer and battery storage"
+                disabled
+                dimmed
+                modelComingSoon
+                comingSoonLabel="Coming soon"
+              />
+            </div>
+          </Ref200ColumnBucket>
+
+          <Ref200ColumnBucket
+            title="Use Cases"
+            bucketChrome={bucketChrome}
+            onHome={onHome}
+            onReset={onReset}
+            className="ideum07-ref200-submenu__bucket"
+          >
+            <div
+              className="ideum07-ref200-submenu__stack"
+              style={{ gap: bucketChrome.subsetGapPx }}
+            >
+              <SubmenuUseCaseTile
+                zoom={zoom}
+                label="Baseload"
+                imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ContingencyScenarios}
+                imageAlt="Baseload power delivery at a large substation"
+              />
+              <SubmenuUseCaseTile
+                zoom={zoom}
+                label="AI Load"
+                imageUrl={IDEUM08_NAV_IMAGE_URLS.renewablePoweredDatacenters}
+                imageAlt="High-density datacenter AI load"
+              />
+            </div>
+          </Ref200ColumnBucket>
+        </div>
+      </IdeumSuperBucket>
+    </div>
+  );
+}
