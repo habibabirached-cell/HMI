@@ -19,7 +19,6 @@ import { normalizeBusTransferSegments } from './utils/busTransferSegments';
 import {
   normalizeQuickScenarioButtons,
   ensureMvupsUndampedQuickScenarioButton,
-  designSupportsMvupsDampingToggle,
   isMvupsQuickScenarioShortcut,
   normalizeMvupsDampingMode,
   normalizeHiddenDefaultQuickScenarios,
@@ -139,6 +138,7 @@ import {
   IDEUM05_HD_AERO_IDEUM_CATALOG,
   IDEUM05_HD_AERO_MAINGEAR_CATALOG,
   IDEUM05_P2R18_MAINGEAR_CATALOG,
+  IDEUM05_P2R_CHIL_MAINGEAR_CATALOG,
   IDEUM05_WIND02_MAINGEAR_CATALOG,
   IDEUM05_NAV_ROOT,
 } from './utils/ideum05Navigation';
@@ -250,10 +250,14 @@ import {
 } from './utils/maltaClusterView';
 import {
   DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND,
+  IDEUM_DEV_WALL_OPEN_TAB_COMMANDS,
+  IDEUM_DEV_WALL_RELAY_COMMANDS,
   IDEUM_DEV_WALL_REMOTE_COMMANDS,
-  openDevMaingearP2R18WallTab,
+  openDevMaingearWallTab,
   openDevMaingearWind02WallTab,
+  installDevWallRemoteCommandListener,
   parseIdeumRemoteDeepLink,
+  relayDevWallRemoteCommand,
   stripIdeumRemoteFromUrl,
 } from './utils/ideumDevMaingearTab';
 import {
@@ -372,6 +376,16 @@ function isP2R18Design(loadedConfig) {
   const name = String(loadedConfig?.name || '').toLowerCase();
   const rel = String(loadedConfig?.csv_status?.design_catalog_rel || '').toLowerCase();
   return name === 'p2r_18' || rel === 'p2r_18' || rel.endsWith('/p2r_18');
+}
+
+function isP2RChilDesign(loadedConfig) {
+  const name = String(loadedConfig?.name || '').toLowerCase();
+  const rel = String(
+    loadedConfig?.design_catalog_rel
+      || loadedConfig?.csv_status?.design_catalog_rel
+      || '',
+  ).toLowerCase();
+  return name === 'p2r_chil' || rel === 'p2r_chil' || rel.endsWith('/p2r_chil');
 }
 
 function isWind02Design(loadedConfig) {
@@ -1135,6 +1149,8 @@ function App() {
   const loadSkipSessionRestoreRef = useRef(false);
   const pendingHdAeroInitRef = useRef(false);
   const pendingP2R18InitRef = useRef(false);
+  /** Dev wall ?ideumRemote=… — skip noBessNoStatcom default until preset follow-up finishes. */
+  const suppressP2R18DefaultInitRef = useRef(false);
   /**
    * After Load Design, re-select the ensemble (and reload charts from its chart_panel) if the user
    * had that ensemble active when they saved — see `designUiSession` in getCurrentConfiguration.
@@ -3973,6 +3989,10 @@ function App() {
       button?.command ||
       button?.properties?.ideumCommand;
     if (!command) return;
+    const maingearCatalog =
+      button?.maingearCatalog === IDEUM05_P2R_CHIL_MAINGEAR_CATALOG
+        ? IDEUM05_P2R_CHIL_MAINGEAR_CATALOG
+        : IDEUM05_P2R18_MAINGEAR_CATALOG;
     if (
       (command === 'resetHdAero' || command === 'loadHdAero')
       && (isHdAeroShell || isHdAeroIdeumLoaded)
@@ -3992,9 +4012,16 @@ function App() {
         openDevMaingearWind02WallTab('addBessOnly');
         return;
       }
-      if (IDEUM_DEV_WALL_REMOTE_COMMANDS.has(command)) {
-        openDevMaingearP2R18WallTab(command);
-        return;
+      if (isLocalClusterDev()) {
+        if (IDEUM_DEV_WALL_OPEN_TAB_COMMANDS.has(command)) {
+          openDevMaingearWallTab(maingearCatalog, command);
+          return;
+        }
+        if (IDEUM_DEV_WALL_RELAY_COMMANDS.has(command)) {
+          if (relayDevWallRemoteCommand(command)) return;
+          openDevMaingearWallTab(maingearCatalog, command);
+          return;
+        }
       }
       alert(
         'Remote touch controls are not enabled in this browser tab. Open the Malta touch screen tab (?maltaView=touch) or configure this PC as Ideum.',
@@ -4014,7 +4041,9 @@ function App() {
         }
         return;
       }
-      if (command === 'add8Turbines') {
+      if (maingearCatalog === IDEUM05_P2R_CHIL_MAINGEAR_CATALOG) {
+        await sendRemoteCommandToMaingear(role, 'loadP2RChil');
+      } else if (command === 'add8Turbines') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
       }
       const result = await sendRemoteCommandToMaingear(role, command);
@@ -4047,6 +4076,9 @@ function App() {
       return;
     }
     if (!isClusterTouchCommandSource(role, maltaView)) {
+      if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) {
+        return;
+      }
       alert(
         'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch) or configure this PC as Ideum.',
       );
@@ -4055,6 +4087,9 @@ function App() {
     try {
       const result = await sendRemoteCommandToMaingear(role, command);
       if (!result.deliveredToClients) {
+        if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) {
+          return;
+        }
         alert(
           'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS.',
         );
@@ -4263,7 +4298,12 @@ function App() {
       return { ok: true, command, focus: true };
     }
 
-    if (command === 'loadP2R18' || command === 'loadWind02' || command === 'loadHdAero') {
+    if (
+      command === 'loadP2R18'
+      || command === 'loadP2RChil'
+      || command === 'loadWind02'
+      || command === 'loadHdAero'
+    ) {
       fireKioskFocusFast('showDcs');
     }
 
@@ -4547,6 +4587,17 @@ function App() {
   const handleIdeum07Ref200MwCommand = useCallback(
     (command) => {
       void handleIdeumControlButtonClick({ command });
+    },
+    [handleIdeumControlButtonClick],
+  );
+
+  /** HIL Test Reference Architecture — Maingear wall uses p2r_chil catalog. */
+  const handleIdeumTestRefArchCommand = useCallback(
+    (command) => {
+      void handleIdeumControlButtonClick({
+        command,
+        maingearCatalog: IDEUM05_P2R_CHIL_MAINGEAR_CATALOG,
+      });
     },
     [handleIdeumControlButtonClick],
   );
@@ -5002,12 +5053,17 @@ function App() {
       const next = normalizeDesignExpansion(
         mvupsFlat
           ? { breakersCompact: toggledCompact, peripheralsCompact: toggledCompact }
-          : {
-              ...prev,
-              ...(expansionKey === 'breakers'
-                ? { breakersCompact: toggledCompact }
-                : { peripheralsCompact: toggledCompact }),
-            },
+          : expansionKey === 'breakers'
+            ? {
+                ...prev,
+                breakersCompact: toggledCompact,
+                breakersCompactUpper: toggledCompact,
+                breakersCompactLower: toggledCompact,
+              }
+            : {
+                ...prev,
+                peripheralsCompact: toggledCompact,
+              },
       );
       setCanvasComponents((comps) =>
         mvupsFlat
@@ -5062,6 +5118,7 @@ function App() {
 
   /** Default P2R_18 wall state: conf3 layout, baseline canvas only (no plots, simulation off). */
   const applyP2R18DefaultState = useCallback(async () => {
+    if (suppressP2R18DefaultInitRef.current) return false;
     if (!designApiPath) return false;
     if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
       return false;
@@ -5102,6 +5159,7 @@ function App() {
   ]);
 
   useEffect(() => {
+    if (suppressP2R18DefaultInitRef.current) return;
     if (!pendingP2R18InitRef.current) return;
     if (!designApiPath || !csvStatus?.use_design_dir) return;
     if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
@@ -5198,6 +5256,15 @@ function App() {
   const isActiveP2R18Design = useCallback(
     () =>
       isP2R18Design({
+        name: currentConfigName,
+        csv_status: { design_catalog_rel: designApiPath },
+      }),
+    [currentConfigName, designApiPath],
+  );
+
+  const isActiveP2RChilDesign = useCallback(
+    () =>
+      isP2RChilDesign({
         name: currentConfigName,
         csv_status: { design_catalog_rel: designApiPath },
       }),
@@ -5357,11 +5424,13 @@ function App() {
       presetName === shortcut.presetName ? shortcut : { ...shortcut, presetName };
 
     if (
-      isActiveP2R18Design()
+      (isActiveP2R18Design() || isActiveP2RChilDesign())
       && isP2R18QuickScenarioPreset(presetName)
       && !isQuickScenarioResetPreset(presetName)
     ) {
       await applyP2r18DesignOnlyPreset(presetName, effectiveShortcut);
+      setRightRailCollapsed(false);
+      setRightRailGridPeek(true);
       return;
     }
 
@@ -5696,6 +5765,29 @@ function App() {
         handleConfigurationLoadedRef.current?.(loadedConfig);
       } catch (e) {
         console.warn('loadP2R18 remote command failed', e);
+      }
+      return;
+    }
+    if (command === 'loadP2RChil') {
+      if (
+        isP2RChilDesign({
+          name: currentConfigName,
+          design_catalog_rel: designApiPath,
+          csv_status: { design_catalog_rel: designApiPath },
+        })
+      ) {
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/designs/catalog/${encodeURIComponent(IDEUM05_P2R_CHIL_MAINGEAR_CATALOG)}/load`,
+        );
+        if (!res.ok) return;
+        const loadedConfig = await res.json();
+        loadSkipSessionRestoreRef.current = true;
+        handleConfigurationLoadedRef.current?.(loadedConfig);
+      } catch (e) {
+        console.warn('loadP2RChil remote command failed', e);
       }
       return;
     }
@@ -8551,6 +8643,7 @@ function App() {
 
     if (
       isP2R18Design(loadedConfig)
+      || isP2RChilDesign(loadedConfig)
       || isWind02Design(loadedConfig)
       || isHDAeroDesign(loadedConfig)
       || isHDAeroIdeumDesign(loadedConfig)
@@ -8567,7 +8660,17 @@ function App() {
       loadSkipSessionRestoreRef.current = true;
       pendingP2R18InitRef.current = false;
     } else if (isP2R18Design(loadedConfig)) {
-      pendingP2R18InitRef.current = true;
+      const ideumRemote =
+        typeof window !== 'undefined'
+          ? parseIdeumRemoteDeepLink(window.location.search)
+          : null;
+      if (ideumRemote) {
+        suppressP2R18DefaultInitRef.current = true;
+        pendingP2R18InitRef.current = false;
+      } else {
+        suppressP2R18DefaultInitRef.current = false;
+        pendingP2R18InitRef.current = true;
+      }
       loadSkipSessionRestoreRef.current = true;
     }
 
@@ -9282,6 +9385,14 @@ function App() {
     handleRemoteClusterCommandRef.current = handleRemoteClusterCommand;
   });
 
+  useEffect(() => {
+    if (!isLocalClusterDev()) return undefined;
+    if (getMaltaViewFromUrl() !== 'wall') return undefined;
+    return installDevWallRemoteCommandListener((command, payload) => {
+      handleRemoteClusterCommandRef.current?.(command, payload);
+    });
+  }, []);
+
   const handleOpenConfiguratorRef = useRef(handleOpenConfigurator);
   useEffect(() => {
     handleOpenConfiguratorRef.current = handleOpenConfigurator;
@@ -9471,7 +9582,9 @@ function App() {
       csv_status: { design_catalog_rel: designApiPath },
     };
     const remoteDesignReady =
-      isP2R18Design(loadedDesign) || isWind02Design(loadedDesign);
+      isP2R18Design(loadedDesign)
+      || isP2RChilDesign(loadedDesign)
+      || isWind02Design(loadedDesign);
     if (!remoteDesignReady) return;
     if (!remoteControlProfile?.commands?.[ideumRemoteFollowup]) return;
     if (
@@ -9494,7 +9607,10 @@ function App() {
       } catch (e) {
         if (!cancelled) console.warn('[Deep link] ideumRemote follow-up failed', command, e);
       } finally {
-        if (!cancelled) stripIdeumRemoteFromUrl();
+        if (!cancelled) {
+          suppressP2R18DefaultInitRef.current = false;
+          stripIdeumRemoteFromUrl();
+        }
       }
     })();
     return () => {
@@ -9835,10 +9951,7 @@ function App() {
       onHideDefaultQuickScenario={handleHideDefaultQuickScenario}
       mvupsDampingMode={mvupsDampingMode}
       onMvupsDampingModeChange={handleMvupsDampingModeChange}
-      showMvupsDampingToggle={
-        designSupportsMvupsDampingToggle(namedSimulationConfigs)
-        && /^p2r_18$/i.test(String(currentConfigName || ''))
-      }
+      showMvupsDampingToggle={false}
       namedSimulationConfigs={namedSimulationConfigs}
       canSaveScenarioAs={Boolean(csvStatus?.use_design_dir && simulationMetadata?.id && designApiPath)}
       onSaveScenarioAsReplace={handleOpenSaveScenarioAs}
@@ -10507,6 +10620,7 @@ function App() {
               onIdeum07HubOpenConfigurator={handleIdeum07HubOpenConfigurator}
               onIdeum07HubOpenReferenceArchitectures={handleIdeum07HubOpenReferenceArchitectures}
               onIdeum07Ref200MwCommand={handleIdeum07Ref200MwCommand}
+              onIdeumTestRefArchCommand={handleIdeumTestRefArchCommand}
               onIdeumKioskHome={isIdeumKiosk ? handleIdeumKioskHome : undefined}
               onIdeum05Reset={handleIdeum05Reset}
               onIdeum05LiveRtds={handleIdeum05LiveRtds}

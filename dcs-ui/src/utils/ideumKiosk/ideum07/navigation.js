@@ -124,6 +124,7 @@ export function getIdeum07OverlayClusterCommand(screenId) {
 }
 
 export function getIdeum07ControlsClusterCommand(screenId) {
+  if (screenId === IDEUM07_TEST_REF_ARCH_SUBMENU) return 'loadP2RChil';
   if (screenId === 'ref-200-mw') return 'loadP2R18';
   return null;
 }

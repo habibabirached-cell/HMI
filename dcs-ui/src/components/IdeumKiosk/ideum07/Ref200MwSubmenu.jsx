@@ -244,31 +244,6 @@ function Ref200ColumnBucket({
   );
 }
 
-function DampedToggleRow({ zoom }) {
-  const [damped, setDamped] = useState(true);
-  const fontPx = Math.max(10, Math.round(11 * zoom));
-  return (
-    <div className="ideum07-ref200__toggle-row" style={{ fontSize: fontPx }}>
-      <span className={`ideum07-ref200__toggle-label${damped ? ' ideum07-ref200__toggle-label--active' : ''}`}>
-        Damped
-      </span>
-      <button
-        type="button"
-        role="switch"
-        className={`ideum07-ref200__toggle${damped ? ' ideum07-ref200__toggle--on' : ''}`}
-        aria-checked={damped}
-        aria-label={damped ? 'Damped mode' : 'Undamped mode'}
-        onClick={() => setDamped((v) => !v)}
-      >
-        <span className="ideum07-ref200__toggle-thumb" aria-hidden />
-      </button>
-      <span className={`ideum07-ref200__toggle-label${!damped ? ' ideum07-ref200__toggle-label--active' : ''}`}>
-        Undamped
-      </span>
-    </div>
-  );
-}
-
 export default function Ideum07Ref200MwSubmenu({
   zoom = 1,
   onBack,
@@ -322,13 +297,12 @@ export default function Ideum07Ref200MwSubmenu({
               className="ideum07-ref200__tile--baseline ideum07-root-subcard--stability"
               label="LM2500 Powered Island"
               modelUrl={LM2500_MODEL}
-              fitScale={0.68}
-              modelYOffset={0.1}
-              cameraPitchLift={0.52}
+              fitScale={1.2}
+              modelYOffset={0.06}
+              cameraPitchLift={0.44}
               ideumCommand={REF200_IDEUM_COMMANDS.baselineLm2500}
               onIdeumCommand={onIdeumCommand}
             />
-            <DampedToggleRow zoom={zoom} />
           </Ref200ColumnBucket>
 
           <Ref200ColumnBucket

@@ -7,7 +7,6 @@ import IdeumSuperBucket from './IdeumSuperBucket';
 import Ref200ExpansionTouchPanel from '../ideum08/Ref200ExpansionTouchPanel';
 import {
   REF200_IDEUM_COMMANDS,
-  Ref200BaselineDampedToggleRow,
   Ref200ColumnBucket,
   SubmenuModelTile,
   SubmenuUseCaseTile,
@@ -87,18 +86,15 @@ export default function TestReferenceArchitectureSubmenu({
             <SubmenuModelTile
               zoom={zoom}
               className="ideum07-ref200__tile--baseline ideum08-ref200__tile--baseline ideum07-root-subcard--stability"
-              label="8xLM2500 + 2xBESS"
+              label="8xLM2500"
               modelUrl={LM2500_MODEL}
-              modelUrlSecondary={BESS_MODEL}
-              fitScale={0.52}
-              fitScaleSecondary={0.95}
+              fitScale={1.12}
               modelYOffset={0.06}
-              cameraPitchLift={0.42}
-              ideumCommand={REF200_IDEUM_COMMANDS.addBess}
+              cameraPitchLift={0.44}
+              ideumCommand={REF200_IDEUM_COMMANDS.baselineLm2500}
               onIdeumCommand={onIdeumCommand}
             />
             <div className="ideum08-ref200__toggle-stack">
-              <Ref200BaselineDampedToggleRow zoom={zoom} />
               <Ref200ExpansionTouchPanel
                 zoom={zoom}
                 ideumExpansionMirror={ideumExpansionMirror}
@@ -127,15 +123,39 @@ export default function TestReferenceArchitectureSubmenu({
             className="ideum07-ref200-submenu__bucket"
           >
             <div
-              className="ideum07-ref200-submenu__stack"
+              className="ideum07-ref200-submenu__stack ideum07-ref200-submenu__stack--augmented"
               style={{ gap: bucketChrome.subsetGapPx }}
             >
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Add MVUPS + SST"
+                label="Add BESS"
+                modelUrl={BESS_MODEL}
+                fitScale={1.0}
+                modelYOffset={0.04}
+                cameraPitchLift={0.38}
+                ideumCommand={REF200_IDEUM_COMMANDS.addBess}
+                onIdeumCommand={onIdeumCommand}
+              />
+              <SubmenuModelTile
+                zoom={zoom}
+                className="ideum07-ref200__tile--tall"
+                label="Add MVUPS"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
-                previewImageAlt="Medium-voltage UPS and solid-state transformer skids"
+                previewImageAlt="Medium-voltage UPS skid"
+                ideumCommand={REF200_IDEUM_COMMANDS.addMvups}
+                onIdeumCommand={onIdeumCommand}
+              />
+              <SubmenuModelTile
+                zoom={zoom}
+                className="ideum07-ref200__tile--tall"
+                label="Add SST"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Sst}
+                previewImageAlt="Solid-state transformer skid"
+                disabled
+                dimmed
+                modelComingSoon
+                comingSoonLabel="Coming soon"
               />
               <SubmenuModelTile
                 zoom={zoom}

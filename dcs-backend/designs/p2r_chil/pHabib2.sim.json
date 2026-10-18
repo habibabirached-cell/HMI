@@ -1,0 +1,8 @@
+{
+  "display_name": "pHabib2 MVUPS FFT",
+  "description": "MVUPS shaft torque FFT (canonical id pHabib2; replaces Csv_mvups in charts)",
+  "charts_to_display": [],
+  "event_markers": {},
+  "data_row_count": 131,
+  "data_column_count": 2
+}

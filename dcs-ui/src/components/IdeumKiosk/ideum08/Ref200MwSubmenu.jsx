@@ -10,7 +10,6 @@ import '../Ideum05NavLayer.css';
 import './DataCentersHub.css';
 import './Ref200MwSubmenu.css';
 import Ref200ExpansionTouchPanel from './Ref200ExpansionTouchPanel';
-import Ref200HorizontalToggleRow from './Ref200HorizontalToggleRow';
 
 const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
 const LM2500_3D_VISUAL = getComponentVisualConfig('gas-turbine-3d');
@@ -290,20 +289,6 @@ export function Ref200ColumnBucket({
   );
 }
 
-export function Ref200BaselineDampedToggleRow({ zoom }) {
-  const [undamped, setUndamped] = useState(true);
-  return (
-    <Ref200HorizontalToggleRow
-      zoom={zoom}
-      leftLabel="Undamped"
-      rightLabel="Damped"
-      rightActive={!undamped}
-      onToggle={() => setUndamped((v) => !v)}
-      ariaLabel="Undamped or damped mode"
-    />
-  );
-}
-
 export default function Ideum08Ref200MwSubmenu({
   zoom = 1,
   onBack,
@@ -361,14 +346,13 @@ export default function Ideum08Ref200MwSubmenu({
               className="ideum07-ref200__tile--baseline ideum08-ref200__tile--baseline ideum07-root-subcard--stability"
               label="LM2500 Powered Island"
               modelUrl={LM2500_MODEL}
-              fitScale={0.58}
-              modelYOffset={0.08}
-              cameraPitchLift={0.48}
+              fitScale={1.12}
+              modelYOffset={0.06}
+              cameraPitchLift={0.44}
               ideumCommand={REF200_IDEUM_COMMANDS.baselineLm2500}
               onIdeumCommand={onIdeumCommand}
             />
             <div className="ideum08-ref200__toggle-stack">
-              <Ref200BaselineDampedToggleRow zoom={zoom} />
               <Ref200ExpansionTouchPanel
                 zoom={zoom}
                 ideumExpansionMirror={ideumExpansionMirror}

@@ -296,6 +296,7 @@ export default function Ideum08NavLayer({
   onHubOpenConfigurator,
   onHubOpenReferenceArchitectures,
   onIdeumRef200MwCommand,
+  onIdeumTestRefArchCommand,
   onIdeum05Reset,
   onIdeum05LiveRtds,
   ideumExpansionMirror,
@@ -413,7 +414,7 @@ export default function Ideum08NavLayer({
         zoom={zoom}
         onBack={onBack}
         onHome={onHome}
-        onIdeumCommand={onIdeumRef200MwCommand}
+        onIdeumCommand={onIdeumTestRefArchCommand ?? onIdeumRef200MwCommand}
         onReset={onIdeum05Reset}
         ideumExpansionMirror={ideumExpansionMirror}
         onIdeumExpansionToggle={onIdeumExpansionToggle}

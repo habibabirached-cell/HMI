@@ -51,6 +51,9 @@ export const IDEUM05_HD_AERO_MAINGEAR_CATALOG = 'hd_aero';
 /** Maingear P2R_18 catalog (cluster loadP2R18). */
 export const IDEUM05_P2R18_MAINGEAR_CATALOG = 'p2r_18';
 
+/** Maingear P2R CHIL catalog (HIL Test Reference Architecture; cluster loadP2RChil). */
+export const IDEUM05_P2R_CHIL_MAINGEAR_CATALOG = 'p2r_chil';
+
 /** Maingear dispatchable-wind wall catalog (cluster loadWind02). */
 export const IDEUM05_WIND02_MAINGEAR_CATALOG = 'wind02';
 

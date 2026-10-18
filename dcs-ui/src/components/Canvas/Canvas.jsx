@@ -354,6 +354,7 @@ const Canvas = forwardRef(({
   onIdeum07HubOpenConfigurator,
   onIdeum07HubOpenReferenceArchitectures,
   onIdeum07Ref200MwCommand,
+  onIdeumTestRefArchCommand,
   onIdeumKioskHome,
   onIdeum05Reset,
   onIdeum05LiveRtds,
@@ -652,6 +653,7 @@ const Canvas = forwardRef(({
             onHubOpenConfigurator={onIdeum07HubOpenConfigurator}
             onHubOpenReferenceArchitectures={onIdeum07HubOpenReferenceArchitectures}
             onIdeumRef200MwCommand={onIdeum07Ref200MwCommand}
+            onIdeumTestRefArchCommand={onIdeumTestRefArchCommand}
             onHome={onIdeumKioskHome}
             onIdeum05Reset={onIdeum05Reset}
             onIdeum05LiveRtds={onIdeum05LiveRtds}
@@ -774,6 +776,7 @@ const Canvas = forwardRef(({
       onIdeum07HubOpenConfigurator,
       onIdeum07HubOpenReferenceArchitectures,
       onIdeum07Ref200MwCommand,
+      onIdeumTestRefArchCommand,
       onIdeumKioskHome,
       onIdeumExpansionToggle,
       onIdeumToggleSimulation,

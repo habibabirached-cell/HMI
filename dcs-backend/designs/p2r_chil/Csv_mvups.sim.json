@@ -1,0 +1,8 @@
+{
+  "display_name": "Csv Mvups",
+  "description": "MVUPS shaft torque FFT from data/MVUPS/FFT_mvups.csv",
+  "charts_to_display": [],
+  "event_markers": {},
+  "data_row_count": 131,
+  "data_column_count": 2
+}
