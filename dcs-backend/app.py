@@ -47,6 +47,7 @@ from cluster_peer import (
 )
 from kiosk_focus import KIOSK_FOCUS_BY_COMMAND, trigger_kiosk_focus
 from rtds_live_service import rtds_live_service
+from configurator.dataVis.loader import martin_study_epoch_middleware
 from configurator.router import router as configurator_router
 
 # Import database components
@@ -658,6 +659,8 @@ app.include_router(configurator_router)
 #
 # CORS middleware tells the browser: "It's okay, these two servers
 # are allowed to talk to each other."
+app.middleware("http")(martin_study_epoch_middleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],           # Allow all origins (for development)

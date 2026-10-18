@@ -1,12 +1,10 @@
 """
 Edit these values on the Maingear Windows PC, then restart StartWinScreenSaver.bat.
-
-Testing:  IDLE_SECONDS = 10
-Production: IDLE_SECONDS = 10 * 60 * 10  # 6000 seconds (~100 minutes)
 """
 
 # Seconds with no mouse movement before sweeping the cursor across all displays.
-IDLE_SECONDS = 600
+# 120 = 2 minutes.
+IDLE_SECONDS = 120
 
 # How long one full desktop sweep takes (seconds).
 SCAN_SECONDS = 3.0

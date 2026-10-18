@@ -24723,18 +24723,18 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.745564903042372,
+    "zoom": 0.6855649030423719,
     "pan": {
       "x": 135.65871035808732,
       "y": 170.35217099662736
     },
     "panTop": {
-      "x": -123.0068252766895,
-      "y": 233.89499229914784
+      "x": -132.00682527668957,
+      "y": 235.09499229914786
     },
     "panBottom": {
-      "x": -79.03248852019082,
-      "y": -69.7081502411839
+      "x": -140.432488520191,
+      "y": -29.5081502411839
     },
     "quadBottomRowShare": 51.5,
     "mode": "design",
@@ -24748,7 +24748,7 @@
       },
       "lower": {
         "line1": "Augmented Configuration : ",
-        "line2": "+ BESS and +STATCOM"
+        "line2": "+ MVUPS"
       }
     },
     "designViewMode": "canvas",
@@ -24765,12 +24765,11 @@
     "t2": 50.0
   },
   "designUiSession": {
-    "ensembleId": "all",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": true,
       "hideBranches": [],
-      "showMvupsFlatSchematic": false,
+      "showMvupsFlatSchematic": true,
       "canvasExternalPrimaryLabels": false
     },
     "quickScenarioBranchCollapsed": {

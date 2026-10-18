@@ -5,7 +5,12 @@ import {
 import {
   MARTIN_STUDY_BADGER,
   effectiveMartinStudy,
+  martinStudyForStateId,
+  normalizeMartinStudy,
   persistMartinStudyForDataVis,
+  readMartinStudyEpoch,
+  readPersistedMartinStudy,
+  stateIdForMartinStudy,
 } from '../../utils/conf_martinStudy';
 
 /** Set only by Ideum 200MW / 1000MW buttons — not cleared by explore-sync corridor updates. */
@@ -87,11 +92,12 @@ export function applyWacoLoadTierHandoff(payload) {
 
 export function inputsWithEffectiveWacoLoadTier(inputs) {
   if (!inputs || typeof inputs !== 'object') return inputs;
-  const stateId = inputs.stateId;
-  const martinStudy = effectiveMartinStudy(stateId);
+  const stateId = inputs.stateId || stateIdForMartinStudy(readPersistedMartinStudy());
+  const martinStudy = martinStudyForStateId(stateId);
   return {
     ...inputs,
-    loadMW: effectiveDataVisLoadMwTier(stateId),
+    stateId,
+    loadMW: stateId === 'wisconsin' ? 200 : effectiveDataVisLoadMwTier(stateId),
     martinStudy,
   };
 }
@@ -119,6 +125,21 @@ export function reloadPageWithWacoLoadTier(loadMW) {
 }
 
 /** Call once on configurator mount after reload from a load button. */
+/** Call on configurator / explore mount when opened with ?martinStudy=badger_hollow_creek. */
+export function hydrateMartinStudyFromUrl() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const url = new URL(window.location.href);
+    const raw = url.searchParams.get(MARTIN_STUDY_URL_PARAM);
+    const study = normalizeMartinStudy(raw);
+    if (!study) return null;
+    persistMartinStudyForDataVis(study);
+    return study;
+  } catch {
+    return null;
+  }
+}
+
 export function hydrateWacoLoadTierFromUrl() {
   if (typeof window === 'undefined') return effectiveDataVisLoadMwTier();
   try {
@@ -128,10 +149,6 @@ export function hydrateWacoLoadTierFromUrl() {
     const tier = normalizeWacoLoadTier(Number(raw));
     if (tier == null) return effectiveDataVisLoadMwTier();
     persistWacoLoadTierForDataVis(tier);
-    url.searchParams.delete(WACO_LOAD_MW_URL_PARAM);
-    const qs = url.searchParams.toString();
-    const next = `${url.pathname}${qs ? `?${qs}` : ''}${url.hash || ''}`;
-    window.history.replaceState(null, '', next);
     return tier;
   } catch {
     return effectiveDataVisLoadMwTier();
@@ -144,13 +161,15 @@ export function withDataVisLoadMw(body = {}, stateId) {
     ...body,
     loadMW: effectiveDataVisLoadMwTier(stateId ?? body.stateId),
     martinStudy: study,
+    martinStudyEpoch: readMartinStudyEpoch(),
   };
 }
 
 export function dataVisLoadMwQueryString(stateId) {
   const tier = effectiveDataVisLoadMwTier(stateId);
   const study = effectiveMartinStudy(stateId);
-  return `loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}`;
+  const epoch = readMartinStudyEpoch();
+  return `loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}&martinStudyEpoch=${encodeURIComponent(String(epoch))}`;
 }
 export function notifyWacoLoadTierChanged(loadMW) {
   if (typeof window === 'undefined') return;

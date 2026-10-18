@@ -104,6 +104,38 @@ export function relayDevWallRemoteCommand(command, payload) {
   }
 }
 
+/** Wall → Ideum touch tab: expansion finished, release the stuck switch. */
+export function postDevWallExpansionApplied(message) {
+  if (!message || typeof window === 'undefined') return false;
+  if (!isLocalClusterDev()) return false;
+  if (typeof BroadcastChannel === 'undefined') return false;
+  try {
+    const ch = new BroadcastChannel(DEV_MAINGEAR_WALL_CHANNEL);
+    ch.postMessage(message);
+    ch.close();
+    return true;
+  } catch (e) {
+    console.warn('[dev wall relay] expansion ack failed', e);
+    return false;
+  }
+}
+
+export function installDevWallExpansionAckListener(onAck) {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
+    return () => {};
+  }
+  const ch = new BroadcastChannel(DEV_MAINGEAR_WALL_CHANNEL);
+  const handler = (ev) => {
+    const data = ev.data;
+    if (data?.type === 'expansion_applied') onAck(data);
+  };
+  ch.addEventListener('message', handler);
+  return () => {
+    ch.removeEventListener('message', handler);
+    ch.close();
+  };
+}
+
 export function installDevWallRemoteCommandListener(onCommand) {
   if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
     return () => {};

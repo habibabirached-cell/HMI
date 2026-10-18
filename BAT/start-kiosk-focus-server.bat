@@ -1,4 +1,5 @@
 @echo off
 setlocal
-REM Background listener for Ideum -> Maingear kiosk focus (port 8766).
+REM Ideum -> Maingear kiosk focus listener (port 8766).
+REM Visible console — do not minimize. Leave this window open during the demo.
 start "KioskFocusServer" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0kiosk-focus-server.ps1"

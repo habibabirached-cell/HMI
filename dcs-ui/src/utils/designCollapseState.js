@@ -339,14 +339,7 @@ export function applyQuickScenarioBranchCollapseToComponents(
   return next;
 }
 
-/** After loading saved designExpansion while MVUPS flat mode is active. */
-export function applyLoadedDesignExpansionToComponents(components, designExpansion, visibility) {
-  const v = normalizeDesignSectionVisibility(visibility);
-  const exp = normalizeDesignExpansion(designExpansion);
-  if (v.showMvupsFlatSchematic) {
-    const collapsed =
-      exp.breakersCompact !== exp.peripheralsCompact ? true : exp.breakersCompact;
-    return applyMvupsFlatUnifiedCollapseToComponents(components, collapsed);
-  }
-  return applyDesignExpansionToComponents(components, exp);
+/** After loading saved designExpansion. Breakers and peripherals stay independent. */
+export function applyLoadedDesignExpansionToComponents(components, designExpansion, _visibility) {
+  return applyDesignExpansionToComponents(components, normalizeDesignExpansion(designExpansion));
 }

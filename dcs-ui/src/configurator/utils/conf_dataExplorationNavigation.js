@@ -21,7 +21,7 @@ import {
   MARTIN_STUDY_URL_PARAM,
   WACO_LOAD_MW_URL_PARAM,
 } from '../dataVis/api/dataVisLoadMw';
-import { effectiveMartinStudy } from './conf_martinStudy';
+import { martinStudyForStateId } from './conf_martinStudy';
 import {
   publishConfiguratorExploreSync,
   stashExploreSyncHandoffForNewTab,
@@ -31,6 +31,74 @@ export { IDEUM_DATA_EXPLORATION_TAB_ID };
 export const IDEUM_EXPLORE_DATA_TAB_ID = 'explore-data';
 
 export const IDEUM_TAB_URL_PARAM = 'ideumTab';
+
+/** One exploration window for this browser. Later clicks navigate this same tab. */
+export const DATA_EXPLORATION_WINDOW_NAME = 'dcsDataExploration';
+
+/** Opener-side handle. Survives until this configurator tab is refreshed. */
+let explorationWindow = null;
+
+const EXPLORATION_NAV_KEY = 'dcs.dataVis.explorationTarget';
+const EXPLORATION_ALIVE_KEY = 'dcs.dataVis.explorationAlive';
+
+function publishExplorationTarget(url) {
+  try {
+    window.localStorage.setItem(
+      EXPLORATION_NAV_KEY,
+      JSON.stringify({ url, at: Date.now() }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function explorationTabIsAlive() {
+  try {
+    const at = Number(window.localStorage.getItem(EXPLORATION_ALIVE_KEY) || 0);
+    return Number.isFinite(at) && Date.now() - at < 5000;
+  } catch {
+    return false;
+  }
+}
+
+function claimThisPageAsExplorationWindow() {
+  if (typeof window === 'undefined') return;
+  try {
+    const view = new URLSearchParams(window.location.search).get('view');
+    if (view !== DATA_EXPLORATION_CONFIGURATOR_VIEW) return;
+    window.name = DATA_EXPLORATION_WINDOW_NAME;
+    const beat = () => {
+      try {
+        window.localStorage.setItem(EXPLORATION_ALIVE_KEY, String(Date.now()));
+      } catch {
+        /* ignore */
+      }
+    };
+    beat();
+    window.setInterval(beat, 1000);
+    window.addEventListener('beforeunload', () => {
+      try {
+        window.localStorage.removeItem(EXPLORATION_ALIVE_KEY);
+      } catch {
+        /* ignore */
+      }
+    });
+    window.addEventListener('storage', (event) => {
+      if (event.key !== EXPLORATION_NAV_KEY || !event.newValue) return;
+      if (window.name !== DATA_EXPLORATION_WINDOW_NAME) return;
+      try {
+        const next = JSON.parse(event.newValue);
+        if (!next?.url) return;
+        if (next.url === window.location.href) window.location.reload();
+        else window.location.replace(next.url);
+      } catch {
+        /* ignore */
+      }
+    });
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Maingear cluster WebSocket + remote-command handler (App.js). */
 export const DATA_EXPLORATION_REMOTE_COMMAND = 'openDataExploration';
@@ -71,12 +139,51 @@ function buildIdeumExploreUrl(originPathname, tabId, inputs, uiMode) {
   url.searchParams.set('view', DATA_EXPLORATION_CONFIGURATOR_VIEW);
   url.searchParams.set(IDEUM_TAB_URL_PARAM, tabId);
   const stateId = handoff?.inputs?.stateId ?? inputs?.stateId;
+  const study = handoff?.inputs?.martinStudy ?? martinStudyForStateId(stateId);
   url.searchParams.set(WACO_LOAD_MW_URL_PARAM, String(handoff?.inputs?.loadMW ?? inputs?.loadMW ?? 200));
-  url.searchParams.set(MARTIN_STUDY_URL_PARAM, effectiveMartinStudy(stateId));
+  url.searchParams.set(MARTIN_STUDY_URL_PARAM, study);
   return url.toString();
 }
 
-/** Dev MacBook Pro: open Data Exploration in a new browser tab. */
+function explorationWindowIsOpen(win) {
+  try {
+    return Boolean(win) && !win.closed;
+  } catch {
+    return false;
+  }
+}
+
+function openNamedExplorationWindow(url) {
+  const existing = explorationWindowIsOpen(explorationWindow) ? explorationWindow : null;
+  if (existing) {
+    try {
+      existing.name = DATA_EXPLORATION_WINDOW_NAME;
+      if (existing.location.href === url) existing.location.reload();
+      else existing.location.replace(url);
+      existing.focus();
+      return existing;
+    } catch {
+      /* the open tab also listens for the storage target below */
+    }
+  }
+  if (explorationTabIsAlive()) {
+    publishExplorationTarget(url);
+    return existing;
+  }
+  publishExplorationTarget(url);
+  const win = window.open(url, DATA_EXPLORATION_WINDOW_NAME);
+  if (win) explorationWindow = win;
+  try {
+    win?.focus();
+  } catch {
+    /* the named tab can still load if focus is blocked */
+  }
+  return win;
+}
+
+claimThisPageAsExplorationWindow();
+
+/** Dev MacBook: Data Exploration in the one named tab. A later click reloads that tab. */
 export function openDataExplorationDevNewTab(inputs, uiMode) {
   if (typeof window === 'undefined') return;
   const url = buildIdeumExploreUrl(
@@ -85,10 +192,10 @@ export function openDataExplorationDevNewTab(inputs, uiMode) {
     inputs,
     uiMode,
   );
-  window.open(url, '_blank', 'noopener,noreferrer');
+  openNamedExplorationWindow(url);
 }
 
-/** Dev MacBook: Explore Data 4-up (wall + parallel) in a new tab. */
+/** Dev MacBook: Explore Data in the same named tab as Data Exploration. */
 export function openExploreDataDevNewTab(inputs, uiMode) {
   if (typeof window === 'undefined') return;
   const url = buildIdeumExploreUrl(
@@ -97,7 +204,7 @@ export function openExploreDataDevNewTab(inputs, uiMode) {
     inputs,
     uiMode,
   );
-  window.open(url, '_blank', 'noopener,noreferrer');
+  openNamedExplorationWindow(url);
 }
 
 /**

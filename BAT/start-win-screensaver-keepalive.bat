@@ -10,6 +10,6 @@ if not exist "%SS_DIR%\StartWinScreenSaver.bat" (
   echo WARN: StartWinScreenSaver.bat not found at %SS_DIR%
   exit /b 0
 )
-REM Launch the working entry script minimized (avoid nested cmd /c quoting issues).
-start "winScreenSaver keepalive" /MIN "%SS_DIR%\StartWinScreenSaver.bat" nopause
+REM Visible console — do not minimize.
+start "winScreenSaver keepalive" "%SS_DIR%\StartWinScreenSaver.bat" nopause
 exit /b 0

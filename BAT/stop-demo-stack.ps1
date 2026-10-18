@@ -69,6 +69,7 @@ Stop-ProcessesMatchingCommandLine @(
     '*start-kiosk-mouse-server.ps1*'
     '*mouse_keepalive.py*'
     '*winScreenSaver*mouse_keepalive*'
+    '*rscad_main*'
 )
 
 # Vernova Vite dev server (Maingear / Malta).
@@ -79,9 +80,10 @@ Stop-ProcessesMatchingCommandLine @(
 Stop-ListenersOnPort -Port 8766
 Stop-ListenersOnPort -Port 8767
 Stop-ListenersOnPort -Port 5173
+Stop-ListenersOnPort -Port 8008
 
-# Minimized cmd windows launched with these titles from BAT/start-*.bat.
-foreach ($title in @('KioskMouseServer', 'KioskFocusServer', 'Vernova dev', 'winScreenSaver keepalive')) {
+# Consoles launched with these titles from the daily start.
+foreach ($title in @('KioskMouseServer', 'KioskFocusServer', 'Vernova dev', 'winScreenSaver keepalive', 'RSCAD server')) {
     & taskkill.exe /FI "WINDOWTITLE eq $title*" /F 2>$null | Out-Null
 }
 

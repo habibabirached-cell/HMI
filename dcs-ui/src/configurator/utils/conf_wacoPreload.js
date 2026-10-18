@@ -9,6 +9,8 @@ import {
   effectiveMartinStudy,
   notifyMartinStudyChanged,
   persistMartinStudyForDataVis,
+  stateIdForMartinStudy,
+  readPersistedMartinStudy,
 } from './conf_martinStudy';
 import { normalizeWacoLoadTier } from './conf_wacoLoadTier';
 import {
@@ -98,17 +100,23 @@ async function postPreloadForTier(tier, machineRole, stateId) {
  * Warm Martin study on backend. Does NOT write session tier — only load buttons do.
  * @param machineRole pass `null` to skip machine-role fetch (load buttons).
  */
-export function preloadWacoStudy(loadMW, machineRole = undefined, stateId = 'texas') {
+function resolvePreloadStateId(stateId) {
+  if (stateId === 'wisconsin' || stateId === 'texas') return stateId;
+  return stateIdForMartinStudy(readPersistedMartinStudy());
+}
+
+export function preloadWacoStudy(loadMW, machineRole = undefined, stateId) {
   if (normalizeWacoLoadTier(loadMW) == null && loadMW != null) {
     return Promise.resolve(null);
   }
 
   const run = preloadTail.then(async () => {
-    const tier = effectiveDataVisLoadMwTier(stateId);
-    const martinStudy = effectiveMartinStudy(stateId);
+    const resolvedStateId = resolvePreloadStateId(stateId);
+    const tier = effectiveDataVisLoadMwTier(resolvedStateId);
+    const martinStudy = effectiveMartinStudy(resolvedStateId);
     persistMartinStudyForDataVis(martinStudy);
-    debugWacoPreload('POST', { tier, requested: loadMW, martinStudy, stateId });
-    const result = await postPreloadForTier(tier, machineRole, stateId);
+    debugWacoPreload('POST', { tier, requested: loadMW, martinStudy, stateId: resolvedStateId });
+    const result = await postPreloadForTier(tier, machineRole, resolvedStateId);
     debugWacoPreload('OK', result);
     notifyWacoLoadTierChanged(tier);
     notifyMartinStudyChanged(martinStudy);
@@ -130,8 +138,9 @@ export function triggerWacoPreloadNow(loadMW, stateId) {
 /** Load workbook for tier, then apply session clean/original mode on backend (and Maingear when Ideum). */
 export const WACO_DATASET_READY_EVENT = 'dcs:waco-dataset-ready';
 
-export async function preloadWacoWithDatasetQuality(loadMW, machineRole = undefined, stateId = 'texas') {
-  await preloadWacoStudy(loadMW, machineRole, stateId);
+export async function preloadWacoWithDatasetQuality(loadMW, machineRole = undefined, stateId) {
+  const resolvedStateId = resolvePreloadStateId(stateId);
+  await preloadWacoStudy(loadMW, machineRole, resolvedStateId);
   let role = machineRole;
   if (role === undefined) {
     role = await fetchMachineRole().catch(() => null);
@@ -141,9 +150,9 @@ export async function preloadWacoWithDatasetQuality(loadMW, machineRole = undefi
     window.dispatchEvent(
       new CustomEvent(WACO_DATASET_READY_EVENT, {
         detail: {
-          loadMW: effectiveDataVisLoadMwTier(stateId),
-          martinStudy: effectiveMartinStudy(stateId),
-          stateId,
+          loadMW: effectiveDataVisLoadMwTier(resolvedStateId),
+          martinStudy: effectiveMartinStudy(resolvedStateId),
+          stateId: resolvedStateId,
         },
       }),
     );

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
 import threading
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +29,10 @@ _cache_by_load_mw: dict[int, dict[str, Any]] = {}
 _badger_cache: dict[str, Any] | None = None
 _active_load_mw: int = DEFAULT_WACO_LOAD_MW
 _active_martin_study: str = MARTIN_STUDY_WACO
+# Bumped every time a location or MW switch drops the in-memory frames.
+# A load that started earlier must not publish after a newer switch.
+_load_generation: int = 0
+_request_study_epoch: ContextVar[int | None] = ContextVar("martin_study_epoch", default=None)
 
 # After header normalization, map tier-specific names to canonical Martin/dataVis keys.
 COLUMN_ALIASES: dict[str, str] = {
@@ -84,12 +90,92 @@ def get_active_martin_study() -> str:
         return _active_martin_study
 
 
-def set_active_martin_study(study: str) -> str:
+def _parse_study_epoch(raw: object) -> int | None:
+    if raw is None or raw == "":
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def bind_request_martin_study_epoch(epoch: int | None):
+    """Attach this HTTP request's selection order. Reset the returned token in a finally."""
+    return _request_study_epoch.set(epoch)
+
+
+def reset_request_martin_study_epoch(token) -> None:
+    _request_study_epoch.reset(token)
+
+
+def _set_active_study_locked(study: str) -> None:
+    """Publish the study this load just read. Caller holds ``_lock``."""
     global _active_martin_study
-    normalized = study if study in MARTIN_STUDIES else MARTIN_STUDY_WACO
+    _active_martin_study = study if study in MARTIN_STUDIES else MARTIN_STUDY_WACO
+
+
+def discard_martin_dataframes() -> None:
+    """Drop every in-memory Martin frame so the next load reads the clean CSV."""
+    global _badger_cache
     with _lock:
-        _active_martin_study = normalized
-    return normalized
+        _badger_cache = None
+        _cache_by_load_mw.clear()
+
+
+def begin_martin_csv_load() -> int:
+    """Drop in-memory frames and start a new selection. Older loads must not publish."""
+    global _load_generation, _badger_cache
+    with _lock:
+        _load_generation += 1
+        token = _load_generation
+        _badger_cache = None
+        _cache_by_load_mw.clear()
+        return token
+
+
+def current_martin_load_generation() -> int:
+    with _lock:
+        return _load_generation
+
+
+def _may_publish(generation: int | None) -> bool:
+    """``None`` publishes. A token publishes only if no newer switch has started."""
+    if generation is None:
+        return True
+    return generation == _load_generation
+
+
+def set_active_martin_study(study: str) -> str:
+    with _lock:
+        _set_active_study_locked(study)
+        return _active_martin_study
+
+
+async def martin_study_epoch_middleware(request, call_next):
+    """Read martinStudyEpoch from the query string or JSON body for this request."""
+    path = request.url.path or ""
+    if not path.startswith("/api/configurator"):
+        return await call_next(request)
+
+    epoch = _parse_study_epoch(request.query_params.get("martinStudyEpoch"))
+    if request.method in ("POST", "PUT", "PATCH"):
+        body = await request.body()
+        content_type = request.headers.get("content-type", "")
+        if body and "application/json" in content_type:
+            try:
+                payload = json.loads(body)
+            except (TypeError, ValueError):
+                payload = None
+            if isinstance(payload, dict) and "martinStudyEpoch" in payload:
+                parsed = _parse_study_epoch(payload.get("martinStudyEpoch"))
+                if parsed is not None:
+                    epoch = parsed
+
+    token = bind_request_martin_study_epoch(epoch)
+    try:
+        return await call_next(request)
+    finally:
+        reset_request_martin_study_epoch(token)
 
 
 def _finalize_waco_dataframe(raw: pd.DataFrame) -> pd.DataFrame:
@@ -149,36 +235,46 @@ def _read_badger_dataset() -> pd.DataFrame:
     return read_martin_excel_dataframe(badger_workbook_path())
 
 
-def load_badger_dataframe(force_reload: bool = False) -> pd.DataFrame:
+def load_badger_dataframe(
+    force_reload: bool = False,
+    generation: int | None = None,
+) -> pd.DataFrame:
     global _badger_cache, _active_martin_study, _active_load_mw
     with _lock:
         if not force_reload and _badger_cache and "df" in _badger_cache:
-            _active_martin_study = MARTIN_STUDY_BADGER
-            _active_load_mw = 200
+            if _may_publish(generation):
+                _set_active_study_locked(MARTIN_STUDY_BADGER)
+                _active_load_mw = 200
             return _badger_cache["df"]
 
     df = _read_badger_dataset()
     csv_path = badger_clean_csv_path()
     source_name = csv_path.name if csv_path.is_file() else badger_workbook_path().name
     with _lock:
-        _active_martin_study = MARTIN_STUDY_BADGER
-        _active_load_mw = 200
         _badger_cache = {
             "df": df,
             "loaded_at": pd.Timestamp.utcnow().isoformat(),
             "workbook": source_name,
         }
+        if _may_publish(generation):
+            _set_active_study_locked(MARTIN_STUDY_BADGER)
+            _active_load_mw = 200
     return df
 
 
-def load_waco_dataframe(load_mw: int | None = None, force_reload: bool = False) -> pd.DataFrame:
+def load_waco_dataframe(
+    load_mw: int | None = None,
+    force_reload: bool = False,
+    generation: int | None = None,
+) -> pd.DataFrame:
     global _active_load_mw, _active_martin_study
     tier = resolve_waco_load_mw(load_mw)
     with _lock:
         bucket = _cache_by_load_mw.get(tier)
         if not force_reload and bucket and "df" in bucket:
-            _active_load_mw = tier
-            _active_martin_study = MARTIN_STUDY_WACO
+            if _may_publish(generation):
+                _set_active_study_locked(MARTIN_STUDY_WACO)
+                _active_load_mw = tier
             return bucket["df"]
 
     # Disk I/O can take 30–90s for Excel — never hold _lock across reads.
@@ -186,13 +282,14 @@ def load_waco_dataframe(load_mw: int | None = None, force_reload: bool = False) 
     csv_path = waco_clean_csv_path(tier)
     source_name = csv_path.name if csv_path.is_file() else waco_workbook_path(tier).name
     with _lock:
-        _active_load_mw = tier
-        _active_martin_study = MARTIN_STUDY_WACO
         _cache_by_load_mw[tier] = {
             "df": df,
             "loaded_at": pd.Timestamp.utcnow().isoformat(),
             "workbook": source_name,
         }
+        if _may_publish(generation):
+            _set_active_study_locked(MARTIN_STUDY_WACO)
+            _active_load_mw = tier
     return df
 
 
@@ -201,11 +298,15 @@ def load_martin_dataframe(
     load_mw: int | None = None,
     martin_study: str | None = None,
     force_reload: bool = False,
+    generation: int | None = None,
 ) -> pd.DataFrame:
-    study = set_active_martin_study(martin_study or get_active_martin_study())
+    requested = martin_study if martin_study in MARTIN_STUDIES else None
+    study = requested or get_active_martin_study()
+    if _may_publish(generation):
+        study = set_active_martin_study(study)
     if study == MARTIN_STUDY_BADGER:
-        return load_badger_dataframe(force_reload=force_reload)
-    return load_waco_dataframe(load_mw, force_reload=force_reload)
+        return load_badger_dataframe(force_reload=force_reload, generation=generation)
+    return load_waco_dataframe(load_mw, force_reload=force_reload, generation=generation)
 
 
 def column_stats(df: pd.DataFrame, column: str) -> dict[str, Any]:

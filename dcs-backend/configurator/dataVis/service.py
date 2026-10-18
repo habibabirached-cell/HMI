@@ -28,11 +28,10 @@ from configurator.dataVis.dataset_mode import (
 )
 from configurator.dataVis.loader import (
     column_stats,
+    current_martin_load_generation,
     get_active_martin_study,
     get_active_waco_load_mw,
     load_martin_dataframe,
-    load_waco_dataframe,
-    set_active_martin_study,
     set_active_waco_load_mw,
 )
 from configurator.dataVis.paths import (
@@ -117,41 +116,71 @@ def ensure_waco_tier(load_mw: int | None, martin_study: str | None = None) -> No
 def ensure_martin_dataset(
     load_mw: int | None = None,
     martin_study: str | None = None,
-) -> None:
-    study = martin_study if martin_study in MARTIN_STUDIES else get_active_martin_study()
+    generation: int | None = None,
+) -> str:
     prev_study = get_active_martin_study()
     if martin_study in MARTIN_STUDIES:
-        set_active_martin_study(martin_study)
         study = martin_study
+    else:
+        study = prev_study
     if study == MARTIN_STUDY_BADGER:
         if prev_study != study:
             reset_datavis_mode()
-        load_martin_dataframe(load_mw=200, martin_study=study, force_reload=False)
-        return
+        load_martin_dataframe(
+            load_mw=200,
+            martin_study=study,
+            force_reload=False,
+            generation=generation,
+        )
+        return study
 
     if load_mw is None:
-        load_martin_dataframe(load_mw=get_active_waco_load_mw(), martin_study=study, force_reload=False)
-        return
+        load_martin_dataframe(
+            load_mw=get_active_waco_load_mw(),
+            martin_study=study,
+            force_reload=False,
+            generation=generation,
+        )
+        return study
     try:
         tier = int(round(float(load_mw)))
     except (TypeError, ValueError):
-        return
+        return study
     if tier not in (200, 1000):
-        return
+        return study
     prev = get_active_waco_load_mw()
-    load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=False)
-    set_active_waco_load_mw(tier)
+    load_martin_dataframe(
+        load_mw=tier,
+        martin_study=study,
+        force_reload=False,
+        generation=generation,
+    )
+    still_current = generation is None or generation == current_martin_load_generation()
+    if still_current and study == get_active_martin_study():
+        set_active_waco_load_mw(tier)
     if prev_study != study or prev != tier:
         reset_datavis_mode()
+    return study
 
 
 def get_meta(requested_load_mw: int | None = None, martin_study: str | None = None) -> dict[str, Any]:
-    ensure_martin_dataset(load_mw=requested_load_mw, martin_study=martin_study)
-
-    df = get_datavis_dataframe()
+    generation = current_martin_load_generation()
+    study = ensure_martin_dataset(
+        load_mw=requested_load_mw,
+        martin_study=martin_study,
+        generation=generation,
+    )
+    active_mw = 200 if study == MARTIN_STUDY_BADGER else (
+        requested_load_mw if requested_load_mw in (200, 1000) else get_active_waco_load_mw()
+    )
+    df = load_martin_dataframe(
+        load_mw=active_mw,
+        martin_study=study,
+        force_reload=False,
+        generation=generation,
+    )
     stats = _column_stats_for_dataframe(df)
-    active = get_active_waco_load_mw()
-    study = get_active_martin_study()
+    active = active_mw
     if study == MARTIN_STUDY_BADGER:
         scenario = scenario_context_for_badger()
         source = badger_dataset_source()

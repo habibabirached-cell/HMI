@@ -33,7 +33,7 @@ const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
 const TITLE_BAR_PX = 44;
 const INNER_PAD_PX = 12;
 
-function IdeumVerticalSwitch({ compact, onToggle, label, zoom, trackH }) {
+function IdeumVerticalSwitch({ compact, onToggle, label, zoom, trackH, disabled = false }) {
   const trackW = Math.max(44, Math.round(56 * zoom));
   const thumbSize = Math.max(28, Math.round(36 * zoom));
   return (
@@ -43,15 +43,20 @@ function IdeumVerticalSwitch({ compact, onToggle, label, zoom, trackH }) {
       className={`ideum-expansion-panel__switch${!compact ? ' ideum-expansion-panel__switch--on' : ''}`}
       style={{ width: trackW, height: trackH }}
       aria-checked={!compact}
+      aria-disabled={disabled}
+      disabled={disabled}
       aria-label={compact ? `${label} compact` : `${label} expanded`}
       title={
-        compact
-          ? `${label} compact — tap to expand on Maingear`
-          : `${label} expanded — tap to compact on Maingear`
+        disabled
+          ? `${label} waiting for Maingear`
+          : compact
+            ? `${label} compact — tap to expand on Maingear`
+            : `${label} expanded — tap to compact on Maingear`
       }
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (disabled) return;
         onToggle?.();
       }}
     >
@@ -253,6 +258,7 @@ export default function IdeumComponentLayer({
               </span>
               <IdeumVerticalSwitch
                 compact={ideumExpansionMirror?.breakersCompact !== false}
+                disabled={ideumExpansionMirror?.busy === true}
                 onToggle={() => onIdeumExpansionToggle?.('breakers')}
                 label="Breakers"
                 zoom={zoom}
@@ -268,6 +274,7 @@ export default function IdeumComponentLayer({
               </span>
               <IdeumVerticalSwitch
                 compact={ideumExpansionMirror?.peripheralsCompact !== false}
+                disabled={ideumExpansionMirror?.busy === true}
                 onToggle={() => onIdeumExpansionToggle?.('peripherals')}
                 label="Peripherals"
                 zoom={zoom}

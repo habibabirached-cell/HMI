@@ -227,6 +227,101 @@ function resolveStubAnchorRenderComponents(
   return resolved;
 }
 
+function tieHorizontalBoundsForStubLinks(tie, components, getComponentVisualConfig, useExpandedMemberSpan) {
+  const baseVis = getComponentVisualConfig(tie.type);
+  if (useExpandedMemberSpan) {
+    const span = tieExpandedMemberHorizontalSpan(components, tie, getComponentVisualConfig);
+    if (span) return { tieLeft: span.minLeft, tieRight: span.maxRight };
+  }
+  const tieLeft = tie.position?.x ?? 0;
+  const tieW = tie.visualOverrides?.width ?? baseVis.width ?? 140;
+  return { tieLeft, tieRight: tieLeft + tieW };
+}
+
+/**
+ * Shared flank translation for a tie with stubLinks (baseline upper + MVUPS lower).
+ * @param {boolean} useExpandedMemberSpan — fillAisleWidth while expanded: bounds = full rung span.
+ */
+function buildTieStubLinkFlankShiftForTie(
+  tie,
+  components,
+  getComponentVisualConfig,
+  scopeByVerticalBand,
+  useExpandedMemberSpan,
+) {
+  const shiftById = new Map();
+  const tg = tie.properties?.tieGroup;
+  const excluded = new Set([...(tg?.memberIds || []), tie.id]);
+  const { tieLeft, tieRight } = tieHorizontalBoundsForStubLinks(
+    tie,
+    components,
+    getComponentVisualConfig,
+    useExpandedMemberSpan,
+  );
+  const gap = Number.isFinite(tg.stubLinks?.gapPx) ? tg.stubLinks.gapPx : 50;
+
+  let { leftMaxRight, rightMinLeft } = flankExtentsFromStubLinks(
+    tie,
+    components,
+    getComponentVisualConfig,
+  );
+
+  if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
+    leftMaxRight = -Infinity;
+    rightMinLeft = Infinity;
+    for (const c of components) {
+      if (!c?.id || excluded.has(c.id)) continue;
+      if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
+      if (!tieSameCanvasPane(tie, c)) continue;
+      if (
+        scopeByVerticalBand &&
+        !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
+      ) {
+        continue;
+      }
+      const w = compWidthPx(c, getComponentVisualConfig);
+      const cx = c.position?.x ?? 0;
+      const right = cx + w;
+      const left = cx;
+      if (right < tieLeft) {
+        leftMaxRight = Math.max(leftMaxRight, right);
+      } else if (left > tieRight) {
+        rightMinLeft = Math.min(rightMinLeft, left);
+      }
+    }
+  }
+
+  if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
+    return shiftById;
+  }
+
+  const dRightward = tieLeft - gap - leftMaxRight;
+  const dLeftward = rightMinLeft - (tieRight + gap);
+
+  for (const c of components) {
+    if (!c?.id || excluded.has(c.id)) continue;
+    if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
+    if (!tieSameCanvasPane(tie, c)) continue;
+    if (
+      scopeByVerticalBand &&
+      !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
+    ) {
+      continue;
+    }
+    const w = compWidthPx(c, getComponentVisualConfig);
+    const cx = c.position?.x ?? 0;
+    const right = cx + w;
+    const left = cx;
+    if (right < tieLeft) {
+      shiftById.set(c.id, dRightward);
+    } else if (left > tieRight) {
+      shiftById.set(c.id, -dLeftward);
+    }
+  }
+
+  return shiftById;
+}
+
 /**
  * When a tie network is collapsed with stubLinks, everything strictly left/right of the
  * aggregate’s horizontal span translates so inner flanks sit ~gapPx from the tie block;
@@ -255,73 +350,63 @@ export function buildTieCollapseHorizontalShiftMap(components, getComponentVisua
     components.filter((c) => isTieBreakerNetwork(c)).length > 1;
 
   for (const tie of anchors) {
-    const tg = tie.properties?.tieGroup;
-    // Collapsed bank preview tiles shift via gasTurbineBank.js; tie shift applies to other flanks only.
-    const excluded = new Set([...(tg?.memberIds || []), tie.id]);
-
-    const baseVis = getComponentVisualConfig(tie.type);
-    const tieLeft = tie.position?.x ?? 0;
-    const tieW = tie.visualOverrides?.width ?? baseVis.width ?? 140;
-    const tieRight = tieLeft + tieW;
-    const gap = Number.isFinite(tg.stubLinks?.gapPx) ? tg.stubLinks.gapPx : 50;
-
-    let { leftMaxRight, rightMinLeft } = flankExtentsFromStubLinks(
+    const perTie = buildTieStubLinkFlankShiftForTie(
       tie,
       components,
       getComponentVisualConfig,
+      scopeByVerticalBand,
+      false,
     );
-
-    if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
-      leftMaxRight = -Infinity;
-      rightMinLeft = Infinity;
-      for (const c of components) {
-        if (!c?.id || excluded.has(c.id)) continue;
-        if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
-        if (!tieSameCanvasPane(tie, c)) continue;
-        if (
-          scopeByVerticalBand &&
-          !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
-        ) {
-          continue;
-        }
-        const w = compWidthPx(c, getComponentVisualConfig);
-        const cx = c.position?.x ?? 0;
-        const right = cx + w;
-        const left = cx;
-        if (right < tieLeft) {
-          leftMaxRight = Math.max(leftMaxRight, right);
-        } else if (left > tieRight) {
-          rightMinLeft = Math.min(rightMinLeft, left);
-        }
-      }
+    for (const [id, dx] of perTie) {
+      shiftById.set(id, dx);
     }
+  }
 
-    if (!Number.isFinite(leftMaxRight) || !Number.isFinite(rightMinLeft)) {
-      continue;
-    }
+  return shiftById;
+}
 
-    const dRightward = tieLeft - gap - leftMaxRight;
-    const dLeftward = rightMinLeft - (tieRight + gap);
+function tieExpandedMemberHorizontalSpan(components, tie, getComponentVisualConfig) {
+  const memberIds = new Set(tie.properties?.tieGroup?.memberIds || []);
+  let minLeft = Infinity;
+  let maxRight = -Infinity;
+  for (const c of components) {
+    if (!memberIds.has(c.id)) continue;
+    if (!tieSameCanvasPane(tie, c)) continue;
+    const x = c.position?.x ?? 0;
+    const w = compWidthPx(c, getComponentVisualConfig);
+    minLeft = Math.min(minLeft, x);
+    maxRight = Math.max(maxRight, x + w);
+  }
+  if (!Number.isFinite(minLeft)) return null;
+  return { minLeft, maxRight };
+}
 
-    for (const c of components) {
-      if (!c?.id || excluded.has(c.id)) continue;
-      if (!shouldApplyTieCollapseShiftToComponent(tie, c)) continue;
-      if (!tieSameCanvasPane(tie, c)) continue;
-      if (
-        scopeByVerticalBand &&
-        !componentOverlapsTieVerticalSpan(c, tie, getComponentVisualConfig)
-      ) {
-        continue;
-      }
-      const w = compWidthPx(c, getComponentVisualConfig);
-      const cx = c.position?.x ?? 0;
-      const right = cx + w;
-      const left = cx;
-      if (right < tieLeft) {
-        shiftById.set(c.id, dRightward);
-      } else if (left > tieRight) {
-        shiftById.set(c.id, -dLeftward);
-      }
+/**
+ * Expanded tie with stubLinks.fillAisleWidth — same flank math as collapsed baseline,
+ * but horizontal bounds = full expanded member span (clears wing tiles in the aisle).
+ */
+export function buildTieExpandedFillAisleShiftMap(components, getComponentVisualConfig) {
+  const shiftById = new Map();
+  if (!components?.length) return shiftById;
+
+  const scopeByVerticalBand =
+    components.filter((c) => isTieBreakerNetwork(c)).length > 1;
+
+  for (const tie of components) {
+    if (!isTieBreakerNetwork(tie)) continue;
+    if (isTieNetworkCollapsed(tie)) continue;
+    const sl = tie.properties?.tieGroup?.stubLinks;
+    if (!sl?.fillAisleWidth || !hasTieStubLinks(tie)) continue;
+
+    const perTie = buildTieStubLinkFlankShiftForTie(
+      tie,
+      components,
+      getComponentVisualConfig,
+      scopeByVerticalBand,
+      true,
+    );
+    for (const [id, dx] of perTie) {
+      shiftById.set(id, (shiftById.get(id) ?? 0) + dx);
     }
   }
 

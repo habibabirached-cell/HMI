@@ -10,6 +10,7 @@ export default function Ref200ExpansionTouchPanel({
 }) {
   const breakersCompact = ideumExpansionMirror?.breakersCompact !== false;
   const peripheralsCompact = ideumExpansionMirror?.peripheralsCompact !== false;
+  const busy = ideumExpansionMirror?.busy === true;
 
   return (
     <div className="ideum08-ref200-expansion" aria-label="Breakers and peripherals">
@@ -20,6 +21,7 @@ export default function Ref200ExpansionTouchPanel({
         rightActive={!breakersCompact}
         onToggle={() => onIdeumExpansionToggle?.('breakers')}
         ariaLabel="Collapse or expand breakers on Maingear"
+        disabled={busy}
       />
       <Ref200HorizontalToggleRow
         zoom={zoom}
@@ -28,6 +30,7 @@ export default function Ref200ExpansionTouchPanel({
         rightActive={!peripheralsCompact}
         onToggle={() => onIdeumExpansionToggle?.('peripherals')}
         ariaLabel="Collapse or expand peripherals on Maingear"
+        disabled={busy}
       />
     </div>
   );

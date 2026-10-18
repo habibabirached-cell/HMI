@@ -44,8 +44,9 @@ if errorlevel 1 goto :err_docker_compose
 
 echo.
 echo [3/6] Starting Vernova dev server (npm run dev)...
-start "Vernova dev" /MIN cmd /c ""%BAT_DIR%start-vernova-dev.bat" "%VERNOVA_DIR%""
-echo Vernova dev launched in minimized window. Waiting 3 seconds before port checks...
+REM Visible console — do not minimize. /k keeps the window if npm exits.
+start "Vernova dev" cmd /k ""%BAT_DIR%start-vernova-dev.bat" "%VERNOVA_DIR%""
+echo Vernova dev launched in a visible window. Waiting 3 seconds before port checks...
 timeout /t 3 /nobreak >nul
 
 echo.

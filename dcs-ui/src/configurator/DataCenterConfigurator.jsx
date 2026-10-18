@@ -59,6 +59,7 @@ import {
 } from './utils/conf_renewableMwBounds';
 import {
   effectiveDataVisLoadMwTier,
+  hydrateMartinStudyFromUrl,
   hydrateWacoLoadTierFromUrl,
   inputsWithEffectiveWacoLoadTier,
   persistWacoLoadTierForDataVis,
@@ -66,6 +67,7 @@ import {
   WACO_LOAD_MW_URL_PARAM,
   WACO_LOAD_TIER_CHANGED_EVENT,
 } from './dataVis/api/dataVisLoadMw';
+import { effectiveMartinStudy, readPersistedMartinStudy, stateIdForMartinStudy } from './utils/conf_martinStudy';
 import { DEFAULT_WACO_LOAD_TIER } from './utils/conf_wacoLoadTier';
 import {
   applyDataVisDatasetMode,
@@ -75,7 +77,6 @@ import {
   subscribeDataQualityMode,
 } from './dataVis/utils/dataVisQualityMode';
 import {
-  IDEUM_TAB_URL_PARAM,
   IDEUM_EXPLORE_DATA_TAB_ID,
   openDataExplorationDevNewTab,
   openExploreDataDevNewTab,
@@ -136,10 +137,17 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     if (mode === 'ideum' || mode === 'martin-dev-tab') {
       let loadMW;
       if (typeof window !== 'undefined') {
+        hydrateMartinStudyFromUrl();
         hydrateWacoLoadTierFromUrl();
         loadMW = readPersistedWacoLoadTier() ?? undefined;
       }
-      return buildIdeumConfiguratorInputs(loadMW);
+      const base = buildIdeumConfiguratorInputs(loadMW);
+      const study = readPersistedMartinStudy();
+      const stateId = stateIdForMartinStudy(study);
+      if (stateId === 'wisconsin') {
+        return { ...base, stateId, cityId: 'madison_wi', loadMW: 200 };
+      }
+      return base;
     }
     return { ...CONFIGURATOR_DEFAULT_INPUTS };
   });
@@ -224,11 +232,6 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     const fromUrl = readIdeumTabFromUrl();
     if (!fromUrl) return undefined;
     setIdeumTab(fromUrl);
-    const params = new URLSearchParams(window.location.search);
-    params.delete(IDEUM_TAB_URL_PARAM);
-    const qs = params.toString();
-    const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`;
-    window.history.replaceState(null, '', nextUrl);
     return undefined;
   }, [isIdeumMode]);
 
@@ -302,17 +305,21 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   useEffect(() => {
     if (!isIdeumMode) return undefined;
-    const tier = effectiveDataVisLoadMwTier();
+    const stateId = inputs.stateId || stateIdForMartinStudy(readPersistedMartinStudy());
+    const tier = stateId === 'wisconsin' ? 200 : effectiveDataVisLoadMwTier(stateId);
     persistWacoLoadTierForDataVis(tier);
     let cancelled = false;
-    void preloadWacoWithDatasetQuality(tier).then((uiMode) => {
+    void preloadWacoWithDatasetQuality(tier, null, stateId).then((nextMode) => {
       if (cancelled) return;
-      if (uiMode) setDataQualityMode(uiMode);
+      if (nextMode) setDataQualityMode(nextMode);
     });
     return () => {
       cancelled = true;
     };
-  }, [isIdeumMode, refreshRenewableMwBounds]);
+    // Warm the study once for the location this page opened with.
+    // Location and MW clicks preload again themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIdeumMode]);
 
   useEffect(() => {
     if (!isIdeumMode || typeof window === 'undefined') return undefined;
@@ -758,6 +765,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       return;
     }
 
+    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
+    publishConfiguratorExploreSync(tiered, uiMode);
+    if (isLocalClusterDev()) {
+      if (tabId === IDEUM_EXPLORE_DATA_TAB_ID) openExploreDataDevNewTab(tiered, uiMode);
+      else openDataExplorationDevNewTab(tiered, uiMode);
+      return;
+    }
+
     let role = null;
     try {
       role = await fetchMachineRole();
@@ -765,12 +780,9 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       /* dev fallback below */
     }
 
-    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
-    publishConfiguratorExploreSync(tiered, uiMode);
-
     const action = await resolveDataExplorationNavigationAction(role);
     if (action === 'new-tab') {
-      openDataExplorationDevNewTab(inputs, uiMode);
+      openDataExplorationDevNewTab(tiered, uiMode);
       return;
     }
     if (action === 'maingear-remote') {
@@ -796,19 +808,24 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     setIdeumTab(tabId);
   }, [inputs, pushExploreSyncToCluster, uiMode]);
 
-  const handleExploreData = useCallback(async () => {
+  const handleExploreData = useCallback(async (inputsOverride) => {
+    const currentInputs = inputsOverride?.stateId ? { ...inputs, ...inputsOverride } : inputs;
+    const tiered = inputsWithEffectiveWacoLoadTier(currentInputs);
+    publishConfiguratorExploreSync(tiered, uiMode);
+    if (isLocalClusterDev()) {
+      openExploreDataDevNewTab(tiered, uiMode);
+      return;
+    }
     let role = null;
     try {
       role = await fetchMachineRole();
     } catch {
       /* dev fallback */
     }
-    const tiered = inputsWithEffectiveWacoLoadTier(inputs);
-    publishConfiguratorExploreSync(tiered, uiMode);
 
     const action = await resolveExploreDataNavigationAction(role);
     if (action === 'new-tab') {
-      openExploreDataDevNewTab(inputs, uiMode);
+      openExploreDataDevNewTab(tiered, uiMode);
       return;
     }
     if (action === 'maingear-remote') {
@@ -832,6 +849,12 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     setDataVisWacoTier(effectiveDataVisLoadMwTier());
     setIdeumTab(IDEUM_EXPLORE_DATA_TAB_ID);
   }, [inputs, pushExploreSyncToCluster, uiMode]);
+
+  const handleExploreDataRef = useRef(handleExploreData);
+  handleExploreDataRef.current = handleExploreData;
+  const openLatestExploreData = useCallback((inputsOverride) => {
+    handleExploreDataRef.current?.(inputsOverride);
+  }, []);
 
   /** Header Preview — Martin on this machine (same as Maingear optimized). */
   const handleMartinLocalConfigure = useCallback(async () => {
@@ -895,7 +918,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       persistDataQualityMode(DATA_QUALITY_CLEAN);
       setDataQualityMode(DATA_QUALITY_CLEAN);
       setDataVisWacoTier(DEFAULT_WACO_LOAD_TIER);
-      void preloadWacoWithDatasetQuality(DEFAULT_WACO_LOAD_TIER).then((uiMode) => {
+      void preloadWacoWithDatasetQuality(DEFAULT_WACO_LOAD_TIER, null, 'texas').then((uiMode) => {
         if (uiMode) setDataQualityMode(uiMode);
       });
     }
@@ -1108,7 +1131,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           <ConfIdeumInputPanel
             inputs={inputs}
             onChange={setInputs}
-            onExploreData={handleExploreData}
+            onExploreData={openLatestExploreData}
             onOptimizedConfiguration={handleOptimizedConfiguration}
             onReset={handleReset}
             onLoadPreset={handleLoadPreset}
@@ -1157,11 +1180,11 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
           <ConfTradeSpacePanel vizId={ideumTab} inputs={inputs} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_DATA_EXPLORATION_TAB_ID && (
-          <DataVisPanel key={`datavis-waco-${dataVisWacoTier}`} showQualityToggle={false} />
+          <DataVisPanel key={`datavis-${effectiveMartinStudy(inputs?.stateId)}-${dataVisWacoTier}`} showQualityToggle={false} />
         )}
         {!isWallMode && isIdeumMode && ideumTab === IDEUM_EXPLORE_DATA_TAB_ID && (
           <DataVisPanel
-            key={`explore-waco-${dataVisWacoTier}`}
+            key={`explore-${effectiveMartinStudy(inputs?.stateId)}-${dataVisWacoTier}`}
             variant="exploreWall"
             showQualityToggle={false}
           />

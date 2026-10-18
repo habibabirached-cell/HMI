@@ -11,7 +11,7 @@ if "%NO_PAUSE%"=="0" (
   echo.
   echo  winScreenSaver — keeps OLED wall displays awake by moving the mouse
   echo  Folder: %CD%
-  echo  Edit config.py to change IDLE_SECONDS (10 for testing, 6000 for production)
+  echo  Edit config.py to change IDLE_SECONDS (currently 120 = 2 minutes)
   echo.
 )
 

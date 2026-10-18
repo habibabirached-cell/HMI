@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { getComponentVisualConfig } from '../../../data/componentVisuals';
 import { getBess3DModelUrl } from '../../../utils/bess3dLayout';
 import { getGasTurbine3DModelUrl } from '../../../utils/gasTurbine3dLayout';
@@ -11,6 +11,11 @@ import {
   SubmenuModelTile,
   SubmenuUseCaseTile,
 } from '../ideum08/Ref200MwSubmenu';
+import {
+  startRscadSimulation,
+  stopRscadSimulation,
+  subscribeRscadDriver,
+} from '../../../rscad/client/rscadDriverClient';
 import '../ideum08/DataCentersHub.css';
 import '../ideum08/Ref200MwSubmenu.css';
 
@@ -47,6 +52,9 @@ export default function TestReferenceArchitectureSubmenu({
   const bucketChrome = getIdeum08RootBucketChrome(zoom);
   const hubInsetPx = Math.max(8, Math.round(8 * zoom));
   const titleFontPx = ref200SideTitleFontPx(zoom);
+  const [rscad, setRscad] = useState({ simulationId: null, busy: false, statusText: '' });
+
+  useEffect(() => subscribeRscadDriver(setRscad), []);
 
   return (
     <div
@@ -111,6 +119,38 @@ export default function TestReferenceArchitectureSubmenu({
               >
                 Toggle simulation
               </button>
+              <div className="ideum08-test-ref-arch__rscad-actions" aria-label="RSCAD simulation">
+                <button
+                  type="button"
+                  className="ideum08-test-ref-arch__rscad-btn"
+                  disabled={rscad.busy}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startRscadSimulation();
+                  }}
+                >
+                  <span>Start</span>
+                  {rscad.simulationId ? (
+                    <span className="ideum08-test-ref-arch__rscad-id">{rscad.simulationId}</span>
+                  ) : null}
+                  {!rscad.simulationId && rscad.statusText ? (
+                    <span className="ideum08-test-ref-arch__rscad-id">{rscad.statusText}</span>
+                  ) : null}
+                </button>
+                <button
+                  type="button"
+                  className="ideum08-test-ref-arch__rscad-btn"
+                  disabled={rscad.busy || !rscad.simulationId}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    stopRscadSimulation();
+                  }}
+                >
+                  Stop
+                </button>
+              </div>
             </div>
           </Ref200ColumnBucket>
 

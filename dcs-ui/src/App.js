@@ -65,7 +65,9 @@ import {
 } from './utils/h2SplitCanvasTitles';
 import {
   applyDesignExpansionToComponents,
+  applyBreakersExpansionToComponents,
   applyBreakersExpansionForPane,
+  applyPeripheralsExpansionToComponents,
   DEFAULT_DESIGN_EXPANSION,
   designHasStackedBreakerExpansion,
   designSupportsExpansionPanel,
@@ -256,6 +258,8 @@ import {
   openDevMaingearWallTab,
   openDevMaingearWind02WallTab,
   installDevWallRemoteCommandListener,
+  installDevWallExpansionAckListener,
+  postDevWallExpansionApplied,
   parseIdeumRemoteDeepLink,
   relayDevWallRemoteCommand,
   stripIdeumRemoteFromUrl,
@@ -1217,6 +1221,10 @@ function App() {
   const [ideumExpansionMirror, setIdeumExpansionMirror] = useState(() => ({
     ...DEFAULT_DESIGN_EXPANSION,
   }));
+  /** Touch toggle stays put until the wall reports the expand/collapse finished. */
+  const expansionBusyRef = useRef(false);
+  const expansionRequestRef = useRef(0);
+  const expansionBusyTimerRef = useRef(null);
   const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
   const [ideumSimulateMirror, setIdeumSimulateMirror] = useState(false);
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
@@ -4058,43 +4066,95 @@ function App() {
     }
   };
 
-  const handleIdeumExpansionRemoteToggle = async (expansionKey) => {
-    const command =
-      expansionKey === 'breakers' ? 'toggleBreakersExpansion' : 'togglePeripheralsExpansion';
+  const releaseIdeumExpansionBusy = useCallback((msg) => {
+    if (msg?.type !== 'expansion_applied') return;
+    const pending = expansionRequestRef.current;
+    if (pending !== 0 && msg.requestId !== pending) return;
+    expansionRequestRef.current = 0;
+    if (expansionBusyTimerRef.current) {
+      clearTimeout(expansionBusyTimerRef.current);
+      expansionBusyTimerRef.current = null;
+    }
+    expansionBusyRef.current = false;
     setIdeumExpansionMirror((prev) => ({
       ...prev,
-      ...(expansionKey === 'breakers'
-        ? { breakersCompact: !prev.breakersCompact }
-        : { peripheralsCompact: !prev.peripheralsCompact }),
+      breakersCompact: typeof msg.breakersCompact === 'boolean' ? msg.breakersCompact : prev.breakersCompact,
+      peripheralsCompact: typeof msg.peripheralsCompact === 'boolean' ? msg.peripheralsCompact : prev.peripheralsCompact,
+      busy: false,
     }));
+  }, []);
+
+  const handleIdeumExpansionRemoteToggle = async (expansionKey) => {
+    if (expansionBusyRef.current) return;
+    const command =
+      expansionKey === 'breakers' ? 'toggleBreakersExpansion' : 'togglePeripheralsExpansion';
+    const currentlyCompact = expansionKey === 'breakers'
+      ? ideumExpansionMirror.breakersCompact !== false
+      : ideumExpansionMirror.peripheralsCompact !== false;
+    const nextCompact = !currentlyCompact;
+    const requestId = expansionRequestRef.current + 1;
+    expansionRequestRef.current = requestId;
+    expansionBusyRef.current = true;
+    if (expansionBusyTimerRef.current) clearTimeout(expansionBusyTimerRef.current);
+    expansionBusyTimerRef.current = setTimeout(() => {
+      expansionBusyRef.current = false;
+      expansionBusyTimerRef.current = null;
+      setIdeumExpansionMirror((prev) => ({ ...prev, busy: false }));
+    }, 20000);
+    setIdeumExpansionMirror((prev) => ({
+      ...prev,
+      busy: true,
+      ...(expansionKey === 'breakers'
+        ? { breakersCompact: nextCompact }
+        : { peripheralsCompact: nextCompact }),
+    }));
+    const payload = { compact: nextCompact, requestId };
+    const revertBusy = () => {
+      if (expansionBusyTimerRef.current) {
+        clearTimeout(expansionBusyTimerRef.current);
+        expansionBusyTimerRef.current = null;
+      }
+      expansionBusyRef.current = false;
+      setIdeumExpansionMirror((prev) => ({
+        ...prev,
+        busy: false,
+        ...(expansionKey === 'breakers'
+          ? { breakersCompact: currentlyCompact }
+          : { peripheralsCompact: currentlyCompact }),
+      }));
+    };
     let role;
     try {
       role = await fetchMachineRole();
       setMachineRole(role);
     } catch (e) {
+      revertBusy();
       alert(e.message || 'Could not determine machine role.');
       return;
     }
     if (!isClusterTouchCommandSource(role, maltaView)) {
-      if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) {
+      if (isLocalClusterDev() && relayDevWallRemoteCommand(command, payload)) {
         return;
       }
+      revertBusy();
       alert(
         'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch) or configure this PC as Ideum.',
       );
       return;
     }
     try {
-      const result = await sendRemoteCommandToMaingear(role, command);
+      const result = await sendRemoteCommandToMaingear(role, command, payload);
       if (!result.deliveredToClients) {
-        if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) {
+        if (isLocalClusterDev() && relayDevWallRemoteCommand(command, payload)) {
           return;
         }
+        revertBusy();
         alert(
           'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS.',
         );
       }
     } catch (e) {
+      revertBusy();
       console.warn(e);
       alert(e.message || 'Failed to send expansion command to Maingear.');
     }
@@ -5012,67 +5072,86 @@ function App() {
     }));
   }, []);
 
+  const publishExpansionApplied = useCallback((expansion, expansionKey, requestId) => {
+    const message = {
+      type: 'expansion_applied',
+      expansionKey,
+      requestId: requestId ?? null,
+      breakersCompact: expansion.breakersCompact !== false,
+      peripheralsCompact: expansion.peripheralsCompact !== false,
+    };
+    postDevWallExpansionApplied(message);
+    void broadcastClusterMessage(message).catch(() => {});
+  }, []);
+
+  const settleExpansionAfterPaint = useCallback((expansion, expansionKey, requestId) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        publishExpansionApplied(expansion, expansionKey, requestId);
+      });
+    });
+  }, [publishExpansionApplied]);
+
   const handleDesignExpansionChange = useCallback((key, expanded, pane) => {
     setDesignExpansion((prev) => {
-      const mvupsFlat = normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic;
       const stackedBreakers =
         key === 'breakers' && pane && designHasStackedBreakerExpansion(canvasComponentsRef.current);
       const next = normalizeDesignExpansion(
-        mvupsFlat
-          ? { breakersCompact: !expanded, peripheralsCompact: !expanded }
-          : stackedBreakers
-            ? {
-                ...prev,
-                ...(pane === 'lower'
-                  ? { breakersCompactLower: !expanded }
-                  : { breakersCompactUpper: !expanded }),
-              }
-            : {
-                ...prev,
-                ...(key === 'breakers'
-                  ? { breakersCompact: !expanded, breakersCompactUpper: !expanded, breakersCompactLower: !expanded }
-                  : { peripheralsCompact: !expanded }),
-              },
+        stackedBreakers
+          ? {
+              ...prev,
+              ...(pane === 'lower'
+                ? { breakersCompactLower: !expanded }
+                : { breakersCompactUpper: !expanded }),
+            }
+          : {
+              ...prev,
+              ...(key === 'breakers'
+                ? { breakersCompact: !expanded, breakersCompactUpper: !expanded, breakersCompactLower: !expanded }
+                : { peripheralsCompact: !expanded }),
+            },
       );
       setCanvasComponents((comps) => {
-        if (mvupsFlat) return applyMvupsFlatUnifiedCollapseToComponents(comps, !expanded);
+        if (key === 'peripherals') {
+          return applyPeripheralsExpansionToComponents(comps, next.peripheralsCompact);
+        }
         if (stackedBreakers) {
           return applyBreakersExpansionForPane(comps, next, pane);
         }
-        return applyDesignExpansionToComponents(comps, next);
+        return applyBreakersExpansionToComponents(comps, next);
       });
+      settleExpansionAfterPaint(next, key, null);
       return next;
     });
-  }, [designSectionVisibility]);
+  }, [settleExpansionAfterPaint]);
 
-  const handleRemoteExpansionToggle = useCallback((expansionKey) => {
+  const handleRemoteExpansionToggle = useCallback((expansionKey, absoluteCompact, requestId) => {
     setDesignExpansion((prev) => {
-      const mvupsFlat = normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic;
-      const toggledCompact =
-        expansionKey === 'breakers' ? !prev.breakersCompact : !prev.peripheralsCompact;
+      const toggledCompact = typeof absoluteCompact === 'boolean'
+        ? absoluteCompact
+        : (expansionKey === 'breakers' ? !prev.breakersCompact : !prev.peripheralsCompact);
       const next = normalizeDesignExpansion(
-        mvupsFlat
-          ? { breakersCompact: toggledCompact, peripheralsCompact: toggledCompact }
-          : expansionKey === 'breakers'
-            ? {
-                ...prev,
-                breakersCompact: toggledCompact,
-                breakersCompactUpper: toggledCompact,
-                breakersCompactLower: toggledCompact,
-              }
-            : {
-                ...prev,
-                peripheralsCompact: toggledCompact,
-              },
+        expansionKey === 'breakers'
+          ? {
+              ...prev,
+              breakersCompact: toggledCompact,
+              breakersCompactUpper: toggledCompact,
+              breakersCompactLower: toggledCompact,
+            }
+          : {
+              ...prev,
+              peripheralsCompact: toggledCompact,
+            },
       );
-      setCanvasComponents((comps) =>
-        mvupsFlat
-          ? applyMvupsFlatUnifiedCollapseToComponents(comps, toggledCompact)
-          : applyDesignExpansionToComponents(comps, next),
-      );
+      setCanvasComponents((comps) => (
+        expansionKey === 'breakers'
+          ? applyBreakersExpansionToComponents(comps, next)
+          : applyPeripheralsExpansionToComponents(comps, next.peripheralsCompact)
+      ));
+      settleExpansionAfterPaint(next, expansionKey, requestId ?? null);
       return next;
     });
-  }, [designSectionVisibility]);
+  }, [settleExpansionAfterPaint]);
 
   useEffect(() => {
     if (!normalizeDesignSectionVisibility(designSectionVisibility).showMvupsFlatSchematic) return;
@@ -5867,7 +5946,8 @@ function App() {
         console.warn('Remote expansion ignored — design does not support expansion panel');
         return;
       }
-      handleRemoteExpansionToggle(spec.expansionKey);
+      const absoluteCompact = typeof payload?.compact === 'boolean' ? payload.compact : undefined;
+      handleRemoteExpansionToggle(spec.expansionKey, absoluteCompact, payload?.requestId);
       return;
     }
     if (!spec?.presetName || !designApiPath) {
@@ -9393,6 +9473,13 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (getMaltaViewFromUrl() === 'wall') return undefined;
+    return installDevWallExpansionAckListener((msg) => {
+      releaseIdeumExpansionBusy(msg);
+    });
+  }, [releaseIdeumExpansionBusy]);
+
   const handleOpenConfiguratorRef = useRef(handleOpenConfigurator);
   useEffect(() => {
     handleOpenConfiguratorRef.current = handleOpenConfigurator;
@@ -9452,6 +9539,10 @@ function App() {
       return undefined;
     }
     return connectPeerClusterWebSocket(machineRole.peerBackendUrl, (msg) => {
+      if (msg?.type === 'expansion_applied') {
+        releaseIdeumExpansionBusy(msg);
+        return;
+      }
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
         setIdeumSimulationMirror(msg.running);
         if (msg.running) {
@@ -9472,6 +9563,7 @@ function App() {
     machineRole?.isIdeum,
     machineRole?.isMalta,
     machineRole?.peerBackendUrl,
+    releaseIdeumExpansionBusy,
   ]);
 
   useEffect(() => {

@@ -57,19 +57,29 @@ export function buildMvupsFlatExpandedRenderShiftMap(components, showMvupsFlatSc
   return map;
 }
 
-/** Collapse horizontal shift must not move upper baseline — only MVUPS flat canvas ids. */
+/** MVUPS one-line pieces, including the expanded mirror that is not flagged on each child. */
+function isMvupsLayoutPiece(component) {
+  if (isMvupsFlatSchematicCanvasComponent(component)) return true;
+  return typeof component?.id === 'string' && component.id.startsWith('comp-mvups-exp-');
+}
+
+/**
+ * BESS/STATCOM wings and the MVUPS one-line collapse independently.
+ * A bank may only pull pieces from its own plant.
+ */
 export function shouldApplyBankCollapseShiftToComponent(bank, component) {
-  if (!isMvupsFlatCollapseOwnerComponent(bank)) return true;
-  return isMvupsFlatSchematicCanvasComponent(component);
+  const mvupsBank = isMvupsFlatCollapseOwnerComponent(bank);
+  const mvupsPiece = isMvupsLayoutPiece(component);
+  if (mvupsBank || mvupsPiece) return mvupsBank && mvupsPiece;
+  return true;
 }
 
 export function shouldApplyTieCollapseShiftToComponent(tie, component) {
+  // Only the MVUPS tie may slide the MVUPS one-line. The BESS paste tie sits on the same
+  // band and would otherwise crush the expanded MVUPS drawing into the center column.
+  if (isMvupsLayoutPiece(component)) {
+    return tie?.id === 'comp-mvups-exp-tie-network';
+  }
   if (!isMvupsFlatCollapseOwnerComponent(tie)) return true;
-  if (isMvupsFlatSchematicCanvasComponent(component)) return true;
-  // P2R_18 lower one-line (buses and section CBs) pulls in beside this tie, same as baseline.
-  return (
-    tie?.id === 'comp-mvups-exp-tie-network' &&
-    typeof component?.id === 'string' &&
-    component.id.startsWith('comp-mvups-exp-')
-  );
+  return false;
 }

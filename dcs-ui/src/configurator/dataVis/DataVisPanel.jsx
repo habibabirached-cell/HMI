@@ -62,6 +62,8 @@ import { preloadWacoWithDatasetQuality } from '../utils/conf_wacoPreload';
 import {
   applyWacoLoadTierHandoff,
   effectiveDataVisLoadMwTier,
+  hydrateMartinStudyFromUrl,
+  hydrateWacoLoadTierFromUrl,
   inputsWithEffectiveWacoLoadTier,
 } from './api/dataVisLoadMw';
 import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
@@ -69,6 +71,7 @@ import {
   applyMartinStudyHandoff,
   effectiveMartinStudy,
   readPersistedMartinStudy,
+  stateIdForMartinStudy,
 } from '../utils/conf_martinStudy';
 import { parallelDimensionsForExploreWall } from './utils/dataVisParallelDefaults';
 
@@ -199,17 +202,22 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     [resetExplorationClientState],
   );
 
-  const reloadInFlightRef = useRef(null);
+  const reloadSeqRef = useRef(0);
 
   const reloadWacoDatasetForTier = useCallback(
     async (tierOverride, stateIdOverride) => {
       const storedInputs = readPersistedConfiguratorInputs()?.inputs;
-      const stateId = stateIdOverride ?? storedInputs?.stateId ?? 'texas';
-      const tier = normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier(stateId);
+      const studyFromSession = readPersistedMartinStudy();
+      const stateId = stateIdOverride
+        ?? (studyFromSession ? stateIdForMartinStudy(studyFromSession) : null)
+        ?? storedInputs?.stateId
+        ?? 'texas';
+      const tier = stateId === 'wisconsin'
+        ? 200
+        : (normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier(stateId));
       const expectedStudy = effectiveMartinStudy(stateId);
-      if (reloadInFlightRef.current) {
-        return reloadInFlightRef.current;
-      }
+      const seq = reloadSeqRef.current + 1;
+      reloadSeqRef.current = seq;
       const run = (async () => {
         try {
           await preloadWacoWithDatasetQuality(tier, null, stateId);
@@ -223,6 +231,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
             metaTier = normalizeWacoLoadTier(res?.load_mw);
             metaStudy = res?.martin_study ?? res?.dataset_source?.martin_study;
           }
+          if (seq !== reloadSeqRef.current) return;
           if (metaTier !== tier || metaStudy !== expectedStudy) {
             setError(
               `Martin dataset mismatch: expected ${expectedStudy} ${tier} MW but meta returned ${metaStudy ?? '?'} ${res?.load_mw ?? '?'} MW (${res?.workbook ?? 'unknown'}). Press ${tier}MW again.`,
@@ -237,13 +246,11 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
           }
           setError(null);
         } catch (err) {
+          if (seq !== reloadSeqRef.current) return;
           setError(err?.message || 'Failed to load Waco dataset.');
         }
       })();
-      reloadInFlightRef.current = run.finally(() => {
-        reloadInFlightRef.current = null;
-      });
-      return reloadInFlightRef.current;
+      return run;
     },
     [resetExplorationClientState],
   );
@@ -252,7 +259,9 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     let cancelled = false;
     const bootstrap = async () => {
       try {
-        await reloadWacoDatasetForTier(effectiveDataVisLoadMwTier());
+        hydrateMartinStudyFromUrl();
+        hydrateWacoLoadTierFromUrl();
+        await reloadWacoDatasetForTier();
       } catch (err) {
         if (!cancelled) setError(err.message);
       }

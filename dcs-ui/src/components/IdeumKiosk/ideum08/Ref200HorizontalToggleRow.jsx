@@ -10,6 +10,7 @@ export default function Ref200HorizontalToggleRow({
   onToggle,
   ariaLabel,
   rowClassName = '',
+  disabled = false,
 }) {
   return (
     <div
@@ -29,10 +30,13 @@ export default function Ref200HorizontalToggleRow({
           rightActive ? ' ideum07-ref200__toggle--on' : ''
         }`}
         aria-checked={rightActive}
+        aria-disabled={disabled}
+        disabled={disabled}
         aria-label={ariaLabel || `${leftLabel} or ${rightLabel}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (disabled) return;
           onToggle?.();
         }}
       >

@@ -54,6 +54,7 @@ import {
   getTieHiddenMemberIdSet,
   tieEffectiveDimensions,
   buildTieCollapseHorizontalShiftMap,
+  buildTieExpandedFillAisleShiftMap,
   getTieCollapsedStubSegments,
   isTieBreakerNetwork,
   isTieNetworkCollapsed,
@@ -555,6 +556,11 @@ const Canvas = forwardRef(({
     [components],
   );
 
+  const tieExpandedFillAisleShiftById = useMemo(
+    () => buildTieExpandedFillAisleShiftMap(components, getComponentVisualConfig),
+    [components],
+  );
+
   const gasTurbineBankShiftById = useMemo(
     () => buildGasTurbineBankCollapseHorizontalShiftMap(components, getComponentVisualConfig),
     [components],
@@ -584,6 +590,10 @@ const Canvas = forwardRef(({
       if (skipCollapseShiftForId(id)) continue;
       merged.set(id, (merged.get(id) ?? 0) + dx);
     }
+    for (const [id, dx] of tieExpandedFillAisleShiftById) {
+      if (skipCollapseShiftForId(id)) continue;
+      merged.set(id, (merged.get(id) ?? 0) + dx);
+    }
     for (const [id, dx] of gasTurbineBankShiftById) {
       if (skipCollapseShiftForId(id)) continue;
       merged.set(id, (merged.get(id) ?? 0) + dx);
@@ -595,6 +605,7 @@ const Canvas = forwardRef(({
     return merged;
   }, [
     tieCollapseShiftById,
+    tieExpandedFillAisleShiftById,
     gasTurbineBankShiftById,
     mvupsFlatExpandedRenderShift,
     components,

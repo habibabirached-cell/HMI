@@ -4,7 +4,7 @@
 
 import { API_BASE_URL } from '../../../apiConfig';
 import { normalizeWacoLoadTier } from '../../utils/conf_wacoLoadTier';
-import { effectiveMartinStudy } from '../../utils/conf_martinStudy';
+import { effectiveMartinStudy, readMartinStudyEpoch } from '../../utils/conf_martinStudy';
 import {
   dataVisLoadMwQueryString,
   effectiveDataVisLoadMwTier,
@@ -23,7 +23,8 @@ function resolveMetaLoadMw(loadMW, stateId) {
 function metaUrl(loadMW, stateId) {
   const tier = resolveMetaLoadMw(loadMW, stateId);
   const study = effectiveMartinStudy(stateId);
-  return `${DATAVIS_BASE}/meta?loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}`;
+  const epoch = readMartinStudyEpoch();
+  return `${DATAVIS_BASE}/meta?loadMW=${encodeURIComponent(String(tier))}&martinStudy=${encodeURIComponent(study)}&martinStudyEpoch=${encodeURIComponent(String(epoch))}`;
 }
 
 async function parseJson(res) {

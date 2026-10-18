@@ -15,7 +15,6 @@ import { formatPercent } from '../utils/conf_formatters';
 import { snapToLoadCompliance } from '../utils/conf_corridorRangeScale';
 import { normalizeWacoLoadTier } from '../utils/conf_wacoLoadTier';
 import {
-  clearPersistedWacoLoadTier,
   notifyWacoLoadTierChanged,
   persistWacoLoadTierForDataVis,
 } from '../dataVis/api/dataVisLoadMw';
@@ -25,6 +24,7 @@ import {
   martinStudyForStateId,
   persistMartinStudyForDataVis,
 } from '../utils/conf_martinStudy';
+
 function clampReliabilityTarget(value) {
   return snapToLoadCompliance(value);
 }
@@ -126,10 +126,7 @@ export default function ConfIdeumInputPanel({
 
   useEffect(() => {
     const known = IDEUM_LOCATION_OPTIONS.some((option) => option.id === inputs.stateId);
-    if (known) {
-      persistMartinStudyForDataVis(martinStudyForStateId(inputs.stateId));
-      return;
-    }
+    if (known) return;
     update({ stateId: 'texas', cityId: 'dallas_tx' });
   }, [inputs.stateId]);
 
@@ -142,43 +139,31 @@ export default function ConfIdeumInputPanel({
 
   const handleLoadTierChange = (loadMW) => {
     const stateId = inputs.stateId || 'texas';
-    update({ loadMW });
+    const nextInputs = { ...inputs, loadMW, stateId };
+    update(nextInputs);
     persistWacoLoadTierForDataVis(loadMW);
     notifyWacoLoadTierChanged(loadMW);
-    void preloadWacoWithDatasetQuality(loadMW, null, stateId).then(() => {
-      if (stateId === 'texas') {
-        onExploreData?.();
-      }
-    });
+    onExploreData?.(nextInputs);
+    void preloadWacoWithDatasetQuality(loadMW, null, stateId);
   };
 
-  const handleLocationChange = async (nextStateId) => {
+  const handleLocationChange = (nextStateId) => {
     const option = IDEUM_LOCATION_OPTIONS.find((entry) => entry.id === nextStateId);
-    persistMartinStudyForDataVis(martinStudyForStateId(nextStateId));
-
-    if (nextStateId === 'wisconsin') {
-      update({
-        stateId: nextStateId,
-        cityId: option?.cityId ?? inputs.cityId,
-        loadMW: 200,
-      });
-      persistWacoLoadTierForDataVis(200);
-      notifyWacoLoadTierChanged(200);
-      try {
-        await preloadWacoWithDatasetQuality(200, null, nextStateId);
-        onExploreData?.();
-      } catch {
-        /* preload failure logged in preload helper */
-      }
-      return;
-    }
-
-    clearPersistedWacoLoadTier();
-    update({
+    const tier = nextStateId === 'wisconsin'
+      ? 200
+      : (normalizeWacoLoadTier(inputs.loadMW) ?? 200);
+    const nextInputs = {
+      ...inputs,
       stateId: nextStateId,
       cityId: option?.cityId ?? inputs.cityId,
-      loadMW: undefined,
-    });
+      loadMW: tier,
+    };
+    persistMartinStudyForDataVis(martinStudyForStateId(nextStateId));
+    persistWacoLoadTierForDataVis(tier);
+    notifyWacoLoadTierChanged(tier);
+    update(nextInputs);
+    onExploreData?.(nextInputs);
+    void preloadWacoWithDatasetQuality(tier, null, nextStateId);
   };
 
   const loadEditor = (
@@ -306,7 +291,7 @@ export default function ConfIdeumInputPanel({
             <button
               type="button"
               className="conf-ideum-explore-data-btn"
-              onClick={onExploreData}
+              onClick={() => onExploreData?.()}
             >
               Explore Data
             </button>

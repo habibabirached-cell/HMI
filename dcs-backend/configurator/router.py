@@ -24,7 +24,10 @@ from configurator.conf_schemas import (
     WacoPreloadRequest,
 )
 from configurator.dataVis.dataset_mode import reset_datavis_mode
-from configurator.dataVis.loader import get_active_martin_study, load_martin_dataframe
+from configurator.dataVis.loader import (
+    begin_martin_csv_load,
+    load_martin_dataframe,
+)
 from configurator.dataVis.paths import (
     MARTIN_STUDY_BADGER,
     MARTIN_STUDIES,
@@ -146,22 +149,33 @@ def _preload_martin_workbook(
     martin_study: str | None = None,
     state_id: object = None,
 ) -> dict:
+    token = begin_martin_csv_load()
     study = _resolve_martin_study(martin_study, state_id)
     if study == MARTIN_STUDY_BADGER:
         tier = 200
-        df = load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=True)
+        df = load_martin_dataframe(
+            load_mw=tier,
+            martin_study=study,
+            force_reload=True,
+            generation=token,
+        )
         source = badger_dataset_source()
     else:
         tier = _waco_tier_from_load_mw(load_mw)
         if tier is None:
             raise ValueError("loadMW must be 200 or 1000")
-        df = load_martin_dataframe(load_mw=tier, martin_study=study, force_reload=True)
+        df = load_martin_dataframe(
+            load_mw=tier,
+            martin_study=study,
+            force_reload=True,
+            generation=token,
+        )
         source = waco_dataset_source(tier)
     reset_datavis_mode()
     return {
         "ok": True,
         "load_mw": tier,
-        "martin_study": get_active_martin_study(),
+        "martin_study": study,
         "workbook": source.get("file"),
         "dataset_source": source,
         "sheet": source.get("sheet", "data"),
