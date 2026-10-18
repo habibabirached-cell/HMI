@@ -1,5 +1,7 @@
 @echo off
 setlocal
+set "NO_PAUSE=0"
+if /i "%~1"=="nopause" set "NO_PAUSE=1"
 call "%~dp0..\_repo-root.bat"
 
 set "TARGET=%~dp0START_Daily_Ideum_Malta_Kiosk.bat"
@@ -22,4 +24,4 @@ echo Created desktop shortcut:
 echo   %LINK%
 echo Target:
 echo   %TARGET%
-pause
+if "%NO_PAUSE%"=="0" pause

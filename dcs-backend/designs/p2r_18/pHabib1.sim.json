@@ -1,0 +1,8 @@
+{
+  "display_name": "pHabib1 Baseline FFT",
+  "description": "Baseline shaft torque FFT (canonical id pHabib1; replaces Csv_gt in charts)",
+  "charts_to_display": [],
+  "event_markers": {},
+  "data_row_count": 131,
+  "data_column_count": 2
+}

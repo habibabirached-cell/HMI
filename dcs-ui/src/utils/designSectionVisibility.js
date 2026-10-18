@@ -214,8 +214,9 @@ export function getDesignSectionHiddenMemberIdSet(components, visibility, connec
       }
     }
   } else {
+    // BESS / STATCOM lower plant is independent of the MVUPS mirror (comp-mvups-exp-*).
     for (const c of components || []) {
-      if (isMvupsFlatSchematicComponentId(c.id) || isMvupsFlatCollapseOwnerId(c.id)) {
+      if (isMvupsFlatSchematicComponent(c) || isMvupsExpandedMirrorComponentId(c.id)) {
         hidden.add(c.id);
       }
     }

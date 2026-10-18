@@ -1,5 +1,7 @@
 @echo off
 setlocal
+set "NO_PAUSE=0"
+if /i "%~1"=="nopause" set "NO_PAUSE=1"
 set "SRC=%~dp0dcs-backend\cluster.local.json.maingear"
 set "DST=%~dp0dcs-backend\cluster.local.json"
 
@@ -21,4 +23,4 @@ echo Copied Maingear cluster config:
 echo   %SRC%
 echo to:
 echo   %DST%
-pause
+if "%NO_PAUSE%"=="0" pause
