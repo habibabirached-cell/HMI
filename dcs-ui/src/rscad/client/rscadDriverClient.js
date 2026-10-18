@@ -1,7 +1,7 @@
 /**
  * Browser client for Roberto's RSCAD driver (Windows host, port 8008).
  * The page is served from the Maingear, so the socket uses that same host.
- * Start payload matches CAD_Driver/.../ws_client/run_streaming_scenario.py.
+ * Start payload matches the sibling repo CAD_Driver/rscad-driver-svc/src/ws_client/run_streaming_scenario.py.
  */
 
 const RSCAD_PORT = '8008';
