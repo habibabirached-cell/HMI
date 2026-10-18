@@ -13,6 +13,5 @@ if %errorlevel% equ 0 (
 )
 
 echo Requesting Administrator approval for cluster Ethernet setup...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$code = (Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', 'call \"\"\"%STEP%\"\"\" nopause') -Verb RunAs -PassThru -Wait).ExitCode; exit $code"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0elevate-batch.ps1" -BatchPath "%STEP%" -BatchArgs nopause
 exit /b %errorlevel%

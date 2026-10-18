@@ -7,12 +7,11 @@ call "%~dp0..\_repo-root.bat"
 set "TARGET=%~dp0START_Daily_Ideum_Malta_Kiosk.bat"
 set "LINK=%USERPROFILE%\Desktop\Ideum DCS Kiosk (Malta).lnk"
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('%LINK%');" ^
-  "$s.TargetPath = '%TARGET%';" ^
-  "$s.WorkingDirectory = '%REPO_ROOT%';" ^
-  "$s.Description = 'Ideum Malta: cluster + Docker + DCS fullscreen';" ^
-  "$s.Save()"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\create-desktop-shortcut.ps1" ^
+  -LinkPath "%LINK%" ^
+  -TargetPath "%TARGET%" ^
+  -WorkingDirectory "%REPO_ROOT%" ^
+  -Description "Ideum Malta daily start"
 
 if errorlevel 1 (
   echo Failed to create desktop shortcut.

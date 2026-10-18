@@ -6,4 +6,4 @@ if errorlevel 1 (
   exit /b 1
 )
 cd /d "%REPO_ROOT%"
-call "%REPO_ROOT%\BAT\ideum-start-kiosk.bat"
+call "%REPO_ROOT%\BAT\ideum-start-kiosk.bat" 

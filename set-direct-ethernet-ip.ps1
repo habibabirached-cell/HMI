@@ -92,7 +92,7 @@ if ($Daily) {
         exit 0
     }
     if (-not (Test-Admin)) {
-        Write-Host "WARN: Ethernet is not $IpAddress — fix once with 02_FIRST_TIME_Setup_Ethernet_Admin (Run as administrator). Continuing startup."
+        Write-Host "WARN: Ethernet is not $IpAddress. Run 02_FIRST_TIME_Setup_Ethernet_Admin once as Administrator. Continuing startup."
         exit 0
     }
     Write-Host "Daily start: applying Ethernet setup (elevated session)..."

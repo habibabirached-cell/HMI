@@ -15,11 +15,7 @@ if "%DAILY%"=="1" (
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo Requesting Administrator privileges...
-    if "%NO_PAUSE%"=="1" (
-        powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -ArgumentList 'nopause' -Verb RunAs -Wait"
-    ) else (
-        powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
-    )
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start\elevate-batch.ps1" -BatchPath "%~f0" -BatchArgs nopause
     exit /b %errorlevel%
 )
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0set-direct-ethernet-ip.ps1" -IpAddress 192.168.50.2
