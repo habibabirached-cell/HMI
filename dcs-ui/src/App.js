@@ -44,6 +44,10 @@ import {
   normalizeQuickScenarioBranchCollapsed,
 } from './utils/designCollapseState';
 import {
+  inferP2R18DesignPresetFromVisibility,
+  isP2R18QuickScenarioPreset,
+} from './utils/p2r18QuickScenario';
+import {
   QUAD_BOTTOM_ROW_SHARE_DEFAULT,
   clampQuadBottomRowShare,
 } from './utils/chartPanelQuadGrid';
@@ -1150,6 +1154,11 @@ function App() {
   const [activeQuickScenarioPlaying, setActiveQuickScenarioPlaying] = useState(null);
   /** Preset awaiting a second click to load charts + simulation (design-first quick scenarios). */
   const [quickScenarioDesignPrimedPreset, setQuickScenarioDesignPrimedPreset] = useState(null);
+  /** P2R_18: canvas-only preset (quick scenarios never auto-open plots). */
+  const [p2r18CanvasPreset, setP2r18CanvasPreset] = useState(null);
+  const p2r18CanvasPresetRef = useRef(null);
+  const applyP2r18DesignOnlyPresetRef = useRef(async () => false);
+  const handleShowPlotsForCurrentP2R18DesignRef = useRef(async () => false);
   /** Upper / lower stacked canvas sections — collapse state stays in components; this only hides rendering. */
   const [designSectionVisibility, setDesignSectionVisibility] = useState(
     () => ({ ...DEFAULT_DESIGN_SECTION_VISIBILITY }),
@@ -4494,6 +4503,10 @@ function App() {
     [handleIdeumControlButtonClick],
   );
 
+  const handleIdeumToggleSimulation = useCallback(() => {
+    void sendIdeumClusterCommand('toggleSimulation');
+  }, [sendIdeumClusterCommand]);
+
   const handleIdeum07NavSelect = useCallback((cardId) => {
     const screenId = ideumKioskNav.getNavScreen(ideum07NavStack);
     const loadCatalog = ideumKioskNav.getNavLoadDesignCatalog(screenId, cardId);
@@ -4999,7 +5012,7 @@ function App() {
     designExpansion,
   ]);
 
-  /** Default P2R_18 wall state: conf3 layout, noBessNoStatcom preset, simulation playing. */
+  /** Default P2R_18 wall state: conf3 layout, baseline canvas only (no plots, simulation off). */
   const applyP2R18DefaultState = useCallback(async () => {
     if (!designApiPath) return false;
     if (!isP2R18Design({ name: currentConfigName, csv_status: { design_catalog_rel: designApiPath } })) {
@@ -5019,11 +5032,6 @@ function App() {
 
     pendingP2R18InitRef.current = false;
 
-    stopLiveRtdsStream();
-    handleStopSimulation();
-    handleWorkspaceLayoutPresetChange('conf3');
-    applyNoBessNoStatcomCanvas();
-
     const sameDesignEnsemble =
       simulationMetadataRef.current?.ensembleId === ensemble.id
       && simulationDesignPathRef.current === designApiPath;
@@ -5031,30 +5039,18 @@ function App() {
       await handleSelectEnsemble(ensemble);
     }
 
-    const presetOk = await handleActivateNamedSimulationConfig(P2R18_DEFAULT_PRESET);
-    if (presetOk) {
-      await restartSimulationPlaybackFromStart();
-      const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
-      if (shortcut) {
-        setActiveQuickScenarioPlaying(shortcut);
-      }
-    }
+    const shortcut = quickScenarioButtons.find((b) => b.presetName === P2R18_DEFAULT_PRESET);
+    await applyP2r18DesignOnlyPresetRef.current(P2R18_DEFAULT_PRESET, shortcut ?? null);
 
     setQuickScenarioDesignPrimedPreset(null);
-    setRightRailCollapsed(false);
     setRightRailGridPeek(true);
-    return presetOk;
+    return true;
   }, [
     designApiPath,
     currentConfigName,
     designEnsembles,
     quickScenarioButtons,
-    stopLiveRtdsStream,
-    handleStopSimulation,
-    handleWorkspaceLayoutPresetChange,
-    applyNoBessNoStatcomCanvas,
     handleSelectEnsemble,
-    handleActivateNamedSimulationConfig,
   ]);
 
   useEffect(() => {
@@ -5147,6 +5143,158 @@ function App() {
 
   useEffect(() => () => stopLiveRtdsStream(), [stopLiveRtdsStream]);
 
+  useEffect(() => {
+    p2r18CanvasPresetRef.current = p2r18CanvasPreset;
+  }, [p2r18CanvasPreset]);
+
+  const isActiveP2R18Design = useCallback(
+    () =>
+      isP2R18Design({
+        name: currentConfigName,
+        csv_status: { design_catalog_rel: designApiPath },
+      }),
+    [currentConfigName, designApiPath],
+  );
+
+  const applyP2r18DesignOnlyPreset = useCallback(
+    async (presetName, effectiveShortcut) => {
+      stopLiveRtdsStream();
+      handleStopSimulation();
+      handleWorkspaceLayoutPresetChange('conf3');
+      setOpenCharts([]);
+      setChartStacks([]);
+      setPerChartSampleStep({});
+      setActiveNamedSimulationConfig(null);
+      activeNamedSimulationConfigRef.current = null;
+      setLastNamedPresetForUi(null);
+      setQuickScenarioDesignPrimedPreset(null);
+      setP2r18CanvasPreset(presetName);
+      p2r18CanvasPresetRef.current = presetName;
+
+      const sectionVisibility = resolveQuickScenarioDesignVisibility(presetName);
+      const visibilityForCollapse = sectionVisibility ?? designSectionVisibility;
+      if (sectionVisibility) {
+        setDesignSectionVisibility(sectionVisibility);
+      }
+      const branchCollapsed = quickScenarioBranchCollapsed[presetName] ?? true;
+      setCanvasComponents((prev) =>
+        applyQuickScenarioBranchCollapseToComponents(
+          prev,
+          visibilityForCollapse,
+          branchCollapsed,
+          presetName,
+          designExpansion,
+        ),
+      );
+      if (
+        sectionVisibility?.showMvupsFlatSchematic
+        || visibilityForCollapse?.showMvupsFlatSchematic
+      ) {
+        setDesignExpansion((prev) => ({
+          ...prev,
+          breakersCompact: branchCollapsed,
+          peripheralsCompact: branchCollapsed,
+        }));
+      }
+
+      if (effectiveShortcut) {
+        setActiveQuickScenarioPlaying(effectiveShortcut);
+      }
+      setRightRailCollapsed(true);
+    },
+    [
+      stopLiveRtdsStream,
+      handleStopSimulation,
+      handleWorkspaceLayoutPresetChange,
+      designSectionVisibility,
+      quickScenarioBranchCollapsed,
+      designExpansion,
+    ],
+  );
+
+  const applyP2r18PlotsForPreset = useCallback(
+    async (presetName, effectiveShortcut) => {
+      if (!presetName || !designApiPath) return false;
+      stopLiveRtdsStream();
+      handleStopSimulation();
+      handleWorkspaceLayoutPresetChange('conf3');
+      setP2r18CanvasPreset(presetName);
+      p2r18CanvasPresetRef.current = presetName;
+
+      const ensemble =
+        resolveDesignEnsemble(designEnsembles, P2R18_ENSEMBLE_ID)
+        || resolveDesignEnsemble(designEnsembles, 'all')
+        || resolveDesignEnsemble(designEnsembles, 'all_');
+      if (!ensemble) {
+        alert('P2R_18 ensemble not found.');
+        return false;
+      }
+      const sameDesignEnsemble =
+        simulationMetadataRef.current?.ensembleId === ensemble.id
+        && simulationDesignPathRef.current === designApiPath;
+      if (!sameDesignEnsemble) {
+        await handleSelectEnsemble(ensemble);
+      }
+      const presetOk = await handleActivateNamedSimulationConfig(presetName);
+      if (!presetOk) return false;
+      if (effectiveShortcut) {
+        setActiveQuickScenarioPlaying(effectiveShortcut);
+      }
+      setRightRailCollapsed(false);
+      return true;
+    },
+    [
+      designApiPath,
+      designEnsembles,
+      stopLiveRtdsStream,
+      handleStopSimulation,
+      handleWorkspaceLayoutPresetChange,
+      handleSelectEnsemble,
+      handleActivateNamedSimulationConfig,
+    ],
+  );
+
+  const handleShowPlotsForCurrentP2R18Design = useCallback(async () => {
+    if (!isActiveP2R18Design()) return false;
+    const preset =
+      p2r18CanvasPresetRef.current
+      || inferP2R18DesignPresetFromVisibility(
+        designSectionVisibility,
+        mvupsDampingMode,
+        namedSimulationConfigs,
+      );
+    const shortcut =
+      quickScenarioButtons.find((b) => b.presetName === preset)
+      || quickScenarioButtons.find((b) => {
+        if (!isMvupsQuickScenarioShortcut(b)) return false;
+        return resolveMvupsPresetForMode(mvupsDampingMode, namedSimulationConfigs) === preset;
+      })
+      || {
+        id: `plots-${preset}`,
+        label: preset,
+        presetName: preset,
+        targetType: 'ensemble',
+        ensembleId: P2R18_ENSEMBLE_ID,
+      };
+    return applyP2r18PlotsForPreset(preset, shortcut);
+  }, [
+    isActiveP2R18Design,
+    designSectionVisibility,
+    mvupsDampingMode,
+    namedSimulationConfigs,
+    quickScenarioButtons,
+    applyP2r18PlotsForPreset,
+  ]);
+
+  const handleQuickScenarioPlotsClick = useCallback(async () => {
+    await handleShowPlotsForCurrentP2R18Design();
+  }, [handleShowPlotsForCurrentP2R18Design]);
+
+  useEffect(() => {
+    applyP2r18DesignOnlyPresetRef.current = applyP2r18DesignOnlyPreset;
+    handleShowPlotsForCurrentP2R18DesignRef.current = handleShowPlotsForCurrentP2R18Design;
+  }, [applyP2r18DesignOnlyPreset, handleShowPlotsForCurrentP2R18Design]);
+
   const handleQuickScenarioShortcutClick = async (shortcut) => {
     if (!shortcut?.presetName || !designApiPath) return;
     if (shortcut.presetName === LIVE_RTDS_PRESET) {
@@ -5159,6 +5307,15 @@ function App() {
       : shortcut.presetName;
     const effectiveShortcut =
       presetName === shortcut.presetName ? shortcut : { ...shortcut, presetName };
+
+    if (
+      isActiveP2R18Design()
+      && isP2R18QuickScenarioPreset(presetName)
+      && !isQuickScenarioResetPreset(presetName)
+    ) {
+      await applyP2r18DesignOnlyPreset(presetName, effectiveShortcut);
+      return;
+    }
 
     stopLiveRtdsStream();
     handleWorkspaceLayoutPresetChange('conf3');
@@ -5321,6 +5478,18 @@ function App() {
     }
     if (command === 'liveRtds') {
       await handleLiveRtds();
+      return;
+    }
+    if (command === 'showPlotsForCurrentDesign') {
+      await handleShowPlotsForCurrentP2R18DesignRef.current();
+      return;
+    }
+    if (command === 'toggleSimulation') {
+      if (simulationRunningRef.current) {
+        handleStopSimulation();
+      } else {
+        await restartSimulationPlaybackFromStart();
+      }
       return;
     }
     if (command === 'resetHdAero') {
@@ -9427,6 +9596,9 @@ function App() {
       activeQuickScenarioPlaying={activeQuickScenarioPlaying}
       activeNamedSimulationConfig={activeNamedSimulationConfig}
       onQuickScenarioShortcutClick={handleQuickScenarioShortcutClick}
+      onQuickScenarioPlotsClick={handleQuickScenarioPlotsClick}
+      showP2r18PlotsButton={isActiveP2R18Design()}
+      p2r18CanvasPreset={p2r18CanvasPreset}
       onIdeumControlButtonClick={handleIdeumControlButtonClick}
       onSaveQuickScenarioPreset={handleSaveQuickScenarioPreset}
       onDeleteQuickScenarioButton={handleDeleteQuickScenarioButton}
@@ -10075,6 +10247,7 @@ function App() {
               onIdeumControlButtonClick={handleIdeumControlButtonClick}
               ideumExpansionMirror={ideumExpansionMirror}
               onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
+              onIdeumToggleSimulation={handleIdeumToggleSimulation}
               ideumSimulationMirror={ideumSimulationMirror}
               onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
               ideumSimulateMirror={ideumSimulateMirror}

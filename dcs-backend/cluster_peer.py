@@ -30,6 +30,8 @@ VALID_REMOTE_COMMANDS = frozenset({
     "addBessOnly",
     "addGfmeOnly",
     "addMvupsOnly",
+    "showPlotsForCurrentDesign",
+    "toggleSimulation",
     "toggleBreakersExpansion",
     "togglePeripheralsExpansion",
     "startSimulation",

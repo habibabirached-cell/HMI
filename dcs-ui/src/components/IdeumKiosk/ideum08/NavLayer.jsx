@@ -296,6 +296,7 @@ export default function Ideum08NavLayer({
   onIdeum05LiveRtds,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
+  onIdeumToggleSimulation,
 }) {
   const [slots, setSlots] = useState([]);
   const [rootChrome, setRootChrome] = useState(null);
@@ -395,6 +396,7 @@ export default function Ideum08NavLayer({
         onReset={onIdeum05Reset}
         ideumExpansionMirror={ideumExpansionMirror}
         onIdeumExpansionToggle={onIdeumExpansionToggle}
+        onIdeumToggleSimulation={onIdeumToggleSimulation}
       />
     );
   }

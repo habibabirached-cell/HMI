@@ -188,6 +188,9 @@ const SimulationControls = ({
   activeQuickScenarioPlaying = null,
   activeNamedSimulationConfig = null,
   onQuickScenarioShortcutClick,
+  onQuickScenarioPlotsClick,
+  showP2r18PlotsButton = false,
+  p2r18CanvasPreset = null,
   onIdeumControlButtonClick,
   onSaveQuickScenarioPreset,
   onDeleteQuickScenarioButton,
@@ -243,19 +246,21 @@ const SimulationControls = ({
 
   const activeQuickScenarioShortcut = React.useMemo(() => {
     if (activeQuickScenarioPlaying) return activeQuickScenarioPlaying;
-    if (!activeNamedSimulationConfig) return null;
+    const presetHighlight = p2r18CanvasPreset ?? activeNamedSimulationConfig;
+    if (!presetHighlight) return null;
     return (
       quickScenarioButtons.find((b) => {
-        if (b.presetName === activeNamedSimulationConfig) return true;
+        if (b.presetName === presetHighlight) return true;
         if (isMvupsQuickScenarioShortcut(b)) {
           const resolved = resolveMvupsPresetForMode(mvupsDampingMode, namedSimulationConfigs);
-          return activeNamedSimulationConfig === resolved;
+          return presetHighlight === resolved;
         }
         return false;
       }) ?? null
     );
   }, [
     activeQuickScenarioPlaying,
+    p2r18CanvasPreset,
     activeNamedSimulationConfig,
     quickScenarioButtons,
     mvupsDampingMode,
@@ -710,6 +715,20 @@ const SimulationControls = ({
                 </div>
               );
             })}
+
+            {showP2r18PlotsButton && onQuickScenarioPlotsClick && (
+              <div className="quick-scenario-row">
+                <button
+                  type="button"
+                  className="control-btn quick-scenario-shortcut quick-scenario-shortcut--plots"
+                  style={{ background: '#455a64' }}
+                  onClick={() => onQuickScenarioPlotsClick()}
+                  title="Show plot layout for the current canvas configuration (simulation off)"
+                >
+                  📊 Plots
+                </button>
+              </div>
+            )}
 
             {quickScenarioShortcuts.map((shortcut) => (
               <QuickScenarioShortcutRow

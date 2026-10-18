@@ -327,6 +327,7 @@ const Canvas = forwardRef(({
   onIdeumControlButtonClick,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
+  onIdeumToggleSimulation,
   ideumSimulationMirror = false,
   onIdeumSimulationClick,
   ideumSimulateMirror = false,
@@ -656,6 +657,7 @@ const Canvas = forwardRef(({
             onIdeum05LiveRtds={onIdeum05LiveRtds}
             ideumExpansionMirror={ideumExpansionMirror}
             onIdeumExpansionToggle={onIdeumExpansionToggle}
+            onIdeumToggleSimulation={onIdeumToggleSimulation}
           />
         );
       }
@@ -774,6 +776,7 @@ const Canvas = forwardRef(({
       onIdeum07Ref200MwCommand,
       onIdeumKioskHome,
       onIdeumExpansionToggle,
+      onIdeumToggleSimulation,
       onIdeum05Reset,
       onIdeum05LiveRtds,
       ideumHdAeroViewCompact,

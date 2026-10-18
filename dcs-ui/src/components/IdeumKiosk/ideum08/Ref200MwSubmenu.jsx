@@ -34,7 +34,7 @@ export const REF200_IDEUM_COMMANDS = {
   addGfme: 'addGfmeOnly',
   addBessAndGfme: 'addStatcomAndGFMe',
   addMvups: 'addMvupsOnly',
-  forcedPowerOscillation: 'add8Turbines',
+  forcedPowerOscillation: 'showPlotsForCurrentDesign',
 };
 
 function ref200SideTitleFontPx(zoom = 1) {
@@ -312,6 +312,7 @@ export default function Ideum08Ref200MwSubmenu({
   onReset,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
+  onIdeumToggleSimulation,
 }) {
   const bucketChrome = getIdeum08RootBucketChrome(zoom);
   const hubInsetPx = Math.max(8, Math.round(8 * zoom));
@@ -373,6 +374,17 @@ export default function Ideum08Ref200MwSubmenu({
                 ideumExpansionMirror={ideumExpansionMirror}
                 onIdeumExpansionToggle={onIdeumExpansionToggle}
               />
+              <button
+                type="button"
+                className="ideum08-ref200__sim-toggle-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onIdeumToggleSimulation?.();
+                }}
+              >
+                Toggle simulation
+              </button>
             </div>
           </Ref200ColumnBucket>
 
