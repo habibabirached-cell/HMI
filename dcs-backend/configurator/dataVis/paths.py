@@ -11,7 +11,8 @@ WACO_WORKBOOK_BY_LOAD_MW: dict[int, str] = {
     200: "Waco_200MW_live_CAPEX.xlsx",
 }
 
-# Pre-built from Excel via scripts/build_waco_clean_csv.py (load compliance >= 97%).
+# Pre-built from Excel via scripts/build_martin_clean_csv.py
+# (load compliance >= 97%, BESS cycles/day >= 1/365).
 WACO_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
     200: "Waco_200MW_clean.csv",
     1000: "Waco_1000MW_clean.csv",

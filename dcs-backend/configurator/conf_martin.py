@@ -117,6 +117,8 @@ def _build_supply_mix_from_row(
         bess_mwh = _num(row, "BESS initially installed Capacity (MWh)")
 
     ha_units = _num(row, "7HA Unit #")
+    if ha_units <= 0:
+        ha_units = _num(row, "7HA.02 Unit #")
     lm_units = _num(row, "LM2500 Unit #")
     ha_mw = ha_units * MW_PER_7HA_UNIT
     lm_mw = lm_units * MW_PER_LM2500_UNIT
@@ -124,18 +126,23 @@ def _build_supply_mix_from_row(
     solar_gwh = _kwh_to_gwh(_num(row, "Year 1 Solar AEP (kWh)"))
     wind_gwh = _kwh_to_gwh(_num(row, "Year 1 Wind AEP (kWh)"))
     bess_gwh = _kwh_to_gwh(_num(row, "Year 1 BESS AEP (kWh)"))
-    thermal_kwh = _num(row, "Year 1 7HA+LM2500 AEP (kWh)")
-    if thermal_kwh <= 0:
-        thermal_kwh = _num(row, "Year 1 LM2500 AEP (kWh)")
-    # The workbook stores one thermal energy total for 7HA and LM2500 together.
-    thermal_gwh = _kwh_to_gwh(thermal_kwh) if thermal_kwh > 0 else 0.0
-    thermal_mw = ha_mw + lm_mw
-    if thermal_mw > 0 and thermal_gwh > 0:
-        ha_gwh = thermal_gwh * (ha_mw / thermal_mw)
-        lm_gwh = thermal_gwh * (lm_mw / thermal_mw)
+    separate_ha_kwh = _num(row, "Year 1 7HA AEP (kWh)")
+    separate_lm_kwh = _num(row, "Year 1 LM2500 AEP (kWh)")
+    combined_kwh = _num(row, "Year 1 7HA+LM2500 AEP (kWh)")
+    if combined_kwh <= 0 and (separate_ha_kwh > 0 or separate_lm_kwh > 0):
+        ha_gwh = _kwh_to_gwh(separate_ha_kwh)
+        lm_gwh = _kwh_to_gwh(separate_lm_kwh)
+        thermal_gwh = ha_gwh + lm_gwh
     else:
-        ha_gwh = 0.0
-        lm_gwh = 0.0
+        thermal_kwh = combined_kwh if combined_kwh > 0 else separate_lm_kwh
+        thermal_gwh = _kwh_to_gwh(thermal_kwh) if thermal_kwh > 0 else 0.0
+        thermal_mw = ha_mw + lm_mw
+        if thermal_mw > 0 and thermal_gwh > 0:
+            ha_gwh = thermal_gwh * (ha_mw / thermal_mw)
+            lm_gwh = thermal_gwh * (lm_mw / thermal_mw)
+        else:
+            ha_gwh = 0.0
+            lm_gwh = 0.0
     thermal_cf = _capacity_factor_gwh(peak_load_mw, thermal_gwh)
 
     portfolio_lcoe = _num(row, COL_LCOE)

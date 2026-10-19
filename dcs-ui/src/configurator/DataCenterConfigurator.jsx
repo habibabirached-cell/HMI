@@ -285,7 +285,9 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
 
   /** Inputs corridor bands → session + Maingear (even while Data Exploration tab is open). */
   useEffect(() => {
-    if (!isIdeumMode) return undefined;
+    // Explore Data is a fresh page whose inputs start at the study defaults.
+    // Publishing those would replace the prices the Inputs page just handed off.
+    if (!isIdeumMode || ideumTab !== 'configure') return undefined;
     const tiered = inputsWithEffectiveWacoLoadTier(inputs);
     const fingerprint = JSON.stringify({
       ranges: configuratorInputsToDataVisRanges(tiered),
@@ -301,7 +303,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       void pushExploreSyncToCluster();
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [inputs, isIdeumMode, pushExploreSyncToCluster, uiMode]);
+  }, [ideumTab, inputs, isIdeumMode, pushExploreSyncToCluster, uiMode]);
 
   useEffect(() => {
     if (!isIdeumMode) return undefined;

@@ -241,7 +241,6 @@ export default function ConfIdeumInputPanel({
             technologyCapex={inputs.technologyCapex || createDefaultTechnologyCapex()}
             onCapexChange={handleCapexChange}
             loadMW={inputs.loadMW ?? DEFAULT_WACO_LOAD_TIER}
-            capexLocked={inputs.stateId === 'wisconsin' && Number(inputs.loadMW) === 1000}
             loadEditor={loadEditor}
             gridEditor={gridEditor}
             corridor={corridor}

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from configurator.dataVis.dataset_mode import filter_load_compliance_clean
+from configurator.dataVis.dataset_mode import (
+    filter_bess_cycles_clean,
+    filter_load_compliance_clean,
+)
 from configurator.dataVis.loader import read_martin_excel_dataframe
 from configurator.dataVis.paths import (
     badger_clean_csv_path,
@@ -20,6 +23,7 @@ def export_clean_csv(workbook: Path, out: Path) -> tuple[Path, int, int]:
 
     full = read_martin_excel_dataframe(workbook)
     clean = filter_load_compliance_clean(full)
+    clean = filter_bess_cycles_clean(clean)
     clean = clean.reset_index(drop=True)
     clean["dataVis_row_id"] = clean.index.astype(int)
 

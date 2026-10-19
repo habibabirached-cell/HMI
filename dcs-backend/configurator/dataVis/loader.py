@@ -39,6 +39,8 @@ COLUMN_ALIASES: dict[str, str] = {
     "Annual Load Compliance (%)": "Year 1 Load Compliance (%)",
     "Project LCOE ($/MWh) at default CAPEX/Fuel values": "Project LCOE ($/MWh)",
     "Project CAPEX ($ M) @ Default Value": "Project CAPEX ($ M)",
+    # Wisconsin 1 GW names the heavy-duty count after the 7HA.02. Texas uses "7HA Unit #".
+    "7HA.02 Unit #": "7HA Unit #",
 }
 
 

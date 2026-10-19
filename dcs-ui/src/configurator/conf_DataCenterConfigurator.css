@@ -4532,8 +4532,8 @@
 }
 
 .conf-arch-canvas__asset {
-  width: clamp(108px, 13.5vw, 185px);
-  height: clamp(118px, 15vw, 200px);
+  width: clamp(135px, 16.875vw, 231.25px);
+  height: clamp(147.5px, 18.75vw, 250px);
   display: flex;
   flex-direction: column;
   border: 2.5px solid var(--conf-evergreen);
@@ -4552,21 +4552,21 @@
 .conf-arch-canvas__asset-head {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 6px 8px 4px;
+  gap: 2.5px;
+  padding: 7.5px 10px 5px;
   background: linear-gradient(180deg, #fff 0%, #f4f8f9 100%);
   border-bottom: 1px solid var(--conf-border);
 }
 
 .conf-arch-canvas__asset-title {
-  font-size: clamp(11px, 1.05vw, 15px);
+  font-size: clamp(13.75px, 1.3125vw, 18.75px);
   font-weight: 800;
   line-height: 1.15;
   color: var(--conf-text);
 }
 
 .conf-arch-canvas__asset-capacity {
-  font-size: clamp(10px, 0.92vw, 13px);
+  font-size: clamp(12.5px, 1.15vw, 16.25px);
   font-weight: 700;
   color: var(--conf-evergreen);
   line-height: 1.2;
@@ -4584,8 +4584,8 @@
 }
 
 .conf-arch-canvas__asset-foot {
-  padding: 5px 8px 6px;
-  font-size: clamp(10px, 0.95vw, 13px);
+  padding: 6.25px 10px 7.5px;
+  font-size: clamp(12.5px, 1.1875vw, 16.25px);
   font-weight: 700;
   color: var(--conf-text);
   border-top: 1px solid var(--conf-border);
@@ -4614,8 +4614,8 @@
 }
 
 .conf-arch-canvas--wall .conf-arch-canvas__asset {
-  width: clamp(118px, 14.5cqi, 210px);
-  height: clamp(128px, 16cqi, 225px);
+  width: clamp(147.5px, 18.125cqi, 262.5px);
+  height: clamp(160px, 20cqi, 281.25px);
 }
 
 .conf-arch-canvas--wall .conf-arch-canvas__hub-layer {
@@ -4643,15 +4643,15 @@
 }
 
 .conf-arch-canvas--wall .conf-arch-canvas__asset-title {
-  font-size: clamp(13px, 1.35vw, 20px);
+  font-size: clamp(16.25px, 1.6875vw, 25px);
 }
 
 .conf-arch-canvas--wall .conf-arch-canvas__asset-capacity {
-  font-size: clamp(12px, 1.15vw, 17px);
+  font-size: clamp(15px, 1.4375vw, 21.25px);
 }
 
 .conf-arch-canvas--wall .conf-arch-canvas__asset-foot {
-  font-size: clamp(12px, 1.1vw, 16px);
+  font-size: clamp(15px, 1.375vw, 20px);
 }
 
 /* Trade space show-and-tell buttons + visualizations */

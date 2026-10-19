@@ -9,7 +9,11 @@ LM2500 / 2,500, battery / 238, gas / 3.50. 7HA and LM2500 fuel both scale.
 Their LCOEs are combined into one thermal LCOE before the blend, using the
 7HA unit count (0, 3, or a capacity-weighted mix).
 
-Wisconsin 1 GW does not take these price changes.
+Wisconsin 1 GW uses the same divisors as 200 MW, and it scales the 7HA as
+well as the LM2500. Each turbine keeps its own year-1 energy in the blend.
+The screen has a gas price on each turbine: 7HA gas scales 7HA fuel, and
+LM2500 gas scales LM2500 fuel. When those two prices match, that is Charu's
+single fuel factor.
 
 The numbers on the screen start at the same prices for every case. Those
 starting numbers are the 200 MW denominators, not the Texas 1 GW denominators.
@@ -194,6 +198,7 @@ _TX_GW_REQUIRED = (
     "Total Yr1 AEP (GWh)",
     COL_PROJECT_LCOE,
 )
+_WI_GW_REQUIRED = _TX_GW_REQUIRED + ("Year 1 7HA AEP (kWh)", "Year 1 LM2500 AEP (kWh)")
 _HA_UNIT_COLUMNS = ("7HA Unit #", "7HA.02 Unit #")
 _GAS_AEP_COLUMN = "Year 1 7HA+LM2500 AEP (kWh)"
 
@@ -450,6 +455,88 @@ def _apply_texas_gw_capex_fuel_lcoe(
     }
 
 
+def _apply_wisconsin_gw_capex_fuel_lcoe(
+    df: pd.DataFrame,
+    factors: dict[str, float],
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Charu's Wisconsin 1 GW formula. 7HA and LM2500 stay separate in the blend."""
+    out = df.copy()
+    solar_capex = _col(out, "Solar CAPEX LCOE at default value")
+    solar_om = _col(out, "Solar OM LCOE")
+    wind_capex = _col(out, "Wind CAPEX LCOE w/ default value")
+    wind_om = _col(out, "Wind OM LCOE")
+    bess_capex = _col(out, "BESS CAPEX LCOE")
+    bess_om = _col(out, "BESS OM LCOE")
+    ha_capex = _col(out, "7HA CAPEX LCOE at default value")
+    ha_fuel = _col(out, "7HA Fuel LCOE at default value")
+    ha_om = _col(out, "7HA OM LCOE")
+    lm_capex = _col(out, "LM2500 CAPEX LCOE at default value")
+    lm_fuel = _col(out, "LM2500 Fuel LCOE at default value")
+    lm_om = _col(out, "LM2500 OM LCOE")
+    solar_aep = _col(out, "Year 1 Solar AEP (kWh)")
+    wind_aep = _col(out, "Year 1 Wind AEP (kWh)")
+    bess_aep = _col(out, "Year 1 BESS AEP (kWh)")
+    ha_aep = _col(out, "Year 1 7HA AEP (kWh)")
+    lm_aep = _col(out, "Year 1 LM2500 AEP (kWh)")
+    total_gwh = _col(out, "Total Yr1 AEP (GWh)")
+
+    solar_user = solar_capex * factors["solar"] + solar_om
+    wind_user = wind_capex * factors["wind"] + wind_om
+    bess_user = bess_capex * factors["bess"] + bess_om
+    ha_user = ha_capex * factors["hdgt"] + ha_fuel * factors["hdFuel"] + ha_om
+    lm_user = lm_capex * factors["aero"] + lm_fuel * factors["fuel"] + lm_om
+    solar_default = solar_capex + solar_om
+    wind_default = wind_capex + wind_om
+    bess_default = bess_capex + bess_om
+    ha_default = ha_capex + ha_fuel + ha_om
+    lm_default = lm_capex + lm_fuel + lm_om
+
+    def _wi_blend(solar_lcoe, wind_lcoe, bess_lcoe, ha_lcoe, lm_lcoe) -> pd.Series:
+        numerator = (
+            solar_lcoe * solar_aep
+            + wind_lcoe * wind_aep
+            + bess_lcoe * bess_aep
+            + ha_lcoe * ha_aep
+            + lm_lcoe * lm_aep
+        )
+        denominator = total_gwh * 1_000_000.0
+        return numerator / denominator.where(denominator > 0)
+
+    blended_user = _wi_blend(solar_user, wind_user, bess_user, ha_user, lm_user)
+    blended_default = _wi_blend(solar_default, wind_default, bess_default, ha_default, lm_default)
+    adjustment = pd.Series(1.0, index=out.index, dtype="float64")
+    valid = blended_default > 0
+    if bool(valid.any()):
+        ratio = (blended_user.loc[valid] / blended_default.loc[valid]).to_numpy(dtype="float64")
+        adjustment.loc[valid] = np.where(np.isfinite(ratio), ratio, 1.0)
+
+    if COL_PROJECT_LCOE_DEFAULT in out.columns:
+        project_default = _col(out, COL_PROJECT_LCOE_DEFAULT)
+    else:
+        project_default = _col(out, COL_PROJECT_LCOE)
+    project_user = project_default * adjustment
+
+    out[COL_PROJECT_LCOE_DEFAULT] = project_default
+    out[COL_PROJECT_LCOE] = project_user
+    out[COL_BLENDED_DEFAULT] = blended_default
+    out[COL_BLENDED_USER] = blended_user
+    out[COL_ADJUSTMENT] = adjustment
+    out[COL_PROJECT_USER] = project_user
+    out["Solar CAPEX LCOE adjust w/ user input"] = solar_capex * factors["solar"]
+    out["Solar LCOE adjust w/ user CAPEX input"] = solar_user
+    out["Wind CAPEX LCOE adjust w/ user input"] = wind_capex * factors["wind"]
+    out["Wind LCOE adjust w/ user CAPEX input"] = wind_user
+    out["BESS CAPEX LCOE adjust w/ user input"] = bess_capex * factors["bess"]
+    out["BESS LCOE adjust w/ user CAPEX inputs"] = bess_user
+    out["7HA CAPEX LCOE adjust w/ user input"] = ha_capex * factors["hdgt"]
+    out["7HA Fuel LCOE adjust w/ user input"] = ha_fuel * factors["hdFuel"]
+    out["7HA LCOE adjust w/ user CAPEX/Fuel inputs"] = ha_user
+    out["LM2500 CAPEX LCOE adjust w/ user input"] = lm_capex * factors["aero"]
+    out["LM2500 Fuel LCOE adjust w/ user input"] = lm_fuel * factors["fuel"]
+    out["LM2500 LCOE adjust w/ user CAPEX/Fuel inputs"] = lm_user
+    return out, {"applied": True, "reason": "1000mw-wisconsin", "factors": factors}
+
+
 def apply_capex_fuel_lcoe(
     df: pd.DataFrame,
     technology_capex: dict[str, Any] | None,
@@ -462,15 +549,19 @@ def apply_capex_fuel_lcoe(
     """
     tier = _load_tier(load_mw)
     study = _normalize_study(martin_study)
-    if tier == 1000 and study == MARTIN_STUDY_BADGER:
-        return df, {"applied": False, "reason": "wisconsin-1000"}
-
     if not isinstance(technology_capex, dict):
         return df, {"applied": False, "reason": "no-capex"}
 
     if tier == 1000 and study == MARTIN_STUDY_WACO:
         factors = capex_fuel_factors(technology_capex, load_mw, basis="tx1000")
         return _apply_texas_gw_capex_fuel_lcoe(df, factors)
+
+    if tier == 1000 and study == MARTIN_STUDY_BADGER:
+        missing = [name for name in _WI_GW_REQUIRED if name not in df.columns]
+        if missing:
+            return df, {"applied": False, "reason": "missing-columns", "missing": missing}
+        factors = capex_fuel_factors(technology_capex, load_mw)
+        return _apply_wisconsin_gw_capex_fuel_lcoe(df, factors)
 
     if tier == 1000:
         return df, {"applied": False, "reason": "missing-study"}
@@ -565,13 +656,11 @@ def bind_technology_capex(
         from configurator.dataVis.loader import get_active_martin_study
 
         study = _normalize_study(get_active_martin_study())
-    if not isinstance(technology_capex, dict) and not (
-        _load_tier(load_mw) == 1000 and study == MARTIN_STUDY_BADGER
-    ):
+    if not isinstance(technology_capex, dict):
         _request_capex.set(None)
         return
     _request_capex.set({
-        "technologyCapex": technology_capex if isinstance(technology_capex, dict) else {},
+        "technologyCapex": technology_capex,
         "loadMW": load_mw,
         "martinStudy": study,
     })
