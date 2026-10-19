@@ -21,7 +21,11 @@ export const IDEUM_DEV_WALL_RELAY_COMMANDS = new Set([
   'addGfmeOnly',
   'addStatcomAndGFMe',
   'reset',
+  'showWind02Plots',
+  'showPlotsForCurrentDesign',
   'toggleSimulation',
+  'startSimulation',
+  'stopSimulation',
   'toggleBreakersExpansion',
   'togglePeripheralsExpansion',
 ]);
@@ -34,6 +38,9 @@ export const IDEUM_DEV_WALL_REMOTE_COMMANDS = new Set([
 
 /** Dispatchable-wind baseline tile (opens wind02 wall tab with addBessOnly). */
 export const DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND = 'dispatchableWindBessBaseline';
+
+/** Forced Power Oscillation tile — open the wind02 plots on the wall. */
+export const SHOW_WIND02_PLOTS_IDEUM_COMMAND = 'showWind02Plots';
 
 export function buildDevMaingearWallTabUrl(catalogDesign, remoteCommand) {
   if (typeof window === 'undefined') {
@@ -118,6 +125,42 @@ export function postDevWallExpansionApplied(message) {
     console.warn('[dev wall relay] expansion ack failed', e);
     return false;
   }
+}
+
+/** Wall → Ideum: simulation actually started or stopped. */
+export function postDevWallSimulationState(running, loop = false) {
+  if (typeof window === 'undefined') return false;
+  if (!isLocalClusterDev()) return false;
+  if (typeof BroadcastChannel === 'undefined') return false;
+  try {
+    const ch = new BroadcastChannel(DEV_MAINGEAR_WALL_CHANNEL);
+    ch.postMessage({
+      type: 'simulation_state',
+      running: !!running,
+      loop: !!loop,
+    });
+    ch.close();
+    return true;
+  } catch (e) {
+    console.warn('[dev wall relay] simulation ack failed', e);
+    return false;
+  }
+}
+
+export function installDevWallSimulationAckListener(onAck) {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
+    return () => {};
+  }
+  const ch = new BroadcastChannel(DEV_MAINGEAR_WALL_CHANNEL);
+  const handler = (ev) => {
+    const data = ev.data;
+    if (data?.type === 'simulation_state' && typeof data.running === 'boolean') onAck(data);
+  };
+  ch.addEventListener('message', handler);
+  return () => {
+    ch.removeEventListener('message', handler);
+    ch.close();
+  };
 }
 
 export function installDevWallExpansionAckListener(onAck) {

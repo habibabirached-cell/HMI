@@ -23,6 +23,7 @@ NON_REPLAY_REMOTE_COMMANDS = frozenset({
     "loadP2R18",
     "loadP2RChil",
     "loadWind02",
+    "showWind02Plots",
     "resetHdAero",
     "rscadMeterSample",
 })
@@ -34,6 +35,7 @@ VALID_REMOTE_COMMANDS = frozenset({
     "addGfmeOnly",
     "addMvupsOnly",
     "showPlotsForCurrentDesign",
+    "showWind02Plots",
     "toggleSimulation",
     "toggleBreakersExpansion",
     "togglePeripheralsExpansion",

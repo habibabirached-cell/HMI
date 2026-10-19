@@ -47,11 +47,8 @@ const IDEUM_LOAD_MW_OPTIONS = [
   { value: 1000, label: '1000MW' },
 ];
 
-function IdeumLoadEditor({ loadMW, onChange, stateId }) {
+function IdeumLoadEditor({ loadMW, onChange }) {
   const tier = normalizeWacoLoadTier(loadMW);
-  const loadOptions = stateId === 'wisconsin'
-    ? IDEUM_LOAD_MW_OPTIONS.filter((option) => option.value === 200)
-    : IDEUM_LOAD_MW_OPTIONS;
 
   const pickLoadTier = (nextTier) => {
     onChange(nextTier);
@@ -62,7 +59,7 @@ function IdeumLoadEditor({ loadMW, onChange, stateId }) {
       <span className="conf-ideum-tech-hub__center-eyebrow conf-ideum-title-3d conf-ideum-hub-load-title">
         Data Center Load
       </span>
-      {tier == null && stateId !== 'wisconsin' ? (
+      {tier == null ? (
         <p className="conf-ideum-hub-load-hint">chose Data Center Load...</p>
       ) : null}
       <div
@@ -70,7 +67,7 @@ function IdeumLoadEditor({ loadMW, onChange, stateId }) {
         role="group"
         aria-label="Data center load"
       >
-        {loadOptions.map((option) => {
+        {IDEUM_LOAD_MW_OPTIONS.map((option) => {
           const active = tier === option.value;
           return (
             <button
@@ -149,9 +146,7 @@ export default function ConfIdeumInputPanel({
 
   const handleLocationChange = (nextStateId) => {
     const option = IDEUM_LOCATION_OPTIONS.find((entry) => entry.id === nextStateId);
-    const tier = nextStateId === 'wisconsin'
-      ? 200
-      : (normalizeWacoLoadTier(inputs.loadMW) ?? 200);
+    const tier = normalizeWacoLoadTier(inputs.loadMW) ?? 200;
     const nextInputs = {
       ...inputs,
       stateId: nextStateId,
@@ -169,7 +164,6 @@ export default function ConfIdeumInputPanel({
   const loadEditor = (
     <IdeumLoadEditor
       loadMW={inputs.loadMW}
-      stateId={inputs.stateId || 'texas'}
       onChange={handleLoadTierChange}
     />
   );
@@ -247,6 +241,7 @@ export default function ConfIdeumInputPanel({
             technologyCapex={inputs.technologyCapex || createDefaultTechnologyCapex()}
             onCapexChange={handleCapexChange}
             loadMW={inputs.loadMW ?? DEFAULT_WACO_LOAD_TIER}
+            capexLocked={inputs.stateId === 'wisconsin' && Number(inputs.loadMW) === 1000}
             loadEditor={loadEditor}
             gridEditor={gridEditor}
             corridor={corridor}
@@ -295,14 +290,14 @@ export default function ConfIdeumInputPanel({
               onClick={onOptimizedConfiguration}
               disabled={isOptimizedBusy}
             >
-              {isOptimizedBusy ? 'Sending…' : 'Explore Data'}
+              {isOptimizedBusy ? 'Sending…' : 'Optimized Configuration'}
             </button>
             <button
               type="button"
               className="conf-ideum-configure-btn conf-ideum-configure-btn--optimized"
               onClick={() => onExploreData?.()}
             >
-              Optimized Configuration
+              Explore Data
             </button>
           </div>
           <Conf3dToggleButton variant="footer" className="conf-3d-toggle--ideum-footer" />

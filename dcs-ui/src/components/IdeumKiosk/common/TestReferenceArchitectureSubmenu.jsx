@@ -5,6 +5,7 @@ import { getGasTurbine3DModelUrl } from '../../../utils/gasTurbine3dLayout';
 import { getIdeum08RootBucketChrome, IDEUM08_NAV_IMAGE_URLS } from '../../../utils/ideumKiosk/ideum08/navigation';
 import IdeumSuperBucket from './IdeumSuperBucket';
 import Ref200ExpansionTouchPanel from '../ideum08/Ref200ExpansionTouchPanel';
+import Ref200HorizontalToggleRow from '../ideum08/Ref200HorizontalToggleRow';
 import {
   REF200_IDEUM_COMMANDS,
   Ref200ColumnBucket,
@@ -60,6 +61,8 @@ export default function TestReferenceArchitectureSubmenu({
   const [loadMode, setLoadMode] = useState('off');
   const [bessOn, setBessOn] = useState(false);
   const [mvupsOn, setMvupsOn] = useState(false);
+  const [emsFreqOn, setEmsFreqOn] = useState(false);
+  const [emsControl, setEmsControl] = useState(false);
   const running = Boolean(rscad.simulationId);
 
   useEffect(() => subscribeRscadDriver(setRscad), []);
@@ -69,11 +72,13 @@ export default function TestReferenceArchitectureSubmenu({
       setLoadMode('baseload');
       setBessOn(false);
       setMvupsOn(false);
+      setEmsFreqOn(false);
       return;
     }
     setLoadMode('off');
     setBessOn(false);
     setMvupsOn(false);
+    setEmsFreqOn(false);
   }, [rscad.simulationId, running]);
 
   return (
@@ -127,6 +132,14 @@ export default function TestReferenceArchitectureSubmenu({
                 zoom={zoom}
                 ideumExpansionMirror={ideumExpansionMirror}
                 onIdeumExpansionToggle={onIdeumExpansionToggle}
+              />
+              <Ref200HorizontalToggleRow
+                zoom={zoom}
+                leftLabel="Manual Control"
+                rightLabel="EMS Control"
+                rightActive={emsControl}
+                onToggle={() => setEmsControl((on) => !on)}
+                ariaLabel="Manual control or EMS control"
               />
               <button
                 type="button"
@@ -319,6 +332,17 @@ export default function TestReferenceArchitectureSubmenu({
                   void sendRscadAiLoad().then((result) => {
                     if (result.ok) setLoadMode('ai');
                   });
+                }}
+              />
+              <SubmenuUseCaseTile
+                zoom={zoom}
+                label="EMS Frequency Regulation"
+                imageUrl={IDEUM08_NAV_IMAGE_URLS.emsFrequencyRegulation}
+                imageAlt="Control room holding grid frequency steady beside a substation"
+                pressState={emsFreqOn ? 'on' : 'off'}
+                onPress={() => {
+                  if (emsFreqOn) return;
+                  setEmsFreqOn(true);
                 }}
               />
             </div>

@@ -59,15 +59,15 @@
     {
       "id": "comp-ideum-bess-gfme-btn",
       "type": "ideum-bess-gfme-button",
-      "name": "Add BESS and GFMe",
-      "fullName": "Add BESS and GFMe",
+      "name": "Add BESS and (GFME) e-Statcom",
+      "fullName": "Add BESS and (GFME) e-Statcom",
       "position": {
         "x": 900,
         "y": 120
       },
       "status": "idle",
       "properties": {
-        "title": "Add BESS and GFMe",
+        "title": "Add BESS and (GFME) e-Statcom",
         "ideumCommand": "addStatcomAndGFMe"
       },
       "visualOverrides": {
@@ -86,15 +86,15 @@
     {
       "id": "comp-ideum-gfme-only-btn",
       "type": "ideum-gfme-button",
-      "name": "ADD GFMe only",
-      "fullName": "ADD GFMe only",
+      "name": "ADD (GFME) e-Statcom only",
+      "fullName": "ADD (GFME) e-Statcom only",
       "position": {
         "x": 900,
         "y": 580
       },
       "status": "idle",
       "properties": {
-        "title": "ADD GFMe only",
+        "title": "ADD (GFME) e-Statcom only",
         "ideumCommand": "addGfmeOnly"
       },
       "visualOverrides": {

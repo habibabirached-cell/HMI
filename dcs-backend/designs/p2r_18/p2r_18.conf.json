@@ -11614,8 +11614,8 @@
     {
       "id": "comp-lower-left-gen-gfme-preview",
       "type": "gfme-statcom",
-      "name": "GEV FACTSFLEX GFMe  #1",
-      "fullName": "GFME Static Synchronous Compensator #1",
+      "name": "GEV FACTSFLEX (GFME) e-Statcom  #1",
+      "fullName": "(GFME) e-Statcom Static Synchronous Compensator #1",
       "position": {
         "x": -525,
         "y": 2712.5
@@ -16661,8 +16661,8 @@
     {
       "id": "paste-1779985373163-184-yz6xc",
       "type": "gfme-statcom",
-      "name": "GEV FACTSFLEX GFMe  #1",
-      "fullName": "GFME Static Synchronous Compensator #1",
+      "name": "GEV FACTSFLEX (GFME) e-Statcom  #1",
+      "fullName": "(GFME) e-Statcom Static Synchronous Compensator #1",
       "position": {
         "x": -175,
         "y": 2700

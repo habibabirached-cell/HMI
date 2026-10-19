@@ -44,6 +44,7 @@ export const IDEUM08_NAV_IMAGE_URLS = {
   ref200RideThrough: `${PUBLIC}/models/ideum07-ref200-ride-through.jpg`,
   ref200Mvups: `${PUBLIC}/models/ideum08-ref200-mvups.jpg`,
   ref200Sst: `${PUBLIC}/models/ideum08-ref200-sst.jpg`,
+  emsFrequencyRegulation: `${PUBLIC}/models/ideum08-ems-frequency-regulation.jpg`,
 };
 
 export const IDEUM08_ADVANCED_ANALYSIS_PREVIEW_MATCH_GROUP = 'ideum08-advanced-analysis-preview';

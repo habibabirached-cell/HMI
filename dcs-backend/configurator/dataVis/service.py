@@ -69,9 +69,10 @@ def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def _active_dataset_source() -> dict[str, str]:
+    load_mw = get_active_waco_load_mw()
     if get_active_martin_study() == MARTIN_STUDY_BADGER:
-        return badger_dataset_source()
-    return waco_dataset_source(get_active_waco_load_mw())
+        return badger_dataset_source(load_mw)
+    return waco_dataset_source(load_mw)
 
 
 def get_health() -> dict[str, Any]:
@@ -123,31 +124,16 @@ def ensure_martin_dataset(
         study = martin_study
     else:
         study = prev_study
-    if study == MARTIN_STUDY_BADGER:
-        if prev_study != study:
-            reset_datavis_mode()
-        load_martin_dataframe(
-            load_mw=200,
-            martin_study=study,
-            force_reload=False,
-            generation=generation,
-        )
-        return study
-
     if load_mw is None:
-        load_martin_dataframe(
-            load_mw=get_active_waco_load_mw(),
-            martin_study=study,
-            force_reload=False,
-            generation=generation,
-        )
-        return study
-    try:
-        tier = int(round(float(load_mw)))
-    except (TypeError, ValueError):
-        return study
-    if tier not in (200, 1000):
-        return study
+        switching_to_badger = study == MARTIN_STUDY_BADGER and prev_study != study
+        tier = 200 if switching_to_badger else get_active_waco_load_mw()
+    else:
+        try:
+            tier = int(round(float(load_mw)))
+        except (TypeError, ValueError):
+            return study
+        if tier not in (200, 1000):
+            return study
     prev = get_active_waco_load_mw()
     load_martin_dataframe(
         load_mw=tier,
@@ -170,7 +156,7 @@ def get_meta(requested_load_mw: int | None = None, martin_study: str | None = No
         martin_study=martin_study,
         generation=generation,
     )
-    active_mw = 200 if study == MARTIN_STUDY_BADGER else (
+    active_mw = (
         requested_load_mw if requested_load_mw in (200, 1000) else get_active_waco_load_mw()
     )
     df = load_martin_dataframe(
@@ -182,8 +168,8 @@ def get_meta(requested_load_mw: int | None = None, martin_study: str | None = No
     stats = _column_stats_for_dataframe(df)
     active = active_mw
     if study == MARTIN_STUDY_BADGER:
-        scenario = scenario_context_for_badger()
-        source = badger_dataset_source()
+        scenario = scenario_context_for_badger(active)
+        source = badger_dataset_source(active)
     else:
         scenario = scenario_context_for_load(active)
         source = waco_dataset_source(active)

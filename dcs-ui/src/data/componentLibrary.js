@@ -83,7 +83,7 @@ export const COMPONENT_LIBRARY = [
       { id: 'dcdc-converter', name: 'DC-DC Conv', fullName: 'DC-DC Converter', type: 'dcdc', properties: { rating: 1, voltage: 0, unit: 'MW' } },
       { id: 'acdc-converter', name: 'AC-DC Conv', fullName: 'AC-DC Converter', type: 'acdc', properties: { rating: 2, voltage: 0.48, unit: 'MW' } },
       { id: 'dcac-converter', name: 'DC-AC Conv', fullName: 'DC-AC Converter', type: 'dcac', properties: { rating: 2, voltage: 0.48, unit: 'MW' } },
-      { id: 'gfme-statcom', name: 'GFME STATCOM', fullName: 'GFME Static Synchronous Compensator', type: 'gfme-statcom', properties: { rating: 50, voltage: 34.5, unit: 'MVAR' } }
+      { id: 'gfme-statcom', name: '(GFME) e-Statcom', fullName: '(GFME) e-Statcom Static Synchronous Compensator', type: 'gfme-statcom', properties: { rating: 50, voltage: 34.5, unit: 'MVAR' } }
     ]
   },
   

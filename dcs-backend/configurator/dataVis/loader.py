@@ -26,7 +26,7 @@ from configurator.dataVis.paths import (
 
 _lock = threading.Lock()
 _cache_by_load_mw: dict[int, dict[str, Any]] = {}
-_badger_cache: dict[str, Any] | None = None
+_badger_cache_by_load_mw: dict[int, dict[str, Any]] = {}
 _active_load_mw: int = DEFAULT_WACO_LOAD_MW
 _active_martin_study: str = MARTIN_STUDY_WACO
 # Bumped every time a location or MW switch drops the in-memory frames.
@@ -116,19 +116,18 @@ def _set_active_study_locked(study: str) -> None:
 
 def discard_martin_dataframes() -> None:
     """Drop every in-memory Martin frame so the next load reads the clean CSV."""
-    global _badger_cache
     with _lock:
-        _badger_cache = None
+        _badger_cache_by_load_mw.clear()
         _cache_by_load_mw.clear()
 
 
 def begin_martin_csv_load() -> int:
     """Drop in-memory frames and start a new selection. Older loads must not publish."""
-    global _load_generation, _badger_cache
+    global _load_generation
     with _lock:
         _load_generation += 1
         token = _load_generation
-        _badger_cache = None
+        _badger_cache_by_load_mw.clear()
         _cache_by_load_mw.clear()
         return token
 
@@ -227,38 +226,42 @@ def _read_waco_dataset(tier: int) -> pd.DataFrame:
     return read_waco_excel_dataframe(tier)
 
 
-def _read_badger_dataset() -> pd.DataFrame:
-    csv_path = badger_clean_csv_path()
+def _read_badger_dataset(tier: int) -> pd.DataFrame:
+    csv_path = badger_clean_csv_path(tier)
     if csv_path.is_file():
         raw = pd.read_csv(csv_path)
         return _finalize_waco_dataframe(raw)
-    return read_martin_excel_dataframe(badger_workbook_path())
+    return read_martin_excel_dataframe(badger_workbook_path(tier))
 
 
 def load_badger_dataframe(
+    load_mw: int | None = None,
     force_reload: bool = False,
     generation: int | None = None,
 ) -> pd.DataFrame:
-    global _badger_cache, _active_martin_study, _active_load_mw
+    global _active_martin_study, _active_load_mw
+    # A missing tier stays on the 200 MW Wisconsin study. Callers that want 1 GW pass 1000.
+    tier = 200 if load_mw is None else resolve_waco_load_mw(load_mw)
     with _lock:
-        if not force_reload and _badger_cache and "df" in _badger_cache:
+        bucket = _badger_cache_by_load_mw.get(tier)
+        if not force_reload and bucket and "df" in bucket:
             if _may_publish(generation):
                 _set_active_study_locked(MARTIN_STUDY_BADGER)
-                _active_load_mw = 200
-            return _badger_cache["df"]
+                _active_load_mw = tier
+            return bucket["df"]
 
-    df = _read_badger_dataset()
-    csv_path = badger_clean_csv_path()
-    source_name = csv_path.name if csv_path.is_file() else badger_workbook_path().name
+    df = _read_badger_dataset(tier)
+    csv_path = badger_clean_csv_path(tier)
+    source_name = csv_path.name if csv_path.is_file() else badger_workbook_path(tier).name
     with _lock:
-        _badger_cache = {
+        _badger_cache_by_load_mw[tier] = {
             "df": df,
             "loaded_at": pd.Timestamp.utcnow().isoformat(),
             "workbook": source_name,
         }
         if _may_publish(generation):
             _set_active_study_locked(MARTIN_STUDY_BADGER)
-            _active_load_mw = 200
+            _active_load_mw = tier
     return df
 
 
@@ -305,7 +308,11 @@ def load_martin_dataframe(
     if _may_publish(generation):
         study = set_active_martin_study(study)
     if study == MARTIN_STUDY_BADGER:
-        return load_badger_dataframe(force_reload=force_reload, generation=generation)
+        return load_badger_dataframe(
+            load_mw=load_mw,
+            force_reload=force_reload,
+            generation=generation,
+        )
     return load_waco_dataframe(load_mw, force_reload=force_reload, generation=generation)
 
 

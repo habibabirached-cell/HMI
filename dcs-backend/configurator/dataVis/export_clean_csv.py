@@ -32,5 +32,5 @@ def export_waco_tier(tier: int) -> tuple[Path, int, int]:
     return export_clean_csv(waco_workbook_path(tier), waco_clean_csv_path(tier))
 
 
-def export_badger_hollow_creek() -> tuple[Path, int, int]:
-    return export_clean_csv(badger_workbook_path(), badger_clean_csv_path())
+def export_badger_hollow_creek(load_mw: int = 200) -> tuple[Path, int, int]:
+    return export_clean_csv(badger_workbook_path(load_mw), badger_clean_csv_path(load_mw))

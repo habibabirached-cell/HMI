@@ -166,7 +166,7 @@ function SubmenuModelTile({
         className="ideum-component-btn__title ideum07-subnav-title ideum07-ref200__side-title ideum-component-btn__title--featured"
         style={{ fontSize: titleFontPx }}
       >
-        <span className="ideum07-subnav-title__text ideum07-ref200__side-title-text">{label}</span>
+        <span className={`ideum07-subnav-title__text ideum07-ref200__side-title-text${String(label).includes(E_STATCOM_MARK) ? ' ideum07-ref200__side-title-text--wrap' : ''}`}>{renderRef200SideTitle(label)}</span>
       </span>
       <div
         ref={previewRef}
@@ -213,6 +213,22 @@ function SubmenuModelTile({
         ) : null}
       </div>
     </button>
+  );
+}
+
+const E_STATCOM_MARK = 'e-Statcom';
+
+/** Keep “e-Statcom” mixed-case inside the uppercase side rail. */
+function renderRef200SideTitle(label) {
+  const text = String(label ?? '');
+  const idx = text.indexOf(E_STATCOM_MARK);
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="ideum07-ref200__keep-case">{E_STATCOM_MARK}</span>
+      {text.slice(idx + E_STATCOM_MARK.length)}
+    </>
   );
 }
 
@@ -333,7 +349,7 @@ export default function Ideum07Ref200MwSubmenu({
                 <SubmenuModelTile
                   zoom={zoom}
                   className="ideum07-ref200__tile--pair"
-                  label="Add GFMe"
+                  label="Add (GFME) e-Statcom"
                   modelUrl={GFME_MODEL}
                   fitScale={0.58}
                   ideumCommand={REF200_IDEUM_COMMANDS.addGfme}
@@ -343,7 +359,7 @@ export default function Ideum07Ref200MwSubmenu({
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Add GFMe + BESS"
+                label="Add (GFME) e-Statcom + BESS"
                 modelUrl={BESS_MODEL}
                 modelUrlSecondary={GFME_MODEL}
                 fitScale={0.5}

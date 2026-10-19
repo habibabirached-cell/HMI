@@ -217,9 +217,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
         ?? (studyFromSession ? stateIdForMartinStudy(studyFromSession) : null)
         ?? storedInputs?.stateId
         ?? 'texas';
-      const tier = stateId === 'wisconsin'
-        ? 200
-        : (normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier(stateId));
+      const tier = normalizeWacoLoadTier(tierOverride) ?? effectiveDataVisLoadMwTier(stateId);
       const expectedStudy = effectiveMartinStudy(stateId);
       const seq = reloadSeqRef.current + 1;
       reloadSeqRef.current = seq;

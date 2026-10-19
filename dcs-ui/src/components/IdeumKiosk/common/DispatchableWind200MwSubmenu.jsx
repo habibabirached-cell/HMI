@@ -5,7 +5,10 @@ import { getWindTurbine3DModelUrl } from '../../../utils/windTurbine3dLayout';
 import { getIdeum08RootBucketChrome, IDEUM08_NAV_IMAGE_URLS } from '../../../utils/ideumKiosk/ideum08/navigation';
 import { IDEUM05_NAV_MODEL_URLS } from '../../../utils/ideum05Navigation';
 import IdeumSuperBucket from './IdeumSuperBucket';
-import { DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND } from '../../../utils/ideumDevMaingearTab';
+import {
+  DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND,
+  SHOW_WIND02_PLOTS_IDEUM_COMMAND,
+} from '../../../utils/ideumDevMaingearTab';
 import {
   Ref200ColumnBucket,
   SubmenuModelTile,
@@ -19,7 +22,7 @@ const WIND_3D_VISUAL = getComponentVisualConfig('wind-turbine-3d');
 const WIND_MODEL = getWindTurbine3DModelUrl(WIND_3D_VISUAL);
 const BESS_MODEL = getBess3DModelUrl(BESS_VISUAL);
 
-const BASELINE_LABEL = '200 MW GFL Wind + 200 MW GFMe BESS';
+const BASELINE_LABEL = '200 MW GFL Wind + 200 MW (GFME) e-Statcom BESS';
 
 function ref200SideTitleFontPx(zoom = 1) {
   const z = Math.max(Number(zoom) || 1, 0.01);
@@ -180,6 +183,8 @@ export default function DispatchableWind200MwSubmenu({
                 label="Forced Power Oscillation (FPO)"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ForcedPowerOscillation}
                 imageAlt="Forced power oscillation study"
+                ideumCommand={SHOW_WIND02_PLOTS_IDEUM_COMMAND}
+                onIdeumCommand={onIdeumCommand}
               />
               <SubmenuUseCaseTile
                 zoom={zoom}

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Texas 1 GW — CAPEX and gas price</title>
+<style>
+  :root {
+    --ink: #1c2b33;
+    --muted: #5c6b73;
+    --line: #d7e0e2;
+    --paper: #f4f7f6;
+    --card: #ffffff;
+    --teal: #0c6e6a;
+    --teal-deep: #084e4c;
+    --solar: #e39b2b;
+    --wind: #3d7ea6;
+    --bess: #3f8f6b;
+    --ha: #8a5a44;
+    --lm: #5c6b86;
+    --om: #c5ced1;
+    --fuel: #d26a4a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 420px at 10% -10%, #e7f4f2 0%, transparent 60%),
+      var(--paper);
+    font: 17px/1.5 "Avenir Next", "Segoe UI", sans-serif;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 {
+    font-family: Palatino, "Iowan Old Style", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .lede { max-width: 48rem; color: var(--muted); font-size: 1.08rem; margin: 0 0 28px; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 28px; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; }
+  .step b { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal); margin-bottom: 4px; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start; }
+  .panel, .stage, .math { background: var(--card); border: 1px solid var(--line); border-radius: 18px; }
+  .panel { padding: 16px 16px 18px; position: sticky; top: 16px; }
+  .panel h2, .stage h2 { margin: 0 0 4px; font-size: 1rem; }
+  .hint { color: var(--muted); font-size: 0.86rem; margin: 0 0 12px; }
+  .wheel { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .wheel label { font-size: 0.82rem; }
+  .wheel .unit { color: var(--muted); font-size: 0.75rem; grid-column: 1 / -1; }
+  .wheel input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--teal); }
+  .wheel output { font-variant-numeric: tabular-nums; font-weight: 650; }
+  button.reset { margin-top: 8px; width: 100%; border: 1px solid var(--teal); background: #f3faf9; color: var(--teal-deep); border-radius: 10px; padding: 8px 10px; font: inherit; cursor: pointer; }
+  .stage { padding: 18px 18px 8px; }
+  .techs { display: grid; gap: 14px; }
+  .tech { display: grid; grid-template-columns: minmax(110px, 150px) minmax(0, 1fr) 132px; gap: 12px; align-items: center; }
+  .tech h3 { margin: 0; font-size: 0.95rem; }
+  .tech p { margin: 2px 0 0; color: var(--muted); font-size: 0.78rem; }
+  .stack { display: flex; height: 28px; border-radius: 8px; overflow: hidden; background: #eef2f3; }
+  .seg { height: 100%; }
+  .seg span { display: block; padding: 4px 6px; color: white; font-size: 0.72rem; white-space: nowrap; }
+  .lcoe-out { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .lcoe-out small { display: block; font-weight: 500; color: var(--muted); white-space: nowrap; }
+  .blend { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+  .weights { display: flex; height: 22px; border-radius: 8px; overflow: hidden; margin: 8px 0 6px; }
+  .weights div { height: 100%; }
+  .formula { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; background: #f7faf9; border-radius: 10px; padding: 10px 12px; color: var(--teal-deep); overflow-x: auto; }
+  .result { margin-top: 16px; display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; }
+  .result article { border-radius: 14px; padding: 14px; background: #f7faf9; }
+  .result article.final { background: var(--teal-deep); color: white; }
+  .result .k { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+  .result strong { display: block; font-size: 1.7rem; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+  .note { margin-top: 22px; color: var(--muted); font-size: 0.92rem; }
+  .note strong { color: var(--ink); }
+  .math { margin-top: 28px; padding: 22px 22px 8px; }
+  .math h2 { font-family: Palatino, "Iowan Old Style", Georgia, serif; font-size: 1.7rem; margin: 0 0 6px; }
+  .math h3 { margin: 22px 0 8px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal); }
+  .defs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .defs div { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #f7faf9; }
+  .defs b { display: block; font-size: 0.95rem; }
+  .defs span { color: var(--muted); font-size: 0.82rem; }
+  .eq { margin: 0 0 8px; padding: 10px 14px; border-radius: 12px; background: #f7faf9; font-family: Palatino, "Iowan Old Style", Georgia, serif; font-size: 1.08rem; line-height: 1.45; overflow-x: auto; }
+  .eq .note { display: block; margin-top: 2px; font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 0.82rem; color: var(--muted); }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 0.25em; line-height: 1.15; }
+  .frac i { font-style: normal; padding: 0 0.35em; }
+  .frac i:first-child { border-bottom: 1.5px solid currentColor; }
+  @media (max-width: 860px) {
+    .steps, .layout, .result, .tech, .defs { grid-template-columns: 1fr; }
+    .panel { position: static; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Texas 1&nbsp;GW: CAPEX and gas price rescale project LCOE.</h1>
+  <p class="lede">
+    This is Charu’s formula for the Texas 1&nbsp;GW case only. The arrows on the
+    configurator still start at the same prices as the 200&nbsp;MW studies. The
+    divisors below are the Texas 1&nbsp;GW study prices, and they are not those
+    starting numbers. Wisconsin 1&nbsp;GW does not use this formula.
+  </p>
+
+  <section class="steps" aria-label="Four steps">
+    <article class="step"><b>1 · Factors</b>Your price ÷ the Texas 1&nbsp;GW study price.</article>
+    <article class="step"><b>2 · Technology LCOE</b>Scaled CAPEX, plus O&amp;M. Fuel scales for the 7HA and the LM2500.</article>
+    <article class="step"><b>3 · Thermal</b>Combine the 7HA and LM2500 from the 7HA unit count.</article>
+    <article class="step"><b>4 · Project</b>Multiply the original project LCOE by blend-new ÷ blend-study.</article>
+  </section>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>Prices</h2>
+      <p class="hint">The sliders open on the screen’s starting prices. Study prices are the divisors.</p>
+
+      <div class="wheel" data-key="solar">
+        <label>Solar installed CAPEX</label>
+        <output></output>
+        <input type="range" min="800" max="3200" step="25" value="1600" />
+        <span class="unit">$/kW · screen starts at 1,600 · study divisor 1,200</span>
+      </div>
+      <div class="wheel" data-key="wind">
+        <label>Wind installed CAPEX</label>
+        <output></output>
+        <input type="range" min="500" max="4000" step="25" value="2000" />
+        <span class="unit">$/kW · screen starts at 2,000 · study divisor 1,200</span>
+      </div>
+      <div class="wheel" data-key="hdgt">
+        <label>7HA installed CAPEX</label>
+        <output></output>
+        <input type="range" min="500" max="4000" step="25" value="2500" />
+        <span class="unit">$/kW · screen starts at 2,500 · study divisor 2,000</span>
+      </div>
+      <div class="wheel" data-key="hdFuel">
+        <label>7HA gas price</label>
+        <output></output>
+        <input type="range" min="2" max="16" step="0.25" value="3.5" />
+        <span class="unit">$/MMBtu · study divisor 3.50</span>
+      </div>
+      <div class="wheel" data-key="aero">
+        <label>LM2500 installed CAPEX</label>
+        <output></output>
+        <input type="range" min="500" max="4000" step="25" value="3000" />
+        <span class="unit">$/kW · screen starts at 3,000 · study divisor 2,500</span>
+      </div>
+      <div class="wheel" data-key="fuel">
+        <label>LM2500 gas price</label>
+        <output></output>
+        <input type="range" min="2" max="16" step="0.25" value="3.5" />
+        <span class="unit">$/MMBtu · study divisor 3.50</span>
+      </div>
+      <div class="wheel" data-key="bess">
+        <label>Battery installed CAPEX</label>
+        <output></output>
+        <input type="range" min="100" max="500" step="1" value="238" />
+        <span class="unit">$/kWh · study divisor 238</span>
+      </div>
+      <button class="reset" type="button" id="study">Use study prices (no change)</button>
+      <button class="reset" type="button" id="screen">Use the screen’s starting prices</button>
+    </aside>
+
+    <section class="stage">
+      <h2>One Texas 1&nbsp;GW case, repriced</h2>
+      <p class="hint" id="case-line"></p>
+      <div class="techs" id="techs"></div>
+
+      <div class="blend">
+        <h2>Thermal LCOE, then the energy-weighted blend</h2>
+        <p class="hint" id="thermal-line"></p>
+        <div class="weights" id="weights"></div>
+        <p class="hint" id="weight-line"></p>
+        <div class="formula" id="formula"></div>
+      </div>
+
+      <div class="result">
+        <article>
+          <div class="k">Blend at study prices</div>
+          <strong id="blend-default"></strong>
+        </article>
+        <article>
+          <div class="k">Blend with your prices</div>
+          <strong id="blend-user"></strong>
+        </article>
+        <article class="final">
+          <div class="k">Project LCOE to display</div>
+          <strong id="project"></strong>
+          <span id="project-note"></span>
+        </article>
+      </div>
+
+      <p class="note">
+        <strong>What Explore Data shows on Texas 1&nbsp;GW.</strong>
+        Each simulation’s number is
+        <em>Project LCOE at the study prices × (your blend ÷ the study blend)</em>.
+        Charu writes one gas price for both turbines. The configurator has a gas
+        price on each turbine, so the 7HA gas price scales 7HA fuel and the LM2500
+        gas price scales LM2500 fuel. When those two prices match, that is his single fuel factor.
+        The bars split this simulation’s technology LCOE into CAPEX, fuel, and O&amp;M so the algebra can be moved.
+        The configurator reads those pieces from the workbook columns named below.
+      </p>
+    </section>
+  </div>
+
+  <section class="math" id="formulas">
+    <h2>Charu’s Texas 1&nbsp;GW formulas</h2>
+    <p class="hint">The screen’s starting prices stay the same on all four cases. The divisors in this case are the Texas 1&nbsp;GW study prices.</p>
+
+    <h3>Screen starting prices — same on every case</h3>
+    <div class="defs">
+      <div><b>Solar = 1,600</b><span>$/kW on the screen</span></div>
+      <div><b>Wind = 2,000</b><span>$/kW on the screen</span></div>
+      <div><b>7HA = 2,500</b><span>$/kW on the screen</span></div>
+      <div><b>LM2500 = 3,000</b><span>$/kW on the screen</span></div>
+      <div><b>BESS = 238</b><span>$/kWh</span></div>
+      <div><b>Gas = 3.50</b><span>$/MMBtu</span></div>
+    </div>
+
+    <h3>Study divisors — Texas 1&nbsp;GW only</h3>
+    <div class="defs">
+      <div><b>Solar<sub>0</sub> = 1,200</b><span>$/kW</span></div>
+      <div><b>Wind<sub>0</sub> = 1,200</b><span>$/kW</span></div>
+      <div><b>HDGT<sub>0</sub> = 2,000</b><span>$/kW · 7HA</span></div>
+      <div><b>Aero<sub>0</sub> = 2,500</b><span>$/kW · LM2500</span></div>
+      <div><b>BESS<sub>0</sub> = 238</b><span>$/kWh</span></div>
+      <div><b>Gas<sub>0</sub> = 3.50</b><span>$/MMBtu</span></div>
+    </div>
+
+    <h3>Scaling factors</h3>
+    <p class="eq">
+      solar<sub>adj</sub> =
+      <span class="frac"><i>solar CAPEX<sub>user</sub></i><i>1,200</i></span>
+      &nbsp;&nbsp; wind<sub>adj</sub> =
+      <span class="frac"><i>wind CAPEX<sub>user</sub></i><i>1,200</i></span>
+      &nbsp;&nbsp; hdgt<sub>adj</sub> =
+      <span class="frac"><i>7HA CAPEX<sub>user</sub></i><i>2,000</i></span>
+    </p>
+    <p class="eq">
+      aero<sub>adj</sub> =
+      <span class="frac"><i>LM2500 CAPEX<sub>user</sub></i><i>2,500</i></span>
+      &nbsp;&nbsp; bess<sub>adj</sub> =
+      <span class="frac"><i>battery CAPEX<sub>user</sub></i><i>238</i></span>
+      &nbsp;&nbsp; fuel<sub>adj</sub> =
+      <span class="frac"><i>gas price<sub>user</sub></i><i>3.50</i></span>
+    </p>
+
+    <h3>Each technology’s LCOE</h3>
+    <p class="eq">Solar LCOE<sub>user</sub> = (Solar CAPEX LCOE<sub>0</sub> × solar<sub>adj</sub>) + Solar OM LCOE</p>
+    <p class="eq">Wind LCOE<sub>user</sub> = (Wind CAPEX LCOE<sub>0</sub> × wind<sub>adj</sub>) + Wind OM LCOE</p>
+    <p class="eq">BESS LCOE<sub>user</sub> = (BESS CAPEX LCOE<sub>0</sub> × bess<sub>adj</sub>) + BESS OM LCOE</p>
+    <p class="eq">7HA LCOE<sub>user</sub> = (7HA CAPEX LCOE<sub>0</sub> × hdgt<sub>adj</sub>) + (7HA Fuel LCOE<sub>0</sub> × fuel<sub>adj</sub>) + 7HA OM LCOE</p>
+    <p class="eq">LM2500 LCOE<sub>user</sub> = (LM2500 CAPEX LCOE<sub>0</sub> × aero<sub>adj</sub>) + (LM2500 Fuel LCOE<sub>0</sub> × fuel<sub>adj</sub>) + LM2500 OM LCOE</p>
+
+    <h3>Thermal LCOE</h3>
+    <p class="eq">
+      If 7HA units = 0, thermal LCOE<sub>user</sub> = 0
+      <span class="note">The LM2500 does not enter the blend on a row with no 7HA.</span>
+    </p>
+    <p class="eq">
+      If 7HA units = 3, thermal LCOE<sub>user</sub> = 7HA LCOE<sub>user</sub>
+      <span class="note">The LM2500 LCOE is left out. The combined gas energy is priced as the 7HA.</span>
+    </p>
+    <p class="eq">
+      Otherwise, thermal LCOE<sub>user</sub> =
+      <span class="frac"><i>(7HA LCOE<sub>user</sub> × 7HA units × 384) + (LM2500 LCOE<sub>user</sub> × LM2500 units × 32)</i><i>(7HA units × 384) + (LM2500 units × 32)</i></span>
+      <span class="note">384 MW is one 7HA. 32 MW is one LM2500. The same rule with every factor equal to 1 is the study thermal LCOE.</span>
+    </p>
+
+    <h3>Blend, then scale the project</h3>
+    <p class="eq">
+      Blend<sub>user</sub> =
+      <span class="frac"><i>Solar LCOE<sub>user</sub> · AEP<sub>solar</sub> + Wind LCOE<sub>user</sub> · AEP<sub>wind</sub> + BESS LCOE<sub>user</sub> · AEP<sub>bess</sub> + thermal LCOE<sub>user</sub> · AEP<sub>7HA+LM2500</sub></i><i>Total year-1 AEP (GWh) × 1,000,000</i></span>
+    </p>
+    <p class="eq">
+      adjustment =
+      <span class="frac"><i>Blend<sub>user</sub></i><i>Blend<sub>0</sub></i></span>
+    </p>
+    <p class="eq">Project LCOE<sub>user</sub> = Project LCOE<sub>0</sub> × adjustment</p>
+    <p class="hint">Project LCOE<sub>user</sub> is the value shown for each simulation after the prices move. On the sheet that column is spelled “Project LOCE”.</p>
+  </section>
+</main>
+<script>
+const STUDY = { solar: 1200, wind: 1200, hdgt: 2000, aero: 2500, bess: 238, fuel: 3.5 };
+const SCREEN = { solar: 1600, wind: 2000, hdgt: 2500, aero: 3000, hdFuel: 3.5, fuel: 3.5, bess: 238 };
+const CASE = {
+  label: "2,472 MW solar · 802 MW wind · 2,000 MW battery · 2× 7HA · 11× LM2500 · 90% carbon-free",
+  haUnits: 2,
+  lmUnits: 11,
+  solarCapex: 144.99096809301335,
+  solarOm: 7.663241312138638,
+  windCapex: 39.37661230502608,
+  windOm: 4.292692680031124,
+  bessCapex: 67.94571661802625,
+  bessOm: 16.010438847223043,
+  haCapex: 223.72116962143784,
+  haFuel: 23.456157257411782,
+  haOm: 21.815302219909363,
+  lmCapex: 1584.217591784734,
+  lmFuel: 18.976724094105904,
+  lmOm: 91.15604966633016,
+  solarAep: 2374373296.85926,
+  windAep: 3519484355.2088,
+  bessAep: 2015669925.63857,
+  gasAep: 850472422.293361,
+  totalGwh: 8759.99999999999,
+  project: 115.563205343343,
+};
+
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+const num = (n, d = 2) => n.toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
+
+function readWheels() {
+  const values = {};
+  document.querySelectorAll(".wheel").forEach((el) => {
+    const input = el.querySelector("input");
+    const key = el.dataset.key;
+    values[key] = Number(input.value);
+    const out = el.querySelector("output");
+    out.textContent = key === "fuel" || key === "hdFuel" ? num(values[key], 2) : money(values[key]);
+  });
+  return values;
+}
+
+function thermal(ha, lm) {
+  if (CASE.haUnits === 0) return 0;
+  if (CASE.haUnits === 3) return ha;
+  const den = CASE.haUnits * 384 + CASE.lmUnits * 32;
+  return (ha * CASE.haUnits * 384 + lm * CASE.lmUnits * 32) / den;
+}
+
+function priceOne(user) {
+  const f = {
+    solar: user.solar / STUDY.solar,
+    wind: user.wind / STUDY.wind,
+    hdgt: user.hdgt / STUDY.hdgt,
+    aero: user.aero / STUDY.aero,
+    bess: user.bess / STUDY.bess,
+    fuel: user.fuel / STUDY.fuel,
+    hdFuel: user.hdFuel / STUDY.fuel,
+  };
+  const tech = {
+    solar: CASE.solarCapex * f.solar + CASE.solarOm,
+    wind: CASE.windCapex * f.wind + CASE.windOm,
+    bess: CASE.bessCapex * f.bess + CASE.bessOm,
+    ha: CASE.haCapex * f.hdgt + CASE.haFuel * f.hdFuel + CASE.haOm,
+    lm: CASE.lmCapex * f.aero + CASE.lmFuel * f.fuel + CASE.lmOm,
+  };
+  const base = {
+    solar: CASE.solarCapex + CASE.solarOm,
+    wind: CASE.windCapex + CASE.windOm,
+    bess: CASE.bessCapex + CASE.bessOm,
+    ha: CASE.haCapex + CASE.haFuel + CASE.haOm,
+    lm: CASE.lmCapex + CASE.lmFuel + CASE.lmOm,
+  };
+  const thermalUser = thermal(tech.ha, tech.lm);
+  const thermalDefault = thermal(base.ha, base.lm);
+  const blend = (lcoe, thermalLcoe) => (
+    lcoe.solar * CASE.solarAep
+    + lcoe.wind * CASE.windAep
+    + lcoe.bess * CASE.bessAep
+    + thermalLcoe * CASE.gasAep
+  ) / (CASE.totalGwh * 1e6);
+  const blendedUser = blend(tech, thermalUser);
+  const blendedDefault = blend(base, thermalDefault);
+  const adjustment = blendedUser / blendedDefault;
+  return { f, tech, base, thermalUser, thermalDefault, blendedUser, blendedDefault, adjustment, project: CASE.project * adjustment };
+}
+
+function draw() {
+  const user = readWheels();
+  const priced = priceOne(user);
+  const rows = [
+    ["Solar", [
+      ["CAPEX", CASE.solarCapex * priced.f.solar, "var(--solar)"],
+      ["O&M", CASE.solarOm, "var(--om)"],
+    ], priced.tech.solar, priced.base.solar],
+    ["Wind", [
+      ["CAPEX", CASE.windCapex * priced.f.wind, "var(--wind)"],
+      ["O&M", CASE.windOm, "var(--om)"],
+    ], priced.tech.wind, priced.base.wind],
+    ["Battery", [
+      ["CAPEX", CASE.bessCapex * priced.f.bess, "var(--bess)"],
+      ["O&M", CASE.bessOm, "var(--om)"],
+    ], priced.tech.bess, priced.base.bess],
+    ["7HA", [
+      ["CAPEX", CASE.haCapex * priced.f.hdgt, "var(--ha)"],
+      ["Fuel", CASE.haFuel * priced.f.hdFuel, "var(--fuel)"],
+      ["O&M", CASE.haOm, "var(--om)"],
+    ], priced.tech.ha, priced.base.ha],
+    ["LM2500", [
+      ["CAPEX", CASE.lmCapex * priced.f.aero, "var(--lm)"],
+      ["Fuel", CASE.lmFuel * priced.f.fuel, "var(--fuel)"],
+      ["O&M", CASE.lmOm, "var(--om)"],
+    ], priced.tech.lm, priced.base.lm],
+  ];
+  const maxPiece = Math.max(...rows.flatMap((row) => row[1].map((seg) => seg[1])));
+  document.getElementById("techs").innerHTML = rows.map(([name, segs, now, was]) => {
+    const bars = segs.map(([label, value, color]) => {
+      const pct = maxPiece > 0 ? (value / (maxPiece * 1.08)) * 100 : 0;
+      const text = pct > 14 ? label : "";
+      return `<div class="seg" style="width:${pct}%;background:${color}"><span>${text}</span></div>`;
+    }).join("");
+    const delta = now - was;
+    const sign = delta >= 0 ? "+" : "−";
+    return `<article class="tech">
+      <div><h3>${name}</h3><p>${segs.map((s) => s[0]).join(" + ")}</p></div>
+      <div class="stack">${bars}</div>
+      <div class="lcoe-out">${money(now)}<small>${sign}$${num(Math.abs(delta), 0)} vs study</small></div>
+    </article>`;
+  }).join("");
+
+  const energy = [
+    ["Solar", CASE.solarAep, "var(--solar)"],
+    ["Wind", CASE.windAep, "var(--wind)"],
+    ["Battery", CASE.bessAep, "var(--bess)"],
+    ["7HA + LM2500", CASE.gasAep, "var(--ha)"],
+  ];
+  const totalKwh = energy.reduce((s, e) => s + e[1], 0);
+  document.getElementById("weights").innerHTML = energy.map(([name, kwh, color]) =>
+    `<div style="width:${(kwh / totalKwh) * 100}%;background:${color}" title="${name}"></div>`
+  ).join("");
+  document.getElementById("weight-line").textContent = energy.map(([name, kwh]) =>
+    `${name} ${Math.round((kwh / totalKwh) * 100)}%`
+  ).join(" · ") + " of year-1 energy";
+  document.getElementById("case-line").textContent = CASE.label + ". This row has 2× 7HA, so thermal LCOE is the capacity-weighted mix.";
+  const branch = CASE.haUnits === 0
+    ? "7HA units = 0, so thermal LCOE is 0."
+    : CASE.haUnits === 3
+      ? "7HA units = 3, so thermal LCOE is the 7HA LCOE."
+      : `2× 7HA and 11× LM2500, so thermal LCOE is $${num(priced.thermalUser, 1)}/MWh (study $${num(priced.thermalDefault, 1)}).`;
+  document.getElementById("thermal-line").textContent = branch;
+  document.getElementById("formula").textContent =
+    `adjustment ${num(priced.adjustment, 3)}  =  blend ${num(priced.blendedUser, 1)}  /  study blend ${num(priced.blendedDefault, 1)}`;
+  document.getElementById("blend-default").textContent = "$" + num(priced.blendedDefault, 1);
+  document.getElementById("blend-user").textContent = "$" + num(priced.blendedUser, 1);
+  document.getElementById("project").textContent = "$" + num(priced.project, 0);
+  const gap = priced.project - CASE.project;
+  document.getElementById("project-note").textContent =
+    `Study case was $${num(CASE.project, 0)}/MWh. Change ${gap >= 0 ? "+" : "−"}$${num(Math.abs(gap), 1)}.`;
+}
+
+function setWheels(values) {
+  Object.entries(values).forEach(([key, value]) => {
+    document.querySelector(`.wheel[data-key="${key}"] input`).value = value;
+  });
+  draw();
+}
+
+document.querySelectorAll(".wheel input").forEach((input) => input.addEventListener("input", draw));
+document.getElementById("study").addEventListener("click", () => {
+  setWheels({ solar: 1200, wind: 1200, hdgt: 2000, aero: 2500, hdFuel: 3.5, fuel: 3.5, bess: 238 });
+});
+document.getElementById("screen").addEventListener("click", () => setWheels(SCREEN));
+draw();
+</script>
+</body>
+</html>

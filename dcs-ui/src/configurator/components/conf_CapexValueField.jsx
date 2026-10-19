@@ -35,6 +35,7 @@ export default function ConfCapexValueField({
   wheelOptions = null,
   formatDisplay = formatCapexDisplay,
   onCommit,
+  locked = false,
 }) {
   const fmt = formatDisplay;
   const holdRef = useRef(null);
@@ -89,7 +90,7 @@ export default function ConfCapexValueField({
   const atMax = !options.length || selectedIdx >= options.length - 1;
 
   const press = (dir, blocked) => (e) => {
-    if (e.button !== 0 || blocked) return;
+    if (locked || e.button !== 0 || blocked) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     startHold(dir);
@@ -98,9 +99,11 @@ export default function ConfCapexValueField({
   return (
     <div className="conf-ideum-capex-field">
       <div
-        className={`conf-ideum-capex-stepper${isGas ? ' conf-ideum-capex-stepper--gas' : ''}`}
+        className={`conf-ideum-capex-stepper${isGas ? ' conf-ideum-capex-stepper--gas' : ''}${locked ? ' conf-ideum-capex-stepper--locked' : ''}`}
         role="group"
         aria-labelledby={`${id}-label`}
+        aria-disabled={locked || undefined}
+        title={locked ? 'Not used on the Wisconsin 1 GW study' : undefined}
       >
         <div
           className={`conf-ideum-capex-field__label conf-ideum-capex-stepper__label${label === 'Installed CAPEX' ? ' conf-ideum-capex-field__label--installed' : ''}`}
@@ -117,7 +120,7 @@ export default function ConfCapexValueField({
           type="button"
           className="conf-ideum-capex-stepper__btn conf-ideum-capex-stepper__btn--down"
           aria-label={`Decrease ${label}`}
-          disabled={atMin}
+          disabled={locked || atMin}
           onPointerDown={press(-1, atMin)}
           onPointerUp={stopHold}
           onPointerCancel={stopHold}
@@ -129,7 +132,7 @@ export default function ConfCapexValueField({
           type="button"
           className="conf-ideum-capex-stepper__btn conf-ideum-capex-stepper__btn--up"
           aria-label={`Increase ${label}`}
-          disabled={atMax}
+          disabled={locked || atMax}
           onPointerDown={press(1, atMax)}
           onPointerUp={stopHold}
           onPointerCancel={stopHold}

@@ -44,9 +44,9 @@ export default function IdeumKioskScreen({ machineRole, onCommand }) {
         type="button"
         className="ideum-kiosk-card ideum-kiosk-card--bess-gfme"
         onClick={() => runCommand('addStatcomAndGFMe')}
-        aria-label="add GFMe and Bess"
+        aria-label="add (GFME) e-Statcom and Bess"
       >
-        <h2 className="ideum-kiosk-title">add GFMe and Bess</h2>
+        <h2 className="ideum-kiosk-title">add (GFME) e-Statcom and Bess</h2>
         <div className="ideum-kiosk-preview ideum-kiosk-preview--dual">
           <div className="ideum-kiosk-preview-cell">
             <Bess3DViewer

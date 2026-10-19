@@ -29,9 +29,11 @@ export default function ConfKpiStrip({ result }) {
           <small>
             {kpis.lcoeCapexApplied
               ? 'Includes your installed CAPEX and gas price'
-              : kpis.lcoeCapexPending
-                ? 'CAPEX and gas price apply on the 200 MW study'
-                : 'Least-cost objective'}
+              : kpis.lcoeCapexLocked
+                ? 'Not used on the Wisconsin 1 GW study'
+                : kpis.lcoeCapexPending
+                  ? 'This study file has no CAPEX and fuel split to scale'
+                  : 'Least-cost objective'}
           </small>
         </div>
         <div className="conf-kpi-card">

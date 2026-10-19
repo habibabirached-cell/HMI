@@ -10,6 +10,7 @@ import '../Ideum05NavLayer.css';
 import './DataCentersHub.css';
 import './Ref200MwSubmenu.css';
 import Ref200ExpansionTouchPanel from './Ref200ExpansionTouchPanel';
+import Ref200HorizontalToggleRow from './Ref200HorizontalToggleRow';
 
 const BESS_VISUAL = getComponentVisualConfig('bess-50mw');
 const LM2500_3D_VISUAL = getComponentVisualConfig('gas-turbine-3d');
@@ -48,6 +49,22 @@ function ref200BucketWellPadding(subsetGapPx) {
     paddingRight: subsetGapPx,
     paddingBottom: subsetGapPx,
   };
+}
+
+const E_STATCOM_MARK = 'e-Statcom';
+
+/** Keep “e-Statcom” mixed-case inside the uppercase side rail. */
+function renderRef200SideTitle(label) {
+  const text = String(label ?? '');
+  const idx = text.indexOf(E_STATCOM_MARK);
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="ideum07-ref200__keep-case">{E_STATCOM_MARK}</span>
+      {text.slice(idx + E_STATCOM_MARK.length)}
+    </>
+  );
 }
 
 function TilePressMark({ pressState }) {
@@ -215,7 +232,7 @@ export function SubmenuModelTile({
         className="ideum-component-btn__title ideum07-subnav-title ideum07-ref200__side-title ideum-component-btn__title--featured"
         style={{ fontSize: titleFontPx }}
       >
-        <span className="ideum07-subnav-title__text ideum07-ref200__side-title-text">{label}</span>
+        <span className={`ideum07-subnav-title__text ideum07-ref200__side-title-text${String(label).includes(E_STATCOM_MARK) ? ' ideum07-ref200__side-title-text--wrap' : ''}`}>{renderRef200SideTitle(label)}</span>
       </span>
       <div
         ref={previewRef}
@@ -322,6 +339,8 @@ export default function Ideum08Ref200MwSubmenu({
   ideumExpansionMirror,
   onIdeumExpansionToggle,
   onIdeumToggleSimulation,
+  ideumSimulationOn = true,
+  ideumSimulationBusy = false,
 }) {
   const bucketChrome = getIdeum08RootBucketChrome(zoom);
   const hubInsetPx = Math.max(8, Math.round(8 * zoom));
@@ -382,17 +401,15 @@ export default function Ideum08Ref200MwSubmenu({
                 ideumExpansionMirror={ideumExpansionMirror}
                 onIdeumExpansionToggle={onIdeumExpansionToggle}
               />
-              <button
-                type="button"
-                className="ideum08-ref200__sim-toggle-btn"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onIdeumToggleSimulation?.();
-                }}
-              >
-                Toggle simulation
-              </button>
+              <Ref200HorizontalToggleRow
+                zoom={zoom}
+                leftLabel="Simulation on"
+                rightLabel="Simulation off"
+                rightActive={!ideumSimulationOn}
+                onToggle={onIdeumToggleSimulation}
+                ariaLabel="Simulation on or simulation off"
+                disabled={ideumSimulationBusy}
+              />
             </div>
           </Ref200ColumnBucket>
 
@@ -426,7 +443,7 @@ export default function Ideum08Ref200MwSubmenu({
                 <SubmenuModelTile
                   zoom={zoom}
                   className="ideum07-ref200__tile--pair"
-                  label="Add GFMe"
+                  label="Add (GFME) e-Statcom"
                   modelUrl={GFME_MODEL}
                   fitScale={1.4}
                   modelYOffset={0}
@@ -440,7 +457,7 @@ export default function Ideum08Ref200MwSubmenu({
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Add GFMe + BESS"
+                label="Add (GFME) e-Statcom + BESS"
                 modelUrl={BESS_MODEL}
                 modelUrlSecondary={GFME_MODEL}
                 fitScale={1.15}

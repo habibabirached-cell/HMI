@@ -69,6 +69,7 @@ import {
   getChartDangerYThreshold,
 } from '../../utils/chartDangerYThreshold';
 import { applyXReferenceLayout } from '../../utils/chartXReference';
+import { applyHorizontalGuideLinesLayout } from '../../utils/chartHorizontalGuideLines';
 import {
   applyFrequencyGoodnessBandsLayout,
   chartSupportsFrequencyGoodnessBands,
@@ -3428,6 +3429,7 @@ const ChartPanel = ({
       if (chartSupportsDangerYThreshold(chart)) {
         next = applyDangerYThresholdLayout(next, chart);
       }
+      next = applyHorizontalGuideLinesLayout(next, chart, data);
       return applyXReferenceLayout(next, chart);
     };
 

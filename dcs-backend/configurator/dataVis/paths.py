@@ -19,8 +19,19 @@ WACO_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
 
 DEFAULT_WACO_LOAD_MW = 1000
 
-BADGER_WORKBOOK = "Badger_Hollow_Creek_200MW_live_CAPEX.xlsx"
-BADGER_CLEAN_CSV = "Badger_Hollow_Creek_200MW_clean.csv"
+BADGER_WORKBOOK_BY_LOAD_MW: dict[int, str] = {
+    200: "Badger_Hollow_Creek_200MW_live_CAPEX.xlsx",
+    1000: "Badger_Hollow_Creek_1GW_live_CAPEX.xlsx",
+}
+
+BADGER_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
+    200: "Badger_Hollow_Creek_200MW_clean.csv",
+    1000: "Badger_Hollow_Creek_1000MW_clean.csv",
+}
+
+# 200 MW names kept for callers that still import the single-file constants.
+BADGER_WORKBOOK = BADGER_WORKBOOK_BY_LOAD_MW[200]
+BADGER_CLEAN_CSV = BADGER_CLEAN_CSV_BY_LOAD_MW[200]
 
 MARTIN_STUDY_WACO = "waco"
 MARTIN_STUDY_BADGER = "badger_hollow_creek"
@@ -37,24 +48,31 @@ def waco_workbook_path(load_mw: int) -> Path:
     return DATA_MARTIN_DIR / name
 
 
-def badger_workbook_path() -> Path:
-    return DATA_MARTIN_DIR / BADGER_WORKBOOK
+def badger_workbook_path(load_mw: int = 200) -> Path:
+    name = BADGER_WORKBOOK_BY_LOAD_MW.get(int(load_mw))
+    if not name:
+        raise ValueError(f"Unsupported Badger load tier: {load_mw} MW (expected 200 or 1000).")
+    return DATA_MARTIN_DIR / name
 
 
-def badger_clean_csv_path() -> Path:
-    return DATA_MARTIN_DIR / BADGER_CLEAN_CSV
+def badger_clean_csv_path(load_mw: int = 200) -> Path:
+    name = BADGER_CLEAN_CSV_BY_LOAD_MW.get(int(load_mw))
+    if not name:
+        raise ValueError(f"Unsupported Badger load tier: {load_mw} MW (expected 200 or 1000).")
+    return DATA_MARTIN_DIR / name
 
 
-def badger_dataset_source() -> dict[str, str]:
-    csv_path = badger_clean_csv_path()
+def badger_dataset_source(load_mw: int = 200) -> dict[str, str]:
+    tier = int(load_mw)
+    csv_path = badger_clean_csv_path(tier)
     if csv_path.is_file():
         return {
             "kind": "csv",
             "file": csv_path.name,
-            "source_workbook": BADGER_WORKBOOK,
+            "source_workbook": BADGER_WORKBOOK_BY_LOAD_MW[tier],
             "martin_study": MARTIN_STUDY_BADGER,
         }
-    workbook = badger_workbook_path()
+    workbook = badger_workbook_path(tier)
     return {
         "kind": "xlsx",
         "file": workbook.name,
@@ -69,8 +87,8 @@ def martin_study_from_state_id(state_id: object) -> str:
     return MARTIN_STUDY_WACO
 
 
-def scenario_context_for_badger() -> dict[str, object]:
-    firm = 200
+def scenario_context_for_badger(load_mw: int = 200) -> dict[str, object]:
+    firm = int(load_mw) if int(load_mw) in (200, 1000) else 200
     return {
         "location": "Badger Hollow Creek, Wisconsin",
         "firm_load_mw": firm,

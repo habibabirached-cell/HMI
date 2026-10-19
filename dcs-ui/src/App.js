@@ -189,6 +189,7 @@ import {
   IDEUM08_REFERENCE_ARCHITECTURES,
 } from './utils/ideum08Navigation';
 import { INTERACTIVE_STUB_BREAKER_TYPE } from './utils/openBreakerConnections';
+import { horizontalLinesFromChartDef } from './utils/chartHorizontalGuideLines';
 import {
   HD_AERO_CB_A_ID,
   HD_AERO_CB_B_ID,
@@ -258,6 +259,7 @@ import {
 } from './utils/maltaClusterView';
 import {
   DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND,
+  SHOW_WIND02_PLOTS_IDEUM_COMMAND,
   IDEUM_DEV_WALL_OPEN_TAB_COMMANDS,
   IDEUM_DEV_WALL_RELAY_COMMANDS,
   IDEUM_DEV_WALL_REMOTE_COMMANDS,
@@ -265,7 +267,9 @@ import {
   openDevMaingearWind02WallTab,
   installDevWallRemoteCommandListener,
   installDevWallExpansionAckListener,
+  installDevWallSimulationAckListener,
   postDevWallExpansionApplied,
+  postDevWallSimulationState,
   parseIdeumRemoteDeepLink,
   relayDevWallRemoteCommand,
   stripIdeumRemoteFromUrl,
@@ -590,6 +594,10 @@ function buildOpenChartsFromChartsToDisplay(chartsToDisplay, canvasComponents, r
               : `${component.name} - ${chartDef.y_column}`),
       ...(chartDef.x_label != null && { xLabel: chartDef.x_label }),
       ...(chartDef.y_label != null && { yLabel: chartDef.y_label }),
+      ...(() => {
+        const guides = horizontalLinesFromChartDef(chartDef);
+        return guides ? { horizontalLines: guides } : {};
+      })(),
       ...(chartDef.stacked_y_labels != null
         && typeof chartDef.stacked_y_labels === 'object'
         && { stackedYLabels: chartDef.stacked_y_labels }),
@@ -1180,6 +1188,9 @@ function App() {
   const pendingDesignUiRestoreRef = useRef(null);
   /** Ideum dispatchable-wind: addBessOnly may arrive before loadWind02 finishes on Maingear. */
   const pendingWind02AddBessRef = useRef(false);
+  const pendingWind02PlotsRef = useRef(false);
+  /** While true, ensemble chart apply must not open the wind plots. */
+  const windPlotsHeldRef = useRef(false);
   /** Set when GET /ensembles finishes for `designApiPath` so post-load restore can distinguish “still fetching” from “empty list”. */
   const ensemblesHydratedForPathRef = useRef(null);
   /** designApiPath for the loaded simulation/ensemble — both HD_Aero and P2R_18 reuse ensemble id `all`. */
@@ -1243,7 +1254,16 @@ function App() {
   const expansionBusyRef = useRef(false);
   const expansionRequestRef = useRef(0);
   const expansionBusyTimerRef = useRef(null);
-  const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(false);
+  /** Baseline switch defaults to Simulation on (thumb left) before Maingear playback starts. */
+  const [ideumSimulationMirror, setIdeumSimulationMirror] = useState(true);
+  const [ideumSimulationBusy, setIdeumSimulationBusy] = useState(false);
+  const simulationBusyRef = useRef(false);
+  const simulationExpectRunningRef = useRef(null);
+  const simulationBusyTimerRef = useRef(null);
+  const confirmedSimulationRunningRef = useRef(true);
+  const releaseIdeumSimulationBusyRef = useRef(() => {});
+  const beginIdeumSimulationRequestRef = useRef(() => {});
+  const revertIdeumSimulationRequestRef = useRef(() => {});
   const [ideumSimulateMirror, setIdeumSimulateMirror] = useState(false);
   const [ideumSimulateLoopMirror, setIdeumSimulateLoopMirror] = useState(false);
   const [ideumSimulationSpeedMirror, setIdeumSimulationSpeedMirror] = useState(1);
@@ -1345,6 +1365,8 @@ function App() {
     );
   }, [currentConfigName, designApiPath, designSectionVisibility, canvasComponents]);
 
+  const windWallBlankRef = useRef(false);
+
   useEffect(() => {
     const onWind = isWind02Design({
       name: currentConfigName,
@@ -1354,6 +1376,7 @@ function App() {
       windExplodedFitRef.current = false;
       return;
     }
+    if (windWallBlankRef.current) return;
     const placed = withWindOctExplodedCopyOnLowerPane(canvasComponents);
     if (placed !== canvasComponents) {
       setCanvasComponents(placed);
@@ -2038,6 +2061,8 @@ function App() {
       resetPlaybackVisualsRef.current();
 
       startSimulationClock();
+      releaseIdeumSimulationBusyRef.current(true, false);
+      postDevWallSimulationState(true, false);
       if (machineRoleRef.current?.isMaingear) {
         void broadcastClusterMessage({ type: 'simulation_state', running: true, loop: false }).catch((e) =>
           console.warn('cluster simulation_state broadcast', e),
@@ -2099,6 +2124,8 @@ function App() {
       setSimulationTime(loopStartTime);
       resetPlaybackVisualsRef.current();
       startSimulationClock();
+      releaseIdeumSimulationBusyRef.current(true, true);
+      postDevWallSimulationState(true, true);
       if (machineRoleRef.current?.isMaingear) {
         void broadcastClusterMessage({ type: 'simulation_state', running: true, loop: true }).catch((e) =>
           console.warn('cluster simulation_state broadcast', e),
@@ -2150,6 +2177,8 @@ function App() {
     setHdAeroChartEvents([]);
     setSimulationRunning(false);
     stopSimulationClock();
+    releaseIdeumSimulationBusyRef.current(false, false);
+    postDevWallSimulationState(false, false);
     if (machineRoleRef.current?.isMaingear) {
       void broadcastClusterMessage({ type: 'simulation_state', running: false, loop: false }).catch((e) =>
         console.warn('cluster simulation_state broadcast', e),
@@ -2191,6 +2220,12 @@ function App() {
    * Apply chart_panel blob from an ensemble entry (select or named-preset activate).
    */
   const applyEnsembleChartPanelCp = useCallback((cp, primaryMemberId) => {
+    if (windPlotsHeldRef.current) {
+      setChartStacks([]);
+      setOpenCharts([]);
+      setPerChartSampleStep({});
+      return;
+    }
     if (!cp || typeof cp !== 'object') {
       setChartStacks([]);
       setOpenCharts([]);
@@ -2545,6 +2580,9 @@ function App() {
     handleStartSimulationRef.current();
   };
   
+  const restartSimulationPlaybackFromStartRef = useRef(restartSimulationPlaybackFromStart);
+  restartSimulationPlaybackFromStartRef.current = restartSimulationPlaybackFromStart;
+
   // Update simulation speed
   const handleSetSimulationSpeed = (speed) => {
     setSimulationSpeed(speed);
@@ -3712,6 +3750,12 @@ function App() {
             sampleStepPatch = plan.sampleStepPatch;
           }
 
+          if (windPlotsHeldRef.current) {
+            setOpenCharts([]);
+            setChartStacks([]);
+            setPerChartSampleStep({});
+            return true;
+          }
           setOpenCharts(updatedCharts);
           if (Object.keys(sampleStepPatch).length) {
             setPerChartSampleStep((prev) => {
@@ -4098,8 +4142,28 @@ function App() {
       return;
     }
     if (!isClusterTouchCommandSource(role, maltaView)) {
+      if (command === 'showPlotsForCurrentDesign') {
+        beginIdeumSimulationRequestRef.current(true);
+        const onWall = getMaltaViewFromUrl() === 'wall' || isClusterWallCommandTarget(role, maltaView);
+        if (onWall && isActiveP2R18Design()) {
+          const ok = await handleShowPlotsForCurrentP2R18DesignRef.current?.();
+          if (!ok) revertIdeumSimulationRequestRef.current();
+          return;
+        }
+        if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) return;
+        revertIdeumSimulationRequestRef.current();
+        alert(
+          'Remote touch controls are not enabled in this browser tab. Open the Malta touch screen tab (?maltaView=touch) or configure this PC as Ideum.',
+        );
+        return;
+      }
       if (command === DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND) {
         openDevMaingearWind02WallTab('addBessOnly');
+        return;
+      }
+      if (command === SHOW_WIND02_PLOTS_IDEUM_COMMAND) {
+        if (relayDevWallRemoteCommand(SHOW_WIND02_PLOTS_IDEUM_COMMAND)) return;
+        openDevMaingearWind02WallTab(SHOW_WIND02_PLOTS_IDEUM_COMMAND);
         return;
       }
       if (isLocalClusterDev()) {
@@ -4131,18 +4195,35 @@ function App() {
         }
         return;
       }
+      if (command === SHOW_WIND02_PLOTS_IDEUM_COMMAND) {
+        await sendRemoteCommandToMaingear(role, 'loadWind02');
+        const plotResult = await sendRemoteCommandToMaingear(role, SHOW_WIND02_PLOTS_IDEUM_COMMAND);
+        if (!plotResult.deliveredToClients) {
+          alert(
+            'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
+          );
+        }
+        return;
+      }
       if (maingearCatalog === IDEUM05_P2R_CHIL_MAINGEAR_CATALOG) {
         await sendRemoteCommandToMaingear(role, 'loadP2RChil');
       } else if (command === 'add8Turbines') {
         await sendRemoteCommandToMaingear(role, 'loadP2R18');
       }
+      if (command === 'showPlotsForCurrentDesign') {
+        beginIdeumSimulationRequestRef.current(true);
+      }
       const result = await sendRemoteCommandToMaingear(role, command);
+      if (command === 'showPlotsForCurrentDesign' && !result?.deliveredToClients) {
+        revertIdeumSimulationRequestRef.current();
+      }
       if (!result.deliveredToClients) {
         alert(
           'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
         );
       }
     } catch (e) {
+      if (command === 'showPlotsForCurrentDesign') revertIdeumSimulationRequestRef.current();
       console.warn(e);
       alert(e.message || 'Failed to send command to Maingear.');
     }
@@ -4742,9 +4823,106 @@ function App() {
     [handleIdeumControlButtonClick],
   );
 
+  const releaseIdeumSimulationBusy = useCallback((running, loop = false) => {
+    if (!simulationBusyRef.current) return;
+    if (simulationExpectRunningRef.current !== running) return;
+    simulationBusyRef.current = false;
+    simulationExpectRunningRef.current = null;
+    if (simulationBusyTimerRef.current) {
+      clearTimeout(simulationBusyTimerRef.current);
+      simulationBusyTimerRef.current = null;
+    }
+    confirmedSimulationRunningRef.current = running;
+    setIdeumSimulationBusy(false);
+    setIdeumSimulationMirror(running);
+    if (running) {
+      setIdeumSimulateLoopMirror(!!loop);
+      setIdeumSimulateMirror(!loop);
+    } else {
+      setIdeumSimulateMirror(false);
+      setIdeumSimulateLoopMirror(false);
+    }
+  }, []);
+  releaseIdeumSimulationBusyRef.current = releaseIdeumSimulationBusy;
+
+  const revertIdeumSimulationRequest = useCallback(() => {
+    simulationBusyRef.current = false;
+    simulationExpectRunningRef.current = null;
+    if (simulationBusyTimerRef.current) {
+      clearTimeout(simulationBusyTimerRef.current);
+      simulationBusyTimerRef.current = null;
+    }
+    setIdeumSimulationBusy(false);
+    setIdeumSimulationMirror(confirmedSimulationRunningRef.current);
+  }, []);
+  revertIdeumSimulationRequestRef.current = revertIdeumSimulationRequest;
+
+  const beginIdeumSimulationRequest = useCallback((nextRunning) => {
+    simulationBusyRef.current = true;
+    simulationExpectRunningRef.current = nextRunning;
+    if (simulationBusyTimerRef.current) clearTimeout(simulationBusyTimerRef.current);
+    simulationBusyTimerRef.current = setTimeout(() => {
+      simulationBusyTimerRef.current = null;
+      revertIdeumSimulationRequestRef.current();
+    }, 20000);
+    setIdeumSimulationBusy(true);
+    setIdeumSimulationMirror(nextRunning);
+  }, []);
+  beginIdeumSimulationRequestRef.current = beginIdeumSimulationRequest;
+
   const handleIdeumToggleSimulation = useCallback(() => {
-    void sendIdeumClusterCommand('toggleSimulation');
-  }, [sendIdeumClusterCommand]);
+    if (simulationBusyRef.current) return;
+    const nextRunning = !ideumSimulationMirror;
+    beginIdeumSimulationRequestRef.current(nextRunning);
+    const command = nextRunning ? 'startSimulation' : 'stopSimulation';
+    void (async () => {
+      let role = machineRole;
+      try {
+        if (!role?.role) {
+          role = await fetchMachineRole();
+          setMachineRole(role);
+        }
+      } catch (e) {
+        revertIdeumSimulationRequestRef.current();
+        alert(e.message || 'Could not determine machine role.');
+        return;
+      }
+      const onWall = getMaltaViewFromUrl() === 'wall' || isClusterWallCommandTarget(role, maltaView);
+      if (!isClusterTouchCommandSource(role, maltaView)) {
+        if (onWall) {
+          try {
+            if (nextRunning) await restartSimulationPlaybackFromStartRef.current?.();
+            else handleStopSimulation();
+          } catch (e) {
+            revertIdeumSimulationRequestRef.current();
+            console.warn(e);
+            alert(e.message || 'Failed to change simulation.');
+          }
+          return;
+        }
+        if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) return;
+        revertIdeumSimulationRequestRef.current();
+        alert(
+          'Remote touch controls are not enabled in this browser tab. Use the Malta touch tab (?maltaView=touch) or configure this PC as Ideum.',
+        );
+        return;
+      }
+      try {
+        const result = await sendRemoteCommandToMaingear(role, command);
+        if (!result?.deliveredToClients) {
+          if (isLocalClusterDev() && relayDevWallRemoteCommand(command)) return;
+          revertIdeumSimulationRequestRef.current();
+          alert(
+            'Command reached the backend, but no wall browser is listening. On Malta: keep the 85" tab open (?maltaView=wall). On CXC: open Maingear DCS and leave it running.',
+          );
+        }
+      } catch (e) {
+        revertIdeumSimulationRequestRef.current();
+        console.warn(e);
+        alert(e.message || 'Failed to send simulation command to Maingear.');
+      }
+    })();
+  }, [ideumSimulationMirror, machineRole, maltaView, handleStopSimulation]);
 
   const handleIdeum07NavSelect = useCallback((cardId) => {
     const screenId = ideumKioskNav.getNavScreen(ideum07NavStack);
@@ -5541,6 +5719,7 @@ function App() {
         setActiveQuickScenarioPlaying(effectiveShortcut);
       }
       setRightRailCollapsed(false);
+      await restartSimulationPlaybackFromStartRef.current?.();
       return true;
     },
     [
@@ -5742,6 +5921,27 @@ function App() {
     await handleIdeumControlButtonClick({ command: 'liveRtds' });
   }, [handleIdeumControlButtonClick]);
 
+  const showWind02Canvas = useCallback(() => {
+    windWallBlankRef.current = false;
+    handleWorkspaceLayoutPresetChange('conf5');
+    setDesignSectionVisibility(normalizeDesignSectionVisibility({
+      showUpper: true,
+      showLower: true,
+      hideBranches: [],
+      canvasExternalPrimaryLabels: true,
+    }));
+    setViewMode('customer');
+  }, [handleWorkspaceLayoutPresetChange]);
+
+  const clearWind02Plots = useCallback(() => {
+    windPlotsHeldRef.current = true;
+    handleStopSimulation();
+    setOpenCharts([]);
+    setChartStacks([]);
+    setPerChartSampleStep({});
+  }, [handleStopSimulation]);
+
+  /** Baseline tile: wind drawing on the wall, charts closed. */
   const applyWind02RemoteAddBessOnly = useCallback(async () => {
     const loadedSnap = {
       name: currentConfigName,
@@ -5751,23 +5951,35 @@ function App() {
     if (!designApiPath || !isWind02Design(loadedSnap)) {
       return false;
     }
+    showWind02Canvas();
+    clearWind02Plots();
+    return true;
+  }, [
+    clearWind02Plots,
+    currentConfigName,
+    designApiPath,
+    showWind02Canvas,
+  ]);
 
-    handleWorkspaceLayoutPresetChange('conf5');
+  /** FPO tile: open the wind ensemble plots on the drawing. */
+  const applyWind02ShowPlots = useCallback(async () => {
+    const loadedSnap = {
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    };
+    if (!designApiPath || !isWind02Design(loadedSnap)) {
+      return false;
+    }
 
-    const sectionVisibility = normalizeDesignSectionVisibility({
-      showUpper: true,
-      showLower: true,
-      hideBranches: [],
-      canvasExternalPrimaryLabels: true,
-    });
-    setDesignSectionVisibility(sectionVisibility);
-    setViewMode('customer');
+    windPlotsHeldRef.current = false;
+    showWind02Canvas();
     setRightRailCollapsed(false);
     setRightRailGridPeek(true);
 
     const ensemble = resolveDesignEnsemble(designEnsembles, 's14_');
     if (!ensemble) {
-      console.warn('[wind02] remote addBessOnly: ensemble s14_ not found');
+      console.warn('[wind02] show plots: ensemble s14_ not found');
       return false;
     }
     const sameEnsemble =
@@ -5789,14 +6001,29 @@ function App() {
     handleActivateNamedSimulationConfig,
     handleSelectEnsemble,
     handleStopSimulation,
-    handleWorkspaceLayoutPresetChange,
+    showWind02Canvas,
     simulationMetadata?.ensembleId,
   ]);
 
   const applyWind02RemoteAddBessOnlyRef = useRef(applyWind02RemoteAddBessOnly);
+  const applyWind02ShowPlotsRef = useRef(applyWind02ShowPlots);
   useEffect(() => {
     applyWind02RemoteAddBessOnlyRef.current = applyWind02RemoteAddBessOnly;
   }, [applyWind02RemoteAddBessOnly]);
+  useEffect(() => {
+    applyWind02ShowPlotsRef.current = applyWind02ShowPlots;
+  }, [applyWind02ShowPlots]);
+
+  const blankWind02Wall = useCallback(() => {
+    windWallBlankRef.current = true;
+    clearWind02Plots();
+    setDesignSectionVisibility(normalizeDesignSectionVisibility({
+      showUpper: false,
+      showLower: false,
+      hideBranches: [],
+      canvasExternalPrimaryLabels: true,
+    }));
+  }, [clearWind02Plots]);
 
   const handleRemoteClusterCommand = async (command, payload) => {
     if (!command) return;
@@ -5821,6 +6048,15 @@ function App() {
       return;
     }
     if (command === 'reset') {
+      const onWind = isWind02Design({
+        name: currentConfigName,
+        design_catalog_rel: designApiPath,
+        csv_status: { design_catalog_rel: designApiPath },
+      });
+      if (onWind) {
+        blankWind02Wall();
+        return;
+      }
       const resetShortcut =
         quickScenarioButtons.find((b) => isQuickScenarioResetPreset(b.presetName)) ?? {
           id: 'remote-reset',
@@ -5897,6 +6133,24 @@ function App() {
     }
     if (command === 'showPlotsForCurrentDesign') {
       await handleShowPlotsForCurrentP2R18DesignRef.current();
+      return;
+    }
+    if (command === SHOW_WIND02_PLOTS_IDEUM_COMMAND) {
+      const loadedSnap = {
+        name: currentConfigName,
+        design_catalog_rel: designApiPath,
+        csv_status: { design_catalog_rel: designApiPath },
+      };
+      windPlotsHeldRef.current = false;
+      windWallBlankRef.current = false;
+      pendingWind02AddBessRef.current = false;
+      if (!isWind02Design(loadedSnap)) {
+        pendingWind02PlotsRef.current = true;
+        await handleRemoteClusterCommand('loadWind02');
+        return;
+      }
+      pendingWind02PlotsRef.current = false;
+      await applyWind02ShowPlotsRef.current();
       return;
     }
     if (command === 'toggleSimulation') {
@@ -6087,6 +6341,9 @@ function App() {
       const wantsWind02 =
         payload?.targetDesign === 'wind02' || pendingWind02AddBessRef.current;
       if (wantsWind02) {
+        windPlotsHeldRef.current = true;
+        windWallBlankRef.current = false;
+        pendingWind02PlotsRef.current = false;
         if (!isWind02Design(loadedSnap)) {
           pendingWind02AddBessRef.current = true;
           await handleRemoteClusterCommand('loadWind02');
@@ -6940,6 +7197,14 @@ function App() {
         }
         if (c.xLabel != null) base.x_label = c.xLabel;
         if (c.yLabel != null) base.y_label = c.yLabel;
+        if (Array.isArray(c.horizontalLines) && c.horizontalLines.length) {
+          base.horizontal_lines = c.horizontalLines
+            .filter((line) => Number.isFinite(Number(line?.y)))
+            .map((line) => ({
+              y: Number(line.y),
+              ...(line.label ? { label: String(line.label) } : {}),
+            }));
+        }
         if (
           c.stackedYLabels != null
           && typeof c.stackedYLabels === 'object'
@@ -8952,7 +9217,11 @@ function App() {
         ? { ...loadedExpansion }
         : { ...DEFAULT_DESIGN_EXPANSION },
     );
-    setIdeumSimulationMirror(false);
+    setIdeumSimulationMirror(true);
+    confirmedSimulationRunningRef.current = true;
+    setIdeumSimulationBusy(false);
+    simulationBusyRef.current = false;
+    simulationExpectRunningRef.current = null;
     setIdeumSimulateMirror(false);
     setIdeumSimulateLoopMirror(false);
     setIdeumSimulationSpeedMirror(1);
@@ -9642,6 +9911,13 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!isLocalClusterDev()) return undefined;
+    return installDevWallSimulationAckListener((msg) => {
+      releaseIdeumSimulationBusyRef.current(!!msg.running, !!msg.loop);
+    });
+  }, []);
+
+  useEffect(() => {
     if (getMaltaViewFromUrl() === 'wall') return undefined;
     return installDevWallExpansionAckListener((msg) => {
       releaseIdeumExpansionBusy(msg);
@@ -9712,15 +9988,7 @@ function App() {
         return;
       }
       if (msg?.type === 'simulation_state' && typeof msg.running === 'boolean') {
-        setIdeumSimulationMirror(msg.running);
-        if (msg.running) {
-          const loop = !!msg.loop;
-          setIdeumSimulateLoopMirror(loop);
-          setIdeumSimulateMirror(!loop);
-        } else {
-          setIdeumSimulateMirror(false);
-          setIdeumSimulateLoopMirror(false);
-        }
+        releaseIdeumSimulationBusyRef.current(msg.running, !!msg.loop);
       }
     });
   }, [
@@ -9846,7 +10114,8 @@ function App() {
       || isP2RChilDesign(loadedDesign)
       || isWind02Design(loadedDesign);
     if (!remoteDesignReady) return;
-    if (!remoteControlProfile?.commands?.[ideumRemoteFollowup]) return;
+    const windPlotsFollowup = ideumRemoteFollowup === SHOW_WIND02_PLOTS_IDEUM_COMMAND;
+    if (!windPlotsFollowup && !remoteControlProfile?.commands?.[ideumRemoteFollowup]) return;
     if (
       isWind02Design(loadedDesign)
       && ensemblesHydratedForPathRef.current !== designApiPath
@@ -9855,11 +10124,17 @@ function App() {
     }
 
     const command = ideumRemoteFollowup;
+    if (isWind02Design(loadedDesign)) {
+      windPlotsHeldRef.current = !windPlotsFollowup;
+      windWallBlankRef.current = false;
+    }
     setIdeumRemoteFollowup(null);
     let cancelled = false;
     (async () => {
       try {
-        if (isWind02Design(loadedDesign)) {
+        if (isWind02Design(loadedDesign) && windPlotsFollowup) {
+          await applyWind02ShowPlotsRef.current();
+        } else if (isWind02Design(loadedDesign)) {
           await applyWind02RemoteAddBessOnlyRef.current();
         } else {
           await handleRemoteClusterCommandRef.current(command);
@@ -9886,7 +10161,7 @@ function App() {
   ]);
 
   useEffect(() => {
-    if (!pendingWind02AddBessRef.current) return;
+    if (!pendingWind02AddBessRef.current || pendingWind02PlotsRef.current) return;
     if (!designApiPath || !csvStatus?.use_design_dir) return;
     const loadedDesign = {
       name: currentConfigName,
@@ -9898,6 +10173,28 @@ function App() {
 
     pendingWind02AddBessRef.current = false;
     void applyWind02RemoteAddBessOnlyRef.current();
+  }, [
+    designApiPath,
+    csvStatus?.use_design_dir,
+    currentConfigName,
+    designEnsembles,
+    sessionRestoreTrigger,
+  ]);
+
+  useEffect(() => {
+    if (!pendingWind02PlotsRef.current) return;
+    if (!designApiPath || !csvStatus?.use_design_dir) return;
+    const loadedDesign = {
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    };
+    if (!isWind02Design(loadedDesign)) return;
+    if (ensemblesHydratedForPathRef.current !== designApiPath) return;
+
+    pendingWind02PlotsRef.current = false;
+    pendingWind02AddBessRef.current = false;
+    void applyWind02ShowPlotsRef.current();
   }, [
     designApiPath,
     csvStatus?.use_design_dir,
@@ -10853,6 +11150,7 @@ function App() {
               onIdeumExpansionToggle={handleIdeumExpansionRemoteToggle}
               onIdeumToggleSimulation={handleIdeumToggleSimulation}
               ideumSimulationMirror={ideumSimulationMirror}
+              ideumSimulationBusy={ideumSimulationBusy}
               onIdeumSimulationClick={handleIdeumSimulationRemoteClick}
               ideumSimulateMirror={ideumSimulateMirror}
               onIdeumSimulateClick={handleIdeumSimulateRemoteClick}

@@ -120,6 +120,17 @@
   box-sizing: border-box;
 }
 
+/* Third baseline switch: shorten the turbine view so the control stack keeps the extra row. */
+.ideum08-test-ref-arch .ideum07-ref200-submenu__bucket-content--baseline .ideum07-ref200__tile--baseline,
+.ideum08-test-ref-arch .ideum07-ref200-submenu__bucket-content--baseline .ideum08-ref200__tile--baseline {
+  flex: 0 1 54%;
+  max-height: 54%;
+}
+
+.ideum08-test-ref-arch .ideum07-ref200-submenu__bucket-content--baseline .ideum08-ref200__toggle-stack {
+  flex: 1 1 auto;
+}
+
 .ideum08-ref200__toggle-stack {
   --ideum08-sw-h: clamp(56px, 7.5vh, 76px);
   --ideum08-sw-w: clamp(148px, 24vw, 240px);
@@ -162,7 +173,7 @@
 .ideum07-ref200-submenu .ideum07-ref200__side-title.ideum07-subnav-title {
   flex: 0 0 auto;
   width: max-content;
-  max-width: 38%;
+  max-width: 46%;
   height: 100%;
   min-height: 0;
   margin: 0;
@@ -190,7 +201,7 @@
   transform: translateX(-50%) rotate(45deg);
 }
 
-.ideum07-ref200-submenu .ideum07-ref200__side-title-text {
+.ideum07-ref200-submenu .ideum07-root-subcard .ideum07-ref200__side-title-text {
   display: block;
   width: max-content;
   max-height: 100%;
@@ -207,6 +218,16 @@
   writing-mode: vertical-rl;
   text-orientation: mixed;
   transform: rotate(180deg);
+}
+
+.ideum07-ref200-submenu .ideum07-root-subcard .ideum07-ref200__side-title-text--wrap {
+  height: 100%;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.ideum07-ref200__keep-case {
+  text-transform: none;
 }
 
 .ideum07-ref200__tile--side-title .ideum07-ref200__preview {
@@ -433,6 +454,11 @@
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
+}
+
+.ideum08-ref200__toggle-stack .ideum08-ref200__toggle:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 .ideum08-ref200__toggle-stack .ideum08-ref200__toggle:hover {

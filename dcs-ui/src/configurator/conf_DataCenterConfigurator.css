@@ -2072,6 +2072,20 @@
   background: linear-gradient(180deg, #e4ebf0 0%, #d5dee6 100%);
 }
 
+.conf-ideum-capex-stepper--locked,
+.conf-ideum-capex-stepper--locked.conf-ideum-capex-stepper--gas {
+  border-color: #9aa8b2;
+  background: linear-gradient(180deg, #eef1f3 0%, #e2e7eb 100%);
+}
+
+.conf-ideum-capex-stepper--locked .conf-ideum-capex-stepper__number,
+.conf-ideum-capex-stepper--locked .conf-ideum-capex-field__unit,
+.conf-ideum-capex-stepper--locked .conf-ideum-capex-field__suffix,
+.conf-ideum-capex-stepper--locked .conf-ideum-capex-stepper__label,
+.conf-ideum-capex-stepper--locked .conf-ideum-capex-stepper__btn {
+  color: #8b97a1;
+}
+
 .conf-ideum-capex-stepper__label {
   grid-column: 1 / -1;
   margin: 0;

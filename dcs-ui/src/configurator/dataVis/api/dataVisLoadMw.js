@@ -48,11 +48,12 @@ export function readDataVisLoadMwTier() {
   return readPersistedWacoLoadTier();
 }
 
-/** Tier on every dataVis / preload call — defaults to 1000 MW until a load button picks 200. */
+/** Tier on every dataVis / preload call. Wisconsin with no button yet stays on 200 MW. */
 export function effectiveDataVisLoadMwTier(stateId) {
-  const study = effectiveMartinStudy(stateId);
-  if (study === MARTIN_STUDY_BADGER) return 200;
-  return readPersistedWacoLoadTier() ?? DEFAULT_WACO_LOAD_TIER;
+  const persisted = readPersistedWacoLoadTier();
+  if (persisted != null) return persisted;
+  if (effectiveMartinStudy(stateId) === MARTIN_STUDY_BADGER) return 200;
+  return DEFAULT_WACO_LOAD_TIER;
 }
 
 export function clearPersistedWacoLoadTier() {
@@ -94,10 +95,11 @@ export function inputsWithEffectiveWacoLoadTier(inputs) {
   if (!inputs || typeof inputs !== 'object') return inputs;
   const stateId = inputs.stateId || stateIdForMartinStudy(readPersistedMartinStudy());
   const martinStudy = martinStudyForStateId(stateId);
+  const requested = normalizeWacoLoadTier(inputs.loadMW);
   return {
     ...inputs,
     stateId,
-    loadMW: stateId === 'wisconsin' ? 200 : effectiveDataVisLoadMwTier(stateId),
+    loadMW: requested ?? effectiveDataVisLoadMwTier(stateId),
     martinStudy,
   };
 }

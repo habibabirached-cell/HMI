@@ -23,7 +23,11 @@ router = APIRouter(prefix="/dataVis", tags=["configurator-dataVis"])
 
 def _open_dataset(body) -> None:
     service.ensure_waco_tier(body.loadMW, body.martinStudy)
-    bind_technology_capex(getattr(body, "technologyCapex", None), body.loadMW)
+    bind_technology_capex(
+        getattr(body, "technologyCapex", None),
+        body.loadMW,
+        getattr(body, "martinStudy", None),
+    )
 
 
 @router.get("/health")

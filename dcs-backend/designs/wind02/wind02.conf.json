@@ -816,35 +816,36 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.7983145254950605,
+    "zoom": 0.9772727272727273,
     "pan": {
       "x": 77.5730006731857,
       "y": 204.3541008964296
     },
     "panTop": {
-      "x": 77.5730006731857,
-      "y": 204.3541008964296
+      "x": -254.8136363636364,
+      "y": -51.38181818181815
     },
     "panBottom": {
-      "x": 40,
-      "y": 80
+      "x": 6.638636363636503,
+      "y": 1141.627272727273
     },
-    "quadBottomRowShare": 51.5,
+    "quadBottomRowShare": 50,
     "mode": "design",
     "uiFontPxShift": 14,
     "canvasFontPxShift": 20,
     "collapsedComponentFontPxShift": 24,
     "splitPaneTitles": null,
     "designViewMode": "canvas",
-    "workspaceLayoutPreset": "conf5"
+    "workspaceLayoutPreset": "conf5",
+    "chartSideDockFractions": {}
   },
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1792377679121-0": 32,
-    "sim-chart-1792377679121-1": 32,
-    "sim-chart-1792377679121-2": 32
+    "sim-chart-1792431591486-0": 32,
+    "sim-chart-1792431591486-1": 32,
+    "sim-chart-1792431591487-2": 32
   },
   "playbackTimeRange": {
     "t1": 15.0,

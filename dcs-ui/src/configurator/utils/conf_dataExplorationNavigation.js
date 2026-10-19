@@ -52,15 +52,6 @@ function publishExplorationTarget(url) {
   }
 }
 
-function explorationTabIsAlive() {
-  try {
-    const at = Number(window.localStorage.getItem(EXPLORATION_ALIVE_KEY) || 0);
-    return Number.isFinite(at) && Date.now() - at < 5000;
-  } catch {
-    return false;
-  }
-}
-
 function claimThisPageAsExplorationWindow() {
   if (typeof window === 'undefined') return;
   try {
@@ -154,6 +145,7 @@ function explorationWindowIsOpen(win) {
 }
 
 function openNamedExplorationWindow(url) {
+  publishExplorationTarget(url);
   const existing = explorationWindowIsOpen(explorationWindow) ? explorationWindow : null;
   if (existing) {
     try {
@@ -163,14 +155,16 @@ function openNamedExplorationWindow(url) {
       existing.focus();
       return existing;
     } catch {
-      /* the open tab also listens for the storage target below */
+      /* fall through and open by name */
     }
   }
-  if (explorationTabIsAlive()) {
-    publishExplorationTarget(url);
-    return existing;
+  // A stale heartbeat must not skip the popup: if that tab is gone, nothing
+  // would appear. window.open with the shared name focuses it when it still
+  // exists, and creates it otherwise. If this inputs page already has that
+  // name, clear it first so the click does not navigate away from Inputs.
+  if (window.name === DATA_EXPLORATION_WINDOW_NAME) {
+    window.name = '';
   }
-  publishExplorationTarget(url);
   const win = window.open(url, DATA_EXPLORATION_WINDOW_NAME);
   if (win) explorationWindow = win;
   try {

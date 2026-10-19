@@ -301,9 +301,6 @@ def generate_martin_configurator_result(
     max_cfe_fraction = min(1.0, max(0.0, max_cfe_percent / 100.0))
 
     martin_study = resolve_martin_study_from_inputs(inputs)
-    if martin_study == MARTIN_STUDY_BADGER:
-        waco_tier = 200
-        load_mw = 200.0
 
     try:
         df = load_martin_dataframe(load_mw=waco_tier, martin_study=martin_study)
@@ -314,7 +311,12 @@ def generate_martin_configurator_result(
             "details": [str(exc)],
         }
 
-    df, capex_info = apply_capex_fuel_lcoe(df, inputs.get("technologyCapex"), load_mw)
+    df, capex_info = apply_capex_fuel_lcoe(
+        df,
+        inputs.get("technologyCapex"),
+        load_mw,
+        martin_study=martin_study,
+    )
 
     if datavis_filters:
         filtered = apply_filters(df, datavis_filters)
@@ -372,7 +374,7 @@ def generate_martin_configurator_result(
             {
                 "state": "Wisconsin",
                 "city": "Badger Hollow Creek",
-                "study": "Martin Badger Hollow Creek 200 MW DOE",
+                "study": f"Martin Badger Hollow Creek {int(load_mw)} MW DOE",
             }
             if martin_study == MARTIN_STUDY_BADGER
             else {
@@ -399,6 +401,7 @@ def generate_martin_configurator_result(
             "lcoe": int(round(portfolio_lcoe)),
             "lcoeCapexApplied": bool(capex_info.get("applied")),
             "lcoeCapexPending": capex_info.get("reason") == "missing-columns",
+            "lcoeCapexLocked": capex_info.get("reason") == "wisconsin-1000",
             "capexFuelAdjustment": (
                 round(_num(winner, COL_ADJUSTMENT, 1.0), 4)
                 if capex_info.get("applied")

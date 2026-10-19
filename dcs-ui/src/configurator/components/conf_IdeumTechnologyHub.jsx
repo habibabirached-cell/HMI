@@ -136,7 +136,7 @@ const COMING_SOON_RIBBONS = {
   fuelCell: 'Coming in 2027',
   recipEngine: 'Coming soon',
 };
-function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
+function TechCapexPanel({ techId, capex, onCapexChange, loadMW, locked = false }) {
   const patch = useCallback((field, raw) => {
     onCapexChange(setTechnologyCapexField(capex, techId, field, raw));
   }, [capex, onCapexChange, techId]);
@@ -154,6 +154,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
         value={ideumCapexDisplayValue(capex.solar.capexPerKwAc, loadMW)}
         wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.solarPerKwAc, loadMW)}
         onCommit={(v) => commitKwCapex('capexPerKwAc', v)}
+        locked={locked}
       />
     );
   }
@@ -166,6 +167,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
         value={ideumCapexDisplayValue(capex.wind.capexPerKw, loadMW)}
         wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
         onCommit={(v) => commitKwCapex('capexPerKw', v)}
+        locked={locked}
       />
     );
   }
@@ -179,6 +181,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
           value={ideumCapexDisplayValue(capex.aeroderivativeGT.capexPerKw, loadMW)}
           wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
           onCommit={(v) => commitKwCapex('capexPerKw', v)}
+          locked={locked}
         />
         <ConfCapexValueField
           id="conf-capex-aero-gas"
@@ -188,6 +191,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
           wheelPreset={CAPEX_WHEEL_PRESETS.gasPricePerMmbtu}
           formatDisplay={formatGasPriceDisplay}
           onCommit={(v) => patch('gasPricePerMmbtu', v)}
+          locked={locked}
         />
       </div>
     );
@@ -227,6 +231,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
           value={ideumCapexDisplayValue(capex.heavyDutyGT.capexPerKw, loadMW)}
           wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.generationPerKw, loadMW)}
           onCommit={(v) => commitKwCapex('capexPerKw', v)}
+          locked={locked}
         />
         <ConfCapexValueField
           id="conf-capex-hd-gas"
@@ -236,6 +241,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
           wheelPreset={CAPEX_WHEEL_PRESETS.gasPricePerMmbtu}
           formatDisplay={formatGasPriceDisplay}
           onCommit={(v) => patch('gasPricePerMmbtu', v)}
+          locked={locked}
         />
       </div>
     );
@@ -249,6 +255,7 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW }) {
         value={ideumCapexDisplayValue(capex.battery.capexPerKwh, loadMW)}
         wheelOptions={ideumCapexWheelOptionsForLoad(CAPEX_WHEEL_PRESETS.bessEnergyPerKwh, loadMW)}
         onCommit={(v) => commitKwCapex('capexPerKwh', v)}
+        locked={locked}
       />
     );
   }
@@ -360,6 +367,7 @@ function HubTechCard({
   cardRef,
   onCapexChange,
   loadMW,
+  capexLocked = false,
   capacityBand = null,
 }) {
   const gridArea = BOTTOM_TIER_SLOTS.has(meta.slot)
@@ -401,6 +409,7 @@ function HubTechCard({
               capex={capex}
               onCapexChange={onCapexChange}
               loadMW={loadMW}
+              locked={capexLocked}
             />
           ) : null}
         </div>
@@ -483,6 +492,7 @@ export default function ConfIdeumTechnologyHub({
   technologyCapex,
   onCapexChange,
   loadMW = 200,
+  capexLocked = false,
   loadEditor = null,
   gridEditor = null,
   corridor,
@@ -533,6 +543,7 @@ export default function ConfIdeumTechnologyHub({
           cardRef={(el) => { cardRefs.current[tech.id] = el; }}
           onCapexChange={onCapexChange}
           loadMW={loadMW}
+          capexLocked={capexLocked}
           capacityBand={renewableCapacityBands?.[tech.id]}
         />
       ))}
@@ -548,6 +559,7 @@ export default function ConfIdeumTechnologyHub({
             cardRef={(el) => { cardRefs.current[tech.id] = el; }}
             onCapexChange={onCapexChange}
             loadMW={loadMW}
+            capexLocked={capexLocked}
             capacityBand={renewableCapacityBands?.[tech.id]}
           />
         ))}

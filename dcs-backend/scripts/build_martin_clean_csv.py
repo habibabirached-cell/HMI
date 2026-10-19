@@ -15,7 +15,12 @@ from configurator.dataVis.dataset_mode import (
     LOAD_COMPLIANCE_COL,
 )
 from configurator.dataVis.export_clean_csv import export_badger_hollow_creek, export_waco_tier
-from configurator.dataVis.paths import WACO_WORKBOOK_BY_LOAD_MW, badger_workbook_path, waco_workbook_path
+from configurator.dataVis.paths import (
+    BADGER_WORKBOOK_BY_LOAD_MW,
+    WACO_WORKBOOK_BY_LOAD_MW,
+    badger_workbook_path,
+    waco_workbook_path,
+)
 
 
 def _summary_line(source_name: str, out: Path, full_rows: int, clean_rows: int) -> str:
@@ -33,8 +38,19 @@ def main() -> None:
         _summary_line(WACO_WORKBOOK_BY_LOAD_MW[200], out, full_rows, clean_rows)
     )
 
-    out, full_rows, clean_rows = export_badger_hollow_creek()
-    summaries.append(_summary_line(badger_workbook_path().name, out, full_rows, clean_rows))
+    out, full_rows, clean_rows = export_badger_hollow_creek(200)
+    summaries.append(_summary_line(badger_workbook_path(200).name, out, full_rows, clean_rows))
+
+    badger_1gw = badger_workbook_path(1000)
+    if badger_1gw.is_file():
+        out, full_rows, clean_rows = export_badger_hollow_creek(1000)
+        summaries.append(
+            _summary_line(BADGER_WORKBOOK_BY_LOAD_MW[1000], out, full_rows, clean_rows)
+        )
+    else:
+        summaries.append(
+            f"Skipped Badger 1000 MW ({badger_1gw.name} not present; kept existing clean CSV if any)"
+        )
 
     workbook_1gw = waco_workbook_path(1000)
     if workbook_1gw.is_file():

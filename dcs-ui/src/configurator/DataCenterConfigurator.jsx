@@ -68,7 +68,7 @@ import {
   WACO_LOAD_TIER_CHANGED_EVENT,
 } from './dataVis/api/dataVisLoadMw';
 import { effectiveMartinStudy, readPersistedMartinStudy, stateIdForMartinStudy } from './utils/conf_martinStudy';
-import { DEFAULT_WACO_LOAD_TIER } from './utils/conf_wacoLoadTier';
+import { DEFAULT_WACO_LOAD_TIER, normalizeWacoLoadTier } from './utils/conf_wacoLoadTier';
 import {
   applyDataVisDatasetMode,
   DATA_QUALITY_CLEAN,
@@ -146,7 +146,8 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
       const study = readPersistedMartinStudy();
       const stateId = stateIdForMartinStudy(study);
       if (stateId === 'wisconsin') {
-        return { ...base, stateId, cityId: 'madison_wi', loadMW: 200 };
+        const tier = normalizeWacoLoadTier(loadMW) ?? 200;
+        return { ...base, stateId, cityId: 'madison_wi', loadMW: tier };
       }
       return base;
     }
@@ -310,7 +311,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
   useEffect(() => {
     if (!isIdeumMode) return undefined;
     const stateId = inputs.stateId || stateIdForMartinStudy(readPersistedMartinStudy());
-    const tier = stateId === 'wisconsin' ? 200 : effectiveDataVisLoadMwTier(stateId);
+    const tier = effectiveDataVisLoadMwTier(stateId);
     persistWacoLoadTierForDataVis(tier);
     let cancelled = false;
     void preloadWacoWithDatasetQuality(tier, null, stateId).then((nextMode) => {
