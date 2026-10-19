@@ -38,9 +38,11 @@ export default function ConfConfigDetailsTable({ mix }) {
                   </td>
                   <td>{formatPercent(row.energySharePercent, 1)}</td>
                   <td>
-                    {row.utilization != null
-                      ? formatCyclesPerDay(row.utilization)
-                      : formatPercent((row.capacityFactor ?? 0) * 100, 0)}
+                    {row.id === 'hd7ha02' || row.id === 'lm2500g4' || row.id === 'heavyDutyGT' || row.id === 'aeroderivativeGT'
+                      ? 'Thermal CF'
+                      : row.utilization != null
+                        ? formatCyclesPerDay(row.utilization)
+                        : formatPercent((row.capacityFactor ?? 0) * 100, 0)}
                   </td>
                   <td>{row.cfeClass}</td>
                   <td>{formatGWh(row.energyContributionGWh)}</td>

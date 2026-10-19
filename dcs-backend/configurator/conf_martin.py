@@ -56,6 +56,13 @@ def _kwh_to_gwh(kwh: float) -> float:
     return kwh * _KWH_TO_GWH
 
 
+def _bess_capacity_factor(aep_kwh: float, nameplate_mw: float) -> float | None:
+    """Year 1 BESS AEP (kWh) / 8760 / BESS power Nameplate (MW) / 1000."""
+    if aep_kwh <= 0 or nameplate_mw <= 0:
+        return None
+    return aep_kwh / 8760.0 / nameplate_mw / 1000.0
+
+
 def _capacity_factor_gwh(peak_load_mw: float, gwh: float) -> float | None:
     """Share of a year at the data center's peak load that this energy would cover."""
     if peak_load_mw <= 0 or gwh <= 0:
@@ -120,13 +127,16 @@ def _build_supply_mix_from_row(
     thermal_kwh = _num(row, "Year 1 7HA+LM2500 AEP (kWh)")
     if thermal_kwh <= 0:
         thermal_kwh = _num(row, "Year 1 LM2500 AEP (kWh)")
+    # The workbook stores one thermal energy total for 7HA and LM2500 together.
+    thermal_gwh = _kwh_to_gwh(thermal_kwh) if thermal_kwh > 0 else 0.0
     thermal_mw = ha_mw + lm_mw
-    if thermal_mw > 0 and thermal_kwh > 0:
-        ha_gwh = _kwh_to_gwh(thermal_kwh * (ha_mw / thermal_mw))
-        lm_gwh = _kwh_to_gwh(thermal_kwh * (lm_mw / thermal_mw))
+    if thermal_mw > 0 and thermal_gwh > 0:
+        ha_gwh = thermal_gwh * (ha_mw / thermal_mw)
+        lm_gwh = thermal_gwh * (lm_mw / thermal_mw)
     else:
         ha_gwh = 0.0
         lm_gwh = 0.0
+    thermal_cf = _capacity_factor_gwh(peak_load_mw, thermal_gwh)
 
     portfolio_lcoe = _num(row, COL_LCOE)
     candidates: list[dict[str, Any]] = []
@@ -138,10 +148,15 @@ def _build_supply_mix_from_row(
         lcoe_col: str,
         *,
         utilization: float | None = None,
+        capacity_factor: float | None = None,
+        use_peak_load: bool = True,
         **kwargs: Any,
     ) -> None:
         lcoe_val = _num(row, lcoe_col, portfolio_lcoe) if lcoe_col else portfolio_lcoe
-        cf = None if utilization is not None else _capacity_factor_gwh(peak_load_mw, gwh)
+        if use_peak_load and utilization is None and capacity_factor is None:
+            cf = _capacity_factor_gwh(peak_load_mw, gwh)
+        else:
+            cf = capacity_factor
         built = _mix_row(
             tech_id=tech_id,
             installed_mw=mw,
@@ -156,17 +171,50 @@ def _build_supply_mix_from_row(
 
     add("solar", solar_mw, solar_gwh, "Solar LCOE ($/MWh)")
     add("wind", wind_mw, wind_gwh, "Wind LCOE ($/MWh)")
-    bess_cycles = _num(row, "BESS usage (cycle/day)")
     add(
         "battery",
         bess_mw,
         bess_gwh,
         "BESS LCOE ($/MWh)",
         battery_mwh=bess_mwh if bess_mwh > 0 else None,
-        utilization=bess_cycles,
+        capacity_factor=_bess_capacity_factor(_num(row, "Year 1 BESS AEP (kWh)"), bess_mw),
+        use_peak_load=False,
     )
-    add("hd7ha02", ha_mw, ha_gwh, "7HA LCOE ($/MWh)", unit_count=ha_units if ha_units > 0 else None)
-    add("lm2500g4", lm_mw, lm_gwh, "LM2500 LCOE ($/MWh)", unit_count=lm_units if lm_units > 0 else None)
+    add(
+        "hd7ha02",
+        ha_mw,
+        ha_gwh,
+        "7HA LCOE ($/MWh)",
+        unit_count=ha_units if ha_units > 0 else None,
+        capacity_factor=None,
+        use_peak_load=False,
+    )
+    add(
+        "lm2500g4",
+        lm_mw,
+        lm_gwh,
+        "LM2500 LCOE ($/MWh)",
+        unit_count=lm_units if lm_units > 0 else None,
+        capacity_factor=None,
+        use_peak_load=False,
+    )
+    if thermal_cf is not None and (ha_mw > 0 or lm_mw > 0):
+        candidates.append(
+            {
+                "id": "thermal",
+                "label": "Thermal CF",
+                "fullLabel": "Thermal CF",
+                "assetClass": "Thermal",
+                "installedMW": 0,
+                "batteryMWh": None,
+                "capacityFactor": thermal_cf,
+                "utilization": None,
+                "energyContributionGWh": 0,
+                "lcoe": None,
+                "cfeClass": "",
+                "capacityFactorOnly": True,
+            }
+        )
 
     total_energy = sum(r["energyContributionGWh"] for r in candidates)
     if total_energy <= 0:
@@ -339,7 +387,7 @@ def generate_martin_configurator_result(
             f"and ≥{reliability_target:.2f}% Year 1 load compliance."
         ),
         "totalInstalledMW": total_installed,
-        "supplyMix": rows,
+        "supplyMix": [r for r in rows if not r.get("capacityFactorOnly")],
         "kpis": {
             "installedCapacityMW": total_installed,
             "achievedReliability": achieved_rel,
@@ -362,6 +410,7 @@ def generate_martin_configurator_result(
                 "utilization": r["utilization"],
             }
             for r in rows
+            if r.get("capacityFactorOnly") or r.get("capacityFactor") is not None or r.get("utilization") is not None
         ],
         "curtailment": {
             "solarCurtailmentPercent": None,

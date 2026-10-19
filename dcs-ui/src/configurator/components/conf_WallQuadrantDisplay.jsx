@@ -50,7 +50,7 @@ function WallDetailsTable({ mix }) {
                   : ''}
                 {row.batteryMWh ? ` / ${Math.round(row.batteryMWh).toLocaleString()} MWh` : ''}
               </td>
-              <td>{formatPercent(row.capacitySharePercent ?? row.energySharePercent, 2)}</td>
+              <td>{formatPercent(row.energySharePercent, 2)}</td>
               <td>{formatGWh(row.energyContributionGWh)}</td>
             </tr>
           ))}

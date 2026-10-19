@@ -341,6 +341,10 @@
   align-items: center;
 }
 
+.dataVis-exploreWall__kpisPane .conf-bar-chunk__grid--no-wheel {
+  grid-template-columns: minmax(108px, 24cqi) minmax(0, 1fr) minmax(104px, 26cqi);
+}
+
 .dataVis-exploreWall__kpisPane .conf-capacity-bars .conf-result-section > h3,
 .dataVis-exploreWall__kpisPane .conf-bar-chunk > h3 {
   flex-shrink: 0;

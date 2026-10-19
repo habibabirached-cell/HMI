@@ -155,18 +155,23 @@ function formatUnitCountSuffix(asset) {
 }
 
 function formatAssetCapacityLine(asset) {
-  const share = asset.capacitySharePercent ?? asset.percent ?? 0;
   const mwText = compactMW(asset.installedMW);
-  const shareText = formatPercent(share, 2);
   const unitsText = formatUnitCountSuffix(asset);
   if (asset.batteryMWh) {
     const mwhText = Math.round(asset.batteryMWh).toLocaleString();
-    return `capacity: ${mwText} (${shareText})${unitsText} / ${mwhText} MWh`;
+    return `capacity: ${mwText}${unitsText} / ${mwhText} MWh`;
   }
-  return `capacity: ${mwText} (${shareText})${unitsText}`;
+  return `capacity: ${mwText}${unitsText}`;
 }
 
-function formatAssetUtilizationLine(asset, cfRow) {
+const THERMAL_ASSET_IDS = new Set(['hd7ha02', 'lm2500g4', 'heavyDutyGT', 'aeroderivativeGT']);
+
+function formatAssetUtilizationLine(assetId, cfRow, thermalRow) {
+  if (THERMAL_ASSET_IDS.has(assetId)) {
+    if (thermalRow?.capacityFactor == null) return 'Thermal CF: —';
+    return `Thermal CF: ${formatPercent(thermalRow.capacityFactor * 100, 0)}`;
+  }
+
   if (!cfRow) return 'Utilization: —';
 
   if (cfRow.utilization != null) {
@@ -174,8 +179,7 @@ function formatAssetUtilizationLine(asset, cfRow) {
   }
 
   if (cfRow.capacityFactor != null) {
-    const utilMw = asset.installedMW * cfRow.capacityFactor;
-    return `Utilization: ${compactMW(utilMw)} (${formatPercent(cfRow.capacityFactor * 100, 0)})`;
+    return `Utilization: ${formatPercent(cfRow.capacityFactor * 100, 0)}`;
   }
 
   return 'Utilization: —';
@@ -186,6 +190,7 @@ function ArchitectureAssetCard({ asset, slot, capacityFactors }) {
   const isStorage = isStorageTechnology(asset.id);
   const title = asset.fullLabel || asset.label;
   const cfRow = capacityFactorForAsset(capacityFactors, asset.id);
+  const thermalRow = capacityFactorForAsset(capacityFactors, 'thermal');
 
   return (
     <article
@@ -203,7 +208,7 @@ function ArchitectureAssetCard({ asset, slot, capacityFactors }) {
       </header>
       <ArchitectureModelPreview spec={spec} />
       <footer className="conf-arch-canvas__asset-foot">
-        {formatAssetUtilizationLine(asset, cfRow)}
+        {formatAssetUtilizationLine(asset.id, cfRow, thermalRow)}
       </footer>
     </article>
   );

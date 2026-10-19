@@ -44,18 +44,20 @@ function BarGroup({
   maxValue,
   renderValue,
   wheelSlices,
+  showWheel = true,
   className,
   variant,
 }) {
   const isWall = variant === 'wall';
   const rowCount = rows.length;
+  const wheelOn = showWheel && wheelSlices?.length > 0;
 
   return (
     <section className={`conf-result-section ${isWall ? 'conf-bar-chunk' : ''} ${className || ''}`.trim()}>
       <h3>{title}</h3>
       {isWall ? (
         <div
-          className="conf-bar-chunk__grid"
+          className={`conf-bar-chunk__grid${wheelOn ? '' : ' conf-bar-chunk__grid--no-wheel'}`}
           style={{ gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))` }}
         >
           {rows.map((row) => {
@@ -78,9 +80,11 @@ function BarGroup({
               </React.Fragment>
             );
           })}
-          <div className="conf-bar-chunk__wheel" style={{ gridRow: `1 / ${rowCount + 1}` }}>
-            <ChunkDonut slices={wheelSlices} />
-          </div>
+          {wheelOn && (
+            <div className="conf-bar-chunk__wheel" style={{ gridRow: `1 / ${rowCount + 1}` }}>
+              <ChunkDonut slices={wheelSlices} />
+            </div>
+          )}
         </div>
       ) : (
         <div className="conf-bar-list">
@@ -137,11 +141,6 @@ export default function ConfCapacityBars({ mix, capacityFactors, variant }) {
     weight: row.sharePercent,
   }));
 
-  const utilizationWheelSlices = cfRows.map((row) => ({
-    id: row.id,
-    weight: row.isUtil ? row.raw.utilization : row.raw.capacityFactor * 100,
-  }));
-
   return (
     <div className={`conf-capacity-bars${variant === 'wall' ? ' conf-capacity-bars--wall' : ''}`}>
       <BarGroup
@@ -158,11 +157,11 @@ export default function ConfCapacityBars({ mix, capacityFactors, variant }) {
       />
       {cfRows.length > 0 && (
         <BarGroup
-          title="Utilization (CF % or cycles/day)"
+          title="Utilization (CF %)"
           className="conf-capacity-factor"
           rows={cfRows}
           maxValue={maxCf}
-          wheelSlices={utilizationWheelSlices}
+          showWheel={false}
           variant={variant}
           renderValue={(row) => (
             row.isUtil

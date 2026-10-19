@@ -3855,6 +3855,14 @@
   align-items: center;
 }
 
+.conf-bar-chunk__grid--no-wheel {
+  grid-template-columns: minmax(100px, 22%) 1fr auto;
+}
+
+.conf-bar-chunk__grid--no-wheel .conf-bar-row__value--after-wheel {
+  grid-column: 3;
+}
+
 .conf-bar-chunk__wheel {
   grid-column: 3;
   display: flex;
@@ -5356,6 +5364,10 @@ body.conf-wall-bezel-dragging-both {
   min-height: 0;
   grid-template-columns: minmax(72px, 14cqi) 1fr minmax(140px, 26cqi) minmax(84px, 20cqi);
   gap: clamp(2px, 0.25cqi, 5px) clamp(6px, 0.6cqi, 10px);
+}
+
+.conf-wall-quadrant--supply .conf-bar-chunk__grid--no-wheel {
+  grid-template-columns: minmax(72px, 14cqi) 1fr minmax(84px, 20cqi);
 }
 
 .conf-wall-quadrant--supply .conf-bar-chunk__wheel {

@@ -545,6 +545,8 @@ const ChartPanel = ({
   insetLeft = 0,
   insetRight = 0,
   layoutMode = 'bottom',
+  /** Bumped when the layout menu (#1–#5) is chosen, so a hidden chart drawer opens. */
+  expandRequest = 0,
   headerBottomPx = 64,
   sidePanelWidth = 420,
   onSidePanelWidthChange,
@@ -599,6 +601,15 @@ const ChartPanel = ({
       /* ignore */
     }
   }, [rscadWallChartsOpen]);
+  useEffect(() => {
+    if (!expandRequest) return;
+    setIsCollapsed(false);
+    try {
+      window.localStorage.setItem('dcsChartPanelCollapsed', '0');
+    } catch {
+      /* ignore */
+    }
+  }, [expandRequest]);
 
   const toggleChartCollapse = () => {
     if (rscadWallChartsOpen) return;

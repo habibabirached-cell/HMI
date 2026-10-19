@@ -10,6 +10,7 @@ export const CONF_TECHNOLOGY_COLORS = {
   solar: '#F5A623',
   wind: '#4A90D9',
   battery: '#7B68EE',
+  thermal: '#005E60',
   fuelCell: '#6B8E23',
   recipEngine: '#8B6914',
 };

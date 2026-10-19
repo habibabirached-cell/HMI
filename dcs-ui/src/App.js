@@ -798,6 +798,7 @@ function App() {
     workspaceLayoutPreset === 'conf4' ||
     workspaceLayoutPreset === 'conf5';
   const controlsLeftInsetPx = viewMode === 'designer' ? COMPONENT_LIBRARY_WIDTH_PX : 0;
+  const [chartDrawerExpandRequest, setChartDrawerExpandRequest] = useState(0);
   const handleWorkspaceLayoutPresetChange = useCallback((preset) => {
     if (preset === 'conf1' || preset === 'conf2' || preset === 'conf3' || preset === 'conf4' || preset === 'conf5') {
       if (preset === 'conf3') {
@@ -811,6 +812,12 @@ function App() {
         });
       }
       setWorkspaceLayoutPreset(preset);
+      try {
+        window.localStorage.setItem('dcsChartPanelCollapsed', '0');
+      } catch {
+        /* ignore */
+      }
+      setChartDrawerExpandRequest((n) => n + 1);
     }
   }, []);
   const handleChartSideDockWidthChange = useCallback((w) => {
@@ -10965,6 +10972,7 @@ function App() {
           insetLeft={chartPanelLeftInset}
           insetRight={chartPanelRightInset}
           layoutMode={chartPanelLayoutMode}
+          expandRequest={chartDrawerExpandRequest}
           headerBottomPx={headerBottomPx}
           sidePanelWidth={chartSideDockWidth}
           onSidePanelWidthChange={handleChartSideDockWidthChange}
