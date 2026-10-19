@@ -131,15 +131,24 @@ def _build_supply_mix_from_row(
     portfolio_lcoe = _num(row, COL_LCOE)
     candidates: list[dict[str, Any]] = []
 
-    def add(tech_id: str, mw: float, gwh: float, lcoe_col: str, **kwargs: Any) -> None:
+    def add(
+        tech_id: str,
+        mw: float,
+        gwh: float,
+        lcoe_col: str,
+        *,
+        utilization: float | None = None,
+        **kwargs: Any,
+    ) -> None:
         lcoe_val = _num(row, lcoe_col, portfolio_lcoe) if lcoe_col else portfolio_lcoe
-        cf = _capacity_factor_gwh(peak_load_mw, gwh)
+        cf = None if utilization is not None else _capacity_factor_gwh(peak_load_mw, gwh)
         built = _mix_row(
             tech_id=tech_id,
             installed_mw=mw,
             energy_gwh=gwh,
             lcoe=lcoe_val if lcoe_val > 0 else None,
             capacity_factor=cf,
+            utilization=utilization,
             **kwargs,
         )
         if built:
@@ -147,13 +156,14 @@ def _build_supply_mix_from_row(
 
     add("solar", solar_mw, solar_gwh, "Solar LCOE ($/MWh)")
     add("wind", wind_mw, wind_gwh, "Wind LCOE ($/MWh)")
+    bess_cycles = _num(row, "BESS usage (cycle/day)")
     add(
         "battery",
         bess_mw,
         bess_gwh,
         "BESS LCOE ($/MWh)",
         battery_mwh=bess_mwh if bess_mwh > 0 else None,
-        utilization=None,
+        utilization=bess_cycles,
     )
     add("hd7ha02", ha_mw, ha_gwh, "7HA LCOE ($/MWh)", unit_count=ha_units if ha_units > 0 else None)
     add("lm2500g4", lm_mw, lm_gwh, "LM2500 LCOE ($/MWh)", unit_count=lm_units if lm_units > 0 else None)

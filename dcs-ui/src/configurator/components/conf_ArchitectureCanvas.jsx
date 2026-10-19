@@ -23,7 +23,7 @@ import {
   layoutAssetsAroundHub,
   sortArchitectureAssets,
 } from '../utils/conf_architectureModels';
-import { formatMWExact, formatPercent } from '../utils/conf_formatters';
+import { formatCyclesPerDay, formatMWExact, formatPercent } from '../utils/conf_formatters';
 import { getTechnologyColor } from '../utils/conf_technologyColors';
 import { useConf3d } from '../utils/conf_3dContext';
 
@@ -170,8 +170,7 @@ function formatAssetUtilizationLine(asset, cfRow) {
   if (!cfRow) return 'Utilization: —';
 
   if (cfRow.utilization != null) {
-    const avgMw = asset.installedMW * cfRow.utilization * 2.5 / 24;
-    return `Utilization: ${compactMW(avgMw)} (${cfRow.utilization.toFixed(1)} cycles/day)`;
+    return `Utilization: ${formatCyclesPerDay(cfRow.utilization)}`;
   }
 
   if (cfRow.capacityFactor != null) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { getTechnologyColor } from '../utils/conf_technologyColors';
-import { formatMWExact, formatPercent } from '../utils/conf_formatters';
+import { formatCyclesPerDay, formatMWExact, formatPercent } from '../utils/conf_formatters';
 
 function polar(cx, cy, r, angleDeg) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -125,7 +125,7 @@ export default function ConfCapacityBars({ mix, capacityFactors, variant }) {
     .map((r) => ({
       id: r.id,
       label: r.label,
-      value: r.capacityFactor != null ? r.capacityFactor * 100 : r.utilization * 10,
+      value: r.utilization != null ? r.utilization : (r.capacityFactor ?? 0) * 100,
       isUtil: r.utilization != null,
       raw: r,
     }));
@@ -166,7 +166,7 @@ export default function ConfCapacityBars({ mix, capacityFactors, variant }) {
           variant={variant}
           renderValue={(row) => (
             row.isUtil
-              ? `${row.raw.utilization.toFixed(1)} cycles/day`
+              ? formatCyclesPerDay(row.raw.utilization)
               : formatPercent(row.raw.capacityFactor * 100, 0)
           )}
         />

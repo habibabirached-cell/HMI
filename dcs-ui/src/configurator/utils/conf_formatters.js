@@ -21,6 +21,13 @@ export function formatPercent(value, decimals = 1) {
   return `${n.toFixed(decimals)}%`;
 }
 
+/** Battery cycles/day: the number only, with no percent sign. */
+export function formatCyclesPerDay(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return String(Math.round(n * 100) / 100);
+}
+
 /** Waco CFE column is 0–1; KPIs may already be 0–100. */
 export function normalizeCfePercentValue(value) {
   const n = Number(value);

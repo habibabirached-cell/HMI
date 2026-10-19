@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatMWExact, formatPercent, formatGWh } from '../utils/conf_formatters';
+import { formatCyclesPerDay, formatMWExact, formatPercent, formatGWh } from '../utils/conf_formatters';
 
 export default function ConfConfigDetailsTable({ mix }) {
   const [open, setOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function ConfConfigDetailsTable({ mix }) {
                   <td>{formatPercent(row.energySharePercent, 1)}</td>
                   <td>
                     {row.utilization != null
-                      ? `${row.utilization.toFixed(1)} cycles/day`
+                      ? formatCyclesPerDay(row.utilization)
                       : formatPercent((row.capacityFactor ?? 0) * 100, 0)}
                   </td>
                   <td>{row.cfeClass}</td>
