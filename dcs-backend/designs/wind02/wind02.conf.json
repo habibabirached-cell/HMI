@@ -818,8 +818,8 @@
     "simulationRunning": false,
     "zoom": 0.7983145254950605,
     "pan": {
-      "x": -186.4269993268143,
-      "y": -11.6458991035704
+      "x": 77.5730006731857,
+      "y": 204.3541008964296
     },
     "panTop": {
       "x": 120,
@@ -842,9 +842,9 @@
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
   "perChartSampleStep": {
-    "sim-chart-1792376727836-0": 32,
-    "sim-chart-1792376727836-1": 32,
-    "sim-chart-1792376727836-2": 32
+    "sim-chart-1792377679121-0": 32,
+    "sim-chart-1792377679121-1": 32,
+    "sim-chart-1792377679121-2": 32
   },
   "playbackTimeRange": {
     "t1": 15.0,
