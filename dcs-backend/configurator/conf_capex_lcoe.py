@@ -83,6 +83,7 @@ def capex_fuel_factors(technology_capex: dict[str, Any] | None, load_mw: object)
     aero = wheel_unit_capex((capex.get("aeroderivativeGT") or {}).get("capexPerKw"), load_mw)
     bess = wheel_unit_capex((capex.get("battery") or {}).get("capexPerKwh"), load_mw)
     fuel = _positive((capex.get("aeroderivativeGT") or {}).get("gasPricePerMmbtu"), FUEL_PRICE_DEFAULT)
+    hd_fuel = _positive((capex.get("heavyDutyGT") or {}).get("gasPricePerMmbtu"), FUEL_PRICE_DEFAULT)
     return {
         "solar": _factor(solar, SOLAR_CAPEX_DEFAULT),
         "wind": _factor(wind, WIND_CAPEX_DEFAULT),
@@ -90,6 +91,7 @@ def capex_fuel_factors(technology_capex: dict[str, Any] | None, load_mw: object)
         "aero": _factor(aero, AERO_CAPEX_DEFAULT),
         "bess": _factor(bess, BESS_CAPEX_DEFAULT),
         "fuel": _factor(fuel, FUEL_PRICE_DEFAULT),
+        "hdFuel": _factor(hd_fuel, FUEL_PRICE_DEFAULT),
     }
 
 
@@ -121,6 +123,133 @@ def _blend(
     return blended
 
 
+# Capital fraction of each technology LCOE at the study prices, measured on the
+# 200 MW sheet (CAPEX LCOE / technology LCOE). The 1 GW sheet only stores the
+# combined technology LCOE, so the same fractions scale its CAPEX piece.
+_GW_CAPEX_SHARE = {
+    "solar": 0.943,
+    "wind": 0.890,
+    "bess": 0.802,
+    "aero": 0.907,
+    "hdgt": 0.907,
+}
+_GW_FUEL_SHARE = 0.026
+_GW_COLUMNS = (
+    "Solar LCOE ($/MWh)",
+    "Wind LCOE ($/MWh)",
+    "BESS LCOE ($/MWh)",
+    "7HA LCOE ($/MWh)",
+    "LM2500 LCOE ($/MWh)",
+    "Year 1 Solar AEP (kWh)",
+    "Year 1 Wind AEP (kWh)",
+    "Year 1 BESS AEP (kWh)",
+    "Year 1 7HA+LM2500 AEP (kWh)",
+    "Total Yr1 AEP (GWh)",
+    COL_PROJECT_LCOE,
+)
+
+
+def _scale_capital(total: pd.Series, capex_share: float, adj: float) -> pd.Series:
+    return total * (capex_share * adj + (1.0 - capex_share))
+
+
+def _scale_turbine(
+    total: pd.Series,
+    capex_share: float,
+    fuel_share: float,
+    capex_adj: float,
+    fuel_adj: float,
+) -> pd.Series:
+    om_share = max(0.0, 1.0 - capex_share - fuel_share)
+    return total * (capex_share * capex_adj + fuel_share * fuel_adj + om_share)
+
+
+def _project_adjustment(
+    out: pd.DataFrame,
+    blended_user: pd.Series,
+    blended_default: pd.Series,
+) -> tuple[pd.Series, pd.Series]:
+    adjustment = pd.Series(1.0, index=out.index, dtype="float64")
+    valid = blended_default > 0
+    if bool(valid.any()):
+        ratio = (blended_user.loc[valid] / blended_default.loc[valid]).to_numpy(dtype="float64")
+        adjustment.loc[valid] = np.where(np.isfinite(ratio), ratio, 1.0)
+    if COL_PROJECT_LCOE_DEFAULT in out.columns:
+        project_default = _col(out, COL_PROJECT_LCOE_DEFAULT)
+    else:
+        project_default = _col(out, COL_PROJECT_LCOE)
+    return project_default, project_default * adjustment
+
+
+def _apply_gw_capex_fuel_lcoe(
+    df: pd.DataFrame,
+    factors: dict[str, float],
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """1 GW sheet has technology LCOEs but not the CAPEX / O&M / fuel split."""
+    missing = [name for name in _GW_COLUMNS if name not in df.columns]
+    if missing:
+        return df, {"applied": False, "reason": "missing-columns", "missing": missing}
+
+    out = df.copy()
+    solar = _col(out, "Solar LCOE ($/MWh)")
+    wind = _col(out, "Wind LCOE ($/MWh)")
+    bess = _col(out, "BESS LCOE ($/MWh)")
+    ha = _col(out, "7HA LCOE ($/MWh)")
+    lm = _col(out, "LM2500 LCOE ($/MWh)")
+    solar_aep = _col(out, "Year 1 Solar AEP (kWh)")
+    wind_aep = _col(out, "Year 1 Wind AEP (kWh)")
+    bess_aep = _col(out, "Year 1 BESS AEP (kWh)")
+    gas_aep = _col(out, "Year 1 7HA+LM2500 AEP (kWh)")
+    ha_capex = _col(out, "7HA CAPEX ($ M)")
+    lm_capex = _col(out, "LM2500 CAPEX ($ M)")
+    capex_sum = ha_capex + lm_capex
+    ha_share = (ha_capex / capex_sum).where(capex_sum > 0, 0.0)
+    # A row with gas energy but no dollar split keeps that energy on the 7HA.
+    ha_share = ha_share.where(capex_sum > 0, 1.0)
+    ha_aep = gas_aep * ha_share
+    lm_aep = gas_aep * (1.0 - ha_share)
+    total_gwh = _col(out, "Total Yr1 AEP (GWh)")
+
+    solar_user = _scale_capital(solar, _GW_CAPEX_SHARE["solar"], factors["solar"])
+    wind_user = _scale_capital(wind, _GW_CAPEX_SHARE["wind"], factors["wind"])
+    bess_user = _scale_capital(bess, _GW_CAPEX_SHARE["bess"], factors["bess"])
+    ha_user = _scale_turbine(ha, _GW_CAPEX_SHARE["hdgt"], _GW_FUEL_SHARE, factors["hdgt"], factors["hdFuel"])
+    lm_user = _scale_turbine(lm, _GW_CAPEX_SHARE["aero"], _GW_FUEL_SHARE, factors["aero"], factors["fuel"])
+
+    def _gw_blend(solar_lcoe, wind_lcoe, bess_lcoe, ha_lcoe, lm_lcoe) -> pd.Series:
+        numerator = (
+            solar_lcoe * solar_aep
+            + wind_lcoe * wind_aep
+            + bess_lcoe * bess_aep
+            + ha_lcoe * ha_aep
+            + lm_lcoe * lm_aep
+        )
+        denominator = total_gwh * 1_000_000.0
+        return numerator / denominator.where(denominator > 0)
+
+    blended_user = _gw_blend(solar_user, wind_user, bess_user, ha_user, lm_user)
+    blended_default = _gw_blend(solar, wind, bess, ha, lm)
+    project_default, project_user = _project_adjustment(out, blended_user, blended_default)
+    adjustment = pd.Series(1.0, index=out.index, dtype="float64")
+    valid = project_default > 0
+    if bool(valid.any()):
+        ratio = (project_user.loc[valid] / project_default.loc[valid]).to_numpy(dtype="float64")
+        adjustment.loc[valid] = np.where(np.isfinite(ratio), ratio, 1.0)
+
+    out[COL_PROJECT_LCOE_DEFAULT] = project_default
+    out[COL_PROJECT_LCOE] = project_user
+    out[COL_BLENDED_DEFAULT] = blended_default
+    out[COL_BLENDED_USER] = blended_user
+    out[COL_ADJUSTMENT] = adjustment
+    out[COL_PROJECT_USER] = project_user
+    out["Solar LCOE ($/MWh)"] = solar_user
+    out["Wind LCOE ($/MWh)"] = wind_user
+    out["BESS LCOE ($/MWh)"] = bess_user
+    out["7HA LCOE ($/MWh)"] = ha_user
+    out["LM2500 LCOE ($/MWh)"] = lm_user
+    return out, {"applied": True, "reason": "1000mw", "factors": factors}
+
+
 def apply_capex_fuel_lcoe(
     df: pd.DataFrame,
     technology_capex: dict[str, Any] | None,
@@ -128,15 +257,15 @@ def apply_capex_fuel_lcoe(
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Return a frame whose Project LCOE includes the user's CAPEX and gas price.
 
-    The cached study frame is not modified. When the workbook has no CAPEX / O&M
-    split (the 1 GW case), the original frame is returned unchanged.
+    The cached study frame is not modified.
     """
     if not isinstance(technology_capex, dict):
         return df, {"applied": False, "reason": "no-capex"}
 
     missing = [name for name in _REQUIRED if name not in df.columns]
     if missing:
-        return df, {"applied": False, "reason": "missing-columns", "missing": missing}
+        factors = capex_fuel_factors(technology_capex, load_mw)
+        return _apply_gw_capex_fuel_lcoe(df, factors)
 
     factors = capex_fuel_factors(technology_capex, load_mw)
     out = df.copy()
