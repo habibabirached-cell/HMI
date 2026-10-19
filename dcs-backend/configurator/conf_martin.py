@@ -56,10 +56,11 @@ def _kwh_to_gwh(kwh: float) -> float:
     return kwh * _KWH_TO_GWH
 
 
-def _capacity_factor_gwh(mw: float, gwh: float) -> float | None:
-    if mw <= 0 or gwh <= 0:
+def _capacity_factor_gwh(peak_load_mw: float, gwh: float) -> float | None:
+    """Share of a year at the data center's peak load that this energy would cover."""
+    if peak_load_mw <= 0 or gwh <= 0:
         return None
-    denom = mw * 8760.0 / 1000.0
+    denom = peak_load_mw * 8760.0 / 1000.0
     if denom <= 0:
         return None
     return gwh / denom
@@ -97,7 +98,10 @@ def _mix_row(
     return row
 
 
-def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], float, float, float, float]:
+def _build_supply_mix_from_row(
+    row: pd.Series,
+    peak_load_mw: float,
+) -> tuple[list[dict[str, Any]], float, float, float, float]:
     solar_mw = _num(row, "Solar AC Nameplate (MWac)")
     wind_mw = _num(row, "Wind Nameplate (MWac)")
     bess_mw = _num(row, "BESS power Nameplate (MW)")
@@ -129,7 +133,7 @@ def _build_supply_mix_from_row(row: pd.Series) -> tuple[list[dict[str, Any]], fl
 
     def add(tech_id: str, mw: float, gwh: float, lcoe_col: str, **kwargs: Any) -> None:
         lcoe_val = _num(row, lcoe_col, portfolio_lcoe) if lcoe_col else portfolio_lcoe
-        cf = _capacity_factor_gwh(mw, gwh)
+        cf = _capacity_factor_gwh(peak_load_mw, gwh)
         built = _mix_row(
             tech_id=tech_id,
             installed_mw=mw,
@@ -286,7 +290,7 @@ def generate_martin_configurator_result(
     else:
         martin_data_vis_row_id = row_index
 
-    rows, total_energy, _cfe_energy, portfolio_lcoe, carbon = _build_supply_mix_from_row(winner)
+    rows, total_energy, _cfe_energy, portfolio_lcoe, carbon = _build_supply_mix_from_row(winner, load_mw)
     achieved_cfe_fraction = _num(winner, COL_CFE)
     achieved_cfe_percent = achieved_cfe_fraction * 100.0
     achieved_rel = _num(winner, COL_LOAD_COMPLIANCE)
