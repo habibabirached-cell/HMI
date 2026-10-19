@@ -201,12 +201,24 @@ export default function TestReferenceArchitectureSubmenu({
                 fitScale={1.0}
                 modelYOffset={0.04}
                 cameraPitchLift={0.38}
-                pressState={running && bessOn ? 'on' : 'off'}
+                pressState={bessOn ? 'on' : 'off'}
                 onPress={() => {
-                  if (!running || rscad.busy) return;
-                  void sendRscadAddBess().then((result) => {
-                    if (result.ok) setBessOn(true);
-                  });
+                  if (running && rscad.busy) return;
+                  void (async () => {
+                    if (onIdeumCommand) {
+                      await onIdeumCommand(REF200_IDEUM_COMMANDS.addBess);
+                    }
+                    if (!running) {
+                      setBessOn(true);
+                      setMvupsOn(false);
+                      return;
+                    }
+                    const result = await sendRscadAddBess();
+                    if (result.ok) {
+                      setBessOn(true);
+                      setMvupsOn(false);
+                    }
+                  })();
                 }}
               />
               <SubmenuModelTile
@@ -215,14 +227,24 @@ export default function TestReferenceArchitectureSubmenu({
                 label="Add MVUPS"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
                 previewImageAlt="Medium-voltage UPS skid"
-                pressState={running && mvupsOn ? 'on' : 'off'}
+                pressState={mvupsOn ? 'on' : 'off'}
                 onPress={() => {
-                  if (!running || rscad.busy) return;
-                  void sendRscadAddMvups().then((result) => {
+                  if (running && rscad.busy) return;
+                  void (async () => {
+                    if (onIdeumCommand) {
+                      await onIdeumCommand(REF200_IDEUM_COMMANDS.addMvups);
+                    }
+                    if (!running) {
+                      setMvupsOn(true);
+                      setBessOn(false);
+                      return;
+                    }
+                    const result = await sendRscadAddMvups();
                     if (!result.ok) return;
                     setMvupsOn(true);
+                    setBessOn(false);
                     setLoadMode('ai');
-                  });
+                  })();
                 }}
               />
               <SubmenuModelTile

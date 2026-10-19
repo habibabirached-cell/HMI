@@ -10,6 +10,53 @@ export function getChartPanelMaxSideWidthPx() {
   return Math.floor(window.innerWidth * 0.55);
 }
 
+/** Open here when a layout configuration has never saved a drawer width. */
+export const CHART_PANEL_DEFAULT_SIDE_FRACTION = 0.5;
+
+export const CHART_DOCK_PRESETS = ['conf1', 'conf2', 'conf3', 'conf4', 'conf5'];
+
+const CHART_DOCK_MAX_FRACTION = 0.55;
+
+export function clampChartSideDockWidthPx(px) {
+  const maxW = getChartPanelMaxSideWidthPx();
+  const n = Number(px);
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const fallback = Math.round(width * CHART_PANEL_DEFAULT_SIDE_FRACTION);
+  if (!Number.isFinite(n)) {
+    return Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, fallback));
+  }
+  return Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(n)));
+}
+
+/** Keep only saved fractions for the five layout configurations. */
+export function sanitizeChartDockFractions(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const key of CHART_DOCK_PRESETS) {
+    const n = Number(raw[key]);
+    if (Number.isFinite(n) && n > 0 && n <= CHART_DOCK_MAX_FRACTION + 0.001) {
+      out[key] = Math.min(CHART_DOCK_MAX_FRACTION, n);
+    }
+  }
+  return out;
+}
+
+/** Pixel width for one layout configuration. Missing entries open at half the screen. */
+export function chartDockPxForPreset(fractions, preset) {
+  const saved = fractions?.[preset];
+  const frac = Number.isFinite(saved) && saved > 0
+    ? saved
+    : CHART_PANEL_DEFAULT_SIDE_FRACTION;
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  return clampChartSideDockWidthPx(width * frac);
+}
+
+export function fractionForChartDockPx(px) {
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  if (!width) return CHART_PANEL_DEFAULT_SIDE_FRACTION;
+  return Math.min(CHART_DOCK_MAX_FRACTION, clampChartSideDockWidthPx(px) / width);
+}
+
 /** Fraction of viewport height the tray may use when resizing (user-requested ~90%). */
 export const CHART_PANEL_MAX_HEIGHT_VIEWPORT = 0.9;
 

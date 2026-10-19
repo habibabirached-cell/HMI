@@ -229,9 +229,10 @@ import { isFormulaParquetScenarioId } from './utils/formulaParquetUi';
 import { FORMULA_PARQUET_DISPLAY_NAME } from './utils/formulaParquetUi';
 import {
   CHART_PANEL_MIN_HEIGHT,
-  CHART_PANEL_MIN_SIDE_WIDTH,
   getChartPanelMaxHeightPx,
-  getChartPanelMaxSideWidthPx,
+  chartDockPxForPreset,
+  fractionForChartDockPx,
+  sanitizeChartDockFractions,
   clampChartPanelOpacity,
   CHART_PANEL_OPACITY_DEFAULT,
 } from './utils/chartPanelLimits';
@@ -746,28 +747,23 @@ function App() {
       /* ignore */
     }
   }, [workspaceLayoutPreset]);
-  const [chartSideDockWidth, setChartSideDockWidth] = useState(() => {
+  const [chartDockFractions, setChartDockFractions] = useState(() => {
     try {
-      const n = Number(window.localStorage?.getItem('dcsChartSideDockWidth'));
-      if (Number.isFinite(n)) {
-        const maxW =
-          typeof window !== 'undefined'
-            ? getChartPanelMaxSideWidthPx()
-            : 900;
-        return Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(n)));
-      }
+      return sanitizeChartDockFractions(
+        JSON.parse(window.localStorage?.getItem('dcsChartSideDockFractions') || '{}'),
+      );
     } catch {
-      /* ignore */
+      return {};
     }
-    return 420;
   });
+  const chartSideDockWidth = chartDockPxForPreset(chartDockFractions, workspaceLayoutPreset);
   useEffect(() => {
     try {
-      window.localStorage.setItem('dcsChartSideDockWidth', String(chartSideDockWidth));
+      window.localStorage.setItem('dcsChartSideDockFractions', JSON.stringify(chartDockFractions));
     } catch {
       /* ignore */
     }
-  }, [chartSideDockWidth]);
+  }, [chartDockFractions]);
   const chartPanelLayoutMode = useMemo(() => {
     if (
       workspaceLayoutPreset === 'conf2' ||
@@ -821,11 +817,9 @@ function App() {
     }
   }, []);
   const handleChartSideDockWidthChange = useCallback((w) => {
-    const maxW = getChartPanelMaxSideWidthPx();
-    setChartSideDockWidth(
-      Math.min(maxW, Math.max(CHART_PANEL_MIN_SIDE_WIDTH, Math.round(w))),
-    );
-  }, []);
+    const fraction = fractionForChartDockPx(w);
+    setChartDockFractions((prev) => ({ ...prev, [workspaceLayoutPreset]: fraction }));
+  }, [workspaceLayoutPreset]);
   /** conf2: fixed gap between Controls rail and the right-hand chart strip (not a second margin on the chart). */
   const CONTROLS_CHART_GAP_PX = 10;
   /** Chart strip insets: component library on the left; conf1 reserves the right Controls rail. */
@@ -3874,6 +3868,7 @@ function App() {
                 splitPaneTitles,
                 designViewMode,
                 workspaceLayoutPreset,
+                chartSideDockFractions: chartDockFractions,
               },
             },
           }),
@@ -3916,6 +3911,7 @@ function App() {
       splitPaneTitles,
       designViewMode,
       workspaceLayoutPreset,
+      chartDockFractions,
     ],
   );
 
@@ -4672,12 +4668,10 @@ function App() {
 
   /** HIL Test Reference Architecture — Maingear wall uses p2r_chil catalog. */
   const handleIdeumTestRefArchCommand = useCallback(
-    (command) => {
-      void handleIdeumControlButtonClick({
-        command,
-        maingearCatalog: IDEUM05_P2R_CHIL_MAINGEAR_CATALOG,
-      });
-    },
+    (command) => handleIdeumControlButtonClick({
+      command,
+      maingearCatalog: IDEUM05_P2R_CHIL_MAINGEAR_CATALOG,
+    }),
     [handleIdeumControlButtonClick],
   );
 
@@ -5374,11 +5368,7 @@ function App() {
     if (workspaceLayoutPreset !== 'conf3') {
       handleWorkspaceLayoutPresetChange('conf3');
     }
-    const half = typeof window !== 'undefined' ? Math.floor(window.innerWidth * 0.5) : 0;
-    if (half > 0 && chartSideDockWidth < half) {
-      setChartSideDockWidth(getChartPanelMaxSideWidthPx());
-    }
-  }, [openCharts, workspaceLayoutPreset, chartSideDockWidth, handleWorkspaceLayoutPresetChange]);
+  }, [openCharts, workspaceLayoutPreset, handleWorkspaceLayoutPresetChange]);
 
   useEffect(() => {
     if (!pendingRscadWallRef.current) return;
@@ -5386,7 +5376,6 @@ function App() {
     pendingRscadWallRef.current = false;
     rscadWallShownRef.current = true;
     handleWorkspaceLayoutPresetChange('conf3');
-    setChartSideDockWidth(getChartPanelMaxSideWidthPx());
     setChartStacks([]);
     setPerChartSampleStep({});
     setOpenCharts(buildRscadWallOpenCharts());
@@ -5399,16 +5388,19 @@ function App() {
 
   const applyP2r18DesignOnlyPreset = useCallback(
     async (presetName, effectiveShortcut) => {
-      stopLiveRtdsStream();
-      handleStopSimulation();
+      const keepRscadWall = openChartsRef.current.some(isRscadWallChart);
+      if (!keepRscadWall) {
+        stopLiveRtdsStream();
+        handleStopSimulation();
+        setOpenCharts([]);
+        setChartStacks([]);
+        setPerChartSampleStep({});
+        setActiveNamedSimulationConfig(null);
+        activeNamedSimulationConfigRef.current = null;
+        setLastNamedPresetForUi(null);
+        setQuickScenarioDesignPrimedPreset(null);
+      }
       handleWorkspaceLayoutPresetChange('conf3');
-      setOpenCharts([]);
-      setChartStacks([]);
-      setPerChartSampleStep({});
-      setActiveNamedSimulationConfig(null);
-      activeNamedSimulationConfigRef.current = null;
-      setLastNamedPresetForUi(null);
-      setQuickScenarioDesignPrimedPreset(null);
       setP2r18CanvasPreset(presetName);
       p2r18CanvasPresetRef.current = presetName;
 
@@ -5787,7 +5779,6 @@ function App() {
       });
       const showRscadWall = (resetSeries) => {
         handleWorkspaceLayoutPresetChange('conf3');
-        setChartSideDockWidth(getChartPanelMaxSideWidthPx());
         setChartStacks([]);
         setPerChartSampleStep({});
         setOpenCharts(buildRscadWallOpenCharts());
@@ -6637,6 +6628,7 @@ function App() {
         splitPaneTitles,
         designViewMode,
         workspaceLayoutPreset,
+        chartSideDockFractions: chartDockFractions,
       },
     };
   }, [
@@ -6669,6 +6661,7 @@ function App() {
     splitPaneTitles,
     designViewMode,
     workspaceLayoutPreset,
+    chartDockFractions,
     quadChartDrawers,
   ]);
 
@@ -9207,8 +9200,10 @@ function App() {
       ) {
         setWorkspaceLayoutPreset(restoredLayout);
       }
+      setChartDockFractions(sanitizeChartDockFractions(data.systemState.chartSideDockFractions));
     } else {
       setDesignViewMode('canvas');
+      setChartDockFractions({});
     }
 
     // Chart tray is filled when user picks a scenario, or restored via pendingDesignUiRestoreRef.
@@ -9361,6 +9356,7 @@ function App() {
         splitPaneTitles,
         designViewMode,
         workspaceLayoutPreset,
+        chartSideDockFractions: chartDockFractions,
       },
     };
   };
