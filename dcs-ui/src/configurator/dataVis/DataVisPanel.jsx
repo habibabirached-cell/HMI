@@ -47,6 +47,7 @@ import {
   readStoredFilterBinCount,
 } from './utils/dataVisHistogramBins';
 import {
+  CONFIGURATOR_EXPLORE_SYNC_EVENT,
   exploreSyncPayloadFromMessage,
   martinInputsFromExploreFilters,
   persistConfiguratorInputsForDataVis,
@@ -463,6 +464,14 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     if (payload?.at) lastExploreSyncAtRef.current = payload.at;
     handleExploreSyncPayloadRef.current(payload);
   }, []);
+
+  useEffect(() => {
+    const onSamePageSync = (event) => {
+      if (event?.detail) deliverExploreSync(event.detail);
+    };
+    window.addEventListener(CONFIGURATOR_EXPLORE_SYNC_EVENT, onSamePageSync);
+    return () => window.removeEventListener(CONFIGURATOR_EXPLORE_SYNC_EVENT, onSamePageSync);
+  }, [deliverExploreSync]);
 
   useEffect(() => {
     let cancelled = false;

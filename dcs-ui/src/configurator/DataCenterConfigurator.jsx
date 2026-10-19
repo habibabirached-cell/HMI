@@ -44,9 +44,12 @@ import { useWallDisplayKeepAlive } from './utils/conf_wallDisplayKeepAlive';
 import { API_BASE_URL } from '../apiConfig';
 import { fetchMachineRole, resolveMaingearPeerPostBase } from '../utils/clusterPeer';
 import {
+  CONFIGURATOR_EXPLORE_SYNC_EVENT,
   configuratorInputsToDataVisRanges,
   publishConfiguratorExploreSync,
+  subscribeConfiguratorExploreSync,
 } from './dataVis/utils/dataVisConfiguratorSync';
+import { createDefaultTechnologyCapex } from './utils/conf_technologyCapex';
 import {
   logExploreSyncResult,
   postConfiguratorExploreSync,
@@ -261,6 +264,47 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     return () => {
       cancelled = true;
     };
+  }, [isIdeumMode]);
+
+  const resetInstalledCapexAndGas = useCallback(() => {
+    const technologyCapex = createDefaultTechnologyCapex();
+    const next = { ...inputs, technologyCapex };
+    setInputs(next);
+    const tiered = inputsWithEffectiveWacoLoadTier(next);
+    const payload = publishConfiguratorExploreSync(tiered, uiMode);
+    lastExploreSyncFingerprintRef.current = JSON.stringify({
+      ranges: configuratorInputsToDataVisRanges(tiered),
+      loadMW: tiered.loadMW,
+      stateId: tiered.stateId,
+      uiMode,
+      technologyCapex: tiered.technologyCapex,
+    });
+    window.dispatchEvent(new CustomEvent(CONFIGURATOR_EXPLORE_SYNC_EVENT, { detail: payload }));
+    void (async () => {
+      try {
+        const role = await fetchMachineRole().catch(() => null);
+        const peerBase = role?.isIdeum ? resolveMaingearPeerPostBase(role) : '';
+        if (peerBase) {
+          await postConfiguratorExploreSyncToPeer(peerBase, tiered, uiMode);
+          return;
+        }
+        await postConfiguratorExploreSync(null, tiered, uiMode);
+      } catch (err) {
+        console.warn('[configurator] reset CAPEX sync failed:', err?.message || err);
+      }
+    })();
+  }, [inputs, uiMode]);
+
+  useEffect(() => {
+    if (!isIdeumMode) return undefined;
+    return subscribeConfiguratorExploreSync((payload) => {
+      const nextCapex = payload?.inputs?.technologyCapex;
+      if (!nextCapex || typeof nextCapex !== 'object') return;
+      setInputs((prev) => {
+        if (JSON.stringify(prev.technologyCapex) === JSON.stringify(nextCapex)) return prev;
+        return { ...prev, technologyCapex: nextCapex };
+      });
+    });
   }, [isIdeumMode]);
 
   const pushExploreSyncToCluster = useCallback(async () => {
@@ -1045,6 +1089,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
             </div>
             {!IDEUM_HIDE_HEADER_CHROME && (onClose ? (
               <div className="conf-page-header__actions">
+                <button
+                  type="button"
+                  className="conf-capex-reset-btn"
+                  onClick={resetInstalledCapexAndGas}
+                  title="Restore installed CAPEX and gas prices to the study defaults"
+                >
+                  Reset CAPEX and gas
+                </button>
                 <Conf3dToggleButton />
                 <button
                   type="button"
@@ -1067,6 +1119,14 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
               </div>
             ) : (
               <div className="conf-page-header__actions">
+                <button
+                  type="button"
+                  className="conf-capex-reset-btn"
+                  onClick={resetInstalledCapexAndGas}
+                  title="Restore installed CAPEX and gas prices to the study defaults"
+                >
+                  Reset CAPEX and gas
+                </button>
                 <Conf3dToggleButton />
               </div>
             ))}

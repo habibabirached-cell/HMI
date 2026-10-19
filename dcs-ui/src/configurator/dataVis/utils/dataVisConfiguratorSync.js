@@ -8,6 +8,8 @@ import { normalizeWacoLoadTier } from '../../utils/conf_wacoLoadTier';
 import { fetchMachineRole } from '../../../utils/clusterPeer';
 
 export const DATAVIS_CONFIGURATOR_SYNC_CHANNEL = 'dcs-dataVis-configurator-filters-v1';
+/** Same-page copy of an explore sync. BroadcastChannel does not echo to the sender. */
+export const CONFIGURATOR_EXPLORE_SYNC_EVENT = 'dcs:configurator-explore-sync';
 export const DATAVIS_CONFIGURATOR_RANGES_STORAGE_KEY = 'dcs.dataVis.lastConfiguratorRanges';
 export const DATAVIS_CONFIGURATOR_INPUTS_STORAGE_KEY = 'dcs.dataVis.lastConfiguratorInputs';
 /** Dev new-tab / Maingear remote — localStorage (sessionStorage is per-tab). */
