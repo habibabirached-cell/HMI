@@ -144,13 +144,13 @@ export function formatGasPriceDisplay(value) {
   });
 }
 
-/** Touch-table wheel ranges. Spans include the study prices (1,600 / 2,000 / 2,500 / 3,000 / 238 / 3.50). */
+/** Arrow ranges. Installed CAPEX moves by 100. Gas moves by 0.50. Spans include the study prices (1,600 / 2,000 / 2,500 / 3,000 / 238 / 3.50). */
 export const CAPEX_WHEEL_PRESETS = {
-  solarPerKwAc: { min: 800, max: 3200, step: 25 },
-  generationPerKw: { min: 500, max: 4000, step: 25 },
-  bessPowerPerKw: { min: 200, max: 600, step: 5 },
-  bessEnergyPerKwh: { min: 100, max: 500, step: 1 },
-  gasPricePerMmbtu: { min: 2, max: 16, step: 0.25 },
+  solarPerKwAc: { min: 800, max: 3200, step: 100 },
+  generationPerKw: { min: 500, max: 4000, step: 100 },
+  bessPowerPerKw: { min: 200, max: 600, step: 100 },
+  bessEnergyPerKwh: { min: 100, max: 500, step: 100 },
+  gasPricePerMmbtu: { min: 2, max: 16, step: 0.5 },
 };
 
 export function buildCapexWheelOptions({ min, max, step }) {

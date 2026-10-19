@@ -13,10 +13,14 @@ import {
   SubmenuUseCaseTile,
 } from '../ideum08/Ref200MwSubmenu';
 import {
+  RSCAD_USE_OLD_SCENARIO,
   sendRscadAddBess,
   sendRscadAddMvups,
   sendRscadAiLoad,
   sendRscadBaseload,
+  sendRscadConnectEms,
+  sendRscadDisconnectEms,
+  sendRscadEmsFrequency,
   startRscadSimulation,
   stopRscadSimulation,
   subscribeRscadDriver,
@@ -73,12 +77,14 @@ export default function TestReferenceArchitectureSubmenu({
       setBessOn(false);
       setMvupsOn(false);
       setEmsFreqOn(false);
+      setEmsControl(false);
       return;
     }
     setLoadMode('off');
     setBessOn(false);
     setMvupsOn(false);
     setEmsFreqOn(false);
+    setEmsControl(false);
   }, [rscad.simulationId, running]);
 
   return (
@@ -138,7 +144,16 @@ export default function TestReferenceArchitectureSubmenu({
                 leftLabel="Manual Control"
                 rightLabel="EMS Control"
                 rightActive={emsControl}
-                onToggle={() => setEmsControl((on) => !on)}
+                onToggle={() => {
+                  if (running && rscad.busy) return;
+                  const next = !emsControl;
+                  setEmsControl(next);
+                  if (!running) return;
+                  const send = next ? sendRscadConnectEms : sendRscadDisconnectEms;
+                  void send().then((result) => {
+                    if (!result?.ok) setEmsControl(!next);
+                  });
+                }}
                 ariaLabel="Manual control or EMS control"
               />
               <button
@@ -219,8 +234,9 @@ export default function TestReferenceArchitectureSubmenu({
                   if (running && rscad.busy) return;
                   const prevBess = bessOn;
                   const prevMvups = mvupsOn;
+                  const clearsMvups = RSCAD_USE_OLD_SCENARIO;
                   setBessOn(true);
-                  setMvupsOn(false);
+                  if (clearsMvups) setMvupsOn(false);
                   void (async () => {
                     try {
                       if (onIdeumCommand) {
@@ -230,11 +246,11 @@ export default function TestReferenceArchitectureSubmenu({
                       const result = await sendRscadAddBess();
                       if (!result.ok) {
                         setBessOn(prevBess);
-                        setMvupsOn(prevMvups);
+                        if (clearsMvups) setMvupsOn(prevMvups);
                       }
                     } catch {
                       setBessOn(prevBess);
-                      setMvupsOn(prevMvups);
+                      if (clearsMvups) setMvupsOn(prevMvups);
                     }
                   })();
                 }}
@@ -250,8 +266,9 @@ export default function TestReferenceArchitectureSubmenu({
                   if (running && rscad.busy) return;
                   const prevBess = bessOn;
                   const prevMvups = mvupsOn;
+                  const clearsBess = RSCAD_USE_OLD_SCENARIO;
                   setMvupsOn(true);
-                  setBessOn(false);
+                  if (clearsBess) setBessOn(false);
                   void (async () => {
                     try {
                       if (onIdeumCommand) {
@@ -260,13 +277,13 @@ export default function TestReferenceArchitectureSubmenu({
                       if (!running) return;
                       const result = await sendRscadAddMvups();
                       if (!result.ok) {
-                        setBessOn(prevBess);
+                        if (clearsBess) setBessOn(prevBess);
                         setMvupsOn(prevMvups);
                         return;
                       }
                       setLoadMode('ai');
                     } catch {
-                      setBessOn(prevBess);
+                      if (clearsBess) setBessOn(prevBess);
                       setMvupsOn(prevMvups);
                     }
                   })();
@@ -317,7 +334,10 @@ export default function TestReferenceArchitectureSubmenu({
                 onPress={() => {
                   if (!running || rscad.busy) return;
                   void sendRscadBaseload().then((result) => {
-                    if (result.ok) setLoadMode('baseload');
+                    if (result.ok) {
+                      setLoadMode('baseload');
+                      setEmsFreqOn(false);
+                    }
                   });
                 }}
               />
@@ -341,8 +361,10 @@ export default function TestReferenceArchitectureSubmenu({
                 imageAlt="Control room holding grid frequency steady beside a substation"
                 pressState={emsFreqOn ? 'on' : 'off'}
                 onPress={() => {
-                  if (emsFreqOn) return;
-                  setEmsFreqOn(true);
+                  if (!running || rscad.busy || emsFreqOn) return;
+                  void sendRscadEmsFrequency().then((result) => {
+                    if (result.ok) setEmsFreqOn(true);
+                  });
                 }}
               />
             </div>

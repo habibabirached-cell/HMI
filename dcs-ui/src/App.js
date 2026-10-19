@@ -2041,6 +2041,25 @@ function App() {
     );
   }, []);
 
+  // Wind charts hide the first 15 s. Publish locks the playback window so Play
+  // draws those traces; do that lock here so Play does not need a Publish click.
+  const applyWindPlaybackRangeBeforePlay = () => {
+    const onWind = isWind02Design({
+      name: currentConfigName,
+      design_catalog_rel: designApiPath,
+      csv_status: { design_catalog_rel: designApiPath },
+    });
+    if (!onWind || !openChartsRef.current?.length) return;
+    const { range, charts } = applyPlaybackRangeToCharts(
+      openChartsRef.current,
+      playbackTimeRangeRef.current,
+    );
+    openChartsRef.current = charts;
+    playbackTimeRangeRef.current = range;
+    setPlaybackTimeRange(range);
+    setOpenCharts(charts);
+  };
+
   // Start simulation (plain play — wraps at playback t2)
   const handleStartSimulation = () => {
     if (simulationIntervalRef.current) {
@@ -2049,6 +2068,7 @@ function App() {
     simulationLoopModeRef.current = false;
     setSimulationLoopMode(false);
     const start = () => {
+      applyWindPlaybackRangeBeforePlay();
       const { loopStart, loopEnd } = getPlaybackLoopBounds();
       const loopStartTime = resolveEffectiveSimulationStart(
         openChartsRef.current,
@@ -2115,6 +2135,7 @@ function App() {
       });
 
     const start = () => {
+      applyWindPlaybackRangeBeforePlay();
       loopChartPlaybackStateRef.current = {};
       const loopStartTime = resolveLoopPlaybackGlobalStart(
         openChartsRef.current,

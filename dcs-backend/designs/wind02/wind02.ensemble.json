@@ -27,9 +27,9 @@
             "x_label": "Time (seconds)",
             "y_label": "Power (megawatts)",
             "legend_labels": {
-              "P_GFL": "Wind farm (14 meter / sec)",
-              "P_BESS": "Battery (14 meter / sec)",
-              "Pload": "Data center demand (14 meter / sec)"
+              "P_GFL": "Wind farm (14 meters / sec)",
+              "P_BESS": "Battery (14 meters / sec)",
+              "Pload": "Data center demand (14 meters / sec)"
             },
             "legend_title": "What this line is",
             "legend_position": {
@@ -69,7 +69,7 @@
               }
             ],
             "legend_labels": {
-              "wind14GFLWind_14ms_HMI — Vload_1": "14 meter / sec"
+              "wind14GFLWind_14ms_HMI — Vload_1": "14 meters / sec"
             },
             "legend_title": "Which case",
             "legend_position": {
@@ -112,7 +112,7 @@
               }
             ],
             "legend_labels": {
-              "wind14GFLWind_14ms_HMI — f_load": "14 meter / sec"
+              "wind14GFLWind_14ms_HMI — f_load": "14 meters / sec"
             },
             "legend_title": "Which case",
             "legend_position": {
@@ -190,9 +190,9 @@
             "x_label": "Time (seconds)",
             "y_label": "Power (megawatts)",
             "legend_labels": {
-              "P_GFL": "Wind farm (14 meter / sec)",
-              "P_BESS": "Battery (14 meter / sec)",
-              "Pload": "Data center demand (14 meter / sec)"
+              "P_GFL": "Wind farm (14 meters / sec)",
+              "P_BESS": "Battery (14 meters / sec)",
+              "Pload": "Data center demand (14 meters / sec)"
             },
             "legend_title": "What this line is",
             "legend_position": {
@@ -232,7 +232,7 @@
               }
             ],
             "legend_labels": {
-              "wind14GFLWind_14ms_HMI — Vload_1": "14 meter / sec"
+              "wind14GFLWind_14ms_HMI — Vload_1": "14 meters / sec"
             },
             "legend_title": "Which case",
             "legend_position": {
@@ -275,7 +275,7 @@
               }
             ],
             "legend_labels": {
-              "wind14GFLWind_14ms_HMI — f_load": "14 meter / sec"
+              "wind14GFLWind_14ms_HMI — f_load": "14 meters / sec"
             },
             "legend_title": "Which case",
             "legend_position": {

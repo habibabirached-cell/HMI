@@ -7,7 +7,6 @@ import React, {
 import {
   buildCapexWheelOptions,
   formatCapexDisplay,
-  nearestCapexWheelOption,
 } from '../utils/conf_technologyCapex';
 
 function StepChevron({ direction }) {
@@ -48,19 +47,18 @@ export default function ConfCapexValueField({
     [wheelOptions, wheelPreset],
   );
 
-  const indexForValue = useCallback((val) => {
-    const n = nearestCapexWheelOption(val, options);
-    const idx = options.indexOf(n);
-    return idx >= 0 ? idx : 0;
-  }, [options]);
+  const stepSize = options.length >= 2 ? options[1] - options[0] : 0;
+  const rangeMin = options.length ? options[0] : 0;
+  const rangeMax = options.length ? options[options.length - 1] : 0;
 
   const stepTo = useCallback((dir) => {
-    if (!options.length) return;
-    const base = indexForValue(value);
-    const nextIdx = Math.max(0, Math.min(options.length - 1, base + dir));
-    if (nextIdx === base) return;
-    onCommit(options[nextIdx]);
-  }, [indexForValue, onCommit, options, value]);
+    if (!options.length || stepSize <= 0) return;
+    const current = Number(value);
+    const base = Number.isFinite(current) ? current : rangeMin;
+    const next = Math.min(rangeMax, Math.max(rangeMin, Math.round((base + dir * stepSize) * 1000) / 1000));
+    if (next === base) return;
+    onCommit(next);
+  }, [onCommit, options.length, rangeMax, rangeMin, stepSize, value]);
 
   const stepToRef = useRef(stepTo);
   stepToRef.current = stepTo;
@@ -85,9 +83,9 @@ export default function ConfCapexValueField({
     holdRef.current = { delay, timer: null };
   }, [stopHold]);
 
-  const selectedIdx = options.length ? indexForValue(value) : 0;
-  const atMin = !options.length || selectedIdx <= 0;
-  const atMax = !options.length || selectedIdx >= options.length - 1;
+  const currentValue = Number(value);
+  const atMin = !options.length || !Number.isFinite(currentValue) || currentValue <= rangeMin;
+  const atMax = !options.length || !Number.isFinite(currentValue) || currentValue >= rangeMax;
 
   const press = (dir, blocked) => (e) => {
     if (locked || e.button !== 0 || blocked) return;

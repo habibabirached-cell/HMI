@@ -23,23 +23,35 @@ export function isRscadWallChart(chart) {
 export function rscadWallSampleFromMeters(meters, index) {
   if (!meters || typeof meters !== 'object') return null;
   if (meters.status || meters.error || meters.command) return null;
-  const present = ['P_UPS_LOAD', 'PMAC', 'W', 'VGB', 'LoadSideV_rms_pu'].some(
-    (key) => meters[key] != null && meters[key] !== '',
-  );
-  if (!present) return null;
-
-  const num = (key) => {
-    const value = Number(meters[key]);
-    return Number.isFinite(value) ? value : null;
+  const num = (...keys) => {
+    for (const key of keys) {
+      if (meters[key] == null || meters[key] === '') continue;
+      const value = Number(meters[key]);
+      if (Number.isFinite(value)) return value;
+    }
+    return null;
   };
-  const speed = num('W');
+  const loadDemand = num('P_UPS_LOAD');
+  const generator = num('PMAC1', 'PMAC');
+  const speed = num('W1', 'W');
+  const voltageLoad = num('LoadSideV_rms_pu');
+  const voltageGen = num('VGB1', 'VGB');
+  if (
+    loadDemand == null
+    && generator == null
+    && speed == null
+    && voltageLoad == null
+    && voltageGen == null
+  ) {
+    return null;
+  }
   return {
     t: index * RSCAD_SAMPLE_DT_S,
-    loadDemand: num('P_UPS_LOAD'),
-    generator: num('PMAC'),
+    loadDemand,
+    generator,
     frequency: speed == null ? null : speed / (2 * Math.PI),
-    voltageLoad: num('LoadSideV_rms_pu'),
-    voltageGen: num('VGB'),
+    voltageLoad,
+    voltageGen,
   };
 }
 

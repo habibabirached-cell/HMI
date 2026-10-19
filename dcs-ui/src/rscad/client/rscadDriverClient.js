@@ -41,7 +41,23 @@ function rscadPushbutton(id, name, position) {
   };
 }
 
-const START_MESSAGE = {
+function rscadSlider(id, name, value) {
+  return {
+    id,
+    name,
+    type: 'slider',
+    subtab: 'Draft',
+    subpage: 'SS #1',
+    properties: { value },
+  };
+}
+
+function rscadMeter(id, name) {
+  return { id, name, type: 'meter', subtab: 'Draft', subpage: 'SS #1' };
+}
+
+/** Previous case: CDC_LM8unit_2BESS_MVUPS.rtfx. Set RSCAD_USE_OLD_SCENARIO to send this again. */
+const OLD_START_MESSAGE = {
   command: 'start',
   body: {
     name: 'CDC_LM8unit_2BESS_MVUPS',
@@ -50,34 +66,51 @@ const START_MESSAGE = {
     streaming_interval: 0.1,
     prop_set_wait: 1,
     config: [
-      {
-        id: 75504,
-        name: 'Topology',
-        type: 'switch',
-        subtab: 'Draft',
-        subpage: 'SS #1',
-        properties: { position: 0 },
-      },
-      {
-        id: 75363,
-        name: 'AI_load',
-        type: 'switch',
-        subtab: 'Draft',
-        subpage: 'SS #1',
-        properties: { position: 0 },
-      },
+      rscadSwitch(75504, 'Topology', 0),
+      rscadSwitch(75363, 'AI_load', 0),
     ],
     output: [
-      { id: 24763, name: 'VGB', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 470, name: 'PMAC', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75586, name: 'P_UPS_LOAD', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75587, name: 'Q_UPS_LOAD', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75589, name: 'Vgridrms', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75588, name: 'LoadSideV_rms_pu', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75441, name: 'BESS1_MW_scale', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 75442, name: 'BESS2_MW_scale', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 24816, name: 'Simtime', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
-      { id: 2114, name: 'W', type: 'meter', subtab: 'Draft', subpage: 'SS #1' },
+      rscadMeter(24763, 'VGB'),
+      rscadMeter(470, 'PMAC'),
+      rscadMeter(75586, 'P_UPS_LOAD'),
+      rscadMeter(75587, 'Q_UPS_LOAD'),
+      rscadMeter(75589, 'Vgridrms'),
+      rscadMeter(75588, 'LoadSideV_rms_pu'),
+      rscadMeter(75441, 'BESS1_MW_scale'),
+      rscadMeter(75442, 'BESS2_MW_scale'),
+      rscadMeter(24816, 'Simtime'),
+      rscadMeter(2114, 'W'),
+    ],
+  },
+};
+
+// HMI - BUTTON - Start
+const START_MESSAGE = {
+  command: 'start',
+  body: {
+    name: 'CDC_LM8unit_2BESS_MVUPS',
+    do_compile_case: false,
+    model_file: 'CDC_LM8unit_2BESS_MVUPS\\Lm2500_8units_EMS_sig_upgraded_10152026.rtfx',
+    streaming_interval: 0.1,
+    prop_set_wait: 1,
+    config: [
+      rscadSwitch(59233, 'Topology', 0),
+      rscadSwitch(59241, 'AI_load', 0),
+      rscadSwitch(55240, 'SW99', 0),
+      rscadSlider(59237, 'PLoad_pu', 0.7),
+    ],
+    output: [
+      rscadMeter(62384, 'VGB1'),
+      rscadMeter(62386, 'PMAC1'),
+      rscadMeter(59248, 'P_UPS_LOAD'),
+      rscadMeter(59249, 'Q_UPS_LOAD'),
+      rscadMeter(59251, 'Vgridrms'),
+      rscadMeter(59250, 'LoadSideV_rms_pu'),
+      rscadMeter(55391, 'BESS1_MW_scale'),
+      rscadMeter(55393, 'BESS2_MW_scale'),
+      rscadMeter(55224, 'Simtime'),
+      rscadMeter(51951, 'W1'),
+      rscadMeter(55355, 'sRef1'),
     ],
   },
 };
@@ -224,7 +257,7 @@ export async function startRscadSimulation() {
     socket = ws;
     await waitForOpen(ws, CONNECT_TIMEOUT_MS, url);
     const pending = waitForReply(ws, START_TIMEOUT_MS);
-    ws.send(JSON.stringify(START_MESSAGE));
+    ws.send(JSON.stringify(activeScenario().start));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'Start failed');
@@ -309,40 +342,113 @@ async function sendRunningConfig(config) {
   }
 }
 
-/** AI Load: close the AI_load switch. */
-export function sendRscadAiLoad() {
-  return sendRunningConfig([rscadSwitch(75363, 'AI_load', 1)]);
-}
-
-/** Baseload: open the AI_load switch. */
-export function sendRscadBaseload() {
-  return sendRunningConfig([rscadSwitch(75363, 'AI_load', 0)]);
-}
-
-/** Add BESS: MVUPS off (Topology 0), then de-block both stacks and connect them. */
-export function sendRscadAddBess() {
-  return sendRunningConfig([
-    rscadSwitch(75504, 'Topology', 0),
+/**
+ * Previous case (CDC_LM8unit_2BESS_MVUPS.rtfx).
+ * Set RSCAD_USE_OLD_SCENARIO to true to send these again.
+ */
+export const oldScenario = {
+  start: OLD_START_MESSAGE,
+  aiLoad: [rscadSwitch(75363, 'AI_load', 1)],
+  baseload: [rscadSwitch(75363, 'AI_load', 0)],
+  addBess: [
     rscadPushbutton(75382, 'ST2DBlk', 1),
     rscadPushbutton(75378, 'ST1DBlk', 1),
     rscadPushbutton(75380, 'BESS1OnGrid', 1),
     rscadPushbutton(75384, 'BESS2OnGrid', 1),
-  ]);
-}
-
-/** Add MVUPS: take both batteries off the grid, then AI load off, Topology on, AI load back on. */
-export function sendRscadAddMvups() {
-  return sendRunningConfig([
-    rscadPushbutton(75382, 'ST2DBlk', 1),
-    rscadPushbutton(75378, 'ST1DBlk', 1),
-    rscadPushbutton(75380, 'BESS1OnGrid', 0),
-    rscadPushbutton(75384, 'BESS2OnGrid', 0),
+  ],
+  addMvups: [
     rscadSwitch(75363, 'AI_load', 0),
     rscadSwitch(75504, 'Topology', 1),
     rscadSwitch(75363, 'AI_load', 1),
-  ]);
+  ],
+};
+
+/**
+ * Live payloads from run_streaming_scenario.py (EMS case).
+ * Start, connect_ai_load_message, tunr_off_ai_load_message, connect_bess_message,
+ * connect_mvups_message, connect_EMS_message, disconnect_EMS_message,
+ * baseload_change_message (EMS frequency regulation). Stop is stop_simulation_message.
+ */
+const scenario = {
+  // HMI - BUTTON - Start
+  start: START_MESSAGE,
+  // HMI - BUTTON - AI Load
+  aiLoad: [rscadSwitch(59241, 'AI_load', 1)],
+  // HMI - BUTTON - Baseload
+  baseload: [
+    rscadSwitch(59241, 'AI_load', 0),
+    rscadSlider(59237, 'PLoad_pu', 0.75),
+  ],
+  // HMI - BUTTON - Add BESS
+  addBess: [
+    rscadPushbutton(52120, 'ST2DBlk', 1),
+    rscadPushbutton(52114, 'ST1DBlk', 1),
+    rscadPushbutton(52115, 'BESS1OnGrid', 1),
+    rscadPushbutton(52121, 'BESS2OnGrid', 1),
+  ],
+  // HMI - BUTTON - Add MVUPS
+  addMvups: [
+    rscadSwitch(59241, 'AI_load', 0),
+    rscadSwitch(59233, 'Topology', 1),
+    rscadSwitch(59241, 'AI_load', 1),
+  ],
+  // HMI - BUTTON - EMS Control
+  connectEms: [rscadSwitch(55240, 'SW99', 1)],
+  // HMI - BUTTON - Manual Control
+  disconnectEms: [rscadSwitch(55240, 'SW99', 0)],
+  // HMI - BUTTON - EMS Frequency Regulation
+  emsFrequency: [rscadSlider(59237, 'PLoad_pu', 0.9)],
+};
+
+/** Flip to true to send oldScenario instead of the messages in run_streaming_scenario.py. */
+export const RSCAD_USE_OLD_SCENARIO = false;
+
+function activeScenario() {
+  return RSCAD_USE_OLD_SCENARIO ? oldScenario : scenario;
 }
 
+/** AI Load: connect_ai_load_message. */
+export function sendRscadAiLoad() {
+  return sendRunningConfig(activeScenario().aiLoad);
+}
+
+/** Baseload: tunr_off_ai_load_message. */
+export function sendRscadBaseload() {
+  return sendRunningConfig(activeScenario().baseload);
+}
+
+/** Add BESS: connect_bess_message. Does not change the MVUPS topology switch. */
+export function sendRscadAddBess() {
+  return sendRunningConfig(activeScenario().addBess);
+}
+
+/** Add MVUPS: connect_mvups_message. AI load off, Topology on, AI load back on. */
+export function sendRscadAddMvups() {
+  return sendRunningConfig(activeScenario().addMvups);
+}
+
+/** EMS Control on: connect_EMS_message (SW99 = 1). */
+export function sendRscadConnectEms() {
+  const config = activeScenario().connectEms;
+  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
+  return sendRunningConfig(config);
+}
+
+/** Manual Control: disconnect_EMS_message (SW99 = 0). */
+export function sendRscadDisconnectEms() {
+  const config = activeScenario().disconnectEms;
+  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
+  return sendRunningConfig(config);
+}
+
+/** EMS Frequency Regulation: baseload_change_message (PLoad_pu = 0.9). */
+export function sendRscadEmsFrequency() {
+  const config = activeScenario().emsFrequency;
+  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
+  return sendRunningConfig(config);
+}
+
+// HMI - BUTTON - Stop
 export async function stopRscadSimulation() {
   if (busy || !simulationId) return snapshot();
   busy = true;
