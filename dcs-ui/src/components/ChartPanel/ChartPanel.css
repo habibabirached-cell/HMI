@@ -1711,6 +1711,22 @@
   opacity: 1 !important;
 }
 
+/* Portaled edit menus sit above every chart card. */
+.chart-menu-portal {
+  position: fixed;
+  z-index: 100000;
+}
+
+.chart-menu-portal .chart-label-editor,
+.chart-menu-portal .chart-axis-range-editor {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: 1;
+  min-height: 0;
+  max-height: var(--chart-menu-max-h, calc(100vh - 48px));
+}
+
 /* ── Inline label editor form ── */
 .chart-label-editor {
   position: absolute;

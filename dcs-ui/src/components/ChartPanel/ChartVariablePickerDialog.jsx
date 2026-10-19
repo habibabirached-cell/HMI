@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import '../SimulationChartBuilder/SimulationChartBuilder.css';
 import './ChartVariablePickerDialog.css';
 import { qualifyEnsembleColumn } from '../../utils/simulationLazyApi';
@@ -111,7 +112,7 @@ const ChartVariablePickerDialog = ({
     ? filteredEnsembleGroups.length > 0 || showFormulaGroup
     : filteredFlatColumns.length > 0;
 
-  return (
+  return createPortal(
     <div className="chart-var-picker-overlay dialog-overlay" onClick={handleOverlayClick}>
       <div className="chart-var-picker-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="chart-var-picker-header">
@@ -228,7 +229,8 @@ const ChartVariablePickerDialog = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

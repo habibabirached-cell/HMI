@@ -1,5 +1,5 @@
-.chart-var-picker-overlay {
-  z-index: 12000;
+.chart-var-picker-overlay.dialog-overlay {
+  z-index: 110000;
 }
 
 .chart-var-picker-dialog {

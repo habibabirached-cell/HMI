@@ -569,6 +569,52 @@
   cursor: default;
 }
 
+.ideum07-ref200__tile {
+  position: relative;
+}
+
+.ideum08-press-mark {
+  position: absolute;
+  z-index: 5;
+  top: 8px;
+  right: 8px;
+  min-width: 4.2em;
+  padding: 0.28em 0.55em;
+  border-radius: 8px;
+  font-style: normal;
+  font-size: clamp(22px, 3vh, 34px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ideum08-press-mark--btn {
+  position: static;
+  font-size: clamp(18px, 2.4vh, 28px);
+}
+
+.ideum08-press-mark--on {
+  color: #042018;
+  background: #3dff9a;
+  box-shadow: 0 0 0 3px #042018, 0 0 18px rgba(61, 255, 154, 0.85);
+}
+
+.ideum08-press-mark--off {
+  color: #fff;
+  background: #e10600;
+  box-shadow: 0 0 0 3px #2a0000, 0 0 16px rgba(225, 6, 0, 0.75);
+}
+
+.ideum08-press-tile--on {
+  box-shadow: inset 0 0 0 5px #3dff9a;
+}
+
+.ideum08-press-tile--off {
+  box-shadow: inset 0 0 0 4px #e10600;
+}
+
 .ideum08-test-ref-arch__rscad-id {
   font-style: normal;
   font-size: 0.62em;

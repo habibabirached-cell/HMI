@@ -17,6 +17,29 @@ const RSCAD_PORT = '8008';
 const MAINGEAR_RSCAD_HOST = '192.168.50.1';
 const CONNECT_TIMEOUT_MS = 8000;
 const START_TIMEOUT_MS = 60000;
+const CONFIG_TIMEOUT_MS = 45000;
+
+function rscadSwitch(id, name, position) {
+  return {
+    id,
+    name,
+    type: 'switch',
+    subtab: 'Draft',
+    subpage: 'SS #1',
+    properties: { position },
+  };
+}
+
+function rscadPushbutton(id, name, position) {
+  return {
+    id,
+    name,
+    type: 'pushbutton',
+    subtab: 'Draft',
+    subpage: 'SS #1',
+    properties: { position },
+  };
+}
 
 const START_MESSAGE = {
   command: 'start',
@@ -249,6 +272,70 @@ export async function startRscadSimulation() {
     busy = false;
     emit();
   }
+}
+
+async function sendRunningConfig(config) {
+  if (busy) return { ...snapshot(), ok: false };
+  if (!simulationId || !socket || socket.readyState !== WebSocket.OPEN) {
+    statusText = 'Press Start first';
+    emit();
+    return { ...snapshot(), ok: false };
+  }
+  busy = true;
+  statusText = '';
+  emit();
+  try {
+    const pending = waitForReply(socket, CONFIG_TIMEOUT_MS);
+    socket.send(JSON.stringify({
+      command: 'set_config',
+      body: {
+        id: simulationId,
+        prop_set_wait: 2,
+        config,
+      },
+    }));
+    const reply = await pending;
+    if (reply.status === 'error' || reply.error) {
+      throw new Error(reply.message || reply.error || 'RSCAD rejected the command');
+    }
+    statusText = '';
+    return { ...snapshot(), ok: true };
+  } catch (error) {
+    statusText = error?.message || 'Command failed';
+    return { ...snapshot(), ok: false };
+  } finally {
+    busy = false;
+    emit();
+  }
+}
+
+/** AI Load: close the AI_load switch. */
+export function sendRscadAiLoad() {
+  return sendRunningConfig([rscadSwitch(75363, 'AI_load', 1)]);
+}
+
+/** Baseload: open the AI_load switch. */
+export function sendRscadBaseload() {
+  return sendRunningConfig([rscadSwitch(75363, 'AI_load', 0)]);
+}
+
+/** Add BESS: de-block both stacks, then connect both to the grid. */
+export function sendRscadAddBess() {
+  return sendRunningConfig([
+    rscadPushbutton(75382, 'ST2DBlk', 1),
+    rscadPushbutton(75378, 'ST1DBlk', 1),
+    rscadPushbutton(75380, 'BESS1OnGrid', 1),
+    rscadPushbutton(75384, 'BESS2OnGrid', 1),
+  ]);
+}
+
+/** Add MVUPS: AI load off, Topology on, AI load back on. */
+export function sendRscadAddMvups() {
+  return sendRunningConfig([
+    rscadSwitch(75363, 'AI_load', 0),
+    rscadSwitch(75504, 'Topology', 1),
+    rscadSwitch(75363, 'AI_load', 1),
+  ]);
 }
 
 export async function stopRscadSimulation() {

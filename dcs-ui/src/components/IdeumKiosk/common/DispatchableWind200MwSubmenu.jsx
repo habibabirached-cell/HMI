@@ -129,6 +129,8 @@ export default function DispatchableWind200MwSubmenu({
                 label="Make wind GFM"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.dispatchableWind200Mw}
                 previewImageAlt="Wind farm with grid-forming conversion"
+                disabled
+                dimmed
               />
               <SubmenuModelTile
                 zoom={zoom}
@@ -175,9 +177,9 @@ export default function DispatchableWind200MwSubmenu({
             >
               <SubmenuUseCaseTile
                 zoom={zoom}
-                label="Change wind speed"
+                label="Forced Power Oscillation (FPO)"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ForcedPowerOscillation}
-                imageAlt="Operator adjusting wind plant setpoints"
+                imageAlt="Forced power oscillation study"
               />
               <SubmenuUseCaseTile
                 zoom={zoom}

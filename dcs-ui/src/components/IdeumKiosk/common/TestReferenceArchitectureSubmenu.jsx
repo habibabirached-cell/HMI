@@ -12,6 +12,10 @@ import {
   SubmenuUseCaseTile,
 } from '../ideum08/Ref200MwSubmenu';
 import {
+  sendRscadAddBess,
+  sendRscadAddMvups,
+  sendRscadAiLoad,
+  sendRscadBaseload,
   startRscadSimulation,
   stopRscadSimulation,
   subscribeRscadDriver,
@@ -53,8 +57,24 @@ export default function TestReferenceArchitectureSubmenu({
   const hubInsetPx = Math.max(8, Math.round(8 * zoom));
   const titleFontPx = ref200SideTitleFontPx(zoom);
   const [rscad, setRscad] = useState({ simulationId: null, busy: false, statusText: '' });
+  const [loadMode, setLoadMode] = useState('off');
+  const [bessOn, setBessOn] = useState(false);
+  const [mvupsOn, setMvupsOn] = useState(false);
+  const running = Boolean(rscad.simulationId);
 
   useEffect(() => subscribeRscadDriver(setRscad), []);
+
+  useEffect(() => {
+    if (running) {
+      setLoadMode('baseload');
+      setBessOn(false);
+      setMvupsOn(false);
+      return;
+    }
+    setLoadMode('off');
+    setBessOn(false);
+    setMvupsOn(false);
+  }, [rscad.simulationId, running]);
 
   return (
     <div
@@ -122,14 +142,18 @@ export default function TestReferenceArchitectureSubmenu({
               <div className="ideum08-test-ref-arch__rscad-actions" aria-label="RSCAD simulation">
                 <button
                   type="button"
-                  className="ideum08-test-ref-arch__rscad-btn"
+                  className={`ideum08-test-ref-arch__rscad-btn${running ? ' ideum08-press-tile--on' : ' ideum08-press-tile--off'}`}
                   disabled={rscad.busy}
+                  aria-pressed={running}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     startRscadSimulation();
                   }}
                 >
+                  <span className={`ideum08-press-mark ideum08-press-mark--btn${running ? ' ideum08-press-mark--on' : ' ideum08-press-mark--off'}`}>
+                    {running ? 'ON' : 'OFF'}
+                  </span>
                   <span>Start</span>
                   {rscad.simulationId ? (
                     <span className="ideum08-test-ref-arch__rscad-id">{rscad.simulationId}</span>
@@ -151,6 +175,9 @@ export default function TestReferenceArchitectureSubmenu({
                   Stop
                 </button>
               </div>
+              {running && rscad.statusText ? (
+                <p className="ideum08-test-ref-arch__rscad-id">{rscad.statusText}</p>
+              ) : null}
             </div>
           </Ref200ColumnBucket>
 
@@ -174,8 +201,13 @@ export default function TestReferenceArchitectureSubmenu({
                 fitScale={1.0}
                 modelYOffset={0.04}
                 cameraPitchLift={0.38}
-                ideumCommand={REF200_IDEUM_COMMANDS.addBess}
-                onIdeumCommand={onIdeumCommand}
+                pressState={running && bessOn ? 'on' : 'off'}
+                onPress={() => {
+                  if (!running || rscad.busy) return;
+                  void sendRscadAddBess().then((result) => {
+                    if (result.ok) setBessOn(true);
+                  });
+                }}
               />
               <SubmenuModelTile
                 zoom={zoom}
@@ -183,8 +215,15 @@ export default function TestReferenceArchitectureSubmenu({
                 label="Add MVUPS"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
                 previewImageAlt="Medium-voltage UPS skid"
-                ideumCommand={REF200_IDEUM_COMMANDS.addMvups}
-                onIdeumCommand={onIdeumCommand}
+                pressState={running && mvupsOn ? 'on' : 'off'}
+                onPress={() => {
+                  if (!running || rscad.busy) return;
+                  void sendRscadAddMvups().then((result) => {
+                    if (!result.ok) return;
+                    setMvupsOn(true);
+                    setLoadMode('ai');
+                  });
+                }}
               />
               <SubmenuModelTile
                 zoom={zoom}
@@ -227,12 +266,26 @@ export default function TestReferenceArchitectureSubmenu({
                 label="Baseload"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.ref200ContingencyScenarios}
                 imageAlt="Baseload power delivery at a large substation"
+                pressState={running && loadMode === 'baseload' ? 'on' : 'off'}
+                onPress={() => {
+                  if (!running || rscad.busy) return;
+                  void sendRscadBaseload().then((result) => {
+                    if (result.ok) setLoadMode('baseload');
+                  });
+                }}
               />
               <SubmenuUseCaseTile
                 zoom={zoom}
                 label="AI Load"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.renewablePoweredDatacenters}
                 imageAlt="High-density datacenter AI load"
+                pressState={running && loadMode === 'ai' ? 'on' : 'off'}
+                onPress={() => {
+                  if (!running || rscad.busy) return;
+                  void sendRscadAiLoad().then((result) => {
+                    if (result.ok) setLoadMode('ai');
+                  });
+                }}
               />
             </div>
           </Ref200ColumnBucket>

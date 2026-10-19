@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Plot from 'react-plotly.js';
 import Plotly from 'plotly.js-dist-min';
 import { API_BASE_URL } from '../../apiConfig';
@@ -485,6 +486,60 @@ function syncLegendMoveOutline(gd, armed) {
  * - onMoveChartDrawer(chartId, 'chart1' | 'chart2' | 'chart3' | 'chart4'): move chart between drawers
  * - onSwapChartDrawers(chartIdA, chartIdB): swap quadrant/stack slot (toolbar drag-and-drop)
  */
+/** Chart edit menus are portaled so a chart card's overflow cannot cover them. */
+function AnchoredChartMenu({ anchorEl, children }) {
+  const portalRef = useRef(null);
+  const [style, setStyle] = useState({ top: 0, left: 0, maxHeight: 480, visibility: 'hidden' });
+
+  const place = useCallback(() => {
+    const anchor = anchorEl;
+    const node = portalRef.current;
+    if (!anchor || !node) return;
+    const rect = anchor.getBoundingClientRect();
+    const margin = 8;
+    const menu = node.firstElementChild;
+    const menuWidth = menu?.getBoundingClientRect().width || Math.min(720, window.innerWidth * 0.92);
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - margin - menuWidth);
+    }
+    const top = rect.bottom + 2;
+    const maxHeight = Math.max(220, window.innerHeight - top - margin);
+    setStyle({ top, left, maxHeight, visibility: 'visible' });
+  }, [anchorEl]);
+
+  useLayoutEffect(() => {
+    place();
+  }, [place]);
+
+  useEffect(() => {
+    if (!anchorEl) return undefined;
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [anchorEl, place]);
+
+  if (!anchorEl || typeof document === 'undefined') return null;
+  return createPortal(
+    <div
+      ref={portalRef}
+      className="chart-menu-portal"
+      style={{
+        top: style.top,
+        left: style.left,
+        visibility: style.visibility,
+        '--chart-menu-max-h': `${style.maxHeight}px`,
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
 const ChartPanel = ({ 
   charts, 
   chartStacks = [],
@@ -689,6 +744,8 @@ const ChartPanel = ({
   const CHART_SIDE_COLLAPSED_PX = 30;
   /** Bottom-dock collapsed: thin horizontal hinge only (no chart toolbar). */
   const CHART_BOTTOM_RAIL_COLLAPSED_H_PX = 22;
+  /** Chart toolbar elements, so edit menus can anchor above every other chart. */
+  const chartHeaderElsRef = useRef(new Map());
   /** Inline label editor: { chartId, title, xLabel, yLabel, stackedYLabels } | null */
   const [editingLabels, setEditingLabels] = useState(null);
   /** Right-click axis label popup: { chartId, kind, yIndex?, value, left, top } */
@@ -3430,6 +3487,17 @@ const ChartPanel = ({
       return legend;
     };
 
+    // UI font scale (+14 on the wall) enlarges titles without growing Plotly's margin,
+    // so axis titles land on the tick numbers and the card edges.
+    const fontGrow = Math.max(0, Number(fontPxDelta) || 0);
+    const axisTitleStandoff = 18 + Math.round(fontGrow * 0.5);
+    const plotMargins = {
+      l: 84 + Math.round(fontGrow * 3.6),
+      r: 40 + Math.round(fontGrow * 0.35),
+      t: 56 + Math.round(fontGrow * 1.85),
+      b: 72 + Math.round(fontGrow * 2.6),
+    };
+
     const baseLayout = {
       // When this string stays the same, Plotly keeps user zoom/pan across Plotly.react updates (e.g. new colors after opacity slider).
       uirevision: getPlotlyUiRevision(chart, data),
@@ -3446,16 +3514,12 @@ const ChartPanel = ({
           weight: 600
         },
         x: 0.5,
-        xanchor: 'center'
+        xanchor: 'center',
+        pad: { t: 8, b: 14 + Math.round(fontGrow * 0.35) },
       },
       
-      // Margins
-      margin: {
-        l: 60,
-        r: 40,
-        t: 50,
-        b: 60
-      },
+      // Margins — room for the chart title, tick numbers, and axis titles.
+      margin: plotMargins,
       
       // Legend
       legend: {
@@ -3768,6 +3832,7 @@ const ChartPanel = ({
         xaxis: {
           title: {
             text: chart.xLabel ?? chart.xColumn,
+            standoff: axisTitleStandoff,
             font: {
               family: 'Arial, sans-serif',
               size: 13,
@@ -3794,6 +3859,7 @@ const ChartPanel = ({
         yaxis: {
           title: {
             text: chart.yLabel ?? (chart.chartType === 'nd' ? 'Value' : chart.yColumn),
+            standoff: axisTitleStandoff + 8,
             font: {
               family: 'Arial, sans-serif',
               size: 13,
@@ -4983,6 +5049,10 @@ const ChartPanel = ({
                     style={cardSizeCssVars(chart)}
                   >
                     <div
+                      ref={(node) => {
+                        if (node) chartHeaderElsRef.current.set(chart.id, node);
+                        else chartHeaderElsRef.current.delete(chart.id);
+                      }}
                       className={chartHeaderClassName(chart)}
                       onPointerDown={(e) => handleChartToolbarPointerDown(chart, e)}
                       title={
@@ -5040,8 +5110,16 @@ const ChartPanel = ({
                 )}
                 {renderLegendMoveButton(chart)}
               </div>
-              {editingLabels?.chartId === chart.id && renderLabelEditorForm()}
-              {editingAxisRange?.chartId === chart.id && renderAxisRangeForm(chart)}
+              {editingLabels?.chartId === chart.id && (
+                <AnchoredChartMenu anchorEl={chartHeaderElsRef.current.get(chart.id)}>
+                  {renderLabelEditorForm()}
+                </AnchoredChartMenu>
+              )}
+              {editingAxisRange?.chartId === chart.id && (
+                <AnchoredChartMenu anchorEl={chartHeaderElsRef.current.get(chart.id)}>
+                  {renderAxisRangeForm(chart)}
+                </AnchoredChartMenu>
+              )}
               {renderChartSampleSelect(chart)}
               {renderChartDrawerShiftButtons(chart)}
               <button 
@@ -5142,6 +5220,10 @@ const ChartPanel = ({
                   style={cardSizeCssVars(chart)}
                 >
                   <div
+                    ref={(node) => {
+                      if (node) chartHeaderElsRef.current.set(chart.id, node);
+                      else chartHeaderElsRef.current.delete(chart.id);
+                    }}
                     className={chartHeaderClassName(chart)}
                     onPointerDown={(e) => handleChartToolbarPointerDown(chart, e)}
                     title={
@@ -5198,8 +5280,16 @@ const ChartPanel = ({
                       )}
                       {renderLegendMoveButton(chart)}
                     </div>
-                    {editingLabels?.chartId === chart.id && renderLabelEditorForm()}
-                    {editingAxisRange?.chartId === chart.id && renderAxisRangeForm(chart)}
+                    {editingLabels?.chartId === chart.id && (
+                      <AnchoredChartMenu anchorEl={chartHeaderElsRef.current.get(chart.id)}>
+                        {renderLabelEditorForm()}
+                      </AnchoredChartMenu>
+                    )}
+                    {editingAxisRange?.chartId === chart.id && (
+                      <AnchoredChartMenu anchorEl={chartHeaderElsRef.current.get(chart.id)}>
+                        {renderAxisRangeForm(chart)}
+                      </AnchoredChartMenu>
+                    )}
                     {renderChartSampleSelect(chart)}
                     {renderChartDrawerShiftButtons(chart)}
                     <button className="chart-panel-chart-close" onClick={() => onRemoveChart(chart.id)} title="Remove Chart">×</button>

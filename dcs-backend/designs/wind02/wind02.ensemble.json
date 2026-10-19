@@ -15,21 +15,35 @@
             "type": "single",
             "component_id": "wo26c-wind-3d",
             "chart_type": "nd",
-            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "x_column": "t",
             "y_columns": [
-              "wind14GFLWind_14ms_HMI — P_GFL",
-              "wind14GFLWind_14ms_HMI — P_BESS",
-              "wind14GFLWind_14ms_HMI — Pload",
-              "f10GFLWind_10ms_HMI — P_GFL",
-              "f10GFLWind_10ms_HMI — P_BESS",
-              "f10GFLWind_10ms_HMI — Pload",
-              "f12GFLWind_12ms_HMI — P_GFL",
-              "f12GFLWind_12ms_HMI — P_BESS",
-              "f12GFLWind_12ms_HMI — Pload"
+              "P_GFL",
+              "P_BESS",
+              "Pload"
             ],
-            "title": "GFL Wind - nD",
-            "ensemble_cross_member": true,
-            "sample_step": 128
+            "title": "Wind, battery, and data center power",
+            "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Power (megawatts)",
+            "legend_labels": {
+              "P_GFL": "Wind farm (14 ms case)",
+              "P_BESS": "Battery (14 ms case)",
+              "Pload": "Data center demand (14 ms case)"
+            },
+            "legend_title": "What this line is",
+            "legend_position": {
+              "x": 0.26999999999999935,
+              "y": 0.6499999999999997,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 60,
+              "t_loop": 3
+            }
           },
           {
             "type": "single",
@@ -41,9 +55,29 @@
               "f10GFLWind_10ms_HMI — Vload_1",
               "f12GFLWind_12ms_HMI — Vload_1"
             ],
-            "title": "GFL Wind - nD",
+            "title": "Voltage at the data center",
             "ensemble_cross_member": true,
-            "sample_step": 128
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Voltage compared with normal",
+            "legend_labels": {
+              "wind14GFLWind_14ms_HMI — Vload_1": "14 ms case",
+              "f10GFLWind_10ms_HMI — Vload_1": "10 ms case",
+              "f12GFLWind_12ms_HMI — Vload_1": "12 ms case"
+            },
+            "legend_title": "Which case",
+            "legend_position": {
+              "x": 0.99,
+              "y": 0.3299999999999994,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 60,
+              "t_loop": 3
+            }
           },
           {
             "type": "single",
@@ -55,9 +89,29 @@
               "f10GFLWind_10ms_HMI — f_load",
               "f12GFLWind_12ms_HMI — f_load"
             ],
-            "title": "GFL Wind - nD",
+            "title": "Frequency at the data center",
             "ensemble_cross_member": true,
-            "sample_step": 128
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Frequency (hertz)",
+            "legend_labels": {
+              "wind14GFLWind_14ms_HMI — f_load": "14 ms case",
+              "f10GFLWind_10ms_HMI — f_load": "10 ms case",
+              "f12GFLWind_12ms_HMI — f_load": "12 ms case"
+            },
+            "legend_title": "Which case",
+            "legend_position": {
+              "x": 0.22999999999999937,
+              "y": 0.48999999999999955,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 61.08626216,
+              "t_loop": 3
+            }
           }
         ],
         "chart_stacks": [],
@@ -77,7 +131,9 @@
             "chart_type": "2d",
             "x_column": "t",
             "y_column": "Vload_1",
-            "title": "GFL Wind - Vload_1",
+            "title": "Voltage at the data center",
+            "x_label": "Time (seconds)",
+            "y_label": "Voltage compared with normal",
             "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
             "sample_step": 128
           }
@@ -97,21 +153,35 @@
             "type": "single",
             "component_id": "wo26c-wind-3d",
             "chart_type": "nd",
-            "x_column": "wind14GFLWind_14ms_HMI — t",
+            "x_column": "t",
             "y_columns": [
-              "wind14GFLWind_14ms_HMI — P_GFL",
-              "wind14GFLWind_14ms_HMI — P_BESS",
-              "wind14GFLWind_14ms_HMI — Pload",
-              "f10GFLWind_10ms_HMI — P_GFL",
-              "f10GFLWind_10ms_HMI — P_BESS",
-              "f10GFLWind_10ms_HMI — Pload",
-              "f12GFLWind_12ms_HMI — P_GFL",
-              "f12GFLWind_12ms_HMI — P_BESS",
-              "f12GFLWind_12ms_HMI — Pload"
+              "P_GFL",
+              "P_BESS",
+              "Pload"
             ],
-            "title": "GFL Wind - nD",
-            "ensemble_cross_member": true,
-            "sample_step": 128
+            "title": "Wind, battery, and data center power",
+            "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Power (megawatts)",
+            "legend_labels": {
+              "P_GFL": "Wind farm (14 ms case)",
+              "P_BESS": "Battery (14 ms case)",
+              "Pload": "Data center demand (14 ms case)"
+            },
+            "legend_title": "What this line is",
+            "legend_position": {
+              "x": 0.26999999999999935,
+              "y": 0.6499999999999997,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 60,
+              "t_loop": 3
+            }
           },
           {
             "type": "single",
@@ -123,9 +193,29 @@
               "f10GFLWind_10ms_HMI — Vload_1",
               "f12GFLWind_12ms_HMI — Vload_1"
             ],
-            "title": "GFL Wind - nD",
+            "title": "Voltage at the data center",
             "ensemble_cross_member": true,
-            "sample_step": 128
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Voltage compared with normal",
+            "legend_labels": {
+              "wind14GFLWind_14ms_HMI — Vload_1": "14 ms case",
+              "f10GFLWind_10ms_HMI — Vload_1": "10 ms case",
+              "f12GFLWind_12ms_HMI — Vload_1": "12 ms case"
+            },
+            "legend_title": "Which case",
+            "legend_position": {
+              "x": 0.99,
+              "y": 0.3299999999999994,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 60,
+              "t_loop": 3
+            }
           },
           {
             "type": "single",
@@ -137,9 +227,29 @@
               "f10GFLWind_10ms_HMI — f_load",
               "f12GFLWind_12ms_HMI — f_load"
             ],
-            "title": "GFL Wind - nD",
+            "title": "Frequency at the data center",
             "ensemble_cross_member": true,
-            "sample_step": 128
+            "sample_step": 32,
+            "x_label": "Time (seconds)",
+            "y_label": "Frequency (hertz)",
+            "legend_labels": {
+              "wind14GFLWind_14ms_HMI — f_load": "14 ms case",
+              "f10GFLWind_10ms_HMI — f_load": "10 ms case",
+              "f12GFLWind_12ms_HMI — f_load": "12 ms case"
+            },
+            "legend_title": "Which case",
+            "legend_position": {
+              "x": 0.22999999999999937,
+              "y": 0.48999999999999955,
+              "xanchor": "right",
+              "yanchor": "top"
+            },
+            "axis_range": {
+              "x_threshold": 15,
+              "simulation_start_at": 0,
+              "simulation_end_at": 61.08626216,
+              "t_loop": 3
+            }
           }
         ],
         "chart_stacks": [],

@@ -50,6 +50,16 @@ function ref200BucketWellPadding(subsetGapPx) {
   };
 }
 
+function TilePressMark({ pressState }) {
+  if (pressState !== 'on' && pressState !== 'off') return null;
+  const on = pressState === 'on';
+  return (
+    <span className={`ideum08-press-mark${on ? ' ideum08-press-mark--on' : ' ideum08-press-mark--off'}`}>
+      {on ? 'ON' : 'OFF'}
+    </span>
+  );
+}
+
 export function SubmenuUseCaseTile({
   label,
   imageUrl,
@@ -59,6 +69,8 @@ export function SubmenuUseCaseTile({
   dimmed = false,
   ideumCommand = null,
   onIdeumCommand,
+  onPress = null,
+  pressState = null,
   zoom = 1,
 }) {
   return (
@@ -67,18 +79,23 @@ export function SubmenuUseCaseTile({
       disabled={disabled}
       className={`ideum07-ref200__tile ideum07-ref200__tile--use-case ideum-component-btn ideum-component-btn--nav-card ideum07-root-subcard ideum07-root-subcard--applications${
         disabled ? ' ideum-component-btn--nav-card-disabled' : ' ideum-component-btn--nav-card-featured'
-      }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}`}
+      }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}${
+        pressState === 'on' ? ' ideum08-press-tile--on' : ''
+      }${pressState === 'off' ? ' ideum08-press-tile--off' : ''}`}
       onClick={(e) => {
         if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
+        if (onPress) onPress();
         if (ideumCommand && onIdeumCommand) {
           onIdeumCommand(ideumCommand);
         }
       }}
-      aria-label={label}
+      aria-label={pressState ? `${label}, ${pressState}` : label}
+      aria-pressed={pressState ? pressState === 'on' : undefined}
       aria-disabled={disabled || undefined}
     >
+      <TilePressMark pressState={pressState} />
       <span
         className={`ideum-component-btn__title ideum07-ref200__use-case-title${
           disabled ? ' ideum-component-btn__title--disabled' : ' ideum-component-btn__title--featured'
@@ -124,6 +141,8 @@ export function SubmenuModelTile({
   previewImageAlt,
   ideumCommand = null,
   onIdeumCommand,
+  onPress = null,
+  pressState = null,
   className = '',
   zoom = 1,
 }) {
@@ -174,18 +193,23 @@ export function SubmenuModelTile({
       disabled={disabled}
       className={`ideum07-ref200__tile ideum07-ref200__tile--side-title ideum-component-btn ideum-component-btn--nav-card ideum07-root-subcard ${subcardVariant}${
         disabled ? ' ideum-component-btn--nav-card-disabled' : ' ideum-component-btn--nav-card-featured'
-      }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}${className ? ` ${className}` : ''}`}
+      }${dimmed ? ' ideum-component-btn--nav-card-dimmed' : ''}${
+        pressState === 'on' ? ' ideum08-press-tile--on' : ''
+      }${pressState === 'off' ? ' ideum08-press-tile--off' : ''}${className ? ` ${className}` : ''}`}
       onClick={(e) => {
         if (disabled || modelComingSoon) return;
         e.preventDefault();
         e.stopPropagation();
+        if (onPress) onPress();
         if (ideumCommand && onIdeumCommand) {
           onIdeumCommand(ideumCommand);
         }
       }}
-      aria-label={label}
+      aria-label={pressState ? `${label}, ${pressState}` : label}
+      aria-pressed={pressState ? pressState === 'on' : undefined}
       aria-disabled={disabled || undefined}
     >
+      <TilePressMark pressState={pressState} />
       <span
         ref={titleRef}
         className="ideum-component-btn__title ideum07-subnav-title ideum07-ref200__side-title ideum-component-btn__title--featured"
