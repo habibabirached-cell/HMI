@@ -20,6 +20,7 @@ class FilterRequest(BaseModel):
     filters: list[FilterSpec] = Field(default_factory=list)
     loadMW: int | None = None
     martinStudy: str | None = None
+    technologyCapex: dict[str, Any] | None = None
 
 
 class RowsRequest(FilterRequest):
@@ -62,6 +63,7 @@ class CompareRequest(BaseModel):
     row_ids: list[int] = Field(..., min_length=1, max_length=8)
     loadMW: int | None = None
     martinStudy: str | None = None
+    technologyCapex: dict[str, Any] | None = None
 
 
 class DatasetModeRequest(BaseModel):

@@ -47,6 +47,11 @@ import {
   isP2R18QuickScenarioPreset,
 } from './utils/p2r18QuickScenario';
 import {
+  fitWindOctSplitPanes,
+  getWindOctPlantOwner,
+  withWindOctExplodedCopyOnLowerPane,
+} from './utils/windOctPlant';
+import {
   QUAD_BOTTOM_ROW_SHARE_DEFAULT,
   clampQuadBottomRowShare,
 } from './utils/chartPanelQuadGrid';
@@ -194,7 +199,7 @@ import {
   resolveHdAeroPresetFromBreakers,
 } from './utils/hdAeroBreakerPresets';
 import { labelForHdAeroCbEvent } from './utils/chartHdAeroCbEvents';
-import { BREAKER_TYPES } from './data/componentVisuals';
+import { BREAKER_TYPES, getComponentVisualConfig } from './data/componentVisuals';
 import {
   API_BASE_URL,
   useLazySimulationData,
@@ -1326,6 +1331,68 @@ function App() {
     }
     return currentConfigName;
   }, [currentConfigName, csvStatus?.use_design_dir, csvStatus?.design_catalog_rel]);
+
+  const windExplodedFitRef = useRef(false);
+  /** wind02: compact plant stays upstairs; the exploded one-line is the lower pane. */
+  const windCanvasSplit = useMemo(() => {
+    if (!isWind02Design({
+      name: currentConfigName,
+      csv_status: { design_catalog_rel: designApiPath },
+    })) return false;
+    if (designSectionVisibility?.showLower === false) return false;
+    return canvasComponents.some(
+      (c) => resolveComponentCanvasPane(c) === CANVAS_PANE_LOWER,
+    );
+  }, [currentConfigName, designApiPath, designSectionVisibility, canvasComponents]);
+
+  useEffect(() => {
+    const onWind = isWind02Design({
+      name: currentConfigName,
+      csv_status: { design_catalog_rel: designApiPath },
+    });
+    if (!onWind) {
+      windExplodedFitRef.current = false;
+      return;
+    }
+    const placed = withWindOctExplodedCopyOnLowerPane(canvasComponents);
+    if (placed !== canvasComponents) {
+      setCanvasComponents(placed);
+      return;
+    }
+    const owner = getWindOctPlantOwner(canvasComponents);
+    const memberIds = new Set((owner?.properties?.tieGroup?.memberIds || []).map(String));
+    if (!memberIds.size) return;
+    setDesignSectionVisibility((prev) => (
+      prev?.showLower === false
+        ? { ...prev, showUpper: true, showLower: true }
+        : prev
+    ));
+    const svg = typeof document !== 'undefined' ? document.querySelector('.canvas-svg') : null;
+    const canvasH = svg?.clientHeight || Math.max(560, window.innerHeight - 88);
+    const topPx = canvasH * 0.5;
+    // panBottom is in full-canvas coordinates. A small y draws the one-line in the
+    // upper clip, so the lower pane stays black.
+    if (windExplodedFitRef.current && panBottom.y >= topPx * 0.75) return;
+    const lower = canvasComponents.filter((c) => memberIds.has(String(c.id)));
+    const upper = canvasComponents.filter(
+      (c) => c.id !== owner.id && !memberIds.has(String(c.id)),
+    );
+    const viewW = svg?.clientWidth || Math.max(480, Math.floor(window.innerWidth * 0.46));
+    const paneH = Math.max(220, canvasH * 0.5);
+    const fit = fitWindOctSplitPanes(upper, lower, viewW, paneH, (c) => {
+      const vis = getComponentVisualConfig(c.type);
+      return {
+        width: c.visualOverrides?.width ?? vis?.width ?? 80,
+        height: c.visualOverrides?.height ?? vis?.height ?? 60,
+      };
+    });
+    if (!fit) return;
+    windExplodedFitRef.current = true;
+    setQuadBottomRowShare(50);
+    setZoom(fit.zoom);
+    setPanTop(fit.panTop);
+    setPanBottom({ x: fit.panBottom.x, y: fit.panBottom.y + topPx });
+  }, [currentConfigName, designApiPath, canvasComponents, panBottom.y]);
 
   const ideum05NavScreen = getIdeum05NavScreen(ideum05NavStack);
   const isIdeum05 = isIdeum05DesignName(currentConfigName);
@@ -5689,7 +5756,7 @@ function App() {
 
     const sectionVisibility = normalizeDesignSectionVisibility({
       showUpper: true,
-      showLower: false,
+      showLower: true,
       hideBranches: [],
       canvasExternalPrimaryLabels: true,
     });
@@ -10754,7 +10821,7 @@ function App() {
               canvasZoomMin={CANVAS_ZOOM_MIN}
               canvasZoomMax={CANVAS_ZOOM_MAX}
               onCanvasViewport={applyCanvasViewport}
-              splitView={quadChartDrawers}
+              splitView={quadChartDrawers || windCanvasSplit}
               splitBottomShare={quadBottomRowShare}
               panTop={panTop}
               panBottom={panBottom}

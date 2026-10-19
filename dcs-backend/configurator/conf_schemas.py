@@ -25,6 +25,8 @@ class ConfiguratorInputs(BaseModel):
     optimizationObjective: str = Field(default="lowestCost")
     technologyMinPercent: dict[str, float] = Field(default_factory=dict)
     technologyPreferences: dict[str, str] = Field(default_factory=dict)
+    # Ideum installed-CAPEX and gas-price wheels. Scales 200 MW project LCOE.
+    technologyCapex: Optional[dict] = None
 
 
 class WacoPreloadRequest(BaseModel):

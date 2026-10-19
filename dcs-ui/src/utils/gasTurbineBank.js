@@ -163,6 +163,11 @@ export function isGasTurbineBankPlaceholderPreview(component) {
   return component?.properties?.collapsePlaceholderOnly === true;
 }
 
+/** Compact tile keeps its authored x/y. Column snap and flank pack leave it alone. */
+function isCollapsePositionPinned(component) {
+  return component?.properties?.pinCollapsePosition === true;
+}
+
 function collapseColumnLeft(bank, components) {
   const g = bank.properties?.gasTurbineGroup;
   if (Number.isFinite(g?.collapseColumnLeft)) return g.collapseColumnLeft;
@@ -339,7 +344,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
 
     for (const surfaceId of surfaceIds) {
       const member = byId.get(surfaceId);
-      if (!member) continue;
+      if (!member || isCollapsePositionPinned(member)) continue;
       const dx = colLeft - (member.position?.x ?? 0);
       if (dx !== 0) shiftById.set(surfaceId, dx);
     }
@@ -358,7 +363,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
         rightMinLeft = Math.min(rightMinLeft, anchorLeftEdge(c));
       }
       for (const c of components) {
-        if (!c?.id || excluded.has(c.id)) continue;
+        if (!c?.id || excluded.has(c.id) || isCollapsePositionPinned(c)) continue;
         if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
@@ -380,7 +385,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
         leftMaxRight = Math.max(leftMaxRight, anchorRightEdge(c, getComponentVisualConfig));
       }
       for (const c of components) {
-        if (!c?.id || excluded.has(c.id)) continue;
+        if (!c?.id || excluded.has(c.id) || isCollapsePositionPinned(c)) continue;
         if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
@@ -400,7 +405,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
       if (!Number.isFinite(leftMaxRight)) continue;
       const dRightward = colLeft - gap - leftMaxRight;
       for (const c of components) {
-        if (!c?.id || excluded.has(c.id)) continue;
+        if (!c?.id || excluded.has(c.id) || isCollapsePositionPinned(c)) continue;
         if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
         if (
           scopeByVerticalBand &&
@@ -421,7 +426,7 @@ export function buildGasTurbineBankCollapseHorizontalShiftMap(components, getCom
     if (!Number.isFinite(rightMinLeft)) continue;
     const dLeftward = rightMinLeft - (colRight + gap);
     for (const c of components) {
-      if (!c?.id || excluded.has(c.id)) continue;
+      if (!c?.id || excluded.has(c.id) || isCollapsePositionPinned(c)) continue;
       if (!shouldApplyBankCollapseShiftToComponent(bank, c)) continue;
       if (
         scopeByVerticalBand &&

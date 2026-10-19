@@ -10503,15 +10503,16 @@
       "name": "Aux, IT and Rack Loads",
       "fullName": "Auxiliary, IT and rack loads (MVUPS collapsed)",
       "position": {
-        "x": 2492,
-        "y": 2328
+        "x": 3302,
+        "y": 1913
       },
       "status": "idle",
       "properties": {
         "rating": 5,
         "voltage": 0.48,
         "unit": "MW",
-        "mvupsFlatSchematic": true
+        "mvupsFlatSchematic": true,
+        "pinCollapsePosition": true
       },
       "visualOverrides": {
         "width": 750,
@@ -10537,7 +10538,7 @@
       },
       "status": "idle",
       "properties": {
-        "rating": 25,
+        "rating": 200,
         "voltage": 34.5,
         "unit": "MVA",
         "mvupsFlatSchematic": true
@@ -10943,7 +10944,7 @@
       },
       "status": "idle",
       "properties": {
-        "rating": 25,
+        "rating": 200,
         "voltage": 34.5,
         "unit": "MVA"
       },

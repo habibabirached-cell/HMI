@@ -153,6 +153,7 @@ export default function DataVisParallelTab({
   lockDimensionsToDefaults = false,
   /** Explore wall: pink line = Martin winner (same row as KPIs), not local min LCOE. */
   highlightMartinRowId = null,
+  capexKey = '',
 }) {
   /** Full view filters — parallel shows only matching rows (no gray ghost lines). */
   const queryFilters = filters ?? chartFilters;
@@ -195,8 +196,8 @@ export default function DataVisParallelTab({
   }, [compact, payload]);
 
   const uirevision = useMemo(
-    () => `dataVis-pc-${dimensions.join('\u0001')}`,
-    [dimensions],
+    () => `dataVis-pc-${dimensions.join('\u0001')}-${capexKey || ''}`,
+    [capexKey, dimensions],
   );
 
   useEffect(() => {
@@ -222,7 +223,7 @@ export default function DataVisParallelTab({
     return () => {
       cancelled = true;
     };
-  }, [queryFilters, queryFiltersKey, dimensions]);
+  }, [capexKey, queryFilters, queryFiltersKey, dimensions]);
 
   useEffect(() => {
     onDimensionsChange?.(dimensions);

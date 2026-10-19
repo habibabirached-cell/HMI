@@ -49,6 +49,7 @@ export default function DataVisQuadLayout({
   tableColumnsCustomized = null,
   onTableColumnsCustomizedChange = null,
   sessionUniverseFilters = [],
+  capexKey = '',
 }) {
   const stats = columnStats ?? meta.column_stats;
   const { split, setSplit, resetSplit } = useWallBezelSplit(DATAVIS_QUAD_SPLIT_KEY);
@@ -95,6 +96,7 @@ export default function DataVisQuadLayout({
           parcoordsActive={parcoordsActive}
           parcoordsRanges={parcoordsRanges}
           onClearAll={onClearAll}
+          capexKey={capexKey}
         />
       </DataVisQuadPane>
 

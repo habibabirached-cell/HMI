@@ -84,6 +84,7 @@ import {
   readIdeumTabFromUrl,
   requestDataExplorationOnMaingear,
   requestExploreDataOnMaingear,
+  exploreNavigationActionForRole,
   resolveDataExplorationNavigationAction,
   resolveExploreDataNavigationAction,
   startIdeumDataExplorationMaingearTunnel,
@@ -171,6 +172,7 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     return fromUrl || 'configure';
   });
   const dataExplorationTunnelRef = useRef(null);
+  const machineRoleRef = useRef(null);
   const lastExploreSyncFingerprintRef = useRef('');
   const [devAutoMartinPreviewBoot, setDevAutoMartinPreviewBoot] = useState(false);
   const [devConfiguratorDataVisSync, setDevConfiguratorDataVisSync] = useState(false);
@@ -248,9 +250,9 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     let cancelled = false;
     fetchMachineRole()
       .then((role) => {
-        if (!cancelled) {
-          setDevConfiguratorDataVisSync(Boolean(role?.isDev) || isLocalClusterDev());
-        }
+        if (cancelled) return;
+        machineRoleRef.current = role;
+        setDevConfiguratorDataVisSync(Boolean(role?.isDev) || isLocalClusterDev());
       })
       .catch(() => {
         if (!cancelled) setDevConfiguratorDataVisSync(isLocalClusterDev());
@@ -287,7 +289,9 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     const fingerprint = JSON.stringify({
       ranges: configuratorInputsToDataVisRanges(tiered),
       loadMW: tiered.loadMW,
+      stateId: tiered.stateId,
       uiMode,
+      technologyCapex: tiered.technologyCapex,
     });
     if (fingerprint === lastExploreSyncFingerprintRef.current) return undefined;
     lastExploreSyncFingerprintRef.current = fingerprint;
@@ -810,13 +814,20 @@ function DataCenterConfiguratorInner({ mode = 'full', onClose, onBack }) {
     const currentInputs = inputsOverride?.stateId ? { ...inputs, ...inputsOverride } : inputs;
     const tiered = inputsWithEffectiveWacoLoadTier(currentInputs);
     publishConfiguratorExploreSync(tiered, uiMode);
-    // Ideum serves this UI at localhost:3003. Hostname alone is not "dev" —
-    // only a dev/unknown role opens a local tab. Ideum sends openExploreData to Maingear.
-    let role = null;
-    try {
-      role = await fetchMachineRole();
-    } catch {
-      /* dev fallback */
+    // Open the dev tab inside the click, before any await, so the browser allows it.
+    const knownRole = machineRoleRef.current;
+    if (!knownRole?.isIdeum && (knownRole ? exploreNavigationActionForRole(knownRole) === 'new-tab' : isLocalClusterDev())) {
+      openExploreDataDevNewTab(tiered, uiMode);
+      return;
+    }
+    let role = knownRole;
+    if (!role) {
+      try {
+        role = await fetchMachineRole();
+        machineRoleRef.current = role;
+      } catch {
+        /* dev fallback */
+      }
     }
 
     const action = await resolveExploreDataNavigationAction(role);

@@ -319,9 +319,10 @@ export function sendRscadBaseload() {
   return sendRunningConfig([rscadSwitch(75363, 'AI_load', 0)]);
 }
 
-/** Add BESS: de-block both stacks, then connect both to the grid. */
+/** Add BESS: MVUPS off (Topology 0), then de-block both stacks and connect them. */
 export function sendRscadAddBess() {
   return sendRunningConfig([
+    rscadSwitch(75504, 'Topology', 0),
     rscadPushbutton(75382, 'ST2DBlk', 1),
     rscadPushbutton(75378, 'ST1DBlk', 1),
     rscadPushbutton(75380, 'BESS1OnGrid', 1),
@@ -329,9 +330,13 @@ export function sendRscadAddBess() {
   ]);
 }
 
-/** Add MVUPS: AI load off, Topology on, AI load back on. */
+/** Add MVUPS: take both batteries off the grid, then AI load off, Topology on, AI load back on. */
 export function sendRscadAddMvups() {
   return sendRunningConfig([
+    rscadPushbutton(75382, 'ST2DBlk', 1),
+    rscadPushbutton(75378, 'ST1DBlk', 1),
+    rscadPushbutton(75380, 'BESS1OnGrid', 0),
+    rscadPushbutton(75384, 'BESS2OnGrid', 0),
     rscadSwitch(75363, 'AI_load', 0),
     rscadSwitch(75504, 'Topology', 1),
     rscadSwitch(75363, 'AI_load', 1),

@@ -185,18 +185,19 @@ export function publishConfiguratorExploreSync(inputs, uiMode) {
   const cleanInputs = sanitizeConfiguratorInputsForDataVis(inputs);
   persistConfiguratorRangesForDataVis(ranges);
   persistConfiguratorInputsForDataVis(cleanInputs, uiMode);
+  const at = Date.now();
+  const handoff = { ranges, inputs: cleanInputs, uiMode, at };
+  try {
+    window.localStorage.setItem(EXPLORE_SYNC_HANDOFF_STORAGE_KEY, JSON.stringify(handoff));
+  } catch {
+    /* ignore */
+  }
   if (typeof BroadcastChannel !== 'undefined') {
     const channel = new BroadcastChannel(DATAVIS_CONFIGURATOR_SYNC_CHANNEL);
-    channel.postMessage({
-      type: 'configurator_explore_sync',
-      ranges,
-      inputs: cleanInputs,
-      uiMode,
-      at: Date.now(),
-    });
+    channel.postMessage({ type: 'configurator_explore_sync', ...handoff });
     channel.close();
   }
-  return { ranges, inputs: cleanInputs, uiMode };
+  return { ranges, inputs: cleanInputs, uiMode, at };
 }
 
 export function stashExploreSyncHandoffForNewTab(inputs, uiMode) {
@@ -280,29 +281,52 @@ export function subscribeConfiguratorFiltersToDataVis(onRanges) {
 
 /** Explore Data + Data Exploration: corridor bands and Martin inputs. */
 export function subscribeConfiguratorExploreSync(onSync) {
-  if (typeof BroadcastChannel === 'undefined') return () => {};
-  const channel = new BroadcastChannel(DATAVIS_CONFIGURATOR_SYNC_CHANNEL);
-  channel.onmessage = (event) => {
-    const msg = event?.data;
-    if (msg?.type === 'configurator_filters' && msg.ranges) {
+  const apply = (msg) => {
+    if (!msg) return;
+    if (msg.type === 'configurator_filters' && msg.ranges) {
       persistConfiguratorRangesForDataVis(msg.ranges);
       onSync({ ranges: msg.ranges });
       return;
     }
-    if (msg?.type !== 'configurator_explore_sync') return;
-    if (msg.ranges) persistConfiguratorRangesForDataVis(msg.ranges);
-    if (msg.inputs) persistConfiguratorInputsForDataVis(msg.inputs, msg.uiMode);
-    onSync({
-      ranges: msg.ranges,
-      inputs: msg.inputs,
-      uiMode: msg.uiMode,
-    });
+    if (msg.type && msg.type !== 'configurator_explore_sync' && !msg.inputs && !msg.ranges) return;
+    if (msg.type === 'configurator_explore_sync' || msg.inputs || msg.ranges) {
+      if (msg.ranges) persistConfiguratorRangesForDataVis(msg.ranges);
+      if (msg.inputs) persistConfiguratorInputsForDataVis(msg.inputs, msg.uiMode);
+      onSync({
+        ranges: msg.ranges,
+        inputs: msg.inputs,
+        uiMode: msg.uiMode,
+        at: msg.at,
+      });
+    }
   };
-  return () => {
+
+  let channel = null;
+  if (typeof BroadcastChannel !== 'undefined') {
+    channel = new BroadcastChannel(DATAVIS_CONFIGURATOR_SYNC_CHANNEL);
+    channel.onmessage = (event) => apply(event?.data);
+  }
+
+  const onStorage = (event) => {
+    if (event.key !== EXPLORE_SYNC_HANDOFF_STORAGE_KEY || !event.newValue) return;
     try {
-      channel.close();
+      apply(JSON.parse(event.newValue));
     } catch {
       /* ignore */
+    }
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', onStorage);
+  }
+
+  return () => {
+    try {
+      channel?.close();
+    } catch {
+      /* ignore */
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', onStorage);
     }
   };
 }

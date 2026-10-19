@@ -78,8 +78,14 @@ export function getTieHiddenMemberIdSet(components) {
     if (!isTieNetworkCollapsed(c)) continue;
     const ids = c.properties?.tieGroup?.memberIds;
     if (!Array.isArray(ids)) continue;
+    const explodedCopyOnOtherPane = !!c.properties?.windOctPlantGroup;
     for (const id of ids) {
-      if (id) hidden.add(String(id));
+      if (!id) continue;
+      if (explodedCopyOnOtherPane) {
+        const member = components.find((m) => m.id === id);
+        if (member && !tieSameCanvasPane(c, member)) continue;
+      }
+      hidden.add(String(id));
     }
   }
   return hidden;

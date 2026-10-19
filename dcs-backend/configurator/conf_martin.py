@@ -6,8 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from configurator.conf_capex_lcoe import COL_ADJUSTMENT, apply_capex_fuel_lcoe
 from configurator.conf_consolidated import TECH_SPECS
-from configurator.dataVis.dataset_mode import get_datavis_dataframe
 from configurator.dataVis.filters import apply_filters
 from configurator.dataVis.loader import load_martin_dataframe
 from configurator.dataVis.paths import (
@@ -306,14 +306,15 @@ def generate_martin_configurator_result(
         load_mw = 200.0
 
     try:
-        load_martin_dataframe(load_mw=waco_tier, martin_study=martin_study)
-        df = get_datavis_dataframe()
+        df = load_martin_dataframe(load_mw=waco_tier, martin_study=martin_study)
     except Exception as exc:  # noqa: BLE001
         return {
             "ok": False,
             "error": "Martin study dataset could not be loaded.",
             "details": [str(exc)],
         }
+
+    df, capex_info = apply_capex_fuel_lcoe(df, inputs.get("technologyCapex"), load_mw)
 
     if datavis_filters:
         filtered = apply_filters(df, datavis_filters)
@@ -396,6 +397,13 @@ def generate_martin_configurator_result(
             "minCfePercent": min_cfe_percent,
             "maxCfePercent": max_cfe_percent,
             "lcoe": int(round(portfolio_lcoe)),
+            "lcoeCapexApplied": bool(capex_info.get("applied")),
+            "lcoeCapexPending": capex_info.get("reason") == "missing-columns",
+            "capexFuelAdjustment": (
+                round(_num(winner, COL_ADJUSTMENT, 1.0), 4)
+                if capex_info.get("applied")
+                else None
+            ),
             "projectCapexUsdM": round(project_capex_usd_m, 1),
             "projectCapexPerKw": (
                 round(project_capex_per_kw) if project_capex_per_kw is not None else None

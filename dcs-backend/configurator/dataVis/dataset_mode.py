@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
+from configurator.conf_capex_lcoe import adjust_dataframe_for_request
 from configurator.dataVis.loader import get_active_waco_load_mw, load_martin_dataframe
 
 LOAD_COMPLIANCE_COL = "Year 1 Load Compliance (%)"
@@ -35,8 +36,9 @@ def reset_datavis_mode() -> None:
 
 
 def get_datavis_dataframe() -> pd.DataFrame:
-    """Active Martin study dataframe (pre-cleaned on disk when clean CSV is present)."""
-    return load_martin_dataframe(load_mw=get_active_waco_load_mw())
+    """Active Martin study dataframe, with project LCOE scaled to this request's wheels."""
+    df = load_martin_dataframe(load_mw=get_active_waco_load_mw())
+    return adjust_dataframe_for_request(df, get_active_waco_load_mw())
 
 
 def filter_load_compliance_clean(full: pd.DataFrame) -> pd.DataFrame:

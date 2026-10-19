@@ -155,13 +155,34 @@ export function hydrateWacoLoadTierFromUrl() {
   }
 }
 
+/** Same key as DATAVIS_CONFIGURATOR_INPUTS_STORAGE_KEY. Read here to avoid an import cycle. */
+const CONFIGURATOR_INPUTS_STORAGE_KEY = 'dcs.dataVis.lastConfiguratorInputs';
+
+function technologyCapexForDataVis(body) {
+  if (body?.technologyCapex && typeof body.technologyCapex === 'object') {
+    return body.technologyCapex;
+  }
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = window.sessionStorage.getItem(CONFIGURATOR_INPUTS_STORAGE_KEY);
+    if (!raw) return undefined;
+    const stored = JSON.parse(raw)?.inputs?.technologyCapex;
+    if (stored && typeof stored === 'object') return stored;
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
 export function withDataVisLoadMw(body = {}, stateId) {
   const study = effectiveMartinStudy(stateId ?? body.stateId);
+  const technologyCapex = technologyCapexForDataVis(body);
   return {
     ...body,
     loadMW: effectiveDataVisLoadMwTier(stateId ?? body.stateId),
     martinStudy: study,
     martinStudyEpoch: readMartinStudyEpoch(),
+    ...(technologyCapex ? { technologyCapex } : {}),
   };
 }
 

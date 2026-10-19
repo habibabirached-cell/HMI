@@ -114,6 +114,11 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
   const [wallInputs, setWallInputs] = useState(null);
   /** Corridor inputs from Ideum explore-sync (stable base for filter → Martin updates). */
   const [ideumWallInputs, setIdeumWallInputs] = useState(() => initialExploreSync.ideumWallInputs);
+  const [capexKey, setCapexKey] = useState(() => JSON.stringify(
+    initialExploreSync.ideumWallInputs?.technologyCapex
+    ?? readPersistedConfiguratorInputs()?.inputs?.technologyCapex
+    ?? null,
+  ));
   const [wallUiMode, setWallUiMode] = useState(
     () => initialExploreSync.wallUiMode ?? UI_MODES.BASIC,
   );
@@ -290,8 +295,10 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
   const columnStatsForViews = sessionColumnStats ?? meta?.column_stats;
   const datasetRowCount = sessionRowCount ?? meta?.row_count;
 
+  const wantsCapexStats = Boolean(capexKey && capexKey !== 'null');
   const needsSessionColumnStats =
-    dataQualityMode === DATA_QUALITY_CLEAN && excludedRowIds.length > 0;
+    (dataQualityMode === DATA_QUALITY_CLEAN && excludedRowIds.length > 0)
+    || wantsCapexStats;
 
   useEffect(() => {
     if (!meta) return undefined;
@@ -312,7 +319,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     return () => {
       cancelled = true;
     };
-  }, [dataQualityMode, excludedRowIds, meta, needsSessionColumnStats]);
+  }, [capexKey, dataQualityMode, excludedRowIds, meta, needsSessionColumnStats]);
 
   useEffect(() => subscribeDataQualityMode(syncAfterDatasetModeChange), [syncAfterDatasetModeChange]);
 
@@ -428,6 +435,9 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     (payload) => {
       if (!payload) return;
       if (payload.inputs) {
+        if (payload.inputs.technologyCapex) {
+          setCapexKey(JSON.stringify(payload.inputs.technologyCapex));
+        }
         const stateId = payload.inputs.stateId;
         const prevTier = effectiveDataVisLoadMwTier(stateId);
         const prevStudy = readPersistedMartinStudy();
@@ -449,6 +459,12 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
 
   const handleExploreSyncPayloadRef = useRef(handleExploreSyncPayload);
   handleExploreSyncPayloadRef.current = handleExploreSyncPayload;
+  const lastExploreSyncAtRef = useRef(0);
+  const deliverExploreSync = useCallback((payload) => {
+    if (payload?.at && payload.at === lastExploreSyncAtRef.current) return;
+    if (payload?.at) lastExploreSyncAtRef.current = payload.at;
+    handleExploreSyncPayloadRef.current(payload);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -494,7 +510,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
     shouldSyncConfiguratorToDataVis().then((useBroadcast) => {
       if (cancelled || !useBroadcast) return;
       unsubscribeChannel = subscribeConfiguratorExploreSync((payload) => {
-        handleExploreSyncPayloadRef.current(payload);
+        deliverExploreSync(payload);
       });
     });
 
@@ -605,6 +621,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
         wallInputs={wallInputs}
         wallGenerating={wallGenerating}
         wallStatusMessage={wallStatusMessage}
+        capexKey={capexKey}
       />
     );
   } else if (layoutMode === 'quad') {
@@ -638,6 +655,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
         sessionUniverseFilters={sessionUniverseFilters}
         binCount={binCount}
         onBinCountChange={setBinCount}
+        capexKey={capexKey}
       />
     );
   } else {
@@ -679,6 +697,7 @@ export default function DataVisPanel({ showQualityToggle = true, variant = 'defa
             parcoordsActive={parcoordsActive}
             parcoordsRanges={parcoordsRanges}
             onClearAll={clearAllFilters}
+            capexKey={capexKey}
           />
         )}
         {tab === 'histogram' && (

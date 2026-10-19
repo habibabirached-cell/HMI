@@ -32,6 +32,7 @@ export default function DataVisExploreWallQuadLayout({
   wallInputs,
   wallGenerating,
   wallStatusMessage,
+  capexKey = '',
 }) {
   const stats = columnStats ?? meta.column_stats;
   const { split, setSplit, resetSplit } = useWallBezelSplit(EXPLORE_WALL_SPLIT_KEY);
@@ -72,6 +73,7 @@ export default function DataVisExploreWallQuadLayout({
           parcoordsActive={parcoordsActive}
           parcoordsRanges={parcoordsRanges}
           onClearAll={onClearAll}
+          capexKey={capexKey}
         />
       </ParallelPane>
     </WallBezelShell>

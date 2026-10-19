@@ -26,7 +26,13 @@ export default function ConfKpiStrip({ result }) {
         <div className="conf-kpi-card">
           <span className="conf-kpi-card__label">Portfolio LCOE</span>
           <strong className="conf-kpi-card__value">{formatCurrencyPerMWh(kpis.lcoe)}</strong>
-          <small>Least-cost objective</small>
+          <small>
+            {kpis.lcoeCapexApplied
+              ? 'Includes your installed CAPEX and gas price'
+              : kpis.lcoeCapexPending
+                ? 'CAPEX and gas price apply on the 200 MW study'
+                : 'Least-cost objective'}
+          </small>
         </div>
         <div className="conf-kpi-card">
           <span className="conf-kpi-card__label">Project CAPEX</span>

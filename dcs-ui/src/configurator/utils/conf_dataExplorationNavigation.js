@@ -250,6 +250,15 @@ export async function requestExploreDataOnMaingear(role, inputs, uiMode) {
   );
 }
 
+export function exploreNavigationActionForRole(role) {
+  if (role?.isIdeum) return 'maingear-remote';
+  // Localhost is the dev laptop, even when cluster.local.json says maingear.
+  // Ideum is handled above so the touch table still drives Maingear.
+  if (role?.isDev || isLocalClusterDev()) return 'new-tab';
+  if (role?.isMaingear) return 'same-tab';
+  return 'same-tab';
+}
+
 export async function resolveExploreDataNavigationAction(explicitRole = null) {
   return resolveDataExplorationNavigationAction(explicitRole);
 }
@@ -272,20 +281,5 @@ export async function resolveDataExplorationNavigationAction(explicitRole = null
     }
   }
 
-  if (role?.isMaingear) {
-    return 'same-tab';
-  }
-
-  if (role?.isIdeum) {
-    return 'maingear-remote';
-  }
-
-  const openDevTab =
-    role?.isDev
-    || (isLocalClusterDev() && !role?.isMaingear && !role?.isIdeum);
-  if (openDevTab) {
-    return 'new-tab';
-  }
-
-  return 'same-tab';
+  return exploreNavigationActionForRole(role);
 }

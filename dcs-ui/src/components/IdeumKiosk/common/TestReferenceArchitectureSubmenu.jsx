@@ -204,19 +204,24 @@ export default function TestReferenceArchitectureSubmenu({
                 pressState={bessOn ? 'on' : 'off'}
                 onPress={() => {
                   if (running && rscad.busy) return;
+                  const prevBess = bessOn;
+                  const prevMvups = mvupsOn;
+                  setBessOn(true);
+                  setMvupsOn(false);
                   void (async () => {
-                    if (onIdeumCommand) {
-                      await onIdeumCommand(REF200_IDEUM_COMMANDS.addBess);
-                    }
-                    if (!running) {
-                      setBessOn(true);
-                      setMvupsOn(false);
-                      return;
-                    }
-                    const result = await sendRscadAddBess();
-                    if (result.ok) {
-                      setBessOn(true);
-                      setMvupsOn(false);
+                    try {
+                      if (onIdeumCommand) {
+                        await onIdeumCommand(REF200_IDEUM_COMMANDS.addBess);
+                      }
+                      if (!running) return;
+                      const result = await sendRscadAddBess();
+                      if (!result.ok) {
+                        setBessOn(prevBess);
+                        setMvupsOn(prevMvups);
+                      }
+                    } catch {
+                      setBessOn(prevBess);
+                      setMvupsOn(prevMvups);
                     }
                   })();
                 }}
@@ -230,20 +235,27 @@ export default function TestReferenceArchitectureSubmenu({
                 pressState={mvupsOn ? 'on' : 'off'}
                 onPress={() => {
                   if (running && rscad.busy) return;
+                  const prevBess = bessOn;
+                  const prevMvups = mvupsOn;
+                  setMvupsOn(true);
+                  setBessOn(false);
                   void (async () => {
-                    if (onIdeumCommand) {
-                      await onIdeumCommand(REF200_IDEUM_COMMANDS.addMvups);
+                    try {
+                      if (onIdeumCommand) {
+                        await onIdeumCommand(REF200_IDEUM_COMMANDS.addMvups);
+                      }
+                      if (!running) return;
+                      const result = await sendRscadAddMvups();
+                      if (!result.ok) {
+                        setBessOn(prevBess);
+                        setMvupsOn(prevMvups);
+                        return;
+                      }
+                      setLoadMode('ai');
+                    } catch {
+                      setBessOn(prevBess);
+                      setMvupsOn(prevMvups);
                     }
-                    if (!running) {
-                      setMvupsOn(true);
-                      setBessOn(false);
-                      return;
-                    }
-                    const result = await sendRscadAddMvups();
-                    if (!result.ok) return;
-                    setMvupsOn(true);
-                    setBessOn(false);
-                    setLoadMode('ai');
                   })();
                 }}
               />

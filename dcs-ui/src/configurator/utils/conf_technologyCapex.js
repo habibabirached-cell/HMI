@@ -1,27 +1,20 @@
-import { normalizeWacoLoadTier } from './conf_wacoLoadTier';
-
 /** Installed CAPEX unit labels (Ideum touch hub). */
 export const IDEUM_CAPEX_UNIT_KW = '($/kW)';
 export const IDEUM_CAPEX_UNIT_KWH = '($/kWh)';
 
-/** 200 MW tier: show stored $/kW ÷ 0.2 (same basis as 1 GW study). */
-export const IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR = 0.2;
-
-export function ideumCapexDisplayValue(storedValue, loadMW) {
+/**
+ * Wheel figures are $/kW, $/kWh, and $/MMBtu on both load tiers.
+ * Those are the units in the 200 MW study prices, so 200 MW is not rescaled.
+ */
+export function ideumCapexDisplayValue(storedValue, _loadMW) {
   const n = Number(storedValue);
   if (!Number.isFinite(n)) return storedValue;
-  if (normalizeWacoLoadTier(loadMW) === 200) {
-    return n / IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR;
-  }
   return n;
 }
 
-export function ideumCapexStoredValue(displayValue, loadMW) {
+export function ideumCapexStoredValue(displayValue, _loadMW) {
   const n = Number(displayValue);
   if (!Number.isFinite(n)) return displayValue;
-  if (normalizeWacoLoadTier(loadMW) === 200) {
-    return n * IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR;
-  }
   return n;
 }
 
@@ -42,22 +35,22 @@ export const HD_GT_CYCLE_MODE = {
   SIMPLE: 'simple',
 };
 
-/** Installed/EPC-style indicative defaults (global, not location-adjusted). */
+/** Study prices the 200 MW LCOE columns were built at (same for every case). */
 export const HD_GT_CAPEX_DEFAULT_BY_MODE = {
-  [HD_GT_CYCLE_MODE.COMBINED]: 1000,
-  [HD_GT_CYCLE_MODE.SIMPLE]: 836,
+  [HD_GT_CYCLE_MODE.COMBINED]: 2500,
+  [HD_GT_CYCLE_MODE.SIMPLE]: 2500,
 };
 
 export const TECH_CAPEX_FIELD_DEFAULTS = {
-  solar: { capexPerKwAc: 1500 },
-  wind: { capexPerKw: 1400 },
+  solar: { capexPerKwAc: 1600 },
+  wind: { capexPerKw: 2000 },
   heavyDutyGT: {
     cycleMode: HD_GT_CYCLE_MODE.SIMPLE,
     capexPerKw: HD_GT_CAPEX_DEFAULT_BY_MODE[HD_GT_CYCLE_MODE.SIMPLE],
-    gasPricePerMmbtu: 6,
+    gasPricePerMmbtu: 3.5,
   },
-  aeroderivativeGT: { capexPerKw: 1200, gasPricePerMmbtu: 6 },
-  battery: { capexPerKw: 372, capexPerKwh: 334 },
+  aeroderivativeGT: { capexPerKw: 3000, gasPricePerMmbtu: 3.5 },
+  battery: { capexPerKw: 372, capexPerKwh: 238 },
 };
 
 export function createDefaultTechnologyCapex() {
@@ -151,12 +144,12 @@ export function formatGasPriceDisplay(value) {
   });
 }
 
-/** Touch-table wheel ranges (installed unit CAPEX). */
+/** Touch-table wheel ranges. Spans include the study prices (1,600 / 2,000 / 2,500 / 3,000 / 238 / 3.50). */
 export const CAPEX_WHEEL_PRESETS = {
-  solarPerKwAc: { min: 800, max: 2400, step: 25 },
-  generationPerKw: { min: 500, max: 2200, step: 25 },
+  solarPerKwAc: { min: 800, max: 3200, step: 25 },
+  generationPerKw: { min: 500, max: 4000, step: 25 },
   bessPowerPerKw: { min: 200, max: 600, step: 5 },
-  bessEnergyPerKwh: { min: 100, max: 500, step: 5 },
+  bessEnergyPerKwh: { min: 100, max: 500, step: 1 },
   gasPricePerMmbtu: { min: 2, max: 16, step: 0.25 },
 };
 
@@ -172,12 +165,8 @@ export function buildCapexWheelOptions({ min, max, step }) {
   return out;
 }
 
-export function ideumCapexWheelOptionsForLoad(wheelPreset, loadMW) {
-  const base = buildCapexWheelOptions(wheelPreset);
-  if (normalizeWacoLoadTier(loadMW) === 200) {
-    return base.map((v) => v / IDEUM_CAPEX_200_MW_DISPLAY_DIVISOR);
-  }
-  return base;
+export function ideumCapexWheelOptionsForLoad(wheelPreset, _loadMW) {
+  return buildCapexWheelOptions(wheelPreset);
 }
 
 export function nearestCapexWheelOption(value, options) {

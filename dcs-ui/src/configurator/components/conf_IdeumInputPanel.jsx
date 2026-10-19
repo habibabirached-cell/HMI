@@ -292,17 +292,17 @@ export default function ConfIdeumInputPanel({
             <button
               type="button"
               className="conf-ideum-explore-data-btn"
-              onClick={() => onExploreData?.()}
+              onClick={onOptimizedConfiguration}
+              disabled={isOptimizedBusy}
             >
-              Explore Data
+              {isOptimizedBusy ? 'Sending…' : 'Explore Data'}
             </button>
             <button
               type="button"
               className="conf-ideum-configure-btn conf-ideum-configure-btn--optimized"
-              onClick={onOptimizedConfiguration}
-              disabled={isOptimizedBusy}
+              onClick={() => onExploreData?.()}
             >
-              {isOptimizedBusy ? 'Sending…' : 'Optimized Configuration'}
+              Optimized Configuration
             </button>
           </div>
           <Conf3dToggleButton variant="footer" className="conf-3d-toggle--ideum-footer" />
