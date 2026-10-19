@@ -58,6 +58,16 @@
             "sample_step": 32,
             "x_label": "Time (seconds)",
             "y_label": "Voltage compared with normal",
+            "horizontal_lines": [
+              {
+                "y": 0.95,
+                "label": "0.95"
+              },
+              {
+                "y": 1.05,
+                "label": "1.05"
+              }
+            ],
             "legend_labels": {
               "wind14GFLWind_14ms_HMI — Vload_1": "14 meter / sec"
             },
@@ -72,18 +82,11 @@
               "x_threshold": 15,
               "simulation_start_at": 0,
               "simulation_end_at": 60,
-              "t_loop": 3
-            },
-            "horizontal_lines": [
-              {
-                "y": 0.95,
-                "label": "0.95"
-              },
-              {
-                "y": 1.05,
-                "label": "1.05"
-              }
-            ]
+              "t_loop": 3,
+              "y_min": 0.8,
+              "y_max": 1.2,
+              "y_locked": true
+            }
           },
           {
             "type": "single",
@@ -98,6 +101,16 @@
             "sample_step": 32,
             "x_label": "Time (seconds)",
             "y_label": "Frequency (hertz)",
+            "horizontal_lines": [
+              {
+                "y": 59.964,
+                "label": "59.964"
+              },
+              {
+                "y": 60.036,
+                "label": "60.036"
+              }
+            ],
             "legend_labels": {
               "wind14GFLWind_14ms_HMI — f_load": "14 meter / sec"
             },
@@ -113,17 +126,7 @@
               "simulation_start_at": 0,
               "simulation_end_at": 61.08626216,
               "t_loop": 3
-            },
-            "horizontal_lines": [
-              {
-                "y": 59.964,
-                "label": "59.964"
-              },
-              {
-                "y": 60.036,
-                "label": "60.036"
-              }
-            ]
+            }
           }
         ],
         "chart_stacks": [],
@@ -218,6 +221,16 @@
             "sample_step": 32,
             "x_label": "Time (seconds)",
             "y_label": "Voltage compared with normal",
+            "horizontal_lines": [
+              {
+                "y": 0.95,
+                "label": "0.95"
+              },
+              {
+                "y": 1.05,
+                "label": "1.05"
+              }
+            ],
             "legend_labels": {
               "wind14GFLWind_14ms_HMI — Vload_1": "14 meter / sec"
             },
@@ -232,18 +245,11 @@
               "x_threshold": 15,
               "simulation_start_at": 0,
               "simulation_end_at": 60,
-              "t_loop": 3
-            },
-            "horizontal_lines": [
-              {
-                "y": 0.95,
-                "label": "0.95"
-              },
-              {
-                "y": 1.05,
-                "label": "1.05"
-              }
-            ]
+              "t_loop": 3,
+              "y_min": 0.8,
+              "y_max": 1.2,
+              "y_locked": true
+            }
           },
           {
             "type": "single",
@@ -258,6 +264,16 @@
             "sample_step": 32,
             "x_label": "Time (seconds)",
             "y_label": "Frequency (hertz)",
+            "horizontal_lines": [
+              {
+                "y": 59.964,
+                "label": "59.964"
+              },
+              {
+                "y": 60.036,
+                "label": "60.036"
+              }
+            ],
             "legend_labels": {
               "wind14GFLWind_14ms_HMI — f_load": "14 meter / sec"
             },
@@ -273,17 +289,7 @@
               "simulation_start_at": 0,
               "simulation_end_at": 61.08626216,
               "t_loop": 3
-            },
-            "horizontal_lines": [
-              {
-                "y": 59.964,
-                "label": "59.964"
-              },
-              {
-                "y": 60.036,
-                "label": "60.036"
-              }
-            ]
+            }
           }
         ],
         "chart_stacks": [],
