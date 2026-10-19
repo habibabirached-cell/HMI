@@ -226,6 +226,7 @@ export default function ConfIdeumInputPanel({
         min={0}
         max={100}
         step={1}
+        minBandSpan={0}
         lowerValue={minCfe}
         upperValue={maxCfe}
         onChange={(lower, upper) => update({
