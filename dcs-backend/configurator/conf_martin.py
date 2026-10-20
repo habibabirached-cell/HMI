@@ -6,7 +6,16 @@ from typing import Any
 
 import pandas as pd
 
-from configurator.conf_capex_lcoe import COL_ADJUSTMENT, apply_capex_fuel_lcoe
+from configurator.conf_capex_lcoe import (
+    AERO_CAPEX_DEFAULT,
+    BESS_CAPEX_DEFAULT,
+    COL_ADJUSTMENT,
+    HDGT_CAPEX_DEFAULT,
+    SOLAR_CAPEX_DEFAULT,
+    WIND_CAPEX_DEFAULT,
+    apply_capex_fuel_lcoe,
+    wheel_unit_capex,
+)
 from configurator.conf_consolidated import TECH_SPECS
 from configurator.dataVis.filters import apply_filters
 from configurator.dataVis.loader import load_martin_dataframe
@@ -29,7 +38,6 @@ def resolve_martin_study_from_inputs(inputs: dict[str, Any]) -> str:
 COL_CFE = "Carbon Free Energy (%)"
 COL_LOAD_COMPLIANCE = "Annual Load Compliance (%)"
 COL_LCOE = "Project LCOE ($/MWh)"
-COL_PROJECT_CAPEX = "Project CAPEX ($ M)"
 COL_CARBON = "Carbon Density (lb CO2/MWh)"
 COL_TOTAL_AEP_GWH = "Total Yr1 AEP (GWh)"
 COL_SOLAR_MW = "Solar AC Nameplate (MWac)"
@@ -378,7 +386,33 @@ def generate_martin_configurator_result(
     achieved_cfe_percent = achieved_cfe_fraction * 100.0
     achieved_rel = _num(winner, COL_LOAD_COMPLIANCE)
     total_installed = sum(r["installedMW"] for r in rows)
-    project_capex_usd_m = _num(winner, COL_PROJECT_CAPEX)
+    solar_mw = _num(winner, "Solar AC Nameplate (MWac)")
+    wind_mw = _num(winner, "Wind Nameplate (MWac)")
+    bess_mwh = _num(winner, "BESS Performance Guarantee (MWh)")
+    if bess_mwh <= 0:
+        bess_mwh = _num(winner, "BESS initially installed Capacity (MWh)")
+    ha_units = _num(winner, "7HA Unit #")
+    if ha_units <= 0:
+        ha_units = _num(winner, "7HA.02 Unit #")
+    lm_units = _num(winner, "LM2500 Unit #")
+    ha_mw = ha_units * MW_PER_7HA_UNIT
+    lm_mw = lm_units * MW_PER_LM2500_UNIT
+
+    capex = inputs.get("technologyCapex") if isinstance(inputs.get("technologyCapex"), dict) else {}
+    solar_input_user = wheel_unit_capex((capex.get("solar") or {}).get("capexPerKwAc")) or SOLAR_CAPEX_DEFAULT
+    wind_input_user = wheel_unit_capex((capex.get("wind") or {}).get("capexPerKw")) or WIND_CAPEX_DEFAULT
+    hd_input_user = wheel_unit_capex((capex.get("heavyDutyGT") or {}).get("capexPerKw")) or HDGT_CAPEX_DEFAULT
+    lm_input_user = wheel_unit_capex((capex.get("aeroderivativeGT") or {}).get("capexPerKw")) or AERO_CAPEX_DEFAULT
+    bess_mwh_input_user = wheel_unit_capex((capex.get("battery") or {}).get("capexPerKwh")) or BESS_CAPEX_DEFAULT
+
+    project_capex_usd_m = 50 + (
+        solar_input_user * solar_mw
+        + wind_input_user * wind_mw
+        + hd_input_user * ha_mw
+        + lm_input_user * lm_mw
+        + bess_mwh_input_user * bess_mwh
+    ) / 1000
+
     project_capex_per_kw = (
         (project_capex_usd_m * 1_000_000.0) / (load_mw * 1000.0)
         if load_mw > 0 and project_capex_usd_m > 0

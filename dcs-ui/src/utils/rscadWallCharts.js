@@ -13,7 +13,6 @@ export const RSCAD_METER_SAMPLE_COMMAND = 'rscadMeterSample';
 const LOAD_COLOR = '#005E60';
 const GENERATOR_COLOR = '#E0A045';
 const FREQUENCY_COLOR = '#2E9B6A';
-const VOLTAGE_LOAD_COLOR = '#E07A6A';
 const VOLTAGE_GEN_COLOR = '#3D9BDC';
 
 export function isRscadWallChart(chart) {
@@ -83,12 +82,12 @@ export function buildRscadWallOpenCharts() {
     }),
     wallChart({
       id: `rscad-generator-${stamp}`,
-      title: 'One generator',
-      yLabel: 'Output of one generator (megawatts)',
+      title: 'LM2500 #1',
+      yLabel: 'Power (megawatt)',
       yMin: 0,
       yMax: 30,
       drawer: 'chart2',
-      traces: [{ channel: 'generator', name: 'One generator', color: GENERATOR_COLOR }],
+      traces: [{ channel: 'generator', name: 'LM2500 #1', color: GENERATOR_COLOR }],
     }),
     wallChart({
       id: `rscad-frequency-${stamp}`,
@@ -102,12 +101,11 @@ export function buildRscadWallOpenCharts() {
     wallChart({
       id: `rscad-voltage-${stamp}`,
       title: 'Voltage',
-      yLabel: 'Voltage compared with normal',
-      yMin: 0.8,
-      yMax: 1.2,
+      yLabel: 'Normalized Voltage',
+      yMin: 0.9,
+      yMax: 1.1,
       drawer: 'chart4',
       traces: [
-        { channel: 'voltageLoad', name: 'At the data center', color: VOLTAGE_LOAD_COLOR },
         { channel: 'voltageGen', name: 'At the generators', color: VOLTAGE_GEN_COLOR },
       ],
     }),
