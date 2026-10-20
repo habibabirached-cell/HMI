@@ -11,9 +11,9 @@ export const EXPLORE_WALL_GREEN_ENERGY_KEYS = [
 
 export const EXPLORE_WALL_CARBON_ENERGY_KEYS = ['7HA Unit #', 'LM2500 Unit #'];
 
-const OUTCOME_KEYS = ['Project LCOE ($/MWh)', DATAVIS_LOAD_COMPLIANCE_COL];
+const OUTCOME_KEYS = [DATAVIS_CFE_COL, 'Project LCOE ($/MWh)', DATAVIS_LOAD_COMPLIANCE_COL];
 
-/** Explore Data: renewables → gas → CFE → LCOE → uptime (columns present in tier). */
+/** Explore Data: renewables → gas → carbon-free, LCOE, uptime (columns present in tier). */
 export function orderExploreWallParallelDimensions(dims) {
   if (!Array.isArray(dims) || !dims.length) return [];
   const present = new Set(dims);
@@ -21,7 +21,6 @@ export function orderExploreWallParallelDimensions(dims) {
   const push = (keys) => keys.forEach((k) => present.has(k) && ordered.push(k));
   push(EXPLORE_WALL_GREEN_ENERGY_KEYS);
   push(EXPLORE_WALL_CARBON_ENERGY_KEYS);
-  if (present.has(DATAVIS_CFE_COL)) ordered.push(DATAVIS_CFE_COL);
   push(OUTCOME_KEYS);
   dims.forEach((k) => {
     if (!ordered.includes(k)) ordered.push(k);

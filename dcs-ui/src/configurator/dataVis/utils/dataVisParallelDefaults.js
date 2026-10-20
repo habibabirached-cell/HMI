@@ -1,6 +1,6 @@
 import { orderExploreWallParallelDimensions } from './dataVisExploreWallParallelOrder';
 
-/** Explore Data parallel dims: gas turbines then CFE, then outcomes. */
+/** Explore Data parallel dims: gas turbines, then carbon-free, LCOE, and uptime. */
 export function parallelDimensionsForExploreWall(defaultsOrDims) {
   const list = Array.isArray(defaultsOrDims)
     ? defaultsOrDims

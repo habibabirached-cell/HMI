@@ -465,7 +465,7 @@ export function applyParcoordsExploreWallSwimlaneHeaders(graphDiv, dimensionKeys
     parentLabelTop,
     parentBracketTop,
     'dataVis-parcoords-swimlane-label--parent dataVis-parcoords-swimlane-label--outcomes',
-    'Value you get',
+    'Outcomes',
   );
   placeSwimlaneGroup(
     layer,
@@ -481,7 +481,7 @@ export function applyParcoordsExploreWallSwimlaneHeaders(graphDiv, dimensionKeys
     subLabelTop,
     subBracketTop,
     'dataVis-parcoords-swimlane-label--carbon',
-    'Carbon energy',
+    'Fossil Energy',
   );
 }
 
