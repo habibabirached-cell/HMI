@@ -4673,6 +4673,47 @@
   font-size: clamp(15px, 1.375vw, 20px);
 }
 
+/* Solar, wind, and battery cards — 15% larger than the shared asset size. */
+.conf-arch-canvas__asset--plant {
+  width: clamp(155.25px, 19.40625vw, 265.9375px);
+  height: clamp(169.625px, 21.5625vw, 287.5px);
+}
+
+.conf-arch-canvas__asset--plant .conf-arch-canvas__asset-head {
+  gap: 2.875px;
+  padding: 8.625px 11.5px 5.75px;
+}
+
+.conf-arch-canvas__asset--plant .conf-arch-canvas__asset-title {
+  font-size: clamp(15.8125px, 1.509375vw, 21.5625px);
+}
+
+.conf-arch-canvas__asset--plant .conf-arch-canvas__asset-capacity {
+  font-size: clamp(14.375px, 1.3225vw, 18.6875px);
+}
+
+.conf-arch-canvas__asset--plant .conf-arch-canvas__asset-foot {
+  padding: 7.1875px 11.5px 8.625px;
+  font-size: clamp(14.375px, 1.365625vw, 18.6875px);
+}
+
+.conf-arch-canvas--wall .conf-arch-canvas__asset--plant {
+  width: clamp(169.625px, 20.84375cqi, 301.875px);
+  height: clamp(184px, 23cqi, 323.4375px);
+}
+
+.conf-arch-canvas--wall .conf-arch-canvas__asset--plant .conf-arch-canvas__asset-title {
+  font-size: clamp(18.6875px, 1.940625vw, 28.75px);
+}
+
+.conf-arch-canvas--wall .conf-arch-canvas__asset--plant .conf-arch-canvas__asset-capacity {
+  font-size: clamp(17.25px, 1.653125vw, 24.4375px);
+}
+
+.conf-arch-canvas--wall .conf-arch-canvas__asset--plant .conf-arch-canvas__asset-foot {
+  font-size: clamp(17.25px, 1.58125vw, 23px);
+}
+
 /* Trade space show-and-tell buttons + visualizations */
 
 .conf-trade-viz-buttons {

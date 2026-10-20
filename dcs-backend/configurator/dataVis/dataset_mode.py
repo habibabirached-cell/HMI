@@ -10,11 +10,8 @@ import pandas as pd
 from configurator.conf_capex_lcoe import adjust_dataframe_for_request
 from configurator.dataVis.loader import get_active_waco_load_mw, load_martin_dataframe
 
-LOAD_COMPLIANCE_COL = "Year 1 Load Compliance (%)"
+LOAD_COMPLIANCE_COL = "Annual Load Compliance (%)"
 CLEAN_MIN_LOAD_COMPLIANCE = 97.0
-BESS_CYCLES_COL = "BESS usage (cycle/day)"
-# One cycle per year. Cases below this never cycle the battery.
-CLEAN_MIN_BESS_CYCLES_PER_DAY = 1 / 365
 
 DatasetMode = Literal["raw", "clean"]
 
@@ -45,20 +42,11 @@ def get_datavis_dataframe() -> pd.DataFrame:
 
 
 def filter_load_compliance_clean(full: pd.DataFrame) -> pd.DataFrame:
-    """Rows with Year 1 load compliance at or above the clean threshold."""
+    """Rows with annual load compliance at or above the clean threshold."""
     if LOAD_COMPLIANCE_COL not in full.columns:
         return full.copy()
     col = pd.to_numeric(full[LOAD_COMPLIANCE_COL], errors="coerce")
     return full.loc[col >= CLEAN_MIN_LOAD_COMPLIANCE].copy()
-
-
-def filter_bess_cycles_clean(full: pd.DataFrame) -> pd.DataFrame:
-    """Drop cases that cycle the battery less than once per year."""
-    if BESS_CYCLES_COL not in full.columns:
-        return full.copy()
-    col = pd.to_numeric(full[BESS_CYCLES_COL], errors="coerce")
-    keep = col.isna() | (col >= CLEAN_MIN_BESS_CYCLES_PER_DAY)
-    return full.loc[keep].copy()
 
 
 _filter_clean = filter_load_compliance_clean

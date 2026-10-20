@@ -22,6 +22,7 @@ from configurator.dataVis.paths import (
     badger_workbook_path,
     waco_clean_csv_path,
     waco_workbook_path,
+    waco_workbook_sheet,
 )
 
 _lock = threading.Lock()
@@ -36,7 +37,6 @@ _request_study_epoch: ContextVar[int | None] = ContextVar("martin_study_epoch", 
 
 # After header normalization, map tier-specific names to canonical Martin/dataVis keys.
 COLUMN_ALIASES: dict[str, str] = {
-    "Annual Load Compliance (%)": "Year 1 Load Compliance (%)",
     "Project LCOE ($/MWh) at default CAPEX/Fuel values": "Project LCOE ($/MWh)",
     "Project CAPEX ($ M) @ Default Value": "Project CAPEX ($ M)",
     # Wisconsin 1 GW names the heavy-duty count after the 7HA.02. Texas uses "7HA Unit #".
@@ -207,7 +207,10 @@ def read_martin_excel_dataframe(
 
 def read_waco_excel_dataframe(tier: int) -> pd.DataFrame:
     """Full Waco tier workbook (used by build_waco_clean_csv.py)."""
-    return read_martin_excel_dataframe(waco_workbook_path(tier))
+    return read_martin_excel_dataframe(
+        waco_workbook_path(tier),
+        sheet_name=waco_workbook_sheet(tier),
+    )
 
 
 def _read_waco_clean_csv(tier: int) -> pd.DataFrame:

@@ -11,8 +11,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from configurator.dataVis.dataset_mode import (
-    BESS_CYCLES_COL,
-    CLEAN_MIN_BESS_CYCLES_PER_DAY,
     CLEAN_MIN_LOAD_COMPLIANCE,
     LOAD_COMPLIANCE_COL,
 )
@@ -35,8 +33,7 @@ def main() -> None:
         summaries.append(
             f"{tier} MW: {WACO_WORKBOOK_BY_LOAD_MW[tier]} "
             f"({full_rows} rows) -> {out.name} ({clean_rows} rows, "
-            f"{LOAD_COMPLIANCE_COL} >= {CLEAN_MIN_LOAD_COMPLIANCE}, "
-            f"{BESS_CYCLES_COL} >= {CLEAN_MIN_BESS_CYCLES_PER_DAY:.5f})"
+            f"{LOAD_COMPLIANCE_COL} >= {CLEAN_MIN_LOAD_COMPLIANCE})"
         )
     print("\n".join(summaries))
 

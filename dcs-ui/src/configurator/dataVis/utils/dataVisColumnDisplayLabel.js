@@ -1,4 +1,4 @@
-export const DATAVIS_LOAD_COMPLIANCE_COL = 'Year 1 Load Compliance (%)';
+export const DATAVIS_LOAD_COMPLIANCE_COL = 'Annual Load Compliance (%)';
 export const DATAVIS_CFE_COL = 'Carbon Free Energy (%)';
 
 export const DATAVIS_UNIT_COUNT_COLUMNS = ['7HA Unit #', 'LM2500 Unit #'];

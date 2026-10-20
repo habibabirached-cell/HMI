@@ -242,9 +242,9 @@ def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
         "median": q("Project LCOE ($/MWh)", "median"),
     }
     kpis["load_compliance"] = {
-        "min": q("Year 1 Load Compliance (%)", "min"),
-        "max": q("Year 1 Load Compliance (%)", "max"),
-        "median": q("Year 1 Load Compliance (%)", "median"),
+        "min": q("Annual Load Compliance (%)", "min"),
+        "max": q("Annual Load Compliance (%)", "max"),
+        "median": q("Annual Load Compliance (%)", "median"),
     }
     kpis["cfe"] = {
         "min": q("Carbon Free Energy (%)", "min"),
@@ -252,9 +252,9 @@ def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
         "median": q("Carbon Free Energy (%)", "median"),
     }
 
-    if "Year 1 Load Compliance (%)" in df.columns:
+    if "Annual Load Compliance (%)" in df.columns:
         kpis["pct_meeting_99_load"] = _json_safe(
-            100.0 * (df["Year 1 Load Compliance (%)"] >= 99).mean()
+            100.0 * (df["Annual Load Compliance (%)"] >= 99).mean()
         )
 
     pareto_n = min(150, n)  # overview KPI preview; UI chart uses /rows with same limit
@@ -269,7 +269,7 @@ def get_overview(filters: list[dict] | None = None) -> dict[str, Any]:
                     for c in [
                         "dataVis_row_id",
                         "Project LCOE ($/MWh)",
-                        "Year 1 Load Compliance (%)",
+                        "Annual Load Compliance (%)",
                         "Solar AC Nameplate (MWac)",
                         "Wind Nameplate (MWac)",
                     ]

@@ -188,13 +188,14 @@ function formatAssetUtilizationLine(assetId, cfRow, thermalRow) {
 function ArchitectureAssetCard({ asset, slot, capacityFactors }) {
   const spec = getArchitectureModelSpec(asset.id);
   const isStorage = isStorageTechnology(asset.id);
+  const isThermal = THERMAL_ASSET_IDS.has(asset.id);
   const title = asset.fullLabel || asset.label;
   const cfRow = capacityFactorForAsset(capacityFactors, asset.id);
   const thermalRow = capacityFactorForAsset(capacityFactors, 'thermal');
 
   return (
     <article
-      className={`conf-arch-canvas__asset${isStorage ? ' conf-arch-canvas__asset--storage' : ''}`}
+      className={`conf-arch-canvas__asset${isStorage ? ' conf-arch-canvas__asset--storage' : ''}${isThermal ? '' : ' conf-arch-canvas__asset--plant'}`}
       style={{
         left: `${slot.left}%`,
         top: `${slot.top}%`,

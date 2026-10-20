@@ -16,11 +16,11 @@ const QUAD_SCATTER_DEFAULTS = [
   },
   {
     x: 'Carbon Free Energy (%)',
-    y: 'Year 1 Load Compliance (%)',
+    y: 'Annual Load Compliance (%)',
     color: DEFAULT_SCATTER_COLOR,
   },
   {
-    x: 'Year 1 Load Compliance (%)',
+    x: 'Annual Load Compliance (%)',
     y: 'Project LCOE ($/MWh)',
     color: DEFAULT_SCATTER_COLOR,
   },

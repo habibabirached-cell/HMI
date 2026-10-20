@@ -5,14 +5,21 @@ DATA_MARTIN_DIR = (
 )
 
 DATAVIS_WACO_SHEET = "data"
+ORIGINAL_UNCLEAN_DIR = DATA_MARTIN_DIR / "originalUncleanData"
 
 WACO_WORKBOOK_BY_LOAD_MW: dict[int, str] = {
-    1000: "Waco_1GW_data_updated_CAPEX.xlsx",
+    1000: "Waco_1GW_live_CAPEX.xlsx",
     200: "Waco_200MW_live_CAPEX.xlsx",
 }
 
+# Texas 1 GW live CAPEX workbook keeps the rows on "1GW Plant data", not "data".
+WACO_SHEET_BY_LOAD_MW: dict[int, str] = {
+    1000: "1GW Plant data",
+    200: DATAVIS_WACO_SHEET,
+}
+
 # Pre-built from Excel via scripts/build_martin_clean_csv.py
-# (load compliance >= 97%, BESS cycles/day >= 1/365).
+# (Annual Load Compliance (%) >= 97%).
 WACO_CLEAN_CSV_BY_LOAD_MW: dict[int, str] = {
     200: "Waco_200MW_clean.csv",
     1000: "Waco_1000MW_clean.csv",
@@ -46,13 +53,26 @@ def waco_workbook_path(load_mw: int) -> Path:
     name = WACO_WORKBOOK_BY_LOAD_MW.get(int(load_mw))
     if not name:
         raise ValueError(f"Unsupported Waco load tier: {load_mw} MW (expected 200 or 1000).")
+    nested = ORIGINAL_UNCLEAN_DIR / name
+    if nested.is_file():
+        return nested
     return DATA_MARTIN_DIR / name
+
+
+def waco_workbook_sheet(load_mw: int) -> str:
+    tier = int(load_mw)
+    if tier not in WACO_WORKBOOK_BY_LOAD_MW:
+        raise ValueError(f"Unsupported Waco load tier: {load_mw} MW (expected 200 or 1000).")
+    return WACO_SHEET_BY_LOAD_MW[tier]
 
 
 def badger_workbook_path(load_mw: int = 200) -> Path:
     name = BADGER_WORKBOOK_BY_LOAD_MW.get(int(load_mw))
     if not name:
         raise ValueError(f"Unsupported Badger load tier: {load_mw} MW (expected 200 or 1000).")
+    nested = ORIGINAL_UNCLEAN_DIR / name
+    if nested.is_file():
+        return nested
     return DATA_MARTIN_DIR / name
 
 

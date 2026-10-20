@@ -11,7 +11,7 @@ import DataVisFilterMiniHistogram from './DataVisFilterMiniHistogram';
 
 const DEFAULT_FILTER_COLUMNS = [
   'Project LCOE ($/MWh)',
-  'Year 1 Load Compliance (%)',
+  'Annual Load Compliance (%)',
   'Carbon Free Energy (%)',
 ];
 

@@ -464,7 +464,7 @@ async def configurator_cluster_explore_sync(body: dict):
         cfe_hi = max(min_cfe, max_cfe) / 100.0
         ranges = {
             "Carbon Free Energy (%)": {"min": cfe_lo, "max": cfe_hi},
-            "Year 1 Load Compliance (%)": {"min": rel, "max": 100},
+            "Annual Load Compliance (%)": {"min": rel, "max": 100},
             "Solar AC Nameplate (MWac)": {"min": min(min_solar, max_solar), "max": max(min_solar, max_solar)},
             "Wind Nameplate (MWac)": {"min": min(min_wind, max_wind), "max": max(min_wind, max_wind)},
         }

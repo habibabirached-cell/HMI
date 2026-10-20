@@ -8,7 +8,7 @@ export const FALLBACK_VISIBLE_COLUMNS = [
   '7HA Unit #',
   'LM2500 Unit #',
   'Project LCOE ($/MWh)',
-  'Year 1 Load Compliance (%)',
+  'Annual Load Compliance (%)',
   'Carbon Free Energy (%)',
 ];
 

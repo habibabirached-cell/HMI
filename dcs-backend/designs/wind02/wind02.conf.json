@@ -816,18 +816,18 @@
   ],
   "systemState": {
     "simulationRunning": false,
-    "zoom": 0.9295454545454546,
+    "zoom": 0.9309090909090909,
     "pan": {
       "x": 77.5730006731857,
       "y": 204.3541008964296
     },
     "panTop": {
-      "x": 451.3977272727273,
-      "y": -50.36363636363636
+      "x": -6.545454545454561,
+      "y": 69.52727272727273
     },
     "panBottom": {
-      "x": 951.7897727272726,
-      "y": 1167.0045454545455
+      "x": 326.5454545454545,
+      "y": 1600.610909090909
     },
     "quadBottomRowShare": 50,
     "mode": "design",
@@ -842,17 +842,12 @@
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
-  "perChartSampleStep": {
-    "sim-chart-1792444931867-0": 32,
-    "sim-chart-1792444931867-1": 32,
-    "sim-chart-1792444931867-2": 32
-  },
+  "perChartSampleStep": {},
   "playbackTimeRange": {
     "t1": 15.0,
     "t2": 60.0
   },
   "designUiSession": {
-    "ensembleId": "s14_",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": true,

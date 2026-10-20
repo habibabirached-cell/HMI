@@ -27,7 +27,7 @@ def resolve_martin_study_from_inputs(inputs: dict[str, Any]) -> str:
     return martin_study_from_state_id(inputs.get("stateId"))
 
 COL_CFE = "Carbon Free Energy (%)"
-COL_LOAD_COMPLIANCE = "Year 1 Load Compliance (%)"
+COL_LOAD_COMPLIANCE = "Annual Load Compliance (%)"
 COL_LCOE = "Project LCOE ($/MWh)"
 COL_PROJECT_CAPEX = "Project CAPEX ($ M)"
 COL_CARBON = "Carbon Density (lb CO2/MWh)"

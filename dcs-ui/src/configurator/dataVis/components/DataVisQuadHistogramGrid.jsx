@@ -4,7 +4,7 @@ import { numericColumnsFromStats } from '../utils/dataVisFilters';
 
 export const QUAD_HISTOGRAM_DEFAULTS = [
   'Project LCOE ($/MWh)',
-  'Year 1 Load Compliance (%)',
+  'Annual Load Compliance (%)',
   'Solar AC Nameplate (MWac)',
   'Carbon Free Energy (%)',
 ];

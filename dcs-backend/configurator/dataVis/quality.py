@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-LOAD_COMPLIANCE_COL = "Year 1 Load Compliance (%)"
+LOAD_COMPLIANCE_COL = "Annual Load Compliance (%)"
 
 
 def run_quality_checks(df: pd.DataFrame) -> list[dict[str, Any]]:

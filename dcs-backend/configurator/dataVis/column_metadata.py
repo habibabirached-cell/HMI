@@ -72,8 +72,8 @@ COLUMNS: list[ColumnMeta] = [
         "unit": "%",
     },
     {
-        "key": "Year 1 Load Compliance (%)",
-        "label": "Year 1 load compliance",
+        "key": "Annual Load Compliance (%)",
+        "label": "Annual load compliance",
         "role": "output",
         "group": "Reliability",
         "unit": "%",
@@ -225,10 +225,10 @@ COLUMN_BY_KEY = {c["key"]: c for c in COLUMNS}
 
 DEFAULT_SCATTER_X = "Solar AC Nameplate (MWac)"
 DEFAULT_SCATTER_Y = "Project LCOE ($/MWh)"
-DEFAULT_SCATTER_COLOR = "Year 1 Load Compliance (%)"
+DEFAULT_SCATTER_COLOR = "Annual Load Compliance (%)"
 DEFAULT_HEATMAP_X = "Solar AC Nameplate (MWac)"
 DEFAULT_HEATMAP_Y = "Wind Nameplate (MWac)"
-DEFAULT_HEATMAP_Z = "Year 1 Load Compliance (%)"
+DEFAULT_HEATMAP_Z = "Annual Load Compliance (%)"
 
 PARALLEL_DEFAULT_DIMS = [
     "Solar AC Nameplate (MWac)",
@@ -237,6 +237,6 @@ PARALLEL_DEFAULT_DIMS = [
     "7HA Unit #",
     "LM2500 Unit #",
     "Project LCOE ($/MWh)",
-    "Year 1 Load Compliance (%)",
+    "Annual Load Compliance (%)",
     "Carbon Free Energy (%)",
 ]

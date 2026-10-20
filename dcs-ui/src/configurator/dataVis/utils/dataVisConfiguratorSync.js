@@ -17,7 +17,7 @@ export const EXPLORE_SYNC_HANDOFF_STORAGE_KEY = 'dcs.configurator.exploreSyncHan
 
 export const CONFIGURATOR_SYNC_COLUMNS = {
   cfe: 'Carbon Free Energy (%)',
-  loadCompliance: 'Year 1 Load Compliance (%)',
+  loadCompliance: 'Annual Load Compliance (%)',
   solar: 'Solar AC Nameplate (MWac)',
   wind: 'Wind Nameplate (MWac)',
 };
