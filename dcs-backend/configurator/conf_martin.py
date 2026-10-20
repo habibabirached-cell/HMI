@@ -350,7 +350,25 @@ def generate_martin_configurator_result(
             ],
         }
 
-    filtered = filtered.sort_values(COL_LCOE, ascending=True, na_position="last")
+    # Same LCOE can describe more than one plant. Keep the cheapest, then the
+    # smaller plant, so the architecture and the parallel chart pick one row.
+    sort_cols = [COL_LCOE]
+    for tie_col in (
+        "7HA Unit #",
+        "LM2500 Unit #",
+        COL_SOLAR_MW,
+        COL_WIND_MW,
+        "BESS power Nameplate (MW)",
+        "dataVis_row_id",
+    ):
+        if tie_col in filtered.columns and tie_col not in sort_cols:
+            sort_cols.append(tie_col)
+    filtered = filtered.sort_values(
+        sort_cols,
+        ascending=True,
+        na_position="last",
+        kind="mergesort",
+    )
     winner = filtered.iloc[0]
     row_index = int(winner.name) if winner.name is not None else 0
     if "dataVis_row_id" in winner.index and pd.notna(winner["dataVis_row_id"]):

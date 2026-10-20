@@ -70,18 +70,37 @@ const PARCOORDS_AXIS_TICK_FONT = { size: 24, color: '#1f2933' };
 const PARCOORDS_DOMAIN_X = [0.08, 0.92];
 const PARCOORDS_DOMAIN_X_COMPACT = [0.05, 0.905];
 const PARCOORDS_DOMAIN_X_NO_SCALE = [0.09, 0.94];
-/** Index of the lowest LCOE among eligible rows (ties → first). */
-function indexOfMinLcoeRow(lcoeValues, eligibleIndices) {
+function parallelTieValue(payload, index, key) {
+  const raw = payload?.values?.[key]?.[index];
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Lowest LCOE, then the smaller plant. Matches the architecture tie-break. */
+function indexOfMinLcoeRow(lcoeValues, eligibleIndices, payload) {
   let bestIdx = -1;
   let bestVal = Infinity;
+  let bestHa = Infinity;
+  let bestLm = Infinity;
+  let bestId = Infinity;
   for (const i of eligibleIndices) {
     const v = lcoeValues[i];
     if (v == null || !Number.isFinite(Number(v))) continue;
     const n = Number(v);
-    if (n < bestVal) {
-      bestVal = n;
-      bestIdx = i;
-    }
+    const ha = parallelTieValue(payload, i, '7HA Unit #');
+    const lm = parallelTieValue(payload, i, 'LM2500 Unit #');
+    const id = Number(payload?.row_ids?.[i]);
+    const rowId = Number.isFinite(id) ? id : i;
+    const better = n < bestVal
+      || (n === bestVal && ha < bestHa)
+      || (n === bestVal && ha === bestHa && lm < bestLm)
+      || (n === bestVal && ha === bestHa && lm === bestLm && rowId < bestId);
+    if (!better) continue;
+    bestVal = n;
+    bestHa = ha;
+    bestLm = lm;
+    bestId = rowId;
+    bestIdx = i;
   }
   return bestIdx;
 }
@@ -208,11 +227,13 @@ export default function DataVisParallelTab({
   useEffect(() => {
     if (!dimensions?.length) return;
     let cancelled = false;
+    const martinRowId = Number(highlightMartinRowId);
     postDataVisParallel({
       filters: queryFilters,
       dimensions,
       color: 'Project LCOE ($/MWh)',
-      max_rows: 5000,
+      max_rows: 20000,
+      ensure_row_ids: Number.isFinite(martinRowId) ? [martinRowId] : [],
     })
       .then((res) => {
         if (!cancelled) setPayload(res);
@@ -223,7 +244,7 @@ export default function DataVisParallelTab({
     return () => {
       cancelled = true;
     };
-  }, [capexKey, queryFilters, queryFiltersKey, dimensions]);
+  }, [capexKey, highlightMartinRowId, queryFilters, queryFiltersKey, dimensions]);
 
   useEffect(() => {
     onDimensionsChange?.(dimensions);
@@ -369,7 +390,7 @@ export default function DataVisParallelTab({
       }
     }
     if (bestLcoeIdx < 0 && lcoeByRow.length > 0) {
-      bestLcoeIdx = indexOfMinLcoeRow(lcoeByRow, eligibleIndices);
+      bestLcoeIdx = indexOfMinLcoeRow(lcoeByRow, eligibleIndices, payload);
     }
     const colorStat = columnStatMap[colorLabel];
     const colorFromPayload = payload.color?.filter((v) => v != null) || [];

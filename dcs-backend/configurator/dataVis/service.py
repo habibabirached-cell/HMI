@@ -467,7 +467,15 @@ def build_parallel(req: dict) -> dict[str, Any]:
         raise ValueError("No valid parallel dimensions")
     max_rows = int(req.get("max_rows", 2000))
     if len(df) > max_rows:
-        df = df.sample(n=max_rows, random_state=42)
+        kept = df.sample(n=max_rows, random_state=42)
+        ensure_ids = [int(v) for v in (req.get("ensure_row_ids") or [])]
+        if ensure_ids and "dataVis_row_id" in df.columns:
+            have = set(pd.to_numeric(kept["dataVis_row_id"], errors="coerce").dropna().astype(int))
+            missing = [row_id for row_id in ensure_ids if row_id not in have]
+            if missing:
+                extra = df[pd.to_numeric(df["dataVis_row_id"], errors="coerce").isin(missing)]
+                kept = pd.concat([kept, extra], ignore_index=False)
+        df = kept
     color = req.get("color")
     out: dict[str, Any] = {
         "dimensions": dims,

@@ -53,6 +53,8 @@ class ParallelRequest(FilterRequest):
     dimensions: list[str]
     color: str | None = "Project LCOE ($/MWh)"  # parallel coords line color
     max_rows: int = 2000
+    # Rows the chart must keep even when it samples, so the pink line is the winner.
+    ensure_row_ids: list[int] = Field(default_factory=list)
 
 
 class HistogramRequest(FilterRequest):
