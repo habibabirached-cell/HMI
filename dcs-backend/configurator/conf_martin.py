@@ -36,8 +36,8 @@ COL_SOLAR_MW = "Solar AC Nameplate (MWac)"
 COL_WIND_MW = "Wind Nameplate (MWac)"
 
 # Display nameplates for unit-count thermal assets (Waco row stores counts, not MW).
-MW_PER_7HA_UNIT = 430.0
-MW_PER_LM2500_UNIT = 34.5
+MW_PER_7HA_UNIT = 384.0
+MW_PER_LM2500_UNIT = 32.0
 
 _KWH_TO_GWH = 1.0 / 1_000_000.0
 
