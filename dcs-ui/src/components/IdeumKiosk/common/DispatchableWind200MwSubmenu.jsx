@@ -3,7 +3,6 @@ import { getComponentVisualConfig } from '../../../data/componentVisuals';
 import { getBess3DModelUrl } from '../../../utils/bess3dLayout';
 import { getWindTurbine3DModelUrl } from '../../../utils/windTurbine3dLayout';
 import { getIdeum08RootBucketChrome, IDEUM08_NAV_IMAGE_URLS } from '../../../utils/ideumKiosk/ideum08/navigation';
-import { IDEUM05_NAV_MODEL_URLS } from '../../../utils/ideum05Navigation';
 import IdeumSuperBucket from './IdeumSuperBucket';
 import {
   DISPATCHABLE_WIND_BASELINE_IDEUM_COMMAND,
@@ -129,7 +128,7 @@ export default function DispatchableWind200MwSubmenu({
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Make wind GFM"
+                label="Make Wind GFM"
                 previewImageUrl={IDEUM08_NAV_IMAGE_URLS.dispatchableWind200Mw}
                 previewImageAlt="Wind farm with grid-forming conversion"
                 disabled
@@ -138,29 +137,27 @@ export default function DispatchableWind200MwSubmenu({
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Add Stability Solutions"
-                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.ref200Mvups}
-                previewImageAlt="Grid stability and power conditioning equipment"
+                label="Add SST"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.windAddSst}
+                previewImageAlt="Solid-state transformer"
                 disabled
                 dimmed
               />
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Add Solar"
-                modelUrl={IDEUM05_NAV_MODEL_URLS.solarField}
-                fitScale={0.72}
-                modelYOffset={0.14}
-                cameraPitchLift={0.52}
+                label="Add MVUPS"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.windAddMvups}
+                previewImageAlt="Medium-voltage uninterruptible power supply"
                 disabled
                 dimmed
               />
               <SubmenuModelTile
                 zoom={zoom}
                 className="ideum07-ref200__tile--tall"
-                label="Hyperscaler Architecture"
-                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.renewablePoweredDatacenters}
-                previewImageAlt="Hyperscale datacenter campus"
+                label="Add e-Statcom"
+                previewImageUrl={IDEUM08_NAV_IMAGE_URLS.windAddEStatcom}
+                previewImageAlt="e-Statcom at a substation"
                 disabled
                 dimmed
               />

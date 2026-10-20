@@ -56,18 +56,15 @@ def _kwh_to_gwh(kwh: float) -> float:
     return kwh * _KWH_TO_GWH
 
 
-def _bess_capacity_factor(aep_kwh: float, nameplate_mw: float) -> float | None:
-    """Year 1 BESS AEP (kWh) / 8760 / BESS power Nameplate (MW) / 1000."""
-    if aep_kwh <= 0 or nameplate_mw <= 0:
-        return None
-    return aep_kwh / 8760.0 / nameplate_mw / 1000.0
+def _capacity_factor_gwh(capacity_mw: float, gwh: float) -> float | None:
+    """Annual generation (GWh) / capacity (MW) / 8760 h.
 
-
-def _capacity_factor_gwh(peak_load_mw: float, gwh: float) -> float | None:
-    """Share of a year at the data center's peak load that this energy would cover."""
-    if peak_load_mw <= 0 or gwh <= 0:
+    Capacity in MW times 8760 / 1000 is that same capacity in GWh, so the ratio
+    stays dimensionless.
+    """
+    if capacity_mw <= 0 or gwh <= 0:
         return None
-    denom = peak_load_mw * 8760.0 / 1000.0
+    denom = capacity_mw * 8760.0 / 1000.0
     if denom <= 0:
         return None
     return gwh / denom
@@ -156,12 +153,12 @@ def _build_supply_mix_from_row(
         *,
         utilization: float | None = None,
         capacity_factor: float | None = None,
-        use_peak_load: bool = True,
+        derive_capacity_factor: bool = True,
         **kwargs: Any,
     ) -> None:
         lcoe_val = _num(row, lcoe_col, portfolio_lcoe) if lcoe_col else portfolio_lcoe
-        if use_peak_load and utilization is None and capacity_factor is None:
-            cf = _capacity_factor_gwh(peak_load_mw, gwh)
+        if derive_capacity_factor and utilization is None and capacity_factor is None:
+            cf = _capacity_factor_gwh(mw, gwh)
         else:
             cf = capacity_factor
         built = _mix_row(
@@ -184,8 +181,8 @@ def _build_supply_mix_from_row(
         bess_gwh,
         "BESS LCOE ($/MWh)",
         battery_mwh=bess_mwh if bess_mwh > 0 else None,
-        capacity_factor=_bess_capacity_factor(_num(row, "Year 1 BESS AEP (kWh)"), bess_mw),
-        use_peak_load=False,
+        capacity_factor=_capacity_factor_gwh(bess_mw, bess_gwh),
+        derive_capacity_factor=False,
     )
     add(
         "hd7ha02",
@@ -194,7 +191,7 @@ def _build_supply_mix_from_row(
         "7HA LCOE ($/MWh)",
         unit_count=ha_units if ha_units > 0 else None,
         capacity_factor=None,
-        use_peak_load=False,
+        derive_capacity_factor=False,
     )
     add(
         "lm2500g4",
@@ -203,7 +200,7 @@ def _build_supply_mix_from_row(
         "LM2500 LCOE ($/MWh)",
         unit_count=lm_units if lm_units > 0 else None,
         capacity_factor=None,
-        use_peak_load=False,
+        derive_capacity_factor=False,
     )
     if thermal_cf is not None and (ha_mw > 0 or lm_mw > 0):
         candidates.append(

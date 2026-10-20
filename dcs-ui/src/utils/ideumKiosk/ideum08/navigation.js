@@ -44,6 +44,9 @@ export const IDEUM08_NAV_IMAGE_URLS = {
   ref200RideThrough: `${PUBLIC}/models/ideum07-ref200-ride-through.jpg`,
   ref200Mvups: `${PUBLIC}/models/ideum08-ref200-mvups.jpg`,
   ref200Sst: `${PUBLIC}/models/ideum08-ref200-sst.jpg`,
+  windAddSst: `${PUBLIC}/models/ideum08-wind-add-sst.jpg`,
+  windAddMvups: `${PUBLIC}/models/ideum08-wind-add-mvups.jpg`,
+  windAddEStatcom: `${PUBLIC}/models/ideum08-wind-add-estatcom.jpg`,
   emsFrequencyRegulation: `${PUBLIC}/models/ideum08-ems-frequency-regulation.jpg`,
 };
 

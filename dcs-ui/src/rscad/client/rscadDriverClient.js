@@ -97,7 +97,7 @@ const START_MESSAGE = {
       rscadSwitch(59233, 'Topology', 0),
       rscadSwitch(59241, 'AI_load', 0),
       rscadSwitch(55240, 'SW99', 0),
-      rscadSlider(59237, 'PLoad_pu', 0.7),
+      rscadSlider(59237, 'PLoad_pu', 0.75),
     ],
     output: [
       rscadMeter(62384, 'VGB1'),
@@ -398,6 +398,13 @@ const scenario = {
   disconnectEms: [rscadSwitch(55240, 'SW99', 0)],
   // HMI - BUTTON - EMS Frequency Regulation
   emsFrequency: [rscadSlider(59237, 'PLoad_pu', 0.9)],
+  // HMI - BUTTON - Reset BESS
+  resetBess: [
+    rscadPushbutton(52120, 'ST2DBlk', 1),
+    rscadPushbutton(52114, 'ST1DBlk', 1),
+    rscadPushbutton(52115, 'BESS1OnGrid', 0),
+    rscadPushbutton(52121, 'BESS2OnGrid', 0),
+  ],
 };
 
 /** Flip to true to send oldScenario instead of the messages in run_streaming_scenario.py. */
@@ -444,6 +451,13 @@ export function sendRscadDisconnectEms() {
 /** EMS Frequency Regulation: baseload_change_message (PLoad_pu = 0.9). */
 export function sendRscadEmsFrequency() {
   const config = activeScenario().emsFrequency;
+  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
+  return sendRunningConfig(config);
+}
+
+/** Reset BESS: turn_off_bess_message. Both stacks de-blocked, both batteries off the grid. */
+export function sendRscadResetBess() {
+  const config = activeScenario().resetBess;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
   return sendRunningConfig(config);
 }

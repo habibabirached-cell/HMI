@@ -15,40 +15,6 @@
             "type": "single",
             "component_id": "wo26c-wind-3d",
             "chart_type": "nd",
-            "x_column": "t",
-            "y_columns": [
-              "P_GFL",
-              "P_BESS",
-              "Pload"
-            ],
-            "title": "Wind, battery, and data center power",
-            "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
-            "sample_step": 32,
-            "x_label": "Time (seconds)",
-            "y_label": "Power (megawatts)",
-            "legend_labels": {
-              "P_GFL": "Wind farm (14 meters / sec)",
-              "P_BESS": "Battery (14 meters / sec)",
-              "Pload": "Data center demand (14 meters / sec)"
-            },
-            "legend_title": "What this line is",
-            "legend_position": {
-              "x": 0.5099999999999996,
-              "y": 0.6299999999999997,
-              "xanchor": "right",
-              "yanchor": "top"
-            },
-            "axis_range": {
-              "x_threshold": 15,
-              "simulation_start_at": 0,
-              "simulation_end_at": 60,
-              "t_loop": 3
-            }
-          },
-          {
-            "type": "single",
-            "component_id": "wo26c-wind-3d",
-            "chart_type": "nd",
             "x_column": "wind14GFLWind_14ms_HMI — t",
             "y_columns": [
               "wind14GFLWind_14ms_HMI — Vload_1"
@@ -174,40 +140,6 @@
       },
       "all": {
         "charts_to_display": [
-          {
-            "type": "single",
-            "component_id": "wo26c-wind-3d",
-            "chart_type": "nd",
-            "x_column": "t",
-            "y_columns": [
-              "P_GFL",
-              "P_BESS",
-              "Pload"
-            ],
-            "title": "Wind, battery, and data center power",
-            "ensemble_sim_id": "wind14GFLWind_14ms_HMI",
-            "sample_step": 32,
-            "x_label": "Time (seconds)",
-            "y_label": "Power (megawatts)",
-            "legend_labels": {
-              "P_GFL": "Wind farm (14 meters / sec)",
-              "P_BESS": "Battery (14 meters / sec)",
-              "Pload": "Data center demand (14 meters / sec)"
-            },
-            "legend_title": "What this line is",
-            "legend_position": {
-              "x": 0.5099999999999996,
-              "y": 0.6299999999999997,
-              "xanchor": "right",
-              "yanchor": "top"
-            },
-            "axis_range": {
-              "x_threshold": 15,
-              "simulation_start_at": 0,
-              "simulation_end_at": 60,
-              "t_loop": 3
-            }
-          },
           {
             "type": "single",
             "component_id": "wo26c-wind-3d",

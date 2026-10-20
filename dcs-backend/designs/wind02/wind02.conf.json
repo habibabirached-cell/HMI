@@ -822,12 +822,12 @@
       "y": 204.3541008964296
     },
     "panTop": {
-      "x": -6.545454545454561,
-      "y": 69.52727272727273
+      "x": -126.54545454545456,
+      "y": -50.47272727272727
     },
     "panBottom": {
-      "x": 326.5454545454545,
-      "y": 1600.610909090909
+      "x": 110.5454545454545,
+      "y": 1168.610909090909
     },
     "quadBottomRowShare": 50,
     "mode": "design",
@@ -842,12 +842,16 @@
   "variableDrivenPresence": [],
   "canvasBlockTypeScale": {},
   "globalSampleStep": 128,
-  "perChartSampleStep": {},
+  "perChartSampleStep": {
+    "sim-chart-1792504400961-1": 32,
+    "sim-chart-1792504400961-2": 32
+  },
   "playbackTimeRange": {
     "t1": 15.0,
     "t2": 60.0
   },
   "designUiSession": {
+    "ensembleId": "s14_",
     "designSectionVisibility": {
       "showUpper": true,
       "showLower": true,

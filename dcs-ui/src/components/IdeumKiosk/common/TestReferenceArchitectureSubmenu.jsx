@@ -21,6 +21,7 @@ import {
   sendRscadConnectEms,
   sendRscadDisconnectEms,
   sendRscadEmsFrequency,
+  sendRscadResetBess,
   startRscadSimulation,
   stopRscadSimulation,
   subscribeRscadDriver,
@@ -56,7 +57,6 @@ export default function TestReferenceArchitectureSubmenu({
   onReset,
   ideumExpansionMirror,
   onIdeumExpansionToggle,
-  onIdeumToggleSimulation,
 }) {
   const bucketChrome = getIdeum08RootBucketChrome(zoom);
   const hubInsetPx = Math.max(8, Math.round(8 * zoom));
@@ -159,13 +159,17 @@ export default function TestReferenceArchitectureSubmenu({
               <button
                 type="button"
                 className="ideum08-ref200__sim-toggle-btn"
+                disabled={running && rscad.busy}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onIdeumToggleSimulation?.();
+                  if (!running || rscad.busy) return;
+                  void sendRscadResetBess().then((result) => {
+                    if (result?.ok) setBessOn(false);
+                  });
                 }}
               >
-                Toggle simulation
+                Reset BESS
               </button>
               <div className="ideum08-test-ref-arch__rscad-actions" aria-label="RSCAD simulation">
                 <button
