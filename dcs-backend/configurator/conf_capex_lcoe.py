@@ -1,8 +1,9 @@
 """Scale Martin project LCOE when the user changes installed CAPEX or gas price.
 
 200 MW (Texas and Wisconsin) uses Charu's 200 MW factors: solar / 1,600,
-wind / 2,000, LM2500 / 3,000, battery / 238, LM2500 gas / 3.50. Heavy-duty
-CAPEX and heavy-duty gas are not used.
+wind / 2,000, LM2500 / 3,000, battery / 238, gas / 3.50. Heavy-duty CAPEX
+is not used. The 7HA gas price is copied into the LM2500 gas variable, and
+that variable scales LM2500 fuel.
 
 Texas 1 GW uses the later factors: solar / 1,200, wind / 1,200, 7HA / 2,000,
 LM2500 / 2,500, battery / 238, gas / 3.50. 7HA and LM2500 fuel both scale.
@@ -11,9 +12,9 @@ Their LCOEs are combined into one thermal LCOE before the blend, using the
 
 Wisconsin 1 GW uses the same divisors as 200 MW, and it scales the 7HA as
 well as the LM2500. Each turbine keeps its own year-1 energy in the blend.
-The screen has a gas price on each turbine: 7HA gas scales 7HA fuel, and
-LM2500 gas scales LM2500 fuel. When those two prices match, that is Charu's
-single fuel factor.
+The screen has one gas price, on the 7HA. That number is also stored as the
+LM2500 gas price, so both fuel factors use it. That is Charu's single fuel
+factor.
 
 The numbers on the screen start at the same prices for every case. Those
 starting numbers are the 200 MW denominators, not the Texas 1 GW denominators.

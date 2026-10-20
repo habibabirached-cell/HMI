@@ -97,10 +97,8 @@ export function normalizeTechnologyCapex(raw) {
     raw.heavyDutyGT?.gasPricePerMmbtu,
     base.heavyDutyGT.gasPricePerMmbtu,
   );
-  base.aeroderivativeGT.gasPricePerMmbtu = parsePositiveNumber(
-    raw.aeroderivativeGT?.gasPricePerMmbtu,
-    base.aeroderivativeGT.gasPricePerMmbtu,
-  );
+  // One gas price on the screen. The 7HA arrow also fills the LM2500 gas variable.
+  base.aeroderivativeGT.gasPricePerMmbtu = base.heavyDutyGT.gasPricePerMmbtu;
 
   return base;
 }

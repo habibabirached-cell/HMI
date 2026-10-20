@@ -183,16 +183,6 @@ function TechCapexPanel({ techId, capex, onCapexChange, loadMW, locked = false }
           onCommit={(v) => commitKwCapex('capexPerKw', v)}
           locked={locked}
         />
-        <ConfCapexValueField
-          id="conf-capex-aero-gas"
-          label="Gas price"
-          unit="/ MMBtu"
-          value={capex.aeroderivativeGT.gasPricePerMmbtu}
-          wheelPreset={CAPEX_WHEEL_PRESETS.gasPricePerMmbtu}
-          formatDisplay={formatGasPriceDisplay}
-          onCommit={(v) => patch('gasPricePerMmbtu', v)}
-          locked={locked}
-        />
       </div>
     );
   }
