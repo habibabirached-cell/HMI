@@ -446,6 +446,11 @@ const scenario = {
     rscadSwitch(59233, 'Topology', 1),
     rscadSwitch(59241, 'AI_load', 1),
   ],
+  // HMI - BUTTON - LM Only
+  lmOnly: [
+    rscadSwitch(59241, 'AI_load', 0),
+    rscadSwitch(59233, 'Topology', 1),
+  ],
   // HMI - BUTTON - EMS Control
   connectEms: [rscadSwitch(55240, 'SW99', 1)],
   // HMI - BUTTON - Manual Control
@@ -454,10 +459,8 @@ const scenario = {
   emsFrequency: [rscadSlider(59237, 'PLoad_pu', 0.9)],
   // HMI - BUTTON - Reset BESS
   resetBess: [
-    rscadPushbutton(52120, 'ST2DBlk', 1),
-    rscadPushbutton(52114, 'ST1DBlk', 1),
-    rscadPushbutton(52115, 'BESS1OnGrid', 0),
-    rscadPushbutton(52121, 'BESS2OnGrid', 0),
+    rscadPushbutton(62388, 'BESS2OffGrid', 1),
+    rscadPushbutton(62387, 'BESS1OffGrid', 1),
   ],
 };
 
@@ -499,6 +502,13 @@ export function sendRscadAddMvups() {
   return sendRunningConfig(activeScenario().addMvups, 'ADD MVUPS');
 }
 
+/** LM Only: AI load off, then Topology on. */
+export function sendRscadLmOnly() {
+  const config = activeScenario().lmOnly;
+  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
+  return sendRunningConfig(config, 'LM ONLY');
+}
+
 /** EMS Control on: connect_EMS_message (SW99 = 1). */
 export function sendRscadConnectEms() {
   const config = activeScenario().connectEms;
@@ -520,7 +530,7 @@ export function sendRscadEmsFrequency() {
   return sendRunningConfig(config, 'EMS FREQUENCY REGULATION');
 }
 
-/** Reset BESS: turn_off_bess_message. Both stacks de-blocked, both batteries off the grid. */
+/** Reset BESS: turn_off_bess_message. BESS2OffGrid then BESS1OffGrid. */
 export function sendRscadResetBess() {
   const config = activeScenario().resetBess;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });

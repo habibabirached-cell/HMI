@@ -21,6 +21,7 @@ import {
   sendRscadConnectEms,
   sendRscadDisconnectEms,
   sendRscadEmsFrequency,
+  sendRscadLmOnly,
   sendRscadResetBess,
   startRscadSimulation,
   stopRscadSimulation,
@@ -155,21 +156,41 @@ export default function TestReferenceArchitectureSubmenu({
                 }}
                 ariaLabel="Manual control or EMS control"
               />
-              <button
-                type="button"
-                className="ideum08-ref200__sim-toggle-btn"
-                disabled={running && rscad.busy}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (running && rscad.busy) return;
-                  void sendRscadResetBess().then((result) => {
-                    if (result?.ok) setBessOn(false);
-                  });
-                }}
-              >
-                Reset BESS
-              </button>
+              <div className="ideum08-test-ref-arch__bess-actions">
+                <button
+                  type="button"
+                  className="ideum08-ref200__sim-toggle-btn"
+                  disabled={running && rscad.busy}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (running && rscad.busy) return;
+                    void sendRscadResetBess().then((result) => {
+                      if (result?.ok) setBessOn(false);
+                    });
+                  }}
+                >
+                  Reset BESS
+                </button>
+                <button
+                  type="button"
+                  className="ideum08-ref200__sim-toggle-btn"
+                  disabled={running && rscad.busy}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (running && rscad.busy) return;
+                    void sendRscadLmOnly().then((result) => {
+                      if (result?.ok) {
+                        setMvupsOn(true);
+                        setLoadMode('baseload');
+                      }
+                    });
+                  }}
+                >
+                  LM Only
+                </button>
+              </div>
               <div className="ideum08-test-ref-arch__rscad-actions" aria-label="RSCAD simulation">
                 <button
                   type="button"
