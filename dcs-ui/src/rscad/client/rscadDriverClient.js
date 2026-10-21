@@ -478,9 +478,20 @@ export function sendRscadBaseload() {
   return sendRunningConfig(activeScenario().baseload, 'BASELOAD');
 }
 
-/** Add BESS: connect_bess_message. Does not change the MVUPS topology switch. */
-export function sendRscadAddBess() {
-  return sendRunningConfig(activeScenario().addBess, 'ADD BESS');
+function releasedPushbuttons(config) {
+  return (config || []).map((item) => ({
+    ...item,
+    properties: { ...item.properties, position: 0 },
+  }));
+}
+
+/** Add BESS: press all four pushbuttons, wait 1.5s, then release them to 0. */
+export async function sendRscadAddBess() {
+  const pressed = activeScenario().addBess;
+  const first = await sendRunningConfig(pressed, 'ADD BESS');
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await sendRunningConfig(releasedPushbuttons(pressed), 'ADD BESS');
+  return first;
 }
 
 /** Add MVUPS: connect_mvups_message. AI load off, Topology on, AI load back on. */
