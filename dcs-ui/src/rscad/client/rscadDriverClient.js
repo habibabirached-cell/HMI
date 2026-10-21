@@ -539,7 +539,7 @@ export function sendRscadResetBess() {
 
 // HMI - BUTTON - Stop
 export async function stopRscadSimulation() {
-  const stopPayload = { command: 'stop', body: { id: simulationId } };
+  const stopPayload = { command: 'stop()', body: { id: simulationId } };
   if (!socketIsOpen()) {
     printHmiButtonBanner('STOP', stopPayload, false);
     return snapshot();
