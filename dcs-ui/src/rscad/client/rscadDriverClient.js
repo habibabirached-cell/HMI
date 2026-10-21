@@ -449,7 +449,7 @@ const scenario = {
   // HMI - BUTTON - LM Only
   lmOnly: [
     rscadSwitch(59241, 'AI_load', 0),
-    rscadSwitch(59233, 'Topology', 1),
+    rscadSwitch(59233, 'Topology', 0),
   ],
   // HMI - BUTTON - EMS Control
   connectEms: [rscadSwitch(55240, 'SW99', 1)],
