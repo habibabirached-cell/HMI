@@ -175,6 +175,39 @@ export async function rscadDriverWebSocketUrl() {
   return `ws://${host}:${RSCAD_PORT}/ws/stream_model`;
 }
 
+function printHmiButtonBanner(button, payload, connected = true) {
+  const pretty = JSON.stringify(payload, null, 2);
+  const title = `** ${button} BUTTON was PRESSED **`;
+  const bar = '*'.repeat(Math.max(title.length + 4, 44));
+  const end = '***. end of transmission for that button *****';
+  const endBar = '*'.repeat(Math.max(end.length + 2, bar.length));
+  console.log(
+    [
+      '',
+      '',
+      '',
+      bar,
+      title,
+      bar,
+      connected
+        ? 'CLIENT: json sent is:'
+        : 'no connection, so I cannot send this json:',
+      '||',
+      'V',
+      '',
+      pretty,
+      endBar,
+      end,
+      endBar,
+      '',
+    ].join('\n'),
+  );
+}
+
+function socketIsOpen() {
+  return Boolean(socket && socket.readyState === WebSocket.OPEN && simulationId);
+}
+
 function snapshot() {
   return { simulationId, busy, statusText };
 }
@@ -250,14 +283,18 @@ export async function startRscadSimulation() {
   statusText = '';
   emit();
 
+  const startPayload = activeScenario().start;
+  let opened = false;
   try {
     closeSocket();
     const url = await rscadDriverWebSocketUrl();
     const ws = new WebSocket(url);
     socket = ws;
     await waitForOpen(ws, CONNECT_TIMEOUT_MS, url);
+    opened = true;
     const pending = waitForReply(ws, START_TIMEOUT_MS);
-    ws.send(JSON.stringify(activeScenario().start));
+    printHmiButtonBanner('START', startPayload);
+    ws.send(JSON.stringify(startPayload));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'Start failed');
@@ -297,6 +334,7 @@ export async function startRscadSimulation() {
     };
     return snapshot();
   } catch (error) {
+    if (!opened) printHmiButtonBanner('START', startPayload, false);
     simulationId = null;
     statusText = error?.message || 'Start failed';
     closeSocket();
@@ -307,26 +345,29 @@ export async function startRscadSimulation() {
   }
 }
 
-async function sendRunningConfig(config) {
-  if (busy) return { ...snapshot(), ok: false };
-  if (!simulationId || !socket || socket.readyState !== WebSocket.OPEN) {
+async function sendRunningConfig(config, buttonName) {
+  const payload = {
+    command: 'set_config',
+    body: {
+      id: simulationId,
+      prop_set_wait: 2,
+      config,
+    },
+  };
+  if (!socketIsOpen()) {
+    printHmiButtonBanner(buttonName || 'SET CONFIG', payload, false);
     statusText = 'Press Start first';
     emit();
     return { ...snapshot(), ok: false };
   }
+  if (busy) return { ...snapshot(), ok: false };
   busy = true;
   statusText = '';
   emit();
   try {
     const pending = waitForReply(socket, CONFIG_TIMEOUT_MS);
-    socket.send(JSON.stringify({
-      command: 'set_config',
-      body: {
-        id: simulationId,
-        prop_set_wait: 2,
-        config,
-      },
-    }));
+    printHmiButtonBanner(buttonName || 'SET CONFIG', payload);
+    socket.send(JSON.stringify(payload));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'RSCAD rejected the command');
@@ -416,55 +457,60 @@ function activeScenario() {
 
 /** AI Load: connect_ai_load_message. */
 export function sendRscadAiLoad() {
-  return sendRunningConfig(activeScenario().aiLoad);
+  return sendRunningConfig(activeScenario().aiLoad, 'AI LOAD');
 }
 
 /** Baseload: tunr_off_ai_load_message. */
 export function sendRscadBaseload() {
-  return sendRunningConfig(activeScenario().baseload);
+  return sendRunningConfig(activeScenario().baseload, 'BASELOAD');
 }
 
 /** Add BESS: connect_bess_message. Does not change the MVUPS topology switch. */
 export function sendRscadAddBess() {
-  return sendRunningConfig(activeScenario().addBess);
+  return sendRunningConfig(activeScenario().addBess, 'ADD BESS');
 }
 
 /** Add MVUPS: connect_mvups_message. AI load off, Topology on, AI load back on. */
 export function sendRscadAddMvups() {
-  return sendRunningConfig(activeScenario().addMvups);
+  return sendRunningConfig(activeScenario().addMvups, 'ADD MVUPS');
 }
 
 /** EMS Control on: connect_EMS_message (SW99 = 1). */
 export function sendRscadConnectEms() {
   const config = activeScenario().connectEms;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config);
+  return sendRunningConfig(config, 'EMS CONTROL');
 }
 
 /** Manual Control: disconnect_EMS_message (SW99 = 0). */
 export function sendRscadDisconnectEms() {
   const config = activeScenario().disconnectEms;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config);
+  return sendRunningConfig(config, 'MANUAL CONTROL');
 }
 
 /** EMS Frequency Regulation: baseload_change_message (PLoad_pu = 0.9). */
 export function sendRscadEmsFrequency() {
   const config = activeScenario().emsFrequency;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config);
+  return sendRunningConfig(config, 'EMS FREQUENCY REGULATION');
 }
 
 /** Reset BESS: turn_off_bess_message. Both stacks de-blocked, both batteries off the grid. */
 export function sendRscadResetBess() {
   const config = activeScenario().resetBess;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config);
+  return sendRunningConfig(config, 'RESET BESS');
 }
 
 // HMI - BUTTON - Stop
 export async function stopRscadSimulation() {
-  if (busy || !simulationId) return snapshot();
+  const stopPayload = { command: 'stop', body: { id: simulationId } };
+  if (!socketIsOpen()) {
+    printHmiButtonBanner('STOP', stopPayload, false);
+    return snapshot();
+  }
+  if (busy) return snapshot();
   busy = true;
   emit();
   const id = simulationId;
@@ -472,7 +518,8 @@ export async function stopRscadSimulation() {
   try {
     if (socket && socket.readyState === WebSocket.OPEN) {
       const pending = waitForReply(socket, 15000);
-      socket.send(JSON.stringify({ command: 'stop', body: { id } }));
+      printHmiButtonBanner('STOP', stopPayload);
+      socket.send(JSON.stringify(stopPayload));
       await pending.catch(() => {});
     }
   } finally {

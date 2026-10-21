@@ -148,7 +148,6 @@ export default function TestReferenceArchitectureSubmenu({
                   if (running && rscad.busy) return;
                   const next = !emsControl;
                   setEmsControl(next);
-                  if (!running) return;
                   const send = next ? sendRscadConnectEms : sendRscadDisconnectEms;
                   void send().then((result) => {
                     if (!result?.ok) setEmsControl(!next);
@@ -163,7 +162,7 @@ export default function TestReferenceArchitectureSubmenu({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (!running || rscad.busy) return;
+                  if (running && rscad.busy) return;
                   void sendRscadResetBess().then((result) => {
                     if (result?.ok) setBessOn(false);
                   });
@@ -197,7 +196,7 @@ export default function TestReferenceArchitectureSubmenu({
                 <button
                   type="button"
                   className="ideum08-test-ref-arch__rscad-btn"
-                  disabled={rscad.busy || !rscad.simulationId}
+                  disabled={rscad.busy}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -246,7 +245,6 @@ export default function TestReferenceArchitectureSubmenu({
                       if (onIdeumCommand) {
                         await onIdeumCommand(REF200_IDEUM_COMMANDS.addBess);
                       }
-                      if (!running) return;
                       const result = await sendRscadAddBess();
                       if (!result.ok) {
                         setBessOn(prevBess);
@@ -278,7 +276,6 @@ export default function TestReferenceArchitectureSubmenu({
                       if (onIdeumCommand) {
                         await onIdeumCommand(REF200_IDEUM_COMMANDS.addMvups);
                       }
-                      if (!running) return;
                       const result = await sendRscadAddMvups();
                       if (!result.ok) {
                         if (clearsBess) setBessOn(prevBess);
@@ -336,7 +333,7 @@ export default function TestReferenceArchitectureSubmenu({
                 imageAlt="Baseload power delivery at a large substation"
                 pressState={running && loadMode === 'baseload' ? 'on' : 'off'}
                 onPress={() => {
-                  if (!running || rscad.busy) return;
+                  if (running && rscad.busy) return;
                   void sendRscadBaseload().then((result) => {
                     if (result.ok) {
                       setLoadMode('baseload');
@@ -352,7 +349,7 @@ export default function TestReferenceArchitectureSubmenu({
                 imageAlt="High-density datacenter AI load"
                 pressState={running && loadMode === 'ai' ? 'on' : 'off'}
                 onPress={() => {
-                  if (!running || rscad.busy) return;
+                  if (running && rscad.busy) return;
                   void sendRscadAiLoad().then((result) => {
                     if (result.ok) setLoadMode('ai');
                   });
@@ -365,7 +362,7 @@ export default function TestReferenceArchitectureSubmenu({
                 imageAlt="Control room holding grid frequency steady beside a substation"
                 pressState={emsFreqOn ? 'on' : 'off'}
                 onPress={() => {
-                  if (!running || rscad.busy || emsFreqOn) return;
+                  if ((running && rscad.busy) || emsFreqOn) return;
                   void sendRscadEmsFrequency().then((result) => {
                     if (result.ok) setEmsFreqOn(true);
                   });
