@@ -175,8 +175,21 @@ export async function rscadDriverWebSocketUrl() {
   return `ws://${host}:${RSCAD_PORT}/ws/stream_model`;
 }
 
+/** Keep `output` in the source payload. Never put it on the wire. */
+function withoutOutput(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  const copy = { ...payload };
+  if (copy.body && typeof copy.body === 'object') {
+    const body = { ...copy.body };
+    delete body.output;
+    copy.body = body;
+  }
+  delete copy.output;
+  return copy;
+}
+
 function printHmiButtonBanner(button, payload, connected = true) {
-  const pretty = JSON.stringify(payload, null, 2);
+  const pretty = JSON.stringify(withoutOutput(payload), null, 2);
   const title = `** ${button} BUTTON was PRESSED **`;
   const bar = '*'.repeat(Math.max(title.length + 4, 44));
   const end = '***. end of transmission for that button *****';
@@ -294,7 +307,7 @@ export async function startRscadSimulation() {
     opened = true;
     const pending = waitForReply(ws, START_TIMEOUT_MS);
     printHmiButtonBanner('START', startPayload);
-    ws.send(JSON.stringify(startPayload));
+    ws.send(JSON.stringify(withoutOutput(startPayload)));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'Start failed');
@@ -367,7 +380,7 @@ async function sendRunningConfig(config, buttonName) {
   try {
     const pending = waitForReply(socket, CONFIG_TIMEOUT_MS);
     printHmiButtonBanner(buttonName || 'SET CONFIG', payload);
-    socket.send(JSON.stringify(payload));
+    socket.send(JSON.stringify(withoutOutput(payload)));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'RSCAD rejected the command');
@@ -519,7 +532,7 @@ export async function stopRscadSimulation() {
     if (socket && socket.readyState === WebSocket.OPEN) {
       const pending = waitForReply(socket, 15000);
       printHmiButtonBanner('STOP', stopPayload);
-      socket.send(JSON.stringify(stopPayload));
+      socket.send(JSON.stringify(withoutOutput(stopPayload)));
       await pending.catch(() => {});
     }
   } finally {
