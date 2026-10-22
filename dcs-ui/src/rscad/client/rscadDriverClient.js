@@ -530,11 +530,14 @@ export function sendRscadEmsFrequency() {
   return sendRunningConfig(config, 'EMS FREQUENCY REGULATION');
 }
 
-/** Reset BESS: turn_off_bess_message. BESS2OffGrid then BESS1OffGrid. */
-export function sendRscadResetBess() {
-  const config = activeScenario().resetBess;
-  if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config, 'RESET BESS');
+/** Reset BESS: press both off-grid buttons, wait 1s, then release them to 0. */
+export async function sendRscadResetBess() {
+  const pressed = activeScenario().resetBess;
+  if (!pressed) return { ...snapshot(), ok: false };
+  const first = await sendRunningConfig(pressed, 'RESET BESS');
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await sendRunningConfig(releasedPushbuttons(pressed), 'RESET BESS');
+  return first;
 }
 
 // HMI - BUTTON - Stop
