@@ -277,89 +277,6 @@ function waitForReply(ws, timeoutMs) {
   });
 }
 
-/** Set true to send each button as one JSON again. */
-export const RSCAD_ONE_SHOT = false;
-const SHOT_GAP_MS = 25;
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function asShots(config) {
-  const items = Array.isArray(config) ? config.filter(Boolean) : [];
-  if (RSCAD_ONE_SHOT || items.length <= 1) return [items];
-  return items.map((item) => [item]);
-}
-
-function setConfigPayload(config) {
-  return {
-    command: 'set_config',
-    body: {
-      id: simulationId,
-      prop_set_wait: 2,
-      config,
-    },
-  };
-}
-
-function expectStatusReplies(ws, count, timeoutMs) {
-  if (!count) return Promise.resolve(null);
-  return new Promise((resolve, reject) => {
-    let left = count;
-    const timer = setTimeout(() => {
-      ws.removeEventListener('message', onMessage);
-      reject(new Error('Timed out waiting for RSCAD'));
-    }, timeoutMs);
-
-    function onMessage(event) {
-      let data;
-      try {
-        data = JSON.parse(event.data);
-      } catch (_) {
-        return;
-      }
-      if (!data || (!data.status && !data.error)) return;
-      if (data.status === 'error' || data.error) {
-        clearTimeout(timer);
-        ws.removeEventListener('message', onMessage);
-        reject(new Error(data.message || data.error || 'RSCAD rejected the command'));
-        return;
-      }
-      left -= 1;
-      if (left <= 0) {
-        clearTimeout(timer);
-        ws.removeEventListener('message', onMessage);
-        resolve(data);
-      }
-    }
-
-    ws.addEventListener('message', onMessage);
-  });
-}
-
-async function emitShots(ws, payloads, buttonName, connected) {
-  const pending = connected
-    ? expectStatusReplies(ws, payloads.length, CONFIG_TIMEOUT_MS)
-    : null;
-  for (let i = 0; i < payloads.length; i += 1) {
-    if (i > 0) await sleep(SHOT_GAP_MS);
-    printHmiButtonBanner(buttonName, payloads[i], connected);
-    if (connected) ws.send(JSON.stringify(payloads[i]));
-  }
-  if (pending) await pending;
-}
-
-function startShots(startPayload) {
-  const config = startPayload?.body?.config || [];
-  const shots = asShots(config);
-  const first = {
-    ...startPayload,
-    body: { ...startPayload.body, config: shots[0] || [] },
-  };
-  const rest = shots.slice(1).map((shot) => setConfigPayload(shot));
-  return { first, rest };
-}
-
 export async function startRscadSimulation() {
   if (busy) return snapshot();
   busy = true;
@@ -367,7 +284,6 @@ export async function startRscadSimulation() {
   emit();
 
   const startPayload = activeScenario().start;
-  const preview = startShots(startPayload);
   let opened = false;
   try {
     closeSocket();
@@ -377,8 +293,8 @@ export async function startRscadSimulation() {
     await waitForOpen(ws, CONNECT_TIMEOUT_MS, url);
     opened = true;
     const pending = waitForReply(ws, START_TIMEOUT_MS);
-    printHmiButtonBanner('START', preview.first);
-    ws.send(JSON.stringify(preview.first));
+    printHmiButtonBanner('START', startPayload);
+    ws.send(JSON.stringify(startPayload));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'Start failed');
@@ -416,22 +332,9 @@ export async function startRscadSimulation() {
         console.warn('[rscad] meter forward failed', error);
       });
     };
-    const followUp = startShots(startPayload).rest;
-    if (followUp.length) {
-      await sleep(SHOT_GAP_MS);
-      await emitShots(ws, followUp, 'START', true);
-    }
     return snapshot();
   } catch (error) {
-    if (!opened) {
-      simulationId = null;
-      const failed = startShots(startPayload);
-      printHmiButtonBanner('START', failed.first, false);
-      if (failed.rest.length) {
-        await sleep(SHOT_GAP_MS);
-        await emitShots(null, failed.rest, 'START', false);
-      }
-    }
+    if (!opened) printHmiButtonBanner('START', startPayload, false);
     simulationId = null;
     statusText = error?.message || 'Start failed';
     closeSocket();
@@ -443,9 +346,16 @@ export async function startRscadSimulation() {
 }
 
 async function sendRunningConfig(config, buttonName) {
-  const payloads = asShots(config).map((shot) => setConfigPayload(shot));
+  const payload = {
+    command: 'set_config',
+    body: {
+      id: simulationId,
+      prop_set_wait: 2,
+      config,
+    },
+  };
   if (!socketIsOpen()) {
-    await emitShots(null, payloads, buttonName || 'SET CONFIG', false);
+    printHmiButtonBanner(buttonName || 'SET CONFIG', payload, false);
     statusText = 'Press Start first';
     emit();
     return { ...snapshot(), ok: false };
@@ -455,7 +365,13 @@ async function sendRunningConfig(config, buttonName) {
   statusText = '';
   emit();
   try {
-    await emitShots(socket, payloads, buttonName || 'SET CONFIG', true);
+    const pending = waitForReply(socket, CONFIG_TIMEOUT_MS);
+    printHmiButtonBanner(buttonName || 'SET CONFIG', payload);
+    socket.send(JSON.stringify(payload));
+    const reply = await pending;
+    if (reply.status === 'error' || reply.error) {
+      throw new Error(reply.message || reply.error || 'RSCAD rejected the command');
+    }
     statusText = '';
     return { ...snapshot(), ok: true };
   } catch (error) {
@@ -559,11 +475,11 @@ function releasedPushbuttons(config) {
   }));
 }
 
-/** Add BESS: press all four pushbuttons, wait 1.5s, then release them to 0. */
+/** Add BESS: press all four pushbuttons, wait 5s, then release them to 0. */
 export async function sendRscadAddBess() {
   const pressed = activeScenario().addBess;
   const first = await sendRunningConfig(pressed, 'ADD BESS');
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   await sendRunningConfig(releasedPushbuttons(pressed), 'ADD BESS');
   return first;
 }
@@ -601,12 +517,12 @@ export function sendRscadEmsFrequency() {
   return sendRunningConfig(config, 'LOAD STEP');
 }
 
-/** Reset BESS: press both off-grid buttons, wait 1s, then release them to 0. */
+/** Reset BESS: press both off-grid buttons, wait 5s, then release them to 0. */
 export async function sendRscadResetBess() {
   const pressed = activeScenario().resetBess;
   if (!pressed) return { ...snapshot(), ok: false };
   const first = await sendRunningConfig(pressed, 'RESET BESS');
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   await sendRunningConfig(releasedPushbuttons(pressed), 'RESET BESS');
   return first;
 }
