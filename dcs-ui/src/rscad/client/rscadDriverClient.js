@@ -277,6 +277,89 @@ function waitForReply(ws, timeoutMs) {
   });
 }
 
+/** Set true to send each button as one JSON again. */
+export const RSCAD_ONE_SHOT = false;
+const SHOT_GAP_MS = 25;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function asShots(config) {
+  const items = Array.isArray(config) ? config.filter(Boolean) : [];
+  if (RSCAD_ONE_SHOT || items.length <= 1) return [items];
+  return items.map((item) => [item]);
+}
+
+function setConfigPayload(config) {
+  return {
+    command: 'set_config',
+    body: {
+      id: simulationId,
+      prop_set_wait: 2,
+      config,
+    },
+  };
+}
+
+function expectStatusReplies(ws, count, timeoutMs) {
+  if (!count) return Promise.resolve(null);
+  return new Promise((resolve, reject) => {
+    let left = count;
+    const timer = setTimeout(() => {
+      ws.removeEventListener('message', onMessage);
+      reject(new Error('Timed out waiting for RSCAD'));
+    }, timeoutMs);
+
+    function onMessage(event) {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (_) {
+        return;
+      }
+      if (!data || (!data.status && !data.error)) return;
+      if (data.status === 'error' || data.error) {
+        clearTimeout(timer);
+        ws.removeEventListener('message', onMessage);
+        reject(new Error(data.message || data.error || 'RSCAD rejected the command'));
+        return;
+      }
+      left -= 1;
+      if (left <= 0) {
+        clearTimeout(timer);
+        ws.removeEventListener('message', onMessage);
+        resolve(data);
+      }
+    }
+
+    ws.addEventListener('message', onMessage);
+  });
+}
+
+async function emitShots(ws, payloads, buttonName, connected) {
+  const pending = connected
+    ? expectStatusReplies(ws, payloads.length, CONFIG_TIMEOUT_MS)
+    : null;
+  for (let i = 0; i < payloads.length; i += 1) {
+    if (i > 0) await sleep(SHOT_GAP_MS);
+    printHmiButtonBanner(buttonName, payloads[i], connected);
+    if (connected) ws.send(JSON.stringify(payloads[i]));
+  }
+  if (pending) await pending;
+}
+
+function startShots(startPayload) {
+  const config = startPayload?.body?.config || [];
+  const shots = asShots(config);
+  const first = {
+    ...startPayload,
+    body: { ...startPayload.body, config: shots[0] || [] },
+  };
+  const rest = shots.slice(1).map((shot) => setConfigPayload(shot));
+  return { first, rest };
+}
+
 export async function startRscadSimulation() {
   if (busy) return snapshot();
   busy = true;
@@ -284,6 +367,7 @@ export async function startRscadSimulation() {
   emit();
 
   const startPayload = activeScenario().start;
+  const preview = startShots(startPayload);
   let opened = false;
   try {
     closeSocket();
@@ -293,8 +377,8 @@ export async function startRscadSimulation() {
     await waitForOpen(ws, CONNECT_TIMEOUT_MS, url);
     opened = true;
     const pending = waitForReply(ws, START_TIMEOUT_MS);
-    printHmiButtonBanner('START', startPayload);
-    ws.send(JSON.stringify(startPayload));
+    printHmiButtonBanner('START', preview.first);
+    ws.send(JSON.stringify(preview.first));
     const reply = await pending;
     if (reply.status === 'error' || reply.error) {
       throw new Error(reply.message || reply.error || 'Start failed');
@@ -332,9 +416,22 @@ export async function startRscadSimulation() {
         console.warn('[rscad] meter forward failed', error);
       });
     };
+    const followUp = startShots(startPayload).rest;
+    if (followUp.length) {
+      await sleep(SHOT_GAP_MS);
+      await emitShots(ws, followUp, 'START', true);
+    }
     return snapshot();
   } catch (error) {
-    if (!opened) printHmiButtonBanner('START', startPayload, false);
+    if (!opened) {
+      simulationId = null;
+      const failed = startShots(startPayload);
+      printHmiButtonBanner('START', failed.first, false);
+      if (failed.rest.length) {
+        await sleep(SHOT_GAP_MS);
+        await emitShots(null, failed.rest, 'START', false);
+      }
+    }
     simulationId = null;
     statusText = error?.message || 'Start failed';
     closeSocket();
@@ -346,16 +443,9 @@ export async function startRscadSimulation() {
 }
 
 async function sendRunningConfig(config, buttonName) {
-  const payload = {
-    command: 'set_config',
-    body: {
-      id: simulationId,
-      prop_set_wait: 2,
-      config,
-    },
-  };
+  const payloads = asShots(config).map((shot) => setConfigPayload(shot));
   if (!socketIsOpen()) {
-    printHmiButtonBanner(buttonName || 'SET CONFIG', payload, false);
+    await emitShots(null, payloads, buttonName || 'SET CONFIG', false);
     statusText = 'Press Start first';
     emit();
     return { ...snapshot(), ok: false };
@@ -365,13 +455,7 @@ async function sendRunningConfig(config, buttonName) {
   statusText = '';
   emit();
   try {
-    const pending = waitForReply(socket, CONFIG_TIMEOUT_MS);
-    printHmiButtonBanner(buttonName || 'SET CONFIG', payload);
-    socket.send(JSON.stringify(payload));
-    const reply = await pending;
-    if (reply.status === 'error' || reply.error) {
-      throw new Error(reply.message || reply.error || 'RSCAD rejected the command');
-    }
+    await emitShots(socket, payloads, buttonName || 'SET CONFIG', true);
     statusText = '';
     return { ...snapshot(), ok: true };
   } catch (error) {
