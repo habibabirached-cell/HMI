@@ -165,9 +165,18 @@ export default function TestReferenceArchitectureSubmenu({
                     e.preventDefault();
                     e.stopPropagation();
                     if (running && rscad.busy) return;
-                    void sendRscadResetBess().then((result) => {
-                      if (result?.ok) setBessOn(false);
-                    });
+                    void (async () => {
+                      try {
+                        if (onIdeumCommand) {
+                          await onIdeumCommand(REF200_IDEUM_COMMANDS.baselineLm2500);
+                        }
+                      } catch {
+                        /* wall preset is separate from the RSCAD reset */
+                      }
+                      setBessOn(false);
+                      setMvupsOn(false);
+                      void sendRscadResetBess();
+                    })();
                   }}
                 >
                   Reset BESS
@@ -378,9 +387,9 @@ export default function TestReferenceArchitectureSubmenu({
               />
               <SubmenuUseCaseTile
                 zoom={zoom}
-                label="EMS Frequency Regulation"
+                label="Load Step"
                 imageUrl={IDEUM08_NAV_IMAGE_URLS.emsFrequencyRegulation}
-                imageAlt="Control room holding grid frequency steady beside a substation"
+                imageAlt="Load step at the data center"
                 pressState={emsFreqOn ? 'on' : 'off'}
                 onPress={() => {
                   if ((running && rscad.busy) || emsFreqOn) return;

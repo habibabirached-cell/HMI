@@ -13,6 +13,7 @@ export const RSCAD_METER_SAMPLE_COMMAND = 'rscadMeterSample';
 const LOAD_COLOR = '#005E60';
 const GENERATOR_COLOR = '#E0A045';
 const FREQUENCY_COLOR = '#2E9B6A';
+const FREQUENCY_REF_COLOR = '#E8C547';
 const VOLTAGE_GEN_COLOR = '#3D9BDC';
 
 export function isRscadWallChart(chart) {
@@ -33,12 +34,14 @@ export function rscadWallSampleFromMeters(meters, index) {
   const loadDemand = num('P_UPS_LOAD');
   const generator = num('PMAC1', 'PMAC');
   const speed = num('W1', 'W');
+  const speedRef = num('sRef1', 'sRef', 'SREF');
   const voltageLoad = num('LoadSideV_rms_pu');
   const voltageGen = num('VGB1', 'VGB');
   if (
     loadDemand == null
     && generator == null
     && speed == null
+    && speedRef == null
     && voltageLoad == null
     && voltageGen == null
   ) {
@@ -49,6 +52,7 @@ export function rscadWallSampleFromMeters(meters, index) {
     loadDemand,
     generator,
     frequency: speed == null ? null : speed / (2 * Math.PI),
+    frequencyRef: speedRef == null ? null : speedRef * 60,
     voltageLoad,
     voltageGen,
   };
@@ -96,7 +100,10 @@ export function buildRscadWallOpenCharts() {
       yMin: 55,
       yMax: 65,
       drawer: 'chart3',
-      traces: [{ channel: 'frequency', name: 'Frequency', color: FREQUENCY_COLOR }],
+      traces: [
+        { channel: 'frequency', name: 'Frequency', color: FREQUENCY_COLOR },
+        { channel: 'frequencyRef', name: 'sRef × 60', color: FREQUENCY_REF_COLOR },
+      ],
     }),
     wallChart({
       id: `rscad-voltage-${stamp}`,
@@ -118,6 +125,7 @@ export function emptyRscadWallSeries() {
     loadDemand: [],
     generator: [],
     frequency: [],
+    frequencyRef: [],
     voltageLoad: [],
     voltageGen: [],
   };
@@ -133,6 +141,7 @@ export function appendRscadWallSample(series, sample) {
     loadDemand: appendLiveRtdsPoint(base.loadDemand, t, Number(sample.loadDemand)),
     generator: appendLiveRtdsPoint(base.generator, t, Number(sample.generator)),
     frequency: appendLiveRtdsPoint(base.frequency, t, Number(sample.frequency)),
+    frequencyRef: appendLiveRtdsPoint(base.frequencyRef, t, Number(sample.frequencyRef)),
     voltageLoad: appendLiveRtdsPoint(base.voltageLoad, t, Number(sample.voltageLoad)),
     voltageGen: appendLiveRtdsPoint(base.voltageGen, t, Number(sample.voltageGen)),
   };

@@ -514,7 +514,7 @@ export function sendRscadDisconnectEms() {
 export function sendRscadEmsFrequency() {
   const config = activeScenario().emsFrequency;
   if (!config) return Promise.resolve({ ...snapshot(), ok: false });
-  return sendRunningConfig(config, 'EMS FREQUENCY REGULATION');
+  return sendRunningConfig(config, 'LOAD STEP');
 }
 
 /** Reset BESS: press both off-grid buttons, wait 1s, then release them to 0. */
